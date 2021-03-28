@@ -10,6 +10,7 @@ Math :: #import "Math";
 #load "ComplexMatrix.jai";
 #load "Vector.jai";
 #load "ComplexVector.jai";
+#load "LinearAlgebra.jai";
 
 
 
@@ -23,4 +24,5 @@ main :: () {
     test_matrix();
     test_complex_matrix();
     test_vector();
+    test_linear_algebra();
 }

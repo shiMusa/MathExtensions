@@ -10,6 +10,14 @@ operator [] :: inline (v: CVector64, i: int) -> Complex64 {
     return v.data[i];
 }
 
+operator == :: inline (a: CVector64, b: CVector64) -> bool {
+    r := true;
+    for a.data {
+        r = r && it == b.data[it_index];
+    }
+    return a.dim == b.dim && r;
+}
+
 
 cvec64 :: (values: ..Complex64) -> CVector64 {
     res : CVector64;
