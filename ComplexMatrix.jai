@@ -137,7 +137,13 @@ operator * :: (a: CVector64, b: CMatrix64) -> CVector64 {
 
 
 
-
+cmat64 :: (m: Matrix64) -> CMatrix64 {
+    res := cmat64(m.rows, m.cols);
+    for 0..res.data.count-1 {
+        res.data[it] = c64(m.data[it]);
+    }
+    return res;
+}
 
 cmat64 :: (rows: int, cols: int) -> CMatrix64 {
     res : CMatrix64;
@@ -291,6 +297,79 @@ conjugate_transpose :: inline (m: CMatrix64) -> CMatrix64 {
     return conjugate(transpose(m));
 }
 dagger :: conjugate_transpose;
+hermitian :: conjugate_transpose;
+
+
+
+
+
+
+
+
+// https://www.wikiwand.com/en/Tensor_product
+tensor :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+    res := cmat64(a.rows * b.rows, a.cols * b.cols);
+    for r: 0..res.rows-1 {
+        ar := r/b.rows;
+        br := r % b.rows;
+        
+        for c: 0..res.cols-1 {
+            ac := c/b.cols;
+            bc := c % b.cols;
+            set(res, r, c, get(a, ar, ac) * get(b, br, bc));
+        }
+    }
+    return res;
+}
+
+// https://www.wikiwand.com/en/Tensor_product
+tensor :: (a: CMatrix64, b: Matrix64) -> CMatrix64 {
+    res := cmat64(a.rows * b.rows, a.cols * b.cols);
+    for r: 0..res.rows-1 {
+        ar := r/b.rows;
+        br := r % b.rows;
+        
+        for c: 0..res.cols-1 {
+            ac := c/b.cols;
+            bc := c % b.cols;
+            set(res, r, c, get(a, ar, ac) * get(b, br, bc));
+        }
+    }
+    return res;
+}
+
+// https://www.wikiwand.com/en/Tensor_product
+tensor :: (a: Matrix64, b: CMatrix64) -> CMatrix64 {
+    res := cmat64(a.rows * b.rows, a.cols * b.cols);
+    for r: 0..res.rows-1 {
+        ar := r/b.rows;
+        br := r % b.rows;
+        
+        for c: 0..res.cols-1 {
+            ac := c/b.cols;
+            bc := c % b.cols;
+            set(res, r, c, get(a, ar, ac) * get(b, br, bc));
+        }
+    }
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -370,5 +449,21 @@ test_complex_matrix :: () {
             I, CZERO
         );
         assert( dagger(m) == m );
+    }
+
+
+    {
+        m := cmat64(2, 2, R, I, c64(2.0, -1.0), 2.0 + 3.0*I);
+        print("m = %\n", m);
+        t1 := tensor(m, m);
+        print("t1 = %\n", t1);
+        t2 := cmat64(4, 4,
+            R            ,             I,             I,   -R           ,
+            2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
+            2.0 -       I, 1.0 + 2.0 * I, 2.0 + 3.0 * I, -3.0 +  2.0 * I,
+            3.0 - 4.0 * I, 7.0 + 4.0 * I, 7.0 + 4.0 * I, -5.0 + 12.0 * I
+        );
+        print("t2 = %\n", t2);
+        assert(t1 == t2);
     }
 }

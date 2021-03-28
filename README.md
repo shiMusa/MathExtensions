@@ -37,3 +37,9 @@ Let's keep it as simple as possible:
 Give sources for algorithms written so that we can take a look and help debugging.
 
 Write (at least some) tests contained in each file.
+
+## TODOs
+
+A list of open tasks for the categories already working on:
+
+- Flags for matrices (anti-/symmetric, hermitian, upper/lower triangle, diagonal, unitary etc.) for using specialized algorithms improving performance

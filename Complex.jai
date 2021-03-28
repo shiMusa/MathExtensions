@@ -37,7 +37,7 @@ operator - :: inline (a: Complex64, b: float64) -> Complex64 {
 }
 
 operator - :: inline (a: float64, b: Complex64) -> Complex64 {
-    return c64(a - b.real, b.imag);
+    return c64(a - b.real, -b.imag);
 }
 
 operator - :: inline (a: Complex64) -> Complex64 {
@@ -62,6 +62,9 @@ operator / :: (a: Complex64, b: Complex64) -> Complex64 {
 operator * :: inline (a: Complex64, v : float64) -> Complex64 #symmetric {
     return c64(a.real * v, a.imag * v);
 }
+// operator * :: inline (v: float64, a: Complex64) -> Complex64 {
+//     return c64(a.real * v, a.imag * v);
+// }
 
 operator / :: inline (a: Complex64, v : float64) -> Complex64 {
     return c64(a.real / v, a.imag / v);
@@ -128,6 +131,8 @@ test_complex :: () {
     a := c64(1.0, 0.0);
     b := c64(0.0, 1.0);
 
+    assert( c64(0.0, 0.0) == c64(-0.0, -0.0) );
+
 
     assert(b * b == -1.0 * R);
     assert(a * a == 1.0 * R);
@@ -156,5 +161,8 @@ test_complex :: () {
 
 
     print("%\n", 2.0*R);
+
+    print("% == %\n", 3.0-4.0*I, Complex64.{3.0, -4.0});
+    assert(3.0 - 4.0 * I == Complex64.{3.0, -4.0});
 
 }

@@ -173,6 +173,13 @@ operator * :: inline (a: Vector64, b: CVector64) -> Complex64 {
 
 
 
+conjugate :: (v: CVector64) -> CVector64 {
+    res := cvec64(v.dim);
+    for v.data {
+        res.data[it_index] = conjugate(it);
+    }
+    return res;
+}
 
 
 
