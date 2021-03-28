@@ -3,6 +3,7 @@
 
 I :: Complex64.{0.0, 1.0};
 R :: Complex64.{1.0, 0.0};
+CZERO :: Complex64.{0.0, 0.0};
 
 C64_NAN :: Complex64.{Math.FLOAT64_NAN, Math.FLOAT64_NAN};
 
@@ -12,7 +13,7 @@ Complex64 :: struct {
     imag: float64;
 }
 
-c64 :: ($$ re: float64, $$ im: float64) -> Complex64 {
+c64 :: (re: float64 = 0.0, im: float64 = 0.0) -> Complex64 {
     r: Complex64 = ---;
     r.real = re;
     r.imag = im;
@@ -40,7 +41,7 @@ operator - :: inline (a: float64, b: Complex64) -> Complex64 {
 }
 
 operator - :: inline (a: Complex64) -> Complex64 {
-    return c64(-a.real, -a.real);
+    return c64(-a.real, -a.imag);
 }
 
 operator * :: inline (a: Complex64, b: Complex64) -> Complex64 {
@@ -152,5 +153,8 @@ test_complex :: () {
         arg(Complex64.{ 0.0, -1.0}) / Math.PI * 180.0,
         arg(Complex64.{ 1.0, -1.0}) / Math.PI * 180.0,
     );
+
+
+    print("%\n", 2.0*R);
 
 }

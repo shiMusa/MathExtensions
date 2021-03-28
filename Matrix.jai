@@ -26,7 +26,7 @@ operator + :: (a: Matrix64, b: Matrix64) -> Matrix64 {
     return res;
 }
 
-operator - :: inline (a: Matrix64, b: Matrix64) -> Matrix64 {
+operator - :: (a: Matrix64, b: Matrix64) -> Matrix64 {
     res := mat64(a.rows, a.cols);
     for 0..a.data.count {
         res.data[it] = a.data[it] - b.data[it];
@@ -34,7 +34,7 @@ operator - :: inline (a: Matrix64, b: Matrix64) -> Matrix64 {
     return res;
 }
 
-operator - :: inline (a: Matrix64) -> Matrix64 {
+operator - :: (a: Matrix64) -> Matrix64 {
     res := mat64(a.rows, a.cols);
     for 0..a.data.count {
         res.data[it] = -a.data[it];
@@ -85,19 +85,19 @@ operator * :: (a: Matrix64, b: Matrix64) -> Matrix64 {
 
 operator * :: (a: Matrix64, b: Vector64) -> Vector64 {
     res := vec64_zeros(a.rows);
-    for i: a.rows {
-        for j: a.cols {
-            res[i] += get(a, i, j) * b[j];
+    for i: 0..a.rows-1 {
+        for j: 0..a.cols-1 {
+            res.data[i] += get(a, i, j) * b[j];
         }
     }
     return res;
 }
 
 operator * :: (a: Vector64, b: Matrix64) -> Vector64 {
-    res := vec64_zeros(a.cols);
-    for i: a.cols {
-        for j: a.rows {
-            res[i] += get(a, i, j) * b[j];
+    res := vec64_zeros(a.dim);
+    for i: 0..a.dim-1 {
+        for j: 0..b.rows-1 {
+            res.data[i] += get(b, i, j) * b[j];
         }
     }
     return res;
@@ -122,7 +122,7 @@ mat64 :: inline (dim: int) -> Matrix64 {
     return mat64(dim, dim);
 }
 
-mat64 :: inline (rows: int, cols: int, init: float64) -> Matrix64 {
+mat64 :: (rows: int, cols: int, init: float64) -> Matrix64 {
     m := mat64(rows, cols);
     for 0..rows*cols-1 {
         m.data[it] = init;
@@ -130,7 +130,7 @@ mat64 :: inline (rows: int, cols: int, init: float64) -> Matrix64 {
     return m;
 }
 
-mat64 :: inline(rows: int, cols:int, values: ..float64) -> Matrix64 {
+mat64 :: (rows: int, cols:int, values: ..float64) -> Matrix64 {
     m := mat64_zeros(rows, cols);
     for values {
         m.data[it_index] = it;
@@ -190,7 +190,7 @@ set :: inline (m: Matrix64, row: int, col: int, val: float64) {
 }
 
 
-mat64_id :: inline (rows: int, cols: int) -> Matrix64 {
+mat64_id :: (rows: int, cols: int) -> Matrix64 {
     m := mat64_zeros(rows, cols);
     dim := ifx rows <= cols then rows else cols;
     for 0..dim-1 {

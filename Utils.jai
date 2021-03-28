@@ -1,5 +1,15 @@
 
 
+
+f64 :: inline (a: $T) -> float64 {
+    return cast(float64) a;
+}
+
+
+
+
+
+
 // Copied over from Hash_Table.jai
 next_power_of_two :: inline (x : int) -> int {
     assert(x != 0);

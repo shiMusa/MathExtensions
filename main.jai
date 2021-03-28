@@ -7,7 +7,9 @@ Math :: #import "Math";
 #load "Polynomials.jai";
 #load "Approximations.jai";
 #load "Matrix.jai";
+#load "ComplexMatrix.jai";
 #load "Vector.jai";
+#load "ComplexVector.jai";
 
 
 
@@ -15,9 +17,10 @@ main :: () {
     print("\n\ntesting some math extensions\n\n");
 
     // test_utils();
-    // test_complex();
+    test_complex();
     // test_polynomials();
     // test_approximations();
     test_matrix();
+    test_complex_matrix();
     test_vector();
 }
