@@ -7,6 +7,7 @@ Math :: #import "Math";
 #load "Polynomials.jai";
 #load "Approximations.jai";
 #load "Matrix.jai";
+#load "Vector.jai";
 
 
 
@@ -18,4 +19,5 @@ main :: () {
     // test_polynomials();
     // test_approximations();
     test_matrix();
+    test_vector();
 }
