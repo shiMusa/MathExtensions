@@ -26,6 +26,40 @@ solve_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
 
 
 
+
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.4.2 Forward Linear Recurrence, page 155
+// solve the system Lx = b where L is a left-triangluar matrix
+solve_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
+    res := cvec64(b.dim);
+    for i: 0..b.dim-1 {
+        sum := CZERO;
+        for j: 0..i-1 {
+            sum += L[i][j]*res[j];
+        }
+        res.data[i] = b[i] - sum;
+    }
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 test_linear_algebra :: () {
     print("\n\nLinear Algebra -------------------------------\n\n");
 
