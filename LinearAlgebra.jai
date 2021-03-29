@@ -10,8 +10,11 @@
 // Springer
 // Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // solves the system A x = b with 2x2 matrix A
-solve_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
-    assert(A.rows == 2 && A.cols == 2);
+solve_linear_2x2 :: (A: CMatrix64, b: CVector64, $check: bool = false) -> CVector64 {
+    #if check {
+        assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
+        assert(b.dim == 2, "b is not a 2-dim vector: dim = %", b.dim);
+    }
 
     sigma := max(abs(A[0][0]), abs(A[0][1]), abs(A[1][0]), abs(A[1][1]));
 
@@ -33,8 +36,21 @@ solve_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.4.2 Forward Linear Recurrence, page 155
-// solve the system Lx = b where L is a left-triangluar matrix
-solve_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
+// solve the system Lx = b where L is a unit left-triangluar matrix
+// that means, all diagonals are 1 and all L_ij = 0 for j > i.
+solve_linear_left_triangular :: (L: CMatrix64, b: CVector64, $check: bool = false) -> CVector64 {
+    #if check {
+        assert(L.cols == L.rows, "L is not quadratic! % rows, % columns", L.rows, L.cols);
+        for i: 0..L.cols-1 {
+            assert(L[i][i] == R, "L is not unit: Diagonal entries are not 1: L[%][%] = %", i, i, L[i][i]);
+        }
+        for r: 0..L.rows-2 {
+            for c: r+1..L.cols-1 {
+                assert(L[r][c] == CZERO, "L is not left-triangular: L[%][%] = %", r, c, L[r][c]);
+            }
+        }
+    }
+
     res := cvec64(b.dim);
     for i: 0..b.dim-1 {
         sum := CZERO;
@@ -66,11 +82,23 @@ test_linear_algebra :: () {
     {
         A := cmat64(2, 2, R, R, 2.0 - I, I);
         b := cvec64(I, c64(2.0, 4.0));
-        res := solve_2x2(A, b);
+        res := solve_linear_2x2(A, b, true);
         print("%\n", res);
         assert(res == cvec64(
             -0.25 + 1.75*I,
             0.25 - 0.75*I
         ));
+    }
+
+    {
+        L := cmat64(3, 3,
+            R, CZERO, CZERO,
+            3.0*R, R, CZERO,
+            I, R+I, R
+        );
+        b := cvec64(3.0*R, -I, R-2.0*I);
+        res := solve_linear_left_triangular(L, b, true);
+        print("% = % ?\n", L * res, b);
+        assert(L * res == b);
     }
 }
