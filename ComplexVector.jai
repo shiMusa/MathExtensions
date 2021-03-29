@@ -44,6 +44,16 @@ cvec64 :: (values: ..Complex64) -> CVector64 {
 //     return res;
 // }
 
+
+cvec64 :: (vec: Vector64) -> CVector64 {
+    res := cvec64(vec.dim);
+    for vec.data {
+        res.data[it_index] = c64(it);
+    }
+    return res;
+}
+
+
 cvec64 :: inline (dim: int) -> CVector64 {
     res : CVector64;
     res.dim = dim;
@@ -207,7 +217,7 @@ operator * :: inline (a: Vector64, b: CVector64) -> Complex64 {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
-    
+
     res := CZERO;
     for 0..a.dim-1 {
         res += a[it] * b[it];

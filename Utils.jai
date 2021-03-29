@@ -37,6 +37,11 @@ f64 :: inline (a: $T) -> float64 {
 }
 
 
+// zero :: inline(reference: $T) -> T {
+//     type :: type_of(reference);
+//     #if type == float64 then return 0.0;
+//     #if type == Complex64 then return CZERO;
+// }
 
 
 

@@ -93,33 +93,48 @@ solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
 // Springer
 // Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
 // solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
-// solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
-//     #if CHECKS {
-//         assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
-//         assert(cmat64_is_right_quasi_triangular(R), "R is not right quasi-triangular!");
-//         // for i: 0..R.rows-1 {
-//         //     for j: 0..R.cols-1 {
-//         //         if i>j+1 then assert(R[i][j] == CZERO, "R is not right quasi-triangular: R[%][%] = % != 0", i,j,R[i][j]);
-//         //     }
-//         //     if i>=2 {
-//         //         // diagonal blocks
-//         //         if R[i-1][i] != CZERO {
-//         //             assert(R[i-2][i-1] == CZERO && R[i][i+1] == CZERO, "R is not right quasi-triangular");
-//         //         }
-//         //         // 1x1 diagonal blocks invertible
-//         //         if R[i-1][i] == CZERO && R[i+1][i] == CZERO {
-//         //             assert(R[i][i] != CZERO, "R is not right quasi-triangular");)
-//         //         }
-//         //         // 2x2 diagonal blocks are invertible
-//         //         if R[i][i-1] != CZERO {
-//         //             assert(R[i-1][i-1]*R[i][i] - R[i-1][i]*R[i][i-1] != CZERO, "R is not right quasi-triangular");
-//         //         }
-//         //     }
-//         // }
-//     }
+solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
+        assert(cmat64_is_right_quasi_triangular(R), "R is not right quasi-triangular!");
+    }
+    res := cvec64(b.dim);
 
-
-// }
+    n := b.dim;
+    i := n-1; // start with last row and wrap from bottom to up
+    while i >= 0 {
+        // check if 2x2 block by looking at left column
+        // the term `|| i == 0` was missing
+        if (i > 0 && R[i][i-1] == CZERO) || i == 0 {
+            sum := CZERO;
+            for j: i+1..n-1 {
+                sum += R[i][j] * res[j];
+            }
+            res.data[i] = (b[i] - sum)/R[i][i];
+            i -= 1;
+        } else if i > 0 { // so now we have a 2x2 block where R[i][i] is the bottom-right element
+            A := cmat64(2, 2, 
+                R[i-1][i-1], R[i-1][i],
+                R[i][i-1], R[i][i]
+            );
+            sum1 := CZERO;
+            sum2 := CZERO;
+            for j: i+1..n-1 {
+                sum1 += R[i-1][j] * res[j];
+                sum2 += R[i][j] * res[j];
+            }
+            c := cvec64(
+                b[i-1] - sum1,
+                b[i] - sum2
+            );
+            tmp := solve_linear_2x2(A, c);
+            res.data[i-1] = tmp[0];
+            res.data[i]   = tmp[1];
+            i -= 2;
+        }
+    }
+    return res;
+}
 
 
 
@@ -168,5 +183,24 @@ test_linear_algebra :: () {
         test := norm_2(M * res - b);
         print("%\n", test);
         assert(test < 1.0e-10, "res = %, M * res = % =? b = %", res, M*res, b);
+    }
+
+    {
+        m := mat64(4, 4,
+            1, 3, 4, 5,
+            0, 2, 3, 4,
+            0, 1, 2, 3,
+            0, 0, 0, 2
+        );
+        cm := cmat64(m);
+        
+        b := vec64(2,3,4,5);
+        cb := cvec64(b);
+
+        res := solve_linear_right_quasi_triangular(cm,cb);
+        print("res = %\n", res);
+
+        test := norm_2(cm * res - cb);
+        assert(test < 1.0e-10);
     }
 }
