@@ -242,6 +242,21 @@ norm_2 :: (v: CVector64) -> float64 {
 }
 
 
+outer_product :: (a: CVector64, b: CVector64) -> CMatrix64 {
+    res := cmat64(a.dim, b.dim);
+    for i: 0..a.dim {
+        for j: 0..b.dim {
+            res[i][j] = a[i] * b[j];
+        }
+    }
+    return res;
+}
+
+
+operator / :: inline (a: CVector64, b: CVector64) -> CMatrix64 {
+    return outer_product(a, b);
+}
+
 
 
 

@@ -133,6 +133,10 @@ cmat64_is_right_quasi_triangular :: (R: CMatrix64) -> bool {
     return true;
 }
 
+cmat64_is_unitary :: (U: CMatrix64) -> bool {
+    return cmat64_is_quadratic(U) && dagger(U)*U == cmat64_id(U.rows);
+}
+
 
 
 test_checks :: () {
@@ -177,5 +181,9 @@ test_checks :: () {
         assert(cmat64_is_right_quasi_triangular(cm));
         cm = transpose(cm);
         assert(!cmat64_is_right_quasi_triangular(cm));
+    }
+
+    {
+        
     }
 }

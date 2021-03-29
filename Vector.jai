@@ -139,6 +139,22 @@ norm_2 :: (v: Vector64) -> float64 {
 
 
 
+outer_product :: (a: Vector64, b: Vector64) -> Matrix64 {
+    res := mat64(a.dim, b.dim);
+    for i: 0..a.dim {
+        for j: 0..b.dim {
+            res[i][j] = a[i] * b[j];
+        }
+    }
+    return res;
+}
+
+
+operator / :: inline (a: Vector64, b: Vector64) -> Matrix64 {
+    return outer_product(a, b);
+}
+
+
 
 
 

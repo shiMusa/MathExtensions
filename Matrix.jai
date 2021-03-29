@@ -27,6 +27,14 @@ operator [] :: inline (m: Matrix64, i: int) -> []float64 {
     return array_view_count(m.data, i * m.cols, m.cols);
 }
 
+row :: (m: Matrix64, i: int) -> Vector64 {
+    res := vec64(m.cols);
+    for 0..m.cols-1 {
+        res.data[it] = m[i][it];
+    }
+    return res;
+}
+
 operator == :: inline (a: Matrix64, b: Matrix64) -> bool {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
@@ -365,6 +373,14 @@ transpose :: (m: Matrix64) -> Matrix64 #must {
 // }
 
 
+
+
+
+
+mat64_reflector :: (normal: Vector64) -> Matrix64 {
+    tau := 2.0/(normal*normal);
+    return mat64_id(normal.dim) - tau * normal / normal;
+}
 
 
 

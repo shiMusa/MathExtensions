@@ -10,6 +10,7 @@
 // Springer
 // Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // solves the system A x = b with 2x2 matrix A
+sl2 :: solve_linear_2x2;
 solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
@@ -38,6 +39,7 @@ solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
 // Algorithm 3.4.2 Forward Linear Recurrence, page 155
 // solve the system Lx = b where L is a unit left-triangluar matrix
 // that means, all diagonals are 1 and all L_ij = 0 for j > i.
+sllt :: solve_linear_left_triangular;
 solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(cmat64_is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
@@ -64,6 +66,7 @@ solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
 // Algorithm 3.4.4 Backward Linear Recurrence, page 158
 // solve the system Rx = b where R is a right-triangluar matrix
 // that means all R_ij = 0 for j < i.
+slrt :: solve_linear_right_triangular;
 solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
@@ -93,6 +96,7 @@ solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
 // Springer
 // Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
 // solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
+slrqt :: solve_linear_right_quasi_triangular;
 solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
@@ -139,6 +143,44 @@ solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64
 
 
 
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.4.8 Orthogonal Projection, page 167
+solve_linear_unitary :: solve_linear_orthogonal_projection;
+slop :: solve_linear_orthogonal_projection;
+solve_linear_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(cmat64_is_unitary(Q));
+    }
+
+    return dagger(Q) * b;
+}
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.4.9 Successive Orthogonal Projection, page 168
+// not sure if this algo is useful. seems to be slower than the previous one.
+slsop :: solve_linear_successive_orthogonal_projection;
+solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(cmat64_is_unitary(Q));
+    }
+    bb := copy(b);
+
+    res := cvec64(bb.dim);
+    for i: 0..bb.dim-1 {
+        q := row(Q, i);
+        res.data[i] = conjugate(q) * bb; // not sure if this is performant...
+        bb = bb - q * res[i];
+    }
+
+    return res;
+}
 
 
 

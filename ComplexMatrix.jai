@@ -26,6 +26,14 @@ operator [] :: inline (m: CMatrix64, i: int) -> []Complex64 {
     return array_view_count(m.data, i * m.cols, m.cols);
 }
 
+row :: (m: CMatrix64, i: int) -> CVector64 {
+    res := cvec64(m.cols);
+    for 0..m.cols-1 {
+        res.data[it] = m[i][it];
+    }
+    return res;
+}
+
 operator == :: inline (a: CMatrix64, b: CMatrix64) -> bool {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
@@ -131,8 +139,6 @@ operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
     }
     return res;
 }
-
-
 
 
 
@@ -313,7 +319,7 @@ set :: inline (m: CMatrix64, row: int, col: int, val: Complex64) {
         assert(row <= m.rows && col <= m.cols,
             "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
     }
-    
+
     m.data[row * m.cols + col] = val;
 }
 
@@ -331,6 +337,21 @@ cmat64_id :: (rows: int, cols: int) -> CMatrix64 {
 cmat64_id :: inline (dim: int) -> CMatrix64 {
     return cmat64_id(dim, dim);
 }
+
+
+
+
+
+cmat64_reflector :: (normal: CVector64) -> CMatrix64 {
+    tau := c64(2.0)/(conjugate(normal)*normal);
+    return cmat64_id(normal.dim) - tau * normal / normal;
+}
+
+
+
+
+
+
 
 
 
