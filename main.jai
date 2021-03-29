@@ -14,4 +14,5 @@ main :: () {
     test_complex_matrix();
     test_vector();
     test_linear_algebra();
+    test_checks();
 }
