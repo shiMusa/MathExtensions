@@ -18,10 +18,19 @@ copy :: (m: CMatrix64) -> CMatrix64 {
 }
 
 operator [] :: inline (m: CMatrix64, i: int) -> []Complex64 {
+    #if CHECKS {
+        assert(i >= 0, "Row-index negative! i = %", i);
+        assert(i < m.rows, "Row-index out of bounds: % rows", m.rows);
+    }
+
     return array_view_count(m.data, i * m.cols, m.cols);
 }
 
 operator == :: inline (a: CMatrix64, b: CMatrix64) -> bool {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
     r := true;
     for a.data {
         r = r & (it == b.data[it_index]);
@@ -31,6 +40,10 @@ operator == :: inline (a: CMatrix64, b: CMatrix64) -> bool {
 
 
 operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
     res := cmat64(a.rows, a.cols);
     for 0..a.data.count {
         res.data[it] = a.data[it] + b.data[it];
@@ -39,6 +52,10 @@ operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
 }
 
 operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
     res := cmat64(a.rows, a.cols);
     for 0..a.data.count {
         res.data[it] = a.data[it] - b.data[it];
@@ -99,6 +116,10 @@ operator / :: (a: CMatrix64, val: Complex64) -> CMatrix64 {
 // the least number of cache misses.
 // WARNING: no dimension checks! Make sure you  know what you're doing.
 operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+    #if CHECKS {
+        assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+    }
+
     res := cmat64_zeros(a.rows, b.cols);
     for j: 0..b.cols-1 {
         for k: 0..a.cols-1 {
@@ -117,6 +138,10 @@ operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
 
 
 operator * :: (a: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
+    }
+
     res := cvec64_zeros(a.rows);
     for i: 0..a.rows-1 {
         for j: 0..a.cols-1 {
@@ -128,6 +153,40 @@ operator * :: (a: CMatrix64, b: CVector64) -> CVector64 {
 }
 
 operator * :: (a: CVector64, b: CMatrix64) -> CVector64 {
+    #if CHECKS {
+        assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
+    }
+
+    res := cvec64_zeros(a.dim);
+    for i: 0..a.dim-1 {
+        for j: 0..b.rows-1 {
+            // res.data[i] += get(b, i, j) * a[j];
+            res.data[i] += b[i][j] * a[j];
+        }
+    }
+    return res;
+}
+
+operator * :: (a: CMatrix64, b: Vector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
+    }
+
+    res := cvec64_zeros(a.rows);
+    for i: 0..a.rows-1 {
+        for j: 0..a.cols-1 {
+            // res.data[i] += get(a, i, j) * b[j];
+            res.data[i] += a[i][j] * b[j];
+        }
+    }
+    return res;
+}
+
+operator * :: (a: Vector64, b: CMatrix64) -> CVector64 {
+    #if CHECKS {
+        assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
+    }
+    
     res := cvec64_zeros(a.dim);
     for i: 0..a.dim-1 {
         for j: 0..b.rows-1 {
@@ -186,6 +245,10 @@ cmat64 ::  (rows: int, cols: int, init: Complex64) -> CMatrix64 {
 // }
 
 cmat64 :: (rows: int, cols: int, values: ..Complex64) -> CMatrix64 {
+    #if CHECKS {
+        assert(values.count <= rows * cols, "Too many values: rows*cols = %, values.count = %", rows*cols, values.count);
+    }
+
     m := cmat64_zeros(rows, cols);
     for values {
         m.data[it_index] = it;
@@ -229,13 +292,28 @@ cmat64_ones :: inline (dim: int) -> CMatrix64 {
 
 
 get :: inline (m: CMatrix64, row: int, col: int) -> Complex64 {
+    #if CHECKS {
+        assert(row <= m.rows && col <= m.cols,
+            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
+    }
+
     return m.data[row * m.cols + col];
 }
 
 set :: inline (m: CMatrix64, row: int, col: int, val: float64) {
+    #if CHECKS {
+        assert(row <= m.rows && col <= m.cols,
+            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
+    }
+
     m.data[row * m.cols + col] = c64(val, 0.0);
 }
 set :: inline (m: CMatrix64, row: int, col: int, val: Complex64) {
+    #if CHECKS {
+        assert(row <= m.rows && col <= m.cols,
+            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
+    }
+    
     m.data[row * m.cols + col] = val;
 }
 

@@ -19,10 +19,19 @@ copy :: (m: Matrix64) -> Matrix64 {
 
 
 operator [] :: inline (m: Matrix64, i: int) -> []float64 {
+    #if CHECKS {
+        assert(i >= 0, "Row-index negative! i = %", i);
+        assert(i < m.rows, "Row-index out of bounds: % rows", m.rows);
+    }
+
     return array_view_count(m.data, i * m.cols, m.cols);
 }
 
 operator == :: inline (a: Matrix64, b: Matrix64) -> bool {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
     r := true;
     for a.data {
         r = r & (it == b.data[it_index]);
@@ -32,6 +41,10 @@ operator == :: inline (a: Matrix64, b: Matrix64) -> bool {
 
 
 operator + :: (a: Matrix64, b: Matrix64) -> Matrix64 {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
     res := mat64(a.rows, a.cols);
     for 0..a.data.count {
         res.data[it] = a.data[it] + b.data[it];
@@ -40,6 +53,10 @@ operator + :: (a: Matrix64, b: Matrix64) -> Matrix64 {
 }
 
 operator - :: (a: Matrix64, b: Matrix64) -> Matrix64 {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
     res := mat64(a.rows, a.cols);
     for 0..a.data.count {
         res.data[it] = a.data[it] - b.data[it];
@@ -85,6 +102,10 @@ operator / :: (a: Matrix64, val: float64) -> Matrix64 {
 //
 // WARNING: no dimension checks! Make sure you  know what you're doing.
 operator * :: (a: Matrix64, b: Matrix64) -> Matrix64 {
+    #if CHECKS {
+        assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+    }
+
     res := mat64_zeros(a.rows, b.cols);
     for j: 0..b.cols-1 {
         for k: 0..a.cols-1 {
@@ -103,6 +124,10 @@ operator * :: (a: Matrix64, b: Matrix64) -> Matrix64 {
 
 
 operator * :: (a: Matrix64, b: Vector64) -> Vector64 {
+    #if CHECKS {
+        assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
+    }
+
     res := vec64_zeros(a.rows);
     for i: 0..a.rows-1 {
         for j: 0..a.cols-1 {
@@ -114,6 +139,10 @@ operator * :: (a: Matrix64, b: Vector64) -> Vector64 {
 }
 
 operator * :: (a: Vector64, b: Matrix64) -> Vector64 {
+    #if CHECKS {
+        assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
+    }
+
     res := vec64_zeros(a.dim);
     for i: 0..a.dim-1 {
         for j: 0..b.rows-1 {
@@ -125,6 +154,10 @@ operator * :: (a: Vector64, b: Matrix64) -> Vector64 {
 }
 
 operator * :: (a: Matrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
+    }
+
     res := cvec64_zeros(a.rows);
     for i: 0..a.rows-1 {
         for j: 0..a.cols-1 {
@@ -136,6 +169,10 @@ operator * :: (a: Matrix64, b: CVector64) -> CVector64 {
 }
 
 operator * :: (a: CVector64, b: Matrix64) -> CVector64 {
+    #if CHECKS {
+        assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
+    }
+
     res := cvec64_zeros(a.dim);
     for i: 0..a.dim-1 {
         for j: 0..b.rows-1 {
@@ -174,6 +211,10 @@ mat64 :: (rows: int, cols: int, init: float64) -> Matrix64 {
 }
 
 mat64 :: (rows: int, cols:int, values: ..float64) -> Matrix64 {
+    #if CHECKS {
+        assert(values.count <= rows * cols, "Too many values: rows*cols = %, values.count = %", rows*cols, values.count);
+    }
+
     m := mat64_zeros(rows, cols);
     for values {
         m.data[it_index] = it;
@@ -212,6 +253,11 @@ mat64_ones :: inline (dim: int) -> Matrix64 {
 
 
 get :: inline (m: Matrix64, row: int, col: int) -> float64 {
+    #if CHECKS {
+        assert(row <= m.rows && col <= m.cols,
+            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
+    }
+
     // if m.transp {
         // return m.data[col * m.cols + row];
     // }
@@ -219,6 +265,11 @@ get :: inline (m: Matrix64, row: int, col: int) -> float64 {
 }
 
 set :: inline (m: Matrix64, row: int, col: int, val: float64) {
+    #if CHECKS {
+        assert(row <= m.rows && col <= m.cols,
+            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
+    }
+
     // if m.transp {
     //     m.data[col * m.cols + row] = val;
     // } else {
@@ -248,11 +299,14 @@ mat64_hadamard_2 :: inline () -> Matrix64 {
     return mat64(2, 2, 1.0, 1.0, 1.0, -1.0);
 }
 
-mat64_hadamard :: inline (iterations: int) -> Matrix64 {
-    if iterations == 0 {
+mat64_hadamard :: inline (nestings: int) -> Matrix64 {
+    #if CHECKS {
+        assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
+    }
+    if nestings == 0 {
         return mat64_hadamard_2();
     }
-    return tensor(mat64_hadamard_2(), mat64_hadamard(iterations-1));
+    return tensor(mat64_hadamard_2(), mat64_hadamard(nestings-1));
 }
 
 

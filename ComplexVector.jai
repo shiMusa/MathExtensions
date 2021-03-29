@@ -11,6 +11,10 @@ operator [] :: inline (v: CVector64, i: int) -> Complex64 {
 }
 
 operator == :: inline (a: CVector64, b: CVector64) -> bool {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     r := true;
     for a.data {
         r = r && it == b.data[it_index];
@@ -81,6 +85,10 @@ copy :: inline (v: CVector64) -> CVector64 {
 
 
 operator + :: inline (a: CVector64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] + b[it];
@@ -89,6 +97,10 @@ operator + :: inline (a: CVector64, b: CVector64) -> CVector64 {
 }
 
 operator + :: inline (a: CVector64, b: Vector64) -> CVector64 #symmetric {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] + b[it];
@@ -97,6 +109,10 @@ operator + :: inline (a: CVector64, b: Vector64) -> CVector64 #symmetric {
 }
 
 operator - :: inline (a: CVector64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] - b[it];
@@ -104,6 +120,10 @@ operator - :: inline (a: CVector64, b: CVector64) -> CVector64 {
     return res;
 }
 operator - :: inline (a: CVector64, b: Vector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] - b[it];
@@ -111,6 +131,10 @@ operator - :: inline (a: CVector64, b: Vector64) -> CVector64 {
     return res;
 }
 operator - :: inline (a: Vector64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] - b[it];
@@ -158,6 +182,10 @@ operator / :: inline (a: CVector64, val: float64) -> CVector64 {
 
 
 operator * :: inline (a: CVector64, b: CVector64) -> Complex64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := CZERO;
     for 0..a.dim-1 {
         res += a[it] * b[it];
@@ -165,6 +193,10 @@ operator * :: inline (a: CVector64, b: CVector64) -> Complex64 {
     return res;
 }
 operator * :: inline (a: CVector64, b: Vector64) -> Complex64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := CZERO;
     for 0..a.dim-1 {
         res += a[it] * b[it];
@@ -172,6 +204,10 @@ operator * :: inline (a: CVector64, b: Vector64) -> Complex64 {
     return res;
 }
 operator * :: inline (a: Vector64, b: CVector64) -> Complex64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+    
     res := CZERO;
     for 0..a.dim-1 {
         res += a[it] * b[it];

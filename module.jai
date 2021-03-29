@@ -11,3 +11,6 @@ Math :: #import "Math";
 #load "Vector.jai";
 #load "ComplexVector.jai";
 #load "LinearAlgebra.jai";
+
+
+CHECKS :: true;

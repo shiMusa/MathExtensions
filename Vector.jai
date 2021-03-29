@@ -69,6 +69,10 @@ copy :: inline (v: Vector64) -> Vector64 {
 
 
 operator + :: inline (a: Vector64, b: Vector64) -> Vector64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := vec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] + b[it];
@@ -77,6 +81,10 @@ operator + :: inline (a: Vector64, b: Vector64) -> Vector64 {
 }
 
 operator - :: inline (a: Vector64, b: Vector64) -> Vector64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res := vec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] - b[it];
@@ -110,6 +118,10 @@ operator / :: inline (a: Vector64, val: float64) -> Vector64 {
 
 
 operator * :: inline (a: Vector64, b: Vector64) -> float64 {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
     res : float64 = 0.0;
     for 0..a.dim-1 {
         res += a[it] * b[it];

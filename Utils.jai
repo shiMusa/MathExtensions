@@ -6,6 +6,10 @@
 
 
 array_view_range :: inline (arr: []$T, from: s64, to: s64) -> []T {
+    #if CHECKS {
+        assert(to < arr.count, "Index out of bounds: to = %, arr.count = %", to, arr.count);
+        assert(from < to, "Negative range: from = %, to = %", from, to);
+    }
     res := arr;
     res.data += from;
     res.count = (to - from);
@@ -13,6 +17,11 @@ array_view_range :: inline (arr: []$T, from: s64, to: s64) -> []T {
 }
 
 array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
+    #if CHECKS {
+        assert(from + count <= arr.count, "Index out of bounds: from+count = %, arr.count = %", from+count, arr.count);
+        assert(count > 0, "Negative/zero range: count = %", count);
+    }
+
     res := arr;
     res.data += from;
     res.count = count;
@@ -60,6 +69,10 @@ factorial :: (n: $T) -> T {
 // Springer
 // 2.3.1.10 Binomial Coefficients, page 55
 binomial :: inline (from: $T, choose: T) -> T {
+    #if CHECKS {
+        assert(choose <= from, "Out of range: from = %, choose = %", from, choose);
+    }
+
     // assert(from >= choose); // TODO disable for release build?!
     if choose == 0 || from == choose {
         return 1;

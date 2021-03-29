@@ -10,8 +10,8 @@
 // Springer
 // Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // solves the system A x = b with 2x2 matrix A
-solve_linear_2x2 :: (A: CMatrix64, b: CVector64, $check: bool = false) -> CVector64 {
-    #if check {
+solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
         assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
         assert(b.dim == 2, "b is not a 2-dim vector: dim = %", b.dim);
     }
@@ -38,8 +38,8 @@ solve_linear_2x2 :: (A: CMatrix64, b: CVector64, $check: bool = false) -> CVecto
 // Algorithm 3.4.2 Forward Linear Recurrence, page 155
 // solve the system Lx = b where L is a unit left-triangluar matrix
 // that means, all diagonals are 1 and all L_ij = 0 for j > i.
-solve_linear_left_triangular :: (L: CMatrix64, b: CVector64, $check: bool = false) -> CVector64 {
-    #if check {
+solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
         assert(L.cols == L.rows, "L is not quadratic! % rows, % columns", L.rows, L.cols);
         for i: 0..L.cols-1 {
             assert(L[i][i] == R, "L is not unit: Diagonal entries are not 1: L[%][%] = %", i, i, L[i][i]);
@@ -70,8 +70,8 @@ solve_linear_left_triangular :: (L: CMatrix64, b: CVector64, $check: bool = fals
 // Algorithm 3.4.4 Backward Linear Recurrence, page 158
 // solve the system Rx = b where R is a right-triangluar matrix
 // that means all R_ij = 0 for j < i.
-solve_linear_right_triangular :: (R: CMatrix64, b: CVector64, $check: bool = false) -> CVector64 {
-    #if check {
+solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
         assert(R.cols == R.rows, "R is not quadratic! % rows, % columns", R.rows, R.cols);
         for r: 0..R.rows-2 {
             for c: 0..r-1 {
@@ -113,7 +113,7 @@ test_linear_algebra :: () {
     {
         A := cmat64(2, 2, R, R, 2.0 - I, I);
         b := cvec64(I, c64(2.0, 4.0));
-        res := solve_linear_2x2(A, b, true);
+        res := solve_linear_2x2(A, b);
         print("%\n", res);
         assert(res == cvec64(
             -0.25 + 1.75*I,
@@ -128,7 +128,7 @@ test_linear_algebra :: () {
             I, R+I, R
         );
         b := cvec64(3.0*R, -I, R-2.0*I);
-        res := solve_linear_left_triangular(L, b, true);
+        res := solve_linear_left_triangular(L, b);
         print("% = % ?\n", L * res, b);
         assert(L * res == b);
     }
@@ -140,7 +140,7 @@ test_linear_algebra :: () {
             CZERO, CZERO, -3.0*R
         );
         b := cvec64(3.0*R, -I, R-2.0*I);
-        res := solve_linear_right_triangular(M, b, true);
+        res := solve_linear_right_triangular(M, b);
 
         test := norm_2(M * res - b);
         print("%\n", test);
