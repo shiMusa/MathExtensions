@@ -40,15 +40,9 @@ solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
 // that means, all diagonals are 1 and all L_ij = 0 for j > i.
 solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(L.cols == L.rows, "L is not quadratic! % rows, % columns", L.rows, L.cols);
-        for i: 0..L.cols-1 {
-            assert(L[i][i] == R, "L is not unit: Diagonal entries are not 1: L[%][%] = %", i, i, L[i][i]);
-        }
-        for r: 0..L.rows-2 {
-            for c: r+1..L.cols-1 {
-                assert(L[r][c] == CZERO, "L is not left-triangular: L[%][%] = %", r, c, L[r][c]);
-            }
-        }
+        assert(cmat64_is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
+        assert(cmat64_is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
+        assert(cmat64_is_left_triangular(L), "L is not left-triangular");
     }
 
     res := cvec64(b.dim);
@@ -72,12 +66,8 @@ solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
 // that means all R_ij = 0 for j < i.
 solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(R.cols == R.rows, "R is not quadratic! % rows, % columns", R.rows, R.cols);
-        for r: 0..R.rows-2 {
-            for c: 0..r-1 {
-                assert(R[r][c] == CZERO, "R is not right-triangular: R[%][%] = %", r, c, R[r][c]);
-            }
-        }
+        assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
+        assert(cmat64_is_right_triangular(R), "R is not right-triangular");
     }
 
     res := cvec64(b.dim);
@@ -97,6 +87,39 @@ solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
 
 
 
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
+// solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
+// solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
+//     #if CHECKS {
+//         assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
+//         assert(cmat64_is_right_quasi_triangular(R), "R is not right quasi-triangular!");
+//         // for i: 0..R.rows-1 {
+//         //     for j: 0..R.cols-1 {
+//         //         if i>j+1 then assert(R[i][j] == CZERO, "R is not right quasi-triangular: R[%][%] = % != 0", i,j,R[i][j]);
+//         //     }
+//         //     if i>=2 {
+//         //         // diagonal blocks
+//         //         if R[i-1][i] != CZERO {
+//         //             assert(R[i-2][i-1] == CZERO && R[i][i+1] == CZERO, "R is not right quasi-triangular");
+//         //         }
+//         //         // 1x1 diagonal blocks invertible
+//         //         if R[i-1][i] == CZERO && R[i+1][i] == CZERO {
+//         //             assert(R[i][i] != CZERO, "R is not right quasi-triangular");)
+//         //         }
+//         //         // 2x2 diagonal blocks are invertible
+//         //         if R[i][i-1] != CZERO {
+//         //             assert(R[i-1][i-1]*R[i][i] - R[i-1][i]*R[i][i-1] != CZERO, "R is not right quasi-triangular");
+//         //         }
+//         //     }
+//         // }
+//     }
+
+
+// }
 
 
 
