@@ -94,6 +94,14 @@ polynom :: (x: float64, a: ..float64) -> float64 {
     return p;
 }
 
+polynom :: (x: Complex64, a: ..Complex64) -> Complex64 {
+    p := a[0];
+    for 1..a.count-1 {
+        p = a[it] + x * p;
+    }
+    return p;
+}
+
 
 // Scientific Computing, Vol I: Linear and nonlinear equations
 // Texts in computational science and engineering 18
