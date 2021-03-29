@@ -64,6 +64,37 @@ solve_linear_left_triangular :: (L: CMatrix64, b: CVector64, $check: bool = fals
 
 
 
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.4.4 Backward Linear Recurrence, page 158
+// solve the system Rx = b where R is a right-triangluar matrix
+// that means all R_ij = 0 for j < i.
+solve_linear_right_triangular :: (R: CMatrix64, b: CVector64, $check: bool = false) -> CVector64 {
+    #if check {
+        assert(R.cols == R.rows, "R is not quadratic! % rows, % columns", R.rows, R.cols);
+        for r: 0..R.rows-2 {
+            for c: 0..r-1 {
+                assert(R[r][c] == CZERO, "R is not right-triangular: R[%][%] = %", r, c, R[r][c]);
+            }
+        }
+    }
+
+    res := cvec64(b.dim);
+    i : int;
+    for 0..b.dim-1 {
+        i = b.dim-1 - it;
+        sum := CZERO;
+        for j: i+1..b.dim-1 {
+            sum += R[i][j]*res[j];
+        }
+        res.data[i] = (b[i] - sum)/R[i][i];
+    }
+    return res;
+}
+
+
+
 
 
 
@@ -100,5 +131,19 @@ test_linear_algebra :: () {
         res := solve_linear_left_triangular(L, b, true);
         print("% = % ?\n", L * res, b);
         assert(L * res == b);
+    }
+
+    {
+        M := cmat64(3, 3,
+            2.0*R, I, R-2.0*I,
+            CZERO, R, 3.0*I,
+            CZERO, CZERO, -3.0*R
+        );
+        b := cvec64(3.0*R, -I, R-2.0*I);
+        res := solve_linear_right_triangular(M, b, true);
+
+        test := norm_2(M * res - b);
+        print("%\n", test);
+        assert(test < 1.0e-10, "res = %, M * res = % =? b = %", res, M*res, b);
     }
 }

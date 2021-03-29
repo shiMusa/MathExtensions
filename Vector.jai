@@ -120,7 +120,9 @@ operator * :: inline (a: Vector64, b: Vector64) -> float64 {
 
 
 
-
+norm_2 :: (v: Vector64) -> float64 {
+    return v * v;
+}
 
 
 

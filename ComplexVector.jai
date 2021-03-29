@@ -191,6 +191,9 @@ conjugate :: (v: CVector64) -> CVector64 {
 
 
 
+norm_2 :: (v: CVector64) -> float64 {
+    return (conjugate(v) * v).real;
+}
 
 
 
