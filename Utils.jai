@@ -1,6 +1,28 @@
 
 
 
+
+
+
+
+array_view_range :: inline (arr: []$T, from: s64, to: s64) -> []T {
+    res := arr;
+    res.data += from;
+    res.count = (to - from);
+    return res;
+}
+
+array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
+    res := arr;
+    res.data += from;
+    res.count = count;
+    return res;
+}
+
+
+
+
+
 f64 :: inline (a: $T) -> float64 {
     return cast(float64) a;
 }
@@ -59,4 +81,11 @@ test_utils :: () {
     assert(binomial(5, 3) == 10);
     assert(binomial(11, 6) == 462);
     // print("%\n", binomial(67, 30));
+
+    {
+        a := float64.[0,1,2,3,4,5,6];
+        v := array_view_range(a, 2, 4);
+        print("%\n", a);
+        print("%\n", v);
+    }
 }

@@ -13,12 +13,12 @@
 solve_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
     assert(A.rows == 2 && A.cols == 2);
 
-    sigma := max(abs(A[0]), abs(A[1]), abs(A[2]), abs(A[3]));
+    sigma := max(abs(A[0][0]), abs(A[0][1]), abs(A[1][0]), abs(A[1][1]));
 
     mu := A / sigma;
-    det := mu[0]*mu[3] - mu[1]*mu[2];
+    det := mu[0][0] * mu[1][1] - mu[0][1] * mu[1][0];
     g := b/sigma;
-    return cmat64(2, 2, mu[3], -mu[1], -mu[2], mu[0]) * g / det;
+    return cmat64(2, 2, mu[1][1], -mu[0][1], -mu[1][0], mu[0][0]) * g / det;
 }
 
 

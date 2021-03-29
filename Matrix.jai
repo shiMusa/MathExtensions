@@ -17,6 +17,11 @@ copy :: (m: Matrix64) -> Matrix64 {
     return res;
 }
 
+
+operator [] :: inline (m: Matrix64, i: int) -> []float64 {
+    return array_view_count(m.data, i * m.cols, m.cols);
+}
+
 operator == :: inline (a: Matrix64, b: Matrix64) -> bool {
     r := true;
     for a.data {
@@ -84,7 +89,8 @@ operator * :: (a: Matrix64, b: Matrix64) -> Matrix64 {
     for j: 0..b.cols-1 {
         for k: 0..a.cols-1 {
             for i: 0..a.rows-1 {
-                set(res, i, j, get(res, i, j) + get(a, i, k) * get(b, k, j));
+                res[i][j] = res[i][j] + a[i][k] * b[k][j];
+                // set(res, i, j, get(res, i, j) + get(a, i, k) * get(b, k, j));
             }
         }
     }
@@ -100,7 +106,8 @@ operator * :: (a: Matrix64, b: Vector64) -> Vector64 {
     res := vec64_zeros(a.rows);
     for i: 0..a.rows-1 {
         for j: 0..a.cols-1 {
-            res.data[i] += get(a, i, j) * b[j];
+            // res.data[i] += get(a, i, j) * b[j];
+            res.data[i] += a[i][j] * b[j];
         }
     }
     return res;
@@ -110,7 +117,8 @@ operator * :: (a: Vector64, b: Matrix64) -> Vector64 {
     res := vec64_zeros(a.dim);
     for i: 0..a.dim-1 {
         for j: 0..b.rows-1 {
-            res.data[i] += get(b, i, j) * b[j];
+            res.data[i] += b[i][j] * a[j];
+            // res.data[i] += get(b, i, j) * a[j];
         }
     }
     return res;
@@ -120,7 +128,8 @@ operator * :: (a: Matrix64, b: CVector64) -> CVector64 {
     res := cvec64_zeros(a.rows);
     for i: 0..a.rows-1 {
         for j: 0..a.cols-1 {
-            res.data[i] += get(a, i, j) * b[j];
+            // res.data[i] += get(a, i, j) * b[j];
+            res.data[i] += a[i][j] * b[j];
         }
     }
     return res;
@@ -130,7 +139,8 @@ operator * :: (a: CVector64, b: Matrix64) -> CVector64 {
     res := cvec64_zeros(a.dim);
     for i: 0..a.dim-1 {
         for j: 0..b.rows-1 {
-            res.data[i] += get(b, i, j) * b[j];
+            // res.data[i] += get(b, i, j) * a[j];
+            res.data[i] += b[i][j] * a[j];
         }
     }
     return res;
@@ -201,12 +211,6 @@ mat64_ones :: inline (dim: int) -> Matrix64 {
 }
 
 
-
-
-operator [] :: inline (m: Matrix64, i: int) -> float64 {
-    return m.data[i];
-}
-
 get :: inline (m: Matrix64, row: int, col: int) -> float64 {
     // if m.transp {
         // return m.data[col * m.cols + row];
@@ -264,7 +268,8 @@ tensor :: (a: Matrix64, b: Matrix64) -> Matrix64 {
         for c: 0..res.cols-1 {
             ac := c/b.cols;
             bc := c % b.cols;
-            set(res, r, c, get(a, ar, ac) * get(b, br, bc));
+            res[r][c] = a[ar][ac] * b[br][bc];
+            // set(res, r, c, get(a, ar, ac) * get(b, br, bc));
         }
     }
     return res;
@@ -286,7 +291,8 @@ transpose :: (m: Matrix64) -> Matrix64 #must {
     res := mat64(m.cols, m.rows);
     for r: 0..m.rows-1 {
         for c: 0..m.cols-1 {
-            set(res, c, r, get(m, r, c));
+            res[c][r] = m[r][c];
+            // set(res, c, r, get(m, r, c));
         }
     }
     return res;
