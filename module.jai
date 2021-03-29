@@ -1,6 +1,3 @@
-#import "Basic";
-Math :: #import "Math";
-
 
 #load "Utils.jai";
 #load "Complex.jai";
@@ -13,5 +10,10 @@ Math :: #import "Math";
 #load "LinearAlgebra.jai";
 #load "Checks.jai";
 
-
 CHECKS :: true;
+
+
+#scope_module
+
+#import "Basic";
+Math :: #import "Math";
