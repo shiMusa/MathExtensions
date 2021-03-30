@@ -9,6 +9,7 @@
 #load "ComplexVector.jai";
 #load "LinearAlgebra.jai";
 #load "Checks.jai";
+#load "VectorT.jai";
 
 CHECKS :: true;
 

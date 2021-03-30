@@ -34,8 +34,8 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 
 ncast :: inline ($T: Type, num: $N) -> T {
     #if T == Complex64 {
-        #if type_of(N) == Complex64 {
-            return N;
+        #if N == Complex64 {
+            return num;
         } else
             return c64(cast(float64)num);
             // return Complex64.{cast(float64) num, 0.0};
@@ -63,7 +63,7 @@ next_power_of_two :: inline (x : int) -> int {
 }
 
 sign :: inline (x: $T) -> T {
-    return 2 * cast(T)(x >= 1) - 1;
+    return 2 * ncast(T, x >= 1) - one(T);
 }
 
 

@@ -78,9 +78,13 @@ operator == :: (a: Complex64, b: Complex64) -> bool {
     return a.real == b.real && a.imag == b.imag;
 }
 
-operator != :: (a: Complex64, b: Complex64) -> bool {
-    return a.real != b.real || a.imag != b.imag;
+operator == :: (a: Complex64, b: float64) -> bool #symmetric {
+    return a.real == b && a.imag == 0.0;
 }
+
+// operator != :: (a: Complex64, b: Complex64) -> bool {
+//     return a.real != b.real || a.imag != b.imag;
+// }
 
 
 
