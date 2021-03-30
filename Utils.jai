@@ -32,16 +32,24 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 
 
 
-f64 :: inline (a: $T) -> float64 {
-    return cast(float64) a;
+ncast :: inline ($T: Type, num: $N) -> T {
+    #if T == Complex64 {
+        #if type_of(N) == Complex64 {
+            return N;
+        } else
+            return c64(cast(float64)num);
+            // return Complex64.{cast(float64) num, 0.0};
+    } else
+        return cast(T) num;
 }
 
+zero :: inline ($T: Type) -> T {
+    return ncast(T, 0);
+}
 
-// zero :: inline(reference: $T) -> T {
-//     type :: type_of(reference);
-//     #if type == float64 then return 0.0;
-//     #if type == Complex64 then return CZERO;
-// }
+one :: inline ($T: Type) -> T {
+    return ncast(T, 1);
+}
 
 
 

@@ -226,7 +226,7 @@ test_linear_algebra :: () {
         res := solve_linear_right_triangular(M, b);
 
         test := norm_2(M * res - b);
-        print("%\n", test);
+        print("%\n", test); 
         assert(test < 1.0e-10, "res = %, M * res = % =? b = %", res, M*res, b);
     }
 
