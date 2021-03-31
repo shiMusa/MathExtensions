@@ -69,26 +69,29 @@ abs :: inline (a: $T) -> float64 {
 
 arg :: inline (a: $T) -> float64 {
     #if T == Complex64 {
-        return carg(a);
+        // return carg(a);
+        return Math.atan2(a.imag, a.real);
     } else 
         return 0.0;
 }
 
-carg :: (a: Complex64) -> float64 {
+// carg :: inline (a: Complex64) -> float64 {
 
-    // prevent division by zero
-    if a.real == 0 {
-        return ifx a.imag >= 0 then 0.5 * Math.PI else 1.5 * Math.PI;
-    }
+//     return Math.atan2(a.imag, a.real);
 
-    if a.real > 0 && a.imag >= 0 {
-        return Math.atan(a.imag / a.real);
-    } else if a.real < 0 {
-        return Math.atan(a.imag / a.real) + Math.PI;
-    } else {
-        return Math.atan(a.imag / a.real) + 2.0 * Math.PI;
-    }
-}
+//     // // prevent division by zero
+//     // if a.real == 0 {
+//     //     return ifx a.imag >= 0 then 0.5 * Math.PI else 1.5 * Math.PI;
+//     // }
+
+//     // if a.real > 0 && a.imag >= 0 {
+//     //     return Math.atan(a.imag / a.real);
+//     // } else if a.real < 0 {
+//     //     return Math.atan(a.imag / a.real) + Math.PI;
+//     // } else {
+//     //     return Math.atan(a.imag / a.real) + 2.0 * Math.PI;
+//     // }
+// }
 
 
 
@@ -101,17 +104,31 @@ exp :: inline (e: $T) -> T {
     }
 }
 
+
+log :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64(Math.log(abs(z)), Math.atan2(z.imag, z.real));
+    } else {
+        return cast(T)Math.log(cast(float64)z);
+    }
+}
+
+
+
+
+
 phase :: inline (theta: $T) -> Complex64 {
     #if T != Complex64 {
-        return cphase(cast(float64) theta);
+        // return cphase(cast(float64) theta);
+        return c64(Math.cos(cast(float64)theta), Math.sin(cast(float64)theta));
     } else {
         return Math.exp(-theta.imag) * cphase(theta.real);
     }
 }
 
-cphase :: inline (theta: float64) -> Complex64 {
-    return c64(Math.cos(theta), Math.sin(theta));
-}
+// cphase :: inline (theta: float64) -> Complex64 {
+//     return c64(Math.cos(theta), Math.sin(theta));
+// }
 
 
 polar :: inline (mag: $T, theta: $U) -> Complex64 {
