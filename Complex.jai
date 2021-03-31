@@ -88,44 +88,6 @@ operator == :: (a: Complex64, b: float64) -> bool #symmetric {
 
 
 
-conjugate :: inline (a: Complex64) -> Complex64 {
-    return c64(a.real, -a.imag);
-}
-
-abs_sq :: inline (a: Complex64) -> float64 {
-    return a.real * a.real + a.imag * a.imag;
-}
-
-abs :: inline (a: Complex64) -> float64 {
-    return Math.sqrt(a.real * a.real + a.imag * a.imag);
-}
-
-arg :: (a: Complex64) -> float64 {
-
-    // prevent division by zero
-    if a.real == 0 {
-        return ifx a.imag >= 0 then 0.5 * Math.PI else 1.5 * Math.PI;
-    }
-
-    if a.real > 0 && a.imag >= 0 {
-        return Math.atan(a.imag / a.real);
-    } else if a.real < 0 {
-        return Math.atan(a.imag / a.real) + Math.PI;
-    } else {
-        return Math.atan(a.imag / a.real) + 2.0 * Math.PI;
-    }
-}
-
-phase :: inline (theta: float64) -> Complex64 {
-    return c64(Math.cos(theta), Math.sin(theta));
-}
-
-polar :: inline (mag: float64, theta: float64) -> Complex64 {
-    return c64(mag * Math.cos(theta), mag * Math.sin(theta));
-}
-
-
-
 
 
 

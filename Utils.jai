@@ -1,6 +1,7 @@
 
 
 
+#scope_module
 
 
 
@@ -32,15 +33,55 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 
 
 
+f64 :: inline (num: $T) -> float64 {
+    return ncast(float64, num);
+}
+
+
+
+
+Super :: struct (T1: Type, T2: Type) {
+    T :: #run super_type(T1, T2);
+}
+
+
+super_type :: inline ($a: Type, $b: Type) -> Type {
+    #if a == Complex64 || b == Complex64 {
+        return Complex64;
+    } else if a == float64 || b == float64 {
+        return float64;
+    } else if a == float32 || b == float32 {
+        return float32;
+    } else if a == s64 || b == s64 {
+        return s64;
+    } else
+        return s32;
+    
+    // if a == s32 || b == s32 {
+    //     return s32;
+    // } else if a == s16 || b == s16 {
+    //     return s16;
+    // } else if a == s8 || 
+}
+
+
 ncast :: inline ($T: Type, num: $N) -> T {
     #if T == Complex64 {
         #if N == Complex64 {
             return num;
-        } else
+        } else {
             return c64(cast(float64)num);
-            // return Complex64.{cast(float64) num, 0.0};
-    } else
-        return cast(T) num;
+            // res : Complex64;
+            // res.real = cast(float64) num;
+            // res.imag = 0.0;
+            // return res;
+        }
+    } else {
+        #if N == Complex64 {
+            return cast(T) num.real;
+        } else
+            return cast(T) num;
+    }
 }
 
 zero :: inline ($T: Type) -> T {
@@ -62,38 +103,6 @@ next_power_of_two :: inline (x : int) -> int {
     return p;
 }
 
-sign :: inline (x: $T) -> T {
-    return 2 * ncast(T, x >= 1) - one(T);
-}
-
-
-
-
-factorial :: (n: $T) -> T {
-    res := 1;
-    for 2..n res *= it;
-    return res;
-}
-
-
-
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// 2.3.1.10 Binomial Coefficients, page 55
-binomial :: inline (from: $T, choose: T) -> T {
-    #if CHECKS {
-        assert(choose <= from, "Out of range: from = %, choose = %", from, choose);
-    }
-
-    // assert(from >= choose); // TODO disable for release build?!
-    if choose == 0 || from == choose {
-        return 1;
-    }
-
-    return binomial(from-1, choose) + binomial(from-1, choose-1);
-}
-
 
 
 test_utils :: () {
@@ -113,5 +122,10 @@ test_utils :: () {
         v := array_view_range(a, 2, 4);
         print("%\n", a);
         print("%\n", v);
+    }
+
+    {
+        assert(Complex64 == super_type(Complex64, u8));
+        assert(float64 == super_type(float32, float64));
     }
 }
