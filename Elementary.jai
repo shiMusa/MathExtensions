@@ -51,7 +51,7 @@ abs :: inline (a: $T) -> float64 {
 }
 
 
-
+// given z = |z| exp(iθ), whis calculates θ.
 arg :: inline (a: $T) -> float64 {
     #if T == Complex64 {
         // return carg(a);
@@ -63,16 +63,17 @@ arg :: inline (a: $T) -> float64 {
 
 
 
-
-exp :: inline (e: $T) -> T {
+// exp(z) where z ∈ ℂ,ℝ
+exp :: inline (z: $T) -> T {
     #if T != Complex64 {
-        return Math.exp(e);
+        return Math.exp(z);
     } else {
-        return Math.exp(e.real) * phase(e.imag);
+       return Math.exp(z.real) * phase(z.imag);
     }
 }
 
 
+// log(z) where z ∈ ℂ,ℝ
 log :: inline (z: $T) -> T {
     #if T == Complex64 {
         return c64(Math.log(abs(z)), Math.atan2(z.imag, z.real));
@@ -83,8 +84,29 @@ log :: inline (z: $T) -> T {
 
 
 
+// z^p, where z,p ∈ ℂ,ℝ
+// z,p ∈ ℝ: build in pow(z,p)
+// z ∈ ℂ, p ∈ ℝ: |z|^p exp(i θ p)
+// z ∈ ℝ, p ∈ ℂ: pow(z,Re{p}) * exp(i ln(z) Im{p})
+// z,p ∈ ℂ: |z|^p * exp(iθ p) referring back to above versions of exp and pow(ℝ,ℂ)
+pow :: inline (z: $T, power: $U, $type: Type) -> type {
+    #if T == Complex64 {
+        #if U == Complex64 {
+            return pow(abs(z), power) * phase(arg(z) * power);
+        } else 
+            return Math.pow(abs(z), power) * phase(arg(z) * power);
+    } else {
+        #if U == Complex64 {
+            return Math.pow(z, power.real) * phase(Math.log(z) * power.imag);
+        } else
+            return Math.pow(z, power);
+    }
+}
 
 
+
+
+// exp(iθ) where θ ∈ ℂ,ℝ
 phase :: inline (theta: $T) -> Complex64 {
     #if T != Complex64 {
         // return cphase(cast(float64) theta);
@@ -95,6 +117,7 @@ phase :: inline (theta: $T) -> Complex64 {
 }
 
 
+// mag * exp(iθ) where m,θ ∈ ℂ,ℝ
 polar :: inline (mag: $T, theta: $U) -> Complex64 {
     return mag * phase(theta);
 }
