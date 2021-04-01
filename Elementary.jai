@@ -111,12 +111,13 @@ pow :: inline (z: $T, power: $U, $type: Type) -> type {
 
 
 // in the hopes sqrt is faster than pow
+// need to wait for compiler fix to get rid of `$type: Type`...
 sqrt :: inline(z: $T, $type: Type) -> type {
     #if T != Complex64 {
         #if type != Complex64 {
             return Math.sqrt(z);
         } else
-            return c64(Math.sqrt(z));
+            return sqrt(c64(z));
     } else {
         return Math.sqrt(abs(z)) * phase(arg(z) * 0.5);
     }
@@ -190,14 +191,14 @@ csc :: inline (z: $T) -> T {
 // inverse trigonometric functions
 asin :: inline (z: $T) -> T {
     #if T == Complex64 {
-        return -I * log(I*z + sqrt(R - z*z));
+        return -I * log(I*z + sqrt(R - z*z, Complex64));
     } else 
         return Math.asin(z);
 }
 
 acos :: inline (z: $T) -> T {
     #if T == Complex64 {
-        return c64(Math.PI * 0.5) + I * log(I*z + sqrt(R - z*z));
+        return c64(Math.PI * 0.5) + I * log(I*z + sqrt(R - z*z, Complex64));
     } else 
         return Math.acos(z);
 }
@@ -218,14 +219,14 @@ acot :: inline (z: $T) -> T {
 
 asec :: inline (z: $T) -> T {
     #if T == Complex64 {
-        return c64(Math.PI * 0.5) + I * log( sqrt(R - R/(z*z)) + I/z );
+        return c64(Math.PI * 0.5) + I * log( sqrt(R - R/(z*z), Complex64) + I/z );
     } else 
         return acos(1.0/z);
 }
 
 acsc :: inline (z: $T) -> T {
     #if T == Complex64 {
-        return -I * log( sqrt(R - R/(z*z)) + I/z );
+        return -I * log( sqrt(R - R/(z*z), Complex64) + I/z );
     } else 
         return asin(1.0/z);
 }
@@ -281,7 +282,47 @@ csch :: inline (z: $T) -> T {
 
 // https://www.wikiwand.com/en/Hyperbolic_functions
 // inverse hyperbolic functions
+asinh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return log(z + sqrt(R + z*z, Complex64));
+    } else 
+        return rasinh(z);
+}
 
+acosh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return log( z + sqrt(z - R, Complex64) * sqrt(z + R, Complex64) );
+    } else 
+        return racosh(z);
+}
+
+atanh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64(0.5) * ( log(R+z) - log(R-z) );
+    } else 
+        return ratanh(z);
+}
+
+acoth :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64(0.5) * ( log(R+R/z) - log(R-R/z) );
+    } else 
+        return racoth(z);
+}
+
+asech :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return log( sqrt(R/z-R, Complex64) * sqrt(R/z+z, Complex64) + r/z );
+    } else 
+        return rasech(z);
+}
+
+acsch :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return log( sqrt(R+R/(z*z), Complex64) + r/z );
+    } else 
+        return racsch(z);
+}
 
 
 
