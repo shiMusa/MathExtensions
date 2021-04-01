@@ -89,6 +89,12 @@ log :: inline (z: $T) -> T {
 // z ∈ ℂ, p ∈ ℝ: |z|^p exp(i θ p)
 // z ∈ ℝ, p ∈ ℂ: pow(z,Re{p}) * exp(i ln(z) Im{p})
 // z,p ∈ ℂ: |z|^p * exp(iθ p) referring back to above versions of exp and pow(ℝ,ℂ)
+//
+// there might be better algorithms calculating this...
+// but it's basically the same as in the Gnu Scientific Library (GSL)
+// see complex/math.c:
+//     gsl_complex gsl_complex_pow (gsl_complex a, gsl_complex b)
+//
 pow :: inline (z: $T, power: $U, $type: Type) -> type {
     #if T == Complex64 {
         #if U == Complex64 {
@@ -100,6 +106,19 @@ pow :: inline (z: $T, power: $U, $type: Type) -> type {
             return Math.pow(z, power.real) * phase(Math.log(z) * power.imag);
         } else
             return Math.pow(z, power);
+    }
+}
+
+
+// in the hopes sqrt is faster than pow
+sqrt :: inline(z: $T, $type: Type) -> type {
+    #if T != Complex64 {
+        #if type != Complex64 {
+            return Math.sqrt(z);
+        } else
+            return c64(Math.sqrt(z));
+    } else {
+        return Math.sqrt(abs(z)) * phase(arg(z) * 0.5);
     }
 }
 
