@@ -160,6 +160,76 @@ cos :: inline (x: $T) -> T {
         return Math.cos(x);
 }
 
+tan :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        tmp := exp(c64(0.0, 2.0)*z);
+        return -I * (tmp - R)/(tmp + R);
+    } else 
+        return Math.tan(z);
+}
+
+cot :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        tmp := exp(c64(0.0, 2.0)*z);
+        return I * (tmp + R)/(tmp - R);
+    } else 
+        return 1.0/Math.tan(z);
+}
+
+sec :: inline (z: $T) -> T {
+    return 1.0/cos(z);
+}
+
+csc :: inline (z: $T) -> T {
+    return 1.0/sin(z);
+}
+
+
+// https://www.wikiwand.com/en/Trigonometric_functions
+// https://mathworld.wolfram.com/
+// inverse trigonometric functions
+asin :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return -I * log(I*z + sqrt(R - z*z));
+    } else 
+        return Math.asin(z);
+}
+
+acos :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64(Math.PI * 0.5) + I * log(I*z + sqrt(R - z*z));
+    } else 
+        return Math.acos(z);
+}
+
+atan :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64(0.0, 0.5) * (log(R-I*z) - log(R + I*z));
+    } else 
+        return Math.atan(z);
+}
+
+acot :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64(0.0, 0.5) * ( log((z - I)/z) - log((z + I)/z) );
+    } else 
+        return Math.PI*0.5 - Math.atan(z);
+}
+
+asec :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64(Math.PI * 0.5) + I * log( sqrt(R - R/(z*z)) + I/z );
+    } else 
+        return acos(1.0/z);
+}
+
+acsc :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return -I * log( sqrt(R - R/(z*z)) + I/z );
+    } else 
+        return asin(1.0/z);
+}
+
 
 
 // https://www.wikiwand.com/en/Hyperbolic_functions
@@ -180,10 +250,39 @@ cosh :: inline (z: $T) -> T {
 
 tanh :: inline (z: $T) -> T {
     #if T == Complex64 {
-        return sin(z)/cos(z); // is there a better formula? similar to rtanh probably
+        tmp := exp(2.0 * z);
+        return (tmp - R)/(tmp + R);
     } else 
         return rtanh(z);
 }
+
+coth :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        tmp := exp(2.0 * z);
+        return (tmp + R)/(tmp - R);
+    } else 
+        return rcoth(z);
+}
+
+sech :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return 2.0 * exp(z) / (exp(2.0*z) + R);
+    } else 
+        return rsech(z);
+}
+csch :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return 2.0 * exp(z) / (exp(2.0*z) - R);
+    } else 
+        return rcsch(z);
+}
+
+
+
+// https://www.wikiwand.com/en/Hyperbolic_functions
+// inverse hyperbolic functions
+
+
 
 
 
@@ -219,7 +318,7 @@ rsech :: inline (x: float64) -> float64 {
     return 2.0 * Math.exp(x) / (Math.exp(2.0*x) + 1.0);
 }
 
-rsch :: inline (x: float64) -> float64 {
+rcsch :: inline (x: float64) -> float64 {
     return 2.0 * Math.exp(x) / (Math.exp(2.0*x) - 1.0);
 }
 
