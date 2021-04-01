@@ -144,13 +144,6 @@ polar :: inline (mag: $T, theta: $U) -> Complex64 {
 
 
 
-
-
-
-
-
-
-
 // https://www.wikiwand.com/en/Trigonometric_functions
 // trigonometric functions
 sin :: inline (x: $T) -> T {
@@ -169,8 +162,36 @@ cos :: inline (x: $T) -> T {
 
 
 
+// https://www.wikiwand.com/en/Hyperbolic_functions
+// hyperbolic functions
+sinh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64( rsinh(z.real)*Math.cos(z.imag), rcosh(z.real)*Math.sin(z.imag) );
+    } else 
+        return rsinh(z);
+}
+
+cosh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64( rcosh(z.real)*Math.cos(z.imag), rsinh(z.real)*Math.sin(z.imag) );
+    } else 
+        return rcosh(z);
+}
+
+tanh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return sin(z)/cos(z); // is there a better formula? similar to rtanh probably
+    } else 
+        return rtanh(z);
+}
 
 
+
+
+
+
+
+#scope_module
 
 
 
@@ -180,22 +201,8 @@ rsinh :: inline (x: float64) -> float64 {
     return 0.5 * (Math.exp(x) - Math.exp(-x));
 }
 
-sinh :: inline (z: $T) -> T {
-    #if T == Complex64 {
-        return c64( rsinh(z.real)*Math.cos(z.imag), rcosh(z.real)*Math.sin(z.imag) );
-    } else 
-        return rsinh(z);
-}
-
 rcosh :: inline (x: float64) -> float64 {
     return 0.5 * (Math.exp(x) + Math.exp(-x));
-}
-
-cosh :: inline (z: $T) -> T {
-    #if T == Complex64 {
-        return c64( rcosh(z.real)*Math.cos(z.imag), rsinh(z.real)*Math.sin(z.imag) );
-    } else 
-        return rcosh(z);
 }
 
 rtanh :: inline (x: float64) -> float64 {
@@ -256,15 +263,6 @@ rasch :: inline (x: float64) -> float64 {
     }
     return Math.log( 1.0/x + Math.sqrt(1.0/(x*x) + 1.0) );
 }
-
-
-
-
-
-
-
-
-
 
 
 
