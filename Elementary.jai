@@ -145,6 +145,132 @@ polar :: inline (mag: $T, theta: $U) -> Complex64 {
 
 
 
+
+
+
+
+
+
+// https://www.wikiwand.com/en/Trigonometric_functions
+// trigonometric functions
+sin :: inline (x: $T) -> T {
+    #if T == Complex64 {
+        return c64( Math.sin(x.real)*rcosh(x.imag), Math.cos(x.real)*rsinh(x.imag));
+    } else
+        return Math.sin(x);
+}
+
+cos :: inline (x: $T) -> T {
+    #if T == Complex64 {
+        return c64( Math.cos(x.real)*rcosh(x.imag), -Math.sin(x.real)*rsinh(x.imag) );
+    } else
+        return Math.cos(x);
+}
+
+
+
+
+
+
+
+
+// https://www.wikiwand.com/en/Hyperbolic_functions
+// hyperbolic functions
+rsinh :: inline (x: float64) -> float64 {
+    return 0.5 * (Math.exp(x) - Math.exp(-x));
+}
+
+sinh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64( rsinh(z.real)*Math.cos(z.imag), rcosh(z.real)*Math.sin(z.imag) );
+    } else 
+        return rsinh(z);
+}
+
+rcosh :: inline (x: float64) -> float64 {
+    return 0.5 * (Math.exp(x) + Math.exp(-x));
+}
+
+cosh :: inline (z: $T) -> T {
+    #if T == Complex64 {
+        return c64( rcosh(z.real)*Math.cos(z.imag), rsinh(z.real)*Math.sin(z.imag) );
+    } else 
+        return rcosh(z);
+}
+
+rtanh :: inline (x: float64) -> float64 {
+    tmp := Math.exp(2.0 * x);
+    return (tmp - 1.0) / (tmp + 1.0);
+}
+
+rcoth :: inline (x: float64) -> float64 {
+    tmp := Math.exp(2.0 * x);
+    return (tmp + 1.0) / (tmp - 1.0);
+}
+
+rsech :: inline (x: float64) -> float64 {
+    return 2.0 * Math.exp(x) / (Math.exp(2.0*x) + 1.0);
+}
+
+rsch :: inline (x: float64) -> float64 {
+    return 2.0 * Math.exp(x) / (Math.exp(2.0*x) - 1.0);
+}
+
+// https://www.wikiwand.com/en/Hyperbolic_functions
+// inverse hyperbolic functions
+rasinh :: inline (x: float64) -> float64 {
+    return Math.log( x + Math.sqrt(x*x + 1.0) );
+}
+
+racosh :: inline (x: float64) -> float64 {
+    #if CHECKS {
+        assert( x >= 1.0);
+    }
+    return Math.log( x + Math.sqrt(x*x - 1.0) );
+}
+
+ratanh :: inline (x: float64) -> float64 {
+    #if CHECKS {
+        assert( Math.abs(x) < 1.0 );
+    }
+    return 0.5 * Math.log( (1.0+x)/(1.0-x) );
+}
+
+racoth :: inline (x: float64) -> float64 {
+    #if CHECKS {
+        assert( Math.abs(x) > 1.0 );
+    }
+    return 0.5 * Math.log( (x+1.0)/(x-1.0) );
+}
+
+rasech :: inline (x: float64) -> float64 {
+    #if CHECKS {
+        assert( x > 0.0 && x <= 1.0 );
+    }
+    return Math.log( (1.0 + Math.sqrt(1.0 - x*x))/x );
+}
+
+rasch :: inline (x: float64) -> float64 {
+    #if CHECKS {
+        assert( x != 0.0 );
+    }
+    return Math.log( 1.0/x + Math.sqrt(1.0/(x*x) + 1.0) );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 test_elementary :: () {
     print("\n\nElementary -------------------------------\n\n");
 
