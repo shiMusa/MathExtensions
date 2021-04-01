@@ -92,7 +92,7 @@ log :: inline (z: $T) -> T {
 pow :: inline (z: $T, power: $U, $type: Type) -> type {
     #if T == Complex64 {
         #if U == Complex64 {
-            return pow(abs(z), power) * phase(arg(z) * power);
+            return pow(abs(z), power, Complex64) * phase(arg(z) * power);
         } else 
             return Math.pow(abs(z), power) * phase(arg(z) * power);
     } else {
@@ -120,4 +120,25 @@ phase :: inline (theta: $T) -> Complex64 {
 // mag * exp(iθ) where m,θ ∈ ℂ,ℝ
 polar :: inline (mag: $T, theta: $U) -> Complex64 {
     return mag * phase(theta);
+}
+
+
+
+
+
+test_elementary :: () {
+    print("\n\nElementary -------------------------------\n\n");
+
+    {
+        assert( pow(2.0, 2.0, float64) == 4);
+        assert( approx(pow(I, 2.0, Complex64), -R) );
+
+        print("%\n", pow(2.0, R+I, Complex64));
+        assert( approx(pow(2.0, R + I, Complex64), c64(1.538477803, 1.277922553)) );
+
+        assert( approx(
+            pow(2.0 - 3.0*I, -0.5 + 2.5*I, Complex64),
+            c64(-5.219991933, -3.243591148)
+        ));
+    }
 }

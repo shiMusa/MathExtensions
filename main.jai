@@ -8,6 +8,9 @@ main :: () {
 
     test_utils();
     test_complex();
+
+    test_elementary();
+
     test_polynomials();
     test_approximations();
     
@@ -16,6 +19,6 @@ main :: () {
     test_vector();
     test_linear_algebra();
     test_checks();
-    
+
     test_vectort();
 }
