@@ -400,7 +400,7 @@ conjugate_transpose :: inline (m: CMatrix64) -> CMatrix64 {
     return conjugate(transpose(m));
 }
 dagger :: conjugate_transpose;
-hermitian :: conjugate_transpose;
+// hermitian :: conjugate_transpose;
 
 
 
@@ -483,7 +483,7 @@ tensor :: (a: Matrix64, b: CMatrix64) -> CMatrix64 {
 //     return norm(v, 2.0);
 // }
 
-norm_1 :: inline (m: CMatrix64) -> float64 {
+norm_1 :: (m: CMatrix64) -> float64 {
     res := 0.0;
 
     for j: 0..m.cols {
@@ -497,7 +497,7 @@ norm_1 :: inline (m: CMatrix64) -> float64 {
     return res;
 }
 
-norm_inf :: inline (m: CMatrix64) -> float64 {
+norm_inf :: (m: CMatrix64) -> float64 {
     res := 0.0;
 
     for i: 0..m.rows {
@@ -510,6 +510,18 @@ norm_inf :: inline (m: CMatrix64) -> float64 {
 
     return res;
 }
+
+norm_frobenius :: (m: CMatrix64) -> float64 {
+    sum := 0.0;
+    for 0..m.data {
+        sum += norm_2(it);
+    }
+    return sum;
+}
+
+
+// condition_frobenius :: (m: CMatrix64) -> float64 {
+// }
 
 
 

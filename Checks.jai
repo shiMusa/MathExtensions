@@ -137,6 +137,12 @@ cmat64_is_unitary :: (U: CMatrix64) -> bool {
     return cmat64_is_quadratic(U) && dagger(U)*U == cmat64_id(U.rows);
 }
 
+cmat64_is_left_trapezoidal :: (M: CMatrix64) -> bool {
+    return M.rows >= M.cols;
+}
+
+
+
 
 
 test_checks :: () {

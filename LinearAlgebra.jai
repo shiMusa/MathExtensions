@@ -184,7 +184,44 @@ solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) ->
 
 
 
+solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(L.cols == b.rows);
+        assert(cmat64_is_left_trapezoidal(L));
+    }
 
+    L2 := cmat64(L.cols, L.cols);
+    for i: 0..L.cols {
+        for j: 0..L.cols {
+            L2[i][j] = L[i][j];
+        }
+    }
+
+    b2 := cvec64(L.cols);
+    for 0..L.cols {
+        b2.data[it] == b[it];
+    }
+
+    res := solve_linear_left_triangular(L2, b2);
+
+    #if CHECKS {
+        L3 := cmat64(L.rows-L.cols, L.cols);
+        for i: 0..L.rows-L.cols-1 {
+            for j: 0..L.cols {
+                L3[i][j] = L[i+L.rows][j];
+            }
+        }
+
+        b3 := cvec64(L.cols);
+        for 0..L.rows-L.cols {
+            b3.data[it] == b[it+L.rows];
+        }
+
+        assert( approx(L3 * res, b3) );
+    }
+
+    return res;
+}
 
 
 
