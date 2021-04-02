@@ -97,7 +97,7 @@ one :: inline ($T: Type) -> T {
 DELTA :: 1.0e-6;
 approx :: (a: $T, b: T) -> bool {
     // print("approx(%, %): abs(1 - b/a) = %\n", a, b, abs(one(T) - b/a));
-    return abs(one(T) - b/a) < DELTA;
+    return abs(a - b) < DELTA;
 }
 
 
