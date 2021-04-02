@@ -296,6 +296,7 @@ decompose_lr :: (A: CMatrix64) -> L: CMatrix64, R: CMatrix64 {
 // // Springer
 // // Algorithm 3.7.2 Solve Linear System via Gaussian Factorization, page 199
 slgf :: solve_linear_gaussian_factorization;
+solve_LR :: solve_linear_gaussian_factorization;
 solve_linear_gaussian_factorization :: (A: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(A.rows == b.dim);
