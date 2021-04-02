@@ -203,9 +203,13 @@ solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 {
     res := solve_linear_left_triangular(L2, b2);
 
     #if CHECKS {
-        L3 := cmat64_submatrix(L, L.cols, L.rows, 0, L.cols);
-        b3 := cvec64_subvector(b, L.cols, L.rows);
-        assert( approx(L3 * res, b3) );
+        if L.cols == L.rows {
+            assert( approx( L2 * res, b2 ) );
+        } else {
+            L3 := cmat64_submatrix(L, L.cols, L.rows, 0, L.cols);
+            b3 := cvec64_subvector(b, L.cols, L.rows);
+            assert( approx(L3 * res, b3) );
+        }
     }
 
     return res;
@@ -260,34 +264,50 @@ gaussian_factorization :: (M: CMatrix64) -> CMatrix64 {
 }
 
 
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.7.1 Gaussian Factorization, page 199
+decompose_lr :: (A: CMatrix64) -> L: CMatrix64, R: CMatrix64 {
+    M := gaussian_factorization(A);
+
+    L := cmat64_id(M.rows, M.cols);
+    R := cmat64_zeros(M.rows, M.cols);
+
+    L[0][0] = c64(1.0, 0.0);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            if j >= i {
+                R[i][j] = M[i][j];
+            } else {
+                L[i][j] = M[i][j];
+            }
+        }
+    }
+
+    return L, R;
+}
+
+
 
 
 // // Scientific Computing, Vol I: Linear and nonlinear equations
 // // Texts in computational science and engineering 18
 // // Springer
 // // Algorithm 3.7.2 Solve Linear System via Gaussian Factorization, page 199
-// slgf :: solve_linear_gaussian_factorization;
-// solve_linear_gaussian_factorization :: (A: CMatrix64, b: CVector64) -> CVector64 {
-//     #if CHECKS {
-//         assert(A.rows == b.dim);
-//     }
+slgf :: solve_linear_gaussian_factorization;
+solve_linear_gaussian_factorization :: (A: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(A.rows == b.dim);
+    }
 
-//     M := gaussian_factorization(A);
+    L, R := decompose_lr(A);
 
-//     L := cmat64_zeros(M.rows, M.cols);
-//     R := cmat64_zeros(M.rows, M.cols);
+    y := solve_linear_left_trapezoidal(L, b);
+    x := solve_linear_right_trapezoidal(R, y);
 
-//     L[0][0] = R;
-//     for i: 0..M.rows-1 {
-//         for j: 0..M.cols-1 {
-//             if j >= i {
-//                 R[i][j] = M[i][j];
-//             } else {
-//                 L[i][j] = M[i][j];
-//             }
-//         }
-//     }
-// }
+    return x;
+}
 
 
 
@@ -390,5 +410,17 @@ test_linear_algebra :: () {
         A := gaussian_factorization(M);
         print("gaussian factorization:\n    %\n -> %\n", M, A);
         assert( A == res , "\n% != %!", A, res);
+    }
+
+    {
+        M := cmat64(2,2,
+            R, I,
+            -3*R, 2.0 - I
+        );
+        b := cvec64(4*R, 6*I);
+
+        res := solve_linear_gaussian_factorization(M, b);
+        print("solve linear system via Gaussian factorization: %\n", res);
+        assert(res == cvec64(2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
     }
 }

@@ -351,8 +351,8 @@ cmat64_reflector :: (normal: CVector64) -> CMatrix64 {
 // inclusive first bound, exclusive last bound
 cmat64_submatrix :: (M: CMatrix64, row_from: int, row_to: int, column_from: int, column_to: int) -> CMatrix64 {
     #if CHECKS {
-        assert(row_to > row_from);
-        assert(column_to > column_from);
+        assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
+        assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
     }
     res := cmat64(row_to-row_from, column_to-column_from);
 
