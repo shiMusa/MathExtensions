@@ -10,18 +10,76 @@ second.
 
 Feel free to add functionality and performance upgrades.
 
-## Warning
+## Currently Implemented
 
-I'm not a very good programmer. I make mistakes, write unoptimal code, make wrong design decisions.
-As a scientist, I'm an end-user of these math libraries. My goal is to make this library simple to use and easy to understand.
+Complex and reals numbers, vectors, matrices interoperate automatically (in most cases).
+Many functions specialize during compile-time on the real or complex variant (e.g. all the elementary functions).
 
-## Vision
-
-Since Jai is as low-level as it gets, the utopia would be to write ALL of the math in Jai.
-
-However, there are decades worth of work already put into libraries such as BLAS, LAPACK, etc. So maybe wrappers for those libraries are easier and more stable and reliable than writing everything from scratch.
-
-I'll start by writing naive Jai implementations and later down the line we can improve incrementally.
+- Complex numbers +, -, *, /,
+- Elementary
+    - sign(r)
+    - factorial(z)
+    - binomial(from, choose)
+    - conjugate(z)
+    - abs_sq(z)
+    - abs(z)
+    - arg(z)
+    - exp(z)
+    - log(z)
+    - pow(z)
+    - sqrt(z)
+    - phase(magnitude, angle) [both complex]
+    - sin, cos, tan, cot, sec, csc on ℂ
+    - asin, acos, atan, acot, asec, acsc on ℂ
+    - sinh, cosh, tanh, coth, sech, csch on ℂ
+    - asinh, acosh, atanh, acoth, asech, acsch on ℂ
+- polynomials
+    - solve_quadratic -> ℂ
+    - solve_quadratic_real -> ℝ
+    - polynom(x, ..a) = a[0] x^n + a[1] x^{n-1} + ... + a[n] x^0, with a,x ∈ ℝ,ℂ
+    - synthetic_division
+    - repeated_synthetic_division
+- complex/real vector: CVector64/Vector64; real vector with subset of these functions
+    - operators [], ==, +, -, *, /
+    - multiple initialization functions
+    - conjugate
+    - outer_product
+    - reflect
+    - norm(vec, n) with n ∈ ℝ, specialisations norm_2, norm_1, norm_inf
+    - cross, for 3-dim vectors
+    - angle
+- complex/real matrix: CMatrix64/Matrix64; real matrix with subset of these functions
+    - operators [], [][], ==, +, -, *, /
+    - multiple initialization functions
+    - row; retrieves a specific row
+    - reflector
+    - submatrix
+    - transpose
+    - conjugate
+    - conjugate_transpose = dagger
+    - tensor
+    - norm_1, norm_inf, norm_frobenius
+- checks
+    - is_quadratic(M)
+    - is_diagonal_unit(M)
+    - is_left_triangular(M)
+    - is_right_triangular(M)
+    - is_right_quasi_triangular(M)
+    - is_unitary(M)
+    - is_left_trapezoidal(M)
+    - is_right_trapezoidal(M)
+- linear algebra
+    - solve_linear_2x2 = sl2
+    - solve_linear_left_triangular = sllta
+    - solve_linear_right_triangular = slrta
+    - solve_linear_right_quasi_triangular = slrqta
+    - solve_linear_orthogonal_projection = solve_linear_unitary = slop
+    - solve_linear_successive_orthogonal_projection = slsop
+    - solve_linear_left_trapezoidal = slltz
+    - solve_linear_right_trapezoidal = slrtz
+    - gaussian_factorization
+    - decompose_lr
+    - solve_linear_gaussian_factorization = slgf = solve_LR
 
 
 ## Structure
@@ -37,9 +95,3 @@ Let's keep it as simple as possible:
 Give sources for algorithms written so that we can take a look and help debugging.
 
 Write (at least some) tests contained in each file.
-
-## TODOs
-
-A list of open tasks for the categories already working on:
-
-- Flags for matrices (anti-/symmetric, hermitian, upper/lower triangle, diagonal, unitary etc.) for using specialized algorithms improving performance
