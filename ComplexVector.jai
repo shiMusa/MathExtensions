@@ -237,9 +237,7 @@ conjugate :: (v: CVector64) -> CVector64 {
 
 
 
-norm_2 :: (v: CVector64) -> float64 {
-    return (conjugate(v) * v).real;
-}
+
 
 
 outer_product :: (a: CVector64, b: CVector64) -> CMatrix64 {
@@ -282,6 +280,82 @@ operator / :: inline (a: Vector64, b: CVector64) -> CMatrix64 {
 operator / :: inline (a: CVector64, b: Vector64) -> CMatrix64 {
     return outer_product(a, b);
 }
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.4.10 Apply Elementary Reflector, page 170
+reflect :: (vec: CVector64, normal: CVector64) -> CVector64 {
+    tau := 2.0 / (conjugate(normal) * normal);
+    alpha := tau * conjugate(normal) * vec;
+    return vec - normal * alpha;
+}
+
+
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Definition 3.5.2 Norms, page 171
+norm :: (v: CVector64, n: float64) -> float64 {
+    if n == Math.FLOAT64_INFINITY {
+        m := abs(v[0]);
+        for 1..v.dim-1 {
+            m = ifx m < v[it] then v[it] else m;
+        }
+        return m;
+    } else if n == 1.0 {
+        res := 0.0;
+        for 0..v.dim-1 {
+            res := abs(v[it]);
+        }
+    } else if n == 2.0 {
+        return sqrt( (conjugate(v) * v).real );
+    } else {
+        res := 0.0;
+        for 0..v.dim-1 {
+            res += pow(abs(v[it]), n);
+        }
+        return pow(res, 1.0/n);
+    }
+}
+
+norm_2 :: inline (v: CVector64) -> float64 {
+    return norm(v, 2.0);
+}
+
+norm_1 :: inline (v: CVector64) -> float64 {
+    return norm(v, 1.0);
+}
+
+norm_inf :: inline (v: CVector64) -> float64 {
+    return norm(v, Math.FLOAT64_INFINITY);
+}
+
+
+
+
+cross :: (a: CVector64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(a.dim == 3 && b.dim == 3);
+    }
+    return cvec64( 
+        a[1]*b[2] - a[2]*b[1], 
+        a[2]*b[0] - a[0]*b[2],
+        a[0]*b[1] - a[1]*b[0]
+    );
+}
+
+
+angle :: (a: CVector64, b: CVector64) -> float64 {
+    return acos( abs(conjugate(a) * b) / (norm_2(a) * norm_2(b)) );
+}
+
+
+
+
 
 
 

@@ -190,6 +190,12 @@ solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) ->
 
 
 
+
+
+
+
+
+
 test_linear_algebra :: () {
     print("\n\nLinear Algebra -------------------------------\n\n");
 

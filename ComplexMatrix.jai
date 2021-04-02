@@ -473,7 +473,43 @@ tensor :: (a: Matrix64, b: CMatrix64) -> CMatrix64 {
 
 
 
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Lemma 3.5.4 Matrix Norms, page 176
 
+// this needs the largest eigenvalue
+// norm_2 :: inline (v: CVector64) -> float64 {
+//     return norm(v, 2.0);
+// }
+
+norm_1 :: inline (m: CMatrix64) -> float64 {
+    res := 0.0;
+
+    for j: 0..m.cols {
+        sum := 0.0;
+        for i: 0..m.rows {
+            sum += abs(m[i][j]);
+        }
+        res = ifx res < sum then sum else res;
+    }
+
+    return res;
+}
+
+norm_inf :: inline (m: CMatrix64) -> float64 {
+    res := 0.0;
+
+    for i: 0..m.rows {
+        sum := 0.0;
+        for j: 0..m.cols {
+            sum += abs(m[i][j]);
+        }
+        res = ifx res < sum then sum else res;
+    }
+
+    return res;
+}
 
 
 
