@@ -42,9 +42,9 @@ solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
 sllt :: solve_linear_left_triangular;
 solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(cmat64_is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
-        assert(cmat64_is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
-        assert(cmat64_is_left_triangular(L), "L is not left-triangular");
+        assert(is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
+        assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
+        assert(is_left_triangular(L), "L is not left-triangular");
     }
 
     res := cvec64(b.dim);
@@ -69,8 +69,8 @@ solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
 slrt :: solve_linear_right_triangular;
 solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
-        assert(cmat64_is_right_triangular(R), "R is not right-triangular");
+        assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
+        assert(is_right_triangular(R), "R is not right-triangular");
     }
 
     res := cvec64(b.dim);
@@ -99,8 +99,8 @@ solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
 slrqt :: solve_linear_right_quasi_triangular;
 solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(cmat64_is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
-        assert(cmat64_is_right_quasi_triangular(R), "R is not right quasi-triangular!");
+        assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
+        assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!");
     }
     res := cvec64(b.dim);
 
@@ -153,7 +153,7 @@ solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop :: solve_linear_orthogonal_projection;
 solve_linear_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(cmat64_is_unitary(Q));
+        assert(is_unitary(Q));
     }
 
     return dagger(Q) * b;
@@ -168,7 +168,7 @@ solve_linear_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 
 slsop :: solve_linear_successive_orthogonal_projection;
 solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(cmat64_is_unitary(Q));
+        assert(is_unitary(Q));
     }
     bb := copy(b);
 
@@ -186,38 +186,39 @@ solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) ->
 
 solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(L.cols == b.rows);
-        assert(cmat64_is_left_trapezoidal(L));
+        assert(L.cols == b.dim);
+        assert(is_left_trapezoidal(L));
     }
 
-    L2 := cmat64(L.cols, L.cols);
-    for i: 0..L.cols {
-        for j: 0..L.cols {
-            L2[i][j] = L[i][j];
-        }
-    }
-
-    b2 := cvec64(L.cols);
-    for 0..L.cols {
-        b2.data[it] == b[it];
-    }
+    L2 := cmat64_submatrix(L, 0, L.cols, 0, L.cols);
+    b2 := cvec64_subvector(b, 0, L.cols);
 
     res := solve_linear_left_triangular(L2, b2);
 
     #if CHECKS {
-        L3 := cmat64(L.rows-L.cols, L.cols);
-        for i: 0..L.rows-L.cols-1 {
-            for j: 0..L.cols {
-                L3[i][j] = L[i+L.rows][j];
-            }
-        }
-
-        b3 := cvec64(L.cols);
-        for 0..L.rows-L.cols {
-            b3.data[it] == b[it+L.rows];
-        }
-
+        L3 := cmat64_submatrix(L, L.cols+1, L.rows, 0, L.cols);
+        b3 := cvec64_subvector(b, L.cols+1, L.rows);
         assert( approx(L3 * res, b3) );
+    }
+
+    return res;
+}
+
+solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(R.cols == b.dim);
+        assert(is_right_trapezoidal(R));
+    }
+
+    R2 := cmat64_submatrix(R, 0, R.rows, 0, R.rows);
+    b2 := cvec64_subvector(b, 0, R.rows);
+
+    res := solve_linear_right_triangular(R2, b2);
+
+    #if CHECKS {
+        R3 := cmat64_submatrix(R, 0, R.rows, R.rows+1, R.cols);
+        b3 := cvec64_subvector(b, R.rows+1, R.cols);
+        assert( approx(R3 * res, b3) );
     }
 
     return res;

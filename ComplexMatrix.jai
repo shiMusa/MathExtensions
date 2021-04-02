@@ -348,6 +348,22 @@ cmat64_reflector :: (normal: CVector64) -> CMatrix64 {
 }
 
 
+// inclusive bounds
+cmat64_submatrix :: (M: CMatrix64, row_from: int, row_to: int, column_from: int, column_to: int) -> CMatrix64 {
+    #if CHECKS {
+        assert(row_to > row_from);
+        assert(column_to > column_from);
+    }
+    res := cmat64(row_to-row_from, column_to-column_from);
+
+    for i: 0..row_to-row_from-1 {
+        for j: 0..column_to-column_from-1 {
+            res[i][j] = M[i+row_from][j+column_from];
+        }
+    }
+
+    return res;
+}
 
 
 
@@ -484,10 +500,10 @@ tensor :: (a: Matrix64, b: CMatrix64) -> CMatrix64 {
 // }
 
 norm_1 :: (m: CMatrix64) -> float64 {
-    res := 0.0;
+    res : float64 = 0.0;
 
     for j: 0..m.cols {
-        sum := 0.0;
+        sum : float64 = 0.0;
         for i: 0..m.rows {
             sum += abs(m[i][j]);
         }
@@ -498,10 +514,10 @@ norm_1 :: (m: CMatrix64) -> float64 {
 }
 
 norm_inf :: (m: CMatrix64) -> float64 {
-    res := 0.0;
+    res : float64 = 0.0;
 
     for i: 0..m.rows {
-        sum := 0.0;
+        sum : float64 = 0.0;
         for j: 0..m.cols {
             sum += abs(m[i][j]);
         }
@@ -512,9 +528,9 @@ norm_inf :: (m: CMatrix64) -> float64 {
 }
 
 norm_frobenius :: (m: CMatrix64) -> float64 {
-    sum := 0.0;
-    for 0..m.data {
-        sum += norm_2(it);
+    sum : float64 = 0.0;
+    for m.data {
+        sum += abs(it);
     }
     return sum;
 }

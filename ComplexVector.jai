@@ -90,6 +90,19 @@ copy :: inline (v: CVector64) -> CVector64 {
 }
 
 
+// inclusive bounds
+cvec64_subvector :: (v: CVector64, from: int, to: int) -> CVector64 {
+    #if CHECKS {
+        assert(to > from);
+    }
+    res := cvec64(to-from);
+    for 0..to-from-1 {
+        res.data[it] = v[it + from];
+    }
+    return res;
+}
+
+
 
 
 
@@ -303,22 +316,24 @@ norm :: (v: CVector64, n: float64) -> float64 {
     if n == Math.FLOAT64_INFINITY {
         m := abs(v[0]);
         for 1..v.dim-1 {
-            m = ifx m < v[it] then v[it] else m;
+            tmp := abs(v[it]);
+            m = ifx m < tmp then tmp else m;
         }
         return m;
     } else if n == 1.0 {
-        res := 0.0;
+        res : float64 = 0.0;
         for 0..v.dim-1 {
             res := abs(v[it]);
         }
+        return res;
     } else if n == 2.0 {
-        return sqrt( (conjugate(v) * v).real );
+        return sqrt( (conjugate(v) * v).real, float64 );
     } else {
-        res := 0.0;
+        res : float64 = 0.0;
         for 0..v.dim-1 {
-            res += pow(abs(v[it]), n);
+            res += pow(abs(v[it]), n, float64);
         }
-        return pow(res, 1.0/n);
+        return pow(res, 1.0/n, float64);
     }
 }
 

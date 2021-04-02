@@ -39,11 +39,12 @@ conjugate :: inline (a: $T) -> T {
 }
 
 
+// |z|²
 abs_sq :: inline (a: $T) -> float64 {
     #if T == Complex64 {
         return a.real * a.real + a.imag * a.imag;
     } else 
-        return cast(float64)(a * a);
+        return a * a;
 }
 
 abs :: inline (a: $T) -> float64 {

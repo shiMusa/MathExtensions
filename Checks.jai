@@ -3,14 +3,14 @@
 
 
 
-mat64_is_quadratic :: (m: Matrix64) -> bool {
+is_quadratic :: (m: Matrix64) -> bool {
     return m.cols == m.rows;
 }
-cmat64_is_quadratic :: (m: CMatrix64) -> bool {
+is_quadratic :: (m: CMatrix64) -> bool {
     return m.cols == m.rows;
 }
 
-mat64_is_diagonal_unit :: (m: Matrix64) -> bool {
+is_diagonal_unit :: (m: Matrix64) -> bool {
     res := true;
     n := min(m.cols, m.rows);
     for 0..n-1 {
@@ -18,7 +18,7 @@ mat64_is_diagonal_unit :: (m: Matrix64) -> bool {
     }
     return true;
 }
-cmat64_is_diagonal_unit :: (m: CMatrix64) -> bool {
+is_diagonal_unit :: (m: CMatrix64) -> bool {
     n := min(m.cols, m.rows);
     for 0..n-1 {
         if m[it][it] != R then return false;
@@ -26,7 +26,9 @@ cmat64_is_diagonal_unit :: (m: CMatrix64) -> bool {
     return true;
 }
 
-mat64_is_left_triangular :: (m: Matrix64) -> bool {
+
+// checks if values != 0 are only in the bottom left corner
+is_left_triangular :: (m: Matrix64) -> bool {
     for i: 0..m.rows-1 {
         for j: i+1..m.cols-1 {
             if m[i][j] != 0.0 then return false;
@@ -34,7 +36,7 @@ mat64_is_left_triangular :: (m: Matrix64) -> bool {
     }
     return true;
 }
-cmat64_is_left_triangular :: (m: CMatrix64) -> bool {
+is_left_triangular :: (m: CMatrix64) -> bool {
     for i: 0..m.rows-1 {
         for j: i+1..m.cols-1 {
             if m[i][j] != CZERO then return false;
@@ -43,7 +45,8 @@ cmat64_is_left_triangular :: (m: CMatrix64) -> bool {
     return true;
 }
 
-mat64_is_right_triangular :: (m: Matrix64) -> bool {
+// checks if values != 0 are only in the top right corner
+is_right_triangular :: (m: Matrix64) -> bool {
     for i: 0..m.rows-1 {
         for j: 0..i-1 {
             if m[i][j] != 0.0 then return false;
@@ -51,7 +54,7 @@ mat64_is_right_triangular :: (m: Matrix64) -> bool {
     }
     return true;
 }
-cmat64_is_right_triangular :: (m: CMatrix64) -> bool {
+is_right_triangular :: (m: CMatrix64) -> bool {
     for i: 0..m.rows-1 {
         for j: 0..i-1 {
             if m[i][j] != CZERO then return false;
@@ -60,7 +63,7 @@ cmat64_is_right_triangular :: (m: CMatrix64) -> bool {
     return true;
 }
 
-mat64_is_right_quasi_triangular :: (R: Matrix64) -> bool {
+is_right_quasi_triangular :: (R: Matrix64) -> bool {
     for i: 0..R.rows-1 {
         for j: 0..i-2 {
             if i>j+1 { 
@@ -96,7 +99,7 @@ mat64_is_right_quasi_triangular :: (R: Matrix64) -> bool {
     }
     return true;
 }
-cmat64_is_right_quasi_triangular :: (R: CMatrix64) -> bool {
+is_right_quasi_triangular :: (R: CMatrix64) -> bool {
     for i: 0..R.rows-1 {
         for j: 0..i-2 {
             if i>j+1 {
@@ -133,12 +136,16 @@ cmat64_is_right_quasi_triangular :: (R: CMatrix64) -> bool {
     return true;
 }
 
-cmat64_is_unitary :: (U: CMatrix64) -> bool {
-    return cmat64_is_quadratic(U) && dagger(U)*U == cmat64_id(U.rows);
+is_unitary :: (U: CMatrix64) -> bool {
+    return is_quadratic(U) && dagger(U)*U == cmat64_id(U.rows);
 }
 
-cmat64_is_left_trapezoidal :: (M: CMatrix64) -> bool {
-    return M.rows >= M.cols;
+is_left_trapezoidal :: inline (M: CMatrix64) -> bool {
+    return M.rows >= M.cols && is_left_triangular(M);
+}
+
+is_right_trapezoidal :: inline (M: CMatrix64) -> bool {
+    return M.cols >= M.rows && is_right_triangular(M);
 }
 
 
@@ -148,28 +155,28 @@ cmat64_is_left_trapezoidal :: (M: CMatrix64) -> bool {
 test_checks :: () {
     print("\n\nChecks -------------------------------\n\n");
     {
-        assert(cmat64_is_quadratic(cmat64_ones(5, 5)));
-        assert(!cmat64_is_quadratic(cmat64_ones(2, 5)));
+        assert(is_quadratic(cmat64_ones(5, 5)));
+        assert(!is_quadratic(cmat64_ones(2, 5)));
     }
     {
         m := cmat64_id(3,3);
-        assert(cmat64_is_diagonal_unit(m));
+        assert(is_diagonal_unit(m));
         m[1][1] = 2.0*R;
-        assert(!cmat64_is_diagonal_unit(m));
+        assert(!is_diagonal_unit(m));
     }
     {
         m := cmat64_zeros(4, 4);
         m[3][0] = 42.0*R;
-        assert(cmat64_is_left_triangular(m));
+        assert(is_left_triangular(m));
         m[0][3] = 42.0*R;
-        assert(!cmat64_is_left_triangular(m));
+        assert(!is_left_triangular(m));
     }
     {
         m := cmat64_zeros(4, 4);
         m[0][3] = 42.0*R;
-        assert(cmat64_is_right_triangular(m));
+        assert(is_right_triangular(m));
         m[3][0] = 42.0*R;
-        assert(!cmat64_is_right_triangular(m));
+        assert(!is_right_triangular(m));
     }
     {
         m := mat64(4, 4,
@@ -180,13 +187,13 @@ test_checks :: () {
         );
         cm := cmat64(m);
 
-        assert(mat64_is_right_quasi_triangular(m));
+        assert(is_right_quasi_triangular(m));
         m = transpose(m);
-        assert(!mat64_is_right_quasi_triangular(m));
+        assert(!is_right_quasi_triangular(m));
 
-        assert(cmat64_is_right_quasi_triangular(cm));
+        assert(is_right_quasi_triangular(cm));
         cm = transpose(cm);
-        assert(!cmat64_is_right_quasi_triangular(cm));
+        assert(!is_right_quasi_triangular(cm));
     }
 
     {

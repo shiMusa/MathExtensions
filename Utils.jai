@@ -96,8 +96,12 @@ one :: inline ($T: Type) -> T {
 
 DELTA :: 1.0e-6;
 approx :: (a: $T, b: T) -> bool {
-    // print("approx(%, %): abs(1 - b/a) = %\n", a, b, abs(one(T) - b/a));
-    return abs(a - b) < DELTA;
+    #if T == CVector64 {
+        return norm_2(a - b) < DELTA;
+    } else #if T == CMatrix64 {
+        return norm_frobenius(a - b) < DELTA;
+    } else
+        return abs(a - b) < DELTA;
 }
 
 
