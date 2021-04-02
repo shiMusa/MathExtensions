@@ -39,7 +39,7 @@ solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
 // Algorithm 3.4.2 Forward Linear Recurrence, page 155
 // solve the system Lx = b where L is a unit left-triangluar matrix
 // that means, all diagonals are 1 and all L_ij = 0 for j > i.
-sllt :: solve_linear_left_triangular;
+sllta :: solve_linear_left_triangular;
 solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
@@ -66,7 +66,7 @@ solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
 // Algorithm 3.4.4 Backward Linear Recurrence, page 158
 // solve the system Rx = b where R is a right-triangluar matrix
 // that means all R_ij = 0 for j < i.
-slrt :: solve_linear_right_triangular;
+slrta :: solve_linear_right_triangular;
 solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
@@ -96,7 +96,7 @@ solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
 // Springer
 // Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
 // solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
-slrqt :: solve_linear_right_quasi_triangular;
+slrqta :: solve_linear_right_quasi_triangular;
 solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
@@ -183,50 +183,111 @@ solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) ->
 }
 
 
-
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// 3.4.5.1 Left Trapezoidal, page 159
+slltz :: solve_linear_left_trapezoidal;
 solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(L.cols == b.dim);
+        assert(L.rows == b.dim);
         assert(is_left_trapezoidal(L));
     }
 
     L2 := cmat64_submatrix(L, 0, L.cols, 0, L.cols);
     b2 := cvec64_subvector(b, 0, L.cols);
 
+    // print("given \n    L = %\n    b = %\n", L, b);
+    // print("supsystem \n    L2 = %\n    b2 = %\n", L2, b2);
+
     res := solve_linear_left_triangular(L2, b2);
 
     #if CHECKS {
-        L3 := cmat64_submatrix(L, L.cols+1, L.rows, 0, L.cols);
-        b3 := cvec64_subvector(b, L.cols+1, L.rows);
+        L3 := cmat64_submatrix(L, L.cols, L.rows, 0, L.cols);
+        b3 := cvec64_subvector(b, L.cols, L.rows);
         assert( approx(L3 * res, b3) );
     }
 
     return res;
 }
 
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// 3.4.5.2 Right Trapezoidal, page 160
+// There are degrees of freedom left. These are set to 0 here.
+slrtz :: solve_linear_right_trapezoidal;
 solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
-        assert(R.cols == b.dim);
+        assert(R.rows == b.dim);
         assert(is_right_trapezoidal(R));
     }
 
     R2 := cmat64_submatrix(R, 0, R.rows, 0, R.rows);
-    b2 := cvec64_subvector(b, 0, R.rows);
 
-    res := solve_linear_right_triangular(R2, b2);
+    res := solve_linear_right_triangular(R2, b);
 
-    #if CHECKS {
-        R3 := cmat64_submatrix(R, 0, R.rows, R.rows+1, R.cols);
-        b3 := cvec64_subvector(b, R.rows+1, R.cols);
-        assert( approx(R3 * res, b3) );
+    rvec := cvec64_zeros(R.cols);
+    for 0..res.dim-1 {
+        rvec.data[it] = res[it];
     }
 
-    return res;
+    return rvec;
+}
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.7.1 Gaussian Factorization, page 199
+gaussian_factorization :: (M: CMatrix64) -> CMatrix64 {
+    A := copy(M);
+    m := M.rows;
+    n := M.cols;
+    for k: 0..min(m,n)-1 {
+        assert(A[k][k] != CZERO, "\nCannot perform Gaussain factorization due to 0 in diagonal.");
+
+        for i: k+1..m-1 {
+            A[i][k] = A[i][k]/A[k][k];
+        }
+        for j: k+1..n-1 {
+            for i: k+1..m-1 {
+                A[i][j] = A[i][j] - A[i][k] * A[k][j];
+            }
+        }
+    }
+    return A;
 }
 
 
 
 
+// // Scientific Computing, Vol I: Linear and nonlinear equations
+// // Texts in computational science and engineering 18
+// // Springer
+// // Algorithm 3.7.2 Solve Linear System via Gaussian Factorization, page 199
+// slgf :: solve_linear_gaussian_factorization;
+// solve_linear_gaussian_factorization :: (A: CMatrix64, b: CVector64) -> CVector64 {
+//     #if CHECKS {
+//         assert(A.rows == b.dim);
+//     }
+
+//     M := gaussian_factorization(A);
+
+//     L := cmat64_zeros(M.rows, M.cols);
+//     R := cmat64_zeros(M.rows, M.cols);
+
+//     L[0][0] = R;
+//     for i: 0..M.rows-1 {
+//         for j: 0..M.cols-1 {
+//             if j >= i {
+//                 R[i][j] = M[i][j];
+//             } else {
+//                 L[i][j] = M[i][j];
+//             }
+//         }
+//     }
+// }
 
 
 
@@ -291,5 +352,43 @@ test_linear_algebra :: () {
 
         test := norm_2(cm * res - cb);
         assert(test < 1.0e-10);
+    }
+
+    {
+        M := cmat64(3, 2, 
+            R, CZERO, 
+            -R, R, 
+            -R, -R
+        );
+        b := cvec64(R, 2.0*R, -4.0*R);
+
+        res := solve_linear_left_trapezoidal(M, b);
+        print("sllt: %\n", res);
+        assert( approx(M*res, b) );
+    }
+
+    {
+        M := cmat64(2, 3, 
+            R, R, CZERO, 
+            CZERO, R, CZERO 
+        );
+        b := cvec64(4*R, 6*R);
+
+        res := solve_linear_right_trapezoidal(M, b);
+        print("slrt: %\n", res);
+        assert( approx(M*res, b) );
+    }
+    {
+        M := cmat64(2,2,
+            2*R, 3*R,
+            -2*R, R
+        );
+        res := cmat64(2,2,
+            2*R, 3*R,
+            -1*R, 4*R
+        );
+        A := gaussian_factorization(M);
+        print("gaussian factorization:\n    %\n -> %\n", M, A);
+        assert( A == res , "\n% != %!", A, res);
     }
 }

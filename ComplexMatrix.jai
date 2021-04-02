@@ -348,7 +348,7 @@ cmat64_reflector :: (normal: CVector64) -> CMatrix64 {
 }
 
 
-// inclusive bounds
+// inclusive first bound, exclusive last bound
 cmat64_submatrix :: (M: CMatrix64, row_from: int, row_to: int, column_from: int, column_to: int) -> CMatrix64 {
     #if CHECKS {
         assert(row_to > row_from);
@@ -637,5 +637,16 @@ test_complex_matrix :: () {
         );
         print("t2 = %\n", t2);
         assert(t1 == t2);
+    }
+
+    {
+        M := cmat64(3,3, 
+            CZERO, R, 2*R,
+            3*R, 4*R, 5*R,
+            6*R, 7*R, 8*R
+        );
+
+        S := cmat64_submatrix(M, 1, 3, 1, 3);
+        assert(S == cmat64(2,2, 4*R, 5*R, 7*R, 8*R));
     }
 }
