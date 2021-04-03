@@ -7,13 +7,11 @@ Matrix64 :: struct {
     rows: int;
     cols: int;
     data: [..]float64;
-    // transp: bool = false;
 }
 
 copy :: (m: Matrix64) -> Matrix64 {
     res := mat64(m.rows, m.cols);
     array_copy(*res.data, m.data);
-    // res.transp = m.transp;
     return res;
 }
 

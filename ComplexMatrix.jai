@@ -7,13 +7,11 @@ CMatrix64 :: struct {
     rows: int;
     cols: int;
     data: [..]Complex64;
-    // transp: bool = false;
 }
 
 copy :: (m: CMatrix64) -> CMatrix64 {
     res := cmat64(m.rows, m.cols);
     array_copy(*res.data, m.data);
-    // res.transp = m.transp;
     return res;
 }
 
@@ -308,34 +306,6 @@ cmat64_ones :: inline (dim: int) -> CMatrix64 {
     return cmat64(dim, dim, R);
 }
 
-
-
-
-get :: inline (m: CMatrix64, row: int, col: int) -> Complex64 {
-    #if CHECKS {
-        assert(row <= m.rows && col <= m.cols,
-            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
-    }
-
-    return m.data[row * m.cols + col];
-}
-
-set :: inline (m: CMatrix64, row: int, col: int, val: float64) {
-    #if CHECKS {
-        assert(row <= m.rows && col <= m.cols,
-            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
-    }
-
-    m.data[row * m.cols + col] = c64(val, 0.0);
-}
-set :: inline (m: CMatrix64, row: int, col: int, val: Complex64) {
-    #if CHECKS {
-        assert(row <= m.rows && col <= m.cols,
-            "Out of bounds: m: %x%, row = %, col = %", m.rows, m.cols, row, col);
-    }
-
-    m.data[row * m.cols + col] = val;
-}
 
 
 cmat64_id :: (rows: int, cols: int) -> CMatrix64 {
@@ -664,25 +634,25 @@ test_complex_matrix :: () {
 
     {
         m := cmat64(3, 3, 42.0);
-        set(m, 1, 2, 1.0);
-        assert(get(m, 1, 2) == c64(1.0, 0.0));
+        m[1][2] = R;
+        assert(m[1][2] == c64(1.0, 0.0));
         print("m = %\n", m);
     }
 
     {
         m := cmat64_id(4);
         print("m = %\n", m);
-        assert(get(m, 0, 1) == c64(0.0, 0.0));
-        assert(get(m, 1, 1) == c64(1.0, 0.0));
-        assert(get(m, 2, 1) == c64(0.0, 0.0));
-        assert(get(m, 3, 3) == c64(1.0, 0.0));
+        assert(m[0][1] == c64(0.0, 0.0));
+        assert(m[1][1] == c64(1.0, 0.0));
+        assert(m[2][1] == c64(0.0, 0.0));
+        assert(m[3][3] == c64(1.0, 0.0));
     }
 
     {
         m := cmat64_zeros(3);
-        set(m, 0, 2, 1.0);
+        m[0][2] = R;
         m = transpose(m);
-        assert(get(m, 2, 0) == c64(1.0, 0.0));
+        assert(m[2][0] == c64(1.0, 0.0));
     }
 
     {

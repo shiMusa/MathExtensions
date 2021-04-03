@@ -79,7 +79,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - solve_linear_(left, right)_trapezoidal = sl(l, r)tz for vectors and matrices
     - decompose_LR
     - gaussian_factorization_(no, full, row)_pivot
-    - solve_linear_gaussian_factorization_(no, full, row)_pivot = slgf_(n, f, r)p = solve_LR(n, f, r)p
+    - solve_linear_gaussian_factorization_(no, full, row)\_pivot = slgf_(n, f, r)p = solve_LR(n, f, r)p
 
 ### Future Tasks
 
