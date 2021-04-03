@@ -6,12 +6,20 @@
 CMatrix64 :: struct {
     rows: int;
     cols: int;
-    data: [..]Complex64;
+    data: []Complex64;
+}
+
+cmat64 :: (rows: int, cols: int) -> CMatrix64 {
+    res : CMatrix64 = ---;
+    res.rows = rows;
+    res.cols = cols;
+    res.data = NewArray(rows*cols, Complex64, initialized=false);
+    return res;
 }
 
 copy :: (m: CMatrix64) -> CMatrix64 {
     res := cmat64(m.rows, m.cols);
-    array_copy(*res.data, m.data);
+    res.data = array_copy(m.data);
     return res;
 }
 
@@ -225,14 +233,6 @@ cmat64 :: (m: Matrix64) -> CMatrix64 {
     for 0..res.data.count-1 {
         res.data[it] = c64(m.data[it]);
     }
-    return res;
-}
-
-cmat64 :: (rows: int, cols: int) -> CMatrix64 {
-    res : CMatrix64;
-    res.rows = rows;
-    res.cols = cols;
-    array_resize(*res.data, rows * cols, false);
     return res;
 }
 

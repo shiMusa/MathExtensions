@@ -6,12 +6,22 @@
 Matrix64 :: struct {
     rows: int;
     cols: int;
-    data: [..]float64;
+    data: []float64;
+}
+
+mat64 :: (rows: int, cols: int) -> Matrix64 {
+    res : Matrix64 = ---;
+    res.rows = rows;
+    res.cols = cols;
+    res.data = NewArray(rows*cols, float64, initialized=false);
+    return res;
 }
 
 copy :: (m: Matrix64) -> Matrix64 {
-    res := mat64(m.rows, m.cols);
-    array_copy(*res.data, m.data);
+    res : Matrix64 = ---;
+    res.cols = m.cols;
+    res.rows = m.rows;
+    res.data = array_copy(m.data);
     return res;
 }
 
@@ -196,13 +206,7 @@ operator * :: (a: CVector64, b: Matrix64) -> CVector64 {
 
 
 
-mat64 :: (rows: int, cols: int) -> Matrix64 {
-    res : Matrix64;
-    res.rows = rows;
-    res.cols = cols;
-    array_resize(*res.data, rows * cols, false);
-    return res;
-}
+
 
 mat64 :: inline (dim: int) -> Matrix64 {
     return mat64(dim, dim);

@@ -3,7 +3,26 @@
 
 CVector64 :: struct {
     dim: int;
-    data: [..]Complex64;
+    data: []Complex64;
+}
+
+
+
+cvec64 :: (values: ..Complex64) -> CVector64 {
+    res : CVector64 = ---;
+    res.dim = values.count;
+    res.data = NewArray(values.count, Complex64);
+    for values {
+        res.data[it_index] = it;
+    }
+    return res;
+}
+
+copy :: inline (v: CVector64) -> CVector64 {
+    res : CVector64 = ---;
+    res.dim = v.dim;
+    res.data = array_copy(v.data);
+    return res;
 }
 
 operator [] :: inline (v: CVector64, i: int) -> Complex64 {
@@ -22,16 +41,6 @@ operator == :: inline (a: CVector64, b: CVector64) -> bool {
     return a.dim == b.dim && r;
 }
 
-
-cvec64 :: (values: ..Complex64) -> CVector64 {
-    res : CVector64;
-    res.dim = values.count;
-    array_resize(*res.data, values.count, false);
-    for values {
-        res.data[it_index] = it;
-    }
-    return res;
-}
 
 // TODO: wait for bug fix in compiler
 // cvec64 :: (values: ..float64) -> CVector64 {
@@ -83,11 +92,7 @@ cvec64_basis :: inline (dim: int, el: int) -> CVector64 {
     return res;
 }
 
-copy :: inline (v: CVector64) -> CVector64 {
-    res := cvec64(v.dim);
-    array_copy(*res.data, v.data);
-    return res;
-}
+
 
 
 // inclusive bounds

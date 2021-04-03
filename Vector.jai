@@ -3,7 +3,7 @@
 
 Vector64 :: struct {
     dim: int;
-    data: [..]float64;
+    data: []float64;
 };
 
 
@@ -12,26 +12,25 @@ operator [] :: inline (v: Vector64, i: int) -> float64 {
 }
 
 
-set :: inline (v: Vector64, i: int, val: float64) {
-    v.data[i] = val;
+copy :: inline (v: Vector64) -> Vector64 {
+    res : Vector64 = ---;
+    res.dim = v.dim;
+    res.data = array_copy(v.data);
+    return res;
 }
 
 
-
 vec64 :: (values: ..float64) -> Vector64 {
-    res : Vector64;
+    res : Vector64 = ---;
     res.dim = values.count;
-    array_resize(*res.data, values.count, false);
-    for values {
-        res.data[it_index] = it;
-    }
+    res.data = array_copy(values);
     return res;
 }
 
 vec64 :: inline (dim: int) -> Vector64 {
-    res : Vector64;
+    res : Vector64 = ---;
     res.dim = dim;
-    array_resize(*res.data, dim, false);
+    res.data = NewArray(dim, float64, initialized=false);
     return res;
 }
 
@@ -57,11 +56,7 @@ vec64_basis :: inline (dim: int, el: int) -> Vector64 {
     return res;
 }
 
-copy :: inline (v: Vector64) -> Vector64 {
-    res := vec64(v.dim);
-    array_copy(*res.data, v.data);
-    return res;
-}
+
 
 
 
