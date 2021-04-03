@@ -81,7 +81,8 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - solve_linear_successive_orthogonal_projection = slsop
     - solve_linear_left_trapezoidal = slltz
     - solve_linear_right_trapezoidal = slrtz
-    - gaussian_factorization
+    - gaussian_factorization_no_pivot
+    - gaussian_factorization_full_pivot
     - decompose_LR_no_pivot
     - decompose_LR_full_pivot
     - solve_linear_gaussian_factorization_no_pivot = slgf_np = solve_LRnp
