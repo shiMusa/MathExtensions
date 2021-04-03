@@ -368,6 +368,81 @@ cmat64_submatrix :: (M: CMatrix64, row_from: int, row_to: int, column_from: int,
 
 
 
+// there are faster ways of doing this.
+permute_rows :: (M: CMatrix64, order: ..int) -> CMatrix64 {
+    #if CHECKS {
+        assert(order.count == M.rows);
+    }
+
+    res := cmat64(M.rows, M.cols);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            res[i][j] = M[order[i]][j];
+        }
+    }
+
+    return res;
+}
+
+// there are faster ways of doing this.
+permute_columns :: (M: CMatrix64, order: ..int) -> CMatrix64 {
+    #if CHECKS {
+        assert(order.count == M.cols);
+    }
+
+    res := cmat64(M.rows, M.cols);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            res[i][j] = M[i][order[j]];
+        }
+    }
+
+    return res;
+}
+
+// there are faster ways of doing this.
+permute :: (M: CMatrix64, row_order: []int, col_order: []int) -> CMatrix64 {
+    #if CHECKS {
+        assert(row_order.count == M.rows);
+        assert(col_order.count == M.cols);
+    }
+
+    res := cmat64(M.rows, M.cols);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            res[i][j] = M[row_order[i]][col_order[j]];
+        }
+    }
+
+    return res;
+}
+
+
+swap_columns :: (M: CMatrix64, i: int, j: int) {
+    #if CHECKS {
+        assert(i >= 0 && j >= 0 && i != j);
+        assert(i < M.cols && j < M.cols);
+    }
+
+    for 0..M.rows-1 {
+        M[it][i], M[it][j] = swap(M[it][i], M[it][j]);
+    }
+}
+
+swap_rows :: (M: CMatrix64, i: int, j: int) {
+    #if CHECKS {
+        assert(i >= 0 && j >= 0 && i != j);
+        assert(i < M.rows && j < M.rows);
+    }
+
+    for 0..M.cols-1 {
+        M[i][it], M[j][it] = swap(M[i][it], M[j][it]);
+    }
+}
+
+
+
+
 
 
 

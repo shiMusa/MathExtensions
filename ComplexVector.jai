@@ -240,6 +240,25 @@ operator * :: inline (a: Vector64, b: CVector64) -> Complex64 {
 
 
 
+
+permute :: (v: CVector64, order: ..int) -> CVector64 {
+    #if CHECKS {
+        assert(v.dim == order.count);
+    }
+    res := cvec64(v.dim);
+    for 0..v.dim-1 {
+        res.data[it] = v[order[it]];
+    }
+
+    return res;
+}
+
+swap :: (v: CVector64, i: int, j: int) {
+    v.data[i], v.data[j] = swap(v.data[i], v.data[j]);
+}
+
+
+
 conjugate :: (v: CVector64) -> CVector64 {
     res := cvec64(v.dim);
     for v.data {

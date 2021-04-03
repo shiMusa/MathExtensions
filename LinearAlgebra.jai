@@ -243,8 +243,8 @@ solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 {
 // Scientific Computing, Vol I: Linear and nonlinear equations
 // Texts in computational science and engineering 18
 // Springer
-// Algorithm 3.7.1 Gaussian Factorization, page 199
-gaussian_factorization :: (M: CMatrix64) -> CMatrix64 {
+// Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
+gaussian_factorization_no_pivot :: (M: CMatrix64) -> CMatrix64 {
     A := copy(M);
     m := M.rows;
     n := M.cols;
@@ -268,8 +268,11 @@ gaussian_factorization :: (M: CMatrix64) -> CMatrix64 {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.1 Gaussian Factorization, page 199
-decompose_lr :: (A: CMatrix64) -> L: CMatrix64, R: CMatrix64 {
-    M := gaussian_factorization(A);
+decompose_LUnp :: decompose_LR_no_pivot;
+decompose_LRnp :: decompose_LR_no_pivot;
+decompose_LU_no_pivot :: decompose_LR_no_pivot;
+decompose_LR_no_pivot :: (A: CMatrix64) -> L: CMatrix64, R: CMatrix64 {
+    M := gaussian_factorization_no_pivot(A);
 
     L := cmat64_id(M.rows, M.cols);
     R := cmat64_zeros(M.rows, M.cols);
@@ -294,21 +297,156 @@ decompose_lr :: (A: CMatrix64) -> L: CMatrix64, R: CMatrix64 {
 // // Scientific Computing, Vol I: Linear and nonlinear equations
 // // Texts in computational science and engineering 18
 // // Springer
-// // Algorithm 3.7.2 Solve Linear System via Gaussian Factorization, page 199
-slgf :: solve_linear_gaussian_factorization;
-solve_LR :: solve_linear_gaussian_factorization;
-solve_linear_gaussian_factorization :: (A: CMatrix64, b: CVector64) -> CVector64 {
+// // Algorithm 3.7.2 Solve Linear System via Gaussian Factorization - No Pivoting, page 199
+slgf_np :: solve_linear_gaussian_factorization_no_pivot;
+solve_LRnp :: solve_linear_gaussian_factorization_no_pivot;
+solve_LUnp :: solve_linear_gaussian_factorization_no_pivot;
+solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
 
-    L, R := decompose_lr(A);
+    L, R := decompose_LRnp(A);
 
     y := solve_linear_left_trapezoidal(L, b);
     x := solve_linear_right_trapezoidal(R, y);
 
     return x;
 }
+
+
+
+
+
+
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
+gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int, cols: []int {
+    A := copy(M);
+    m := A.rows;
+    n := A.cols;
+
+    rows : [..]int;
+    cols : [..]int;
+    array_resize(*rows, A.rows, false);
+    array_resize(*cols, A.cols, false);
+    for 0..A.rows-1 {
+        rows[it] = it;
+    }
+    for 0..A.cols-1 {
+        cols[it] = it;
+    }
+
+
+    for k: 0..min(m,n)-1 {
+        ii := k;
+        jj := k;
+        rho := abs(A[k][k]);
+
+        for j: k..n-1 {
+            for i: k..m-1 {
+                tmp := abs(A[i][j]);
+                if tmp > rho {
+                    ii = i;
+                    jj = j;
+                    rho = tmp;
+                }
+            }
+        }
+
+        assert(rho != 0.0, "\nCannot perform Gaussain factorization due to 0 in diagonal.");
+
+        // swap 
+        if ii > k {
+            swap_rows(A, k, ii);
+            rows[k], rows[ii] = swap(rows[k], rows[ii]);
+        }
+        if jj > k {
+            swap_columns(A, k, jj);
+            cols[k], cols[jj] = swap(cols[k], cols[jj]);
+        }
+
+        for i: k+1..m-1 {
+            A[i][k] = A[i][k]/A[k][k];
+        }
+        for j: k+1..n-1 {
+            for i: k+1..m-1 {
+                A[i][j] = A[i][j] - A[i][k] * A[k][j];
+            }
+        }
+    }
+
+    return A, rows, cols;
+}
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.7.4 Solve Linear System via Gaussian Factorization with Full Pivoting, page 206
+decompose_LUfp :: decompose_LR_full_pivot;
+decompose_LRfp :: decompose_LR_full_pivot;
+decompose_LU_full_pivot :: decompose_LR_full_pivot;
+decompose_LR_full_pivot :: (A: CMatrix64) -> L: CMatrix64, R: CMatrix64, rows: []int, cols: []int {
+    M, rows, cols := gaussian_factorization_full_pivot(A);
+
+    // print("rows %\n", rows);
+    // print("cols %\n", cols);
+
+    L := cmat64_id(M.rows, M.cols);
+    R := cmat64_zeros(M.rows, M.cols);
+
+    L[0][0] = c64(1.0, 0.0);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            if j >= i {
+                R[i][j] = M[i][j];
+            } else {
+                L[i][j] = M[i][j];
+            }
+        }
+    }
+
+    return L, R, rows, cols;
+}
+
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.7.4 Solve Linear System via Gaussian Factorization with Full Pivoting, page 206
+slgf_fp :: solve_linear_gaussian_factorization_full_pivot;
+solve_LRfp :: solve_linear_gaussian_factorization_full_pivot;
+solve_LUfp :: solve_linear_gaussian_factorization_full_pivot;
+solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 {
+    #if CHECKS {
+        assert(A.rows == b.dim);
+    }
+
+    L, R, rows, cols := decompose_LRfp(A);
+
+    y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
+    w := solve_linear_right_trapezoidal(R, y);
+    x := permute(w, ..cols);
+
+    return x;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -408,7 +546,7 @@ test_linear_algebra :: () {
             2*R, 3*R,
             -1*R, 4*R
         );
-        A := gaussian_factorization(M);
+        A := gaussian_factorization_no_pivot(M);
         print("gaussian factorization:\n    %\n -> %\n", M, A);
         assert( A == res , "\n% != %!", A, res);
     }
@@ -420,8 +558,44 @@ test_linear_algebra :: () {
         );
         b := cvec64(4*R, 6*I);
 
-        res := solve_linear_gaussian_factorization(M, b);
-        print("solve linear system via Gaussian factorization: %\n", res);
+        res := solve_LRnp(M, b);
+        print("solve linear system via Gaussian factorization (no pivoting): %\n", res);
         assert(res == cvec64(2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
+    }
+
+    {
+        M := cmat64(3,3,
+            CZERO, 4*R, -3*R,
+            2*R, CZERO, 4*R,
+            3*R, -5*R, 3*R
+        );
+
+        A, rows, cols := gaussian_factorization_full_pivot(M);
+
+        print("A = %\n", A);
+    }
+
+    {
+        M := cmat64(3,3,
+            CZERO, 4*R, -3*R,
+            2*R, CZERO, 4*R,
+            3*R, -5*R, 3*R
+        );
+
+        L, R, rows, cols := decompose_LRfp(M);
+
+        print("L = \n    %\nR = \n    %\n", L, R);
+    }
+
+    {
+        M := cmat64(2,2,
+            R, I,
+            -3*R, 2.0 - I
+        );
+        b := cvec64(4*R, 6*I);
+
+        res := solve_LRfp(M, b);
+        print("solve linear system via Gaussian factorization (full pivoting): %\n", res);
+        assert(approx(res, cvec64(2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
 }

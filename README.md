@@ -48,6 +48,8 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - norm(vec, n) with n ∈ ℝ, specialisations norm_2, norm_1, norm_inf
     - cross, for 3-dim vectors
     - angle
+    - permute
+    - swap
 - complex/real matrix: CMatrix64/Matrix64; real matrix with subset of these functions
     - operators [], [][], ==, +, -, *, /
     - multiple initialization functions
@@ -59,6 +61,8 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - conjugate_transpose = dagger
     - tensor
     - norm_1, norm_inf, norm_frobenius
+    - permute_rows, permute_columns, permute
+    - swap_columns, swap_rows
 - checks
     - is_quadratic(M)
     - is_diagonal_unit(M)
