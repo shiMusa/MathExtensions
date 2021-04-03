@@ -83,7 +83,8 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - solve_linear_right_trapezoidal = slrtz
     - gaussian_factorization
     - decompose_lr
-    - solve_linear_gaussian_factorization = slgf = solve_LR
+    - solve_linear_gaussian_factorization_no_pivot = slgf_np = solve_LRnp
+    - solve_linear_gaussian_factorization_full_pivot = slgf_fp = solve_LRfp
 
 
 ## Structure
