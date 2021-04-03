@@ -27,9 +27,23 @@ operator [] :: inline (m: CMatrix64, i: int) -> []Complex64 {
 }
 
 row :: (m: CMatrix64, i: int) -> CVector64 {
+    #if CHECKS {
+        assert(i >= 0 && i < m.rows);
+    }
     res := cvec64(m.cols);
     for 0..m.cols-1 {
         res.data[it] = m[i][it];
+    }
+    return res;
+}
+
+column :: (m: CMatrix64, i: int) -> CVector64 {
+    #if CHECKS {
+        assert(i >= 0 && i < m.cols);
+    }
+    res := cvec64(m.rows);
+    for 0..m.rows-1 {
+        res.data[it] = m[it][i];
     }
     return res;
 }
@@ -53,7 +67,7 @@ operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
     }
 
     res := cmat64(a.rows, a.cols);
-    for 0..a.data.count {
+    for 0..a.data.count-1 {
         res.data[it] = a.data[it] + b.data[it];
     }
     return res;
@@ -65,7 +79,7 @@ operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
     }
 
     res := cmat64(a.rows, a.cols);
-    for 0..a.data.count {
+    for 0..a.data.count-1 {
         res.data[it] = a.data[it] - b.data[it];
     }
     return res;
@@ -73,7 +87,7 @@ operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
 
 operator - :: (a: CMatrix64) -> CMatrix64 {
     res := cmat64(a.rows, a.cols);
-    for 0..a.data.count {
+    for 0..a.data.count-1 {
         res.data[it] = -a.data[it];
     }
     return res;

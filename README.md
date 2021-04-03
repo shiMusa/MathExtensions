@@ -53,7 +53,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
 - complex/real matrix: CMatrix64/Matrix64; real matrix with subset of these functions
     - operators [], [][], ==, +, -, *, /
     - multiple initialization functions
-    - row; retrieves a specific row
+    - row, column
     - reflector
     - submatrix
     - transpose
@@ -66,24 +66,26 @@ Many functions specialize during compile-time on the real or complex variant (e.
 - checks
     - is_quadratic(M)
     - is_diagonal_unit(M)
-    - is_left_triangular(M)
-    - is_right_triangular(M)
+    - is_(left, right)_triangular(M)
     - is_right_quasi_triangular(M)
     - is_unitary(M)
-    - is_left_trapezoidal(M)
-    - is_right_trapezoidal(M)
+    - is_(left, right)_trapezoidal(M)
 - linear algebra
     - solve_linear_2x2 = sl2
-    - solve_linear_left_triangular = sllta
-    - solve_linear_right_triangular = slrta
+    - solve_linear_(left, right)_triangular = sl(l, r)ta
     - solve_linear_right_quasi_triangular = slrqta
     - solve_linear_orthogonal_projection = solve_linear_unitary = slop
     - solve_linear_successive_orthogonal_projection = slsop
-    - solve_linear_left_trapezoidal = slltz
-    - solve_linear_right_trapezoidal = slrtz
+    - solve_linear_(left, right)_trapezoidal = sl(l, r)tz for vectors and matrices
     - decompose_LR
     - gaussian_factorization_(no, full, row)_pivot
     - solve_linear_gaussian_factorization_(no, full, row)_pivot = slgf_(n, f, r)p = solve_LR(n, f, r)p
+
+### Future Tasks
+
+- linear algebra
+    - LAPACK Scaling for Gaussian factorization (Algorithm 3.9.1 [1])
+    - Iterative Improvement for Gaussian factorization (Algorithm 3.9.2 [1])
 
 
 ## Structure
@@ -101,3 +103,6 @@ Give sources for algorithms written so that we can take a look and help debuggin
 Write (at least some) tests contained in each file.
 
 
+## Ressources
+
+[1] Scientific Computing, Vol I: Linear and nonlinear equations, Texts in computational science and engineering 18, Springer

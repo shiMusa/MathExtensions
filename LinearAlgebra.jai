@@ -215,6 +215,26 @@ solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 {
     return res;
 }
 
+solve_linear_left_trapezoidal :: (L: CMatrix64, M: CMatrix64) -> CMatrix64 {
+    #if CHECKS {
+        assert(L.rows == M.rows);
+    }
+
+    res := cmat64(L.cols, M.cols);
+
+    for j: 0..M.cols-1 {
+        b := column(M, j);
+        tmp := solve_linear_left_trapezoidal(L, b);
+        for tmp.data {
+            res[it_index][j] = it;
+        }
+    }
+
+    return res;
+}
+
+
+
 // Scientific Computing, Vol I: Linear and nonlinear equations
 // Texts in computational science and engineering 18
 // Springer
@@ -237,6 +257,25 @@ solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 {
     }
 
     return rvec;
+}
+
+
+solve_linear_right_trapezoidal :: (R: CMatrix64, M: CMatrix64) -> CMatrix64 {
+    #if CHECKS {
+        assert(R.rows == M.rows);
+    }
+    
+    res := cmat64(R.cols, M.cols);
+
+    for j: 0..M.cols-1 {
+        b := column(M, j);
+        tmp := solve_linear_right_trapezoidal(R, b);
+        for tmp.data {
+            res[it_index][j] = it;
+        }
+    }
+
+    return res;
 }
 
 
@@ -663,5 +702,37 @@ test_linear_algebra :: () {
         res := solve_LRrp(M, b);
         print("solve linear system via Gaussian factorization (row pivoting): %\n", res);
         assert(approx(res, cvec64(2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
+    }
+
+    {
+        L := cmat64(3,3,
+            R, CZERO, CZERO,
+            I, R, CZERO,
+            2*R, 3+I, R
+        );
+        one := cmat64_id(3,3);
+        res := solve_linear_left_trapezoidal(L,one);
+        print("K = %\n", res);
+        assert(approx(res, cmat64(3,3,
+            R, CZERO, CZERO,
+            -I, R, CZERO, 
+            -3+3*I, -3-I, R
+        )));
+    }
+
+    {
+        M := cmat64(3,3,
+            2*R, I, -2*R,
+            CZERO, -I, CZERO,
+            CZERO, CZERO, 1+I
+        );
+        one := cmat64_id(3,3);
+        res := solve_linear_right_trapezoidal(M,one);
+        print("K = %\n", res);
+        assert(approx(res, cmat64(3,3,
+            0.5*R, 0.5*R, 0.5-0.5*I,
+            CZERO, I, CZERO,
+            CZERO, CZERO, 0.5-0.5*I
+        )));
     }
 }
