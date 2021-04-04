@@ -8,6 +8,19 @@ CZERO :: Complex64.{0.0, 0.0};
 C64_NAN :: Complex64.{Math.FLOAT64_NAN, Math.FLOAT64_NAN};
 
 
+
+
+str :: (z: Complex64) -> string {
+    if z.imag >= 0 {
+        return sprint("% + % I", z.real, z.imag);
+    } else {
+        return sprint("% - % I", z.real, -z.imag);
+    }
+}
+
+
+
+
 Complex64 :: struct {
     real: float64;
     imag: float64;
@@ -126,9 +139,9 @@ test_complex :: () {
     );
 
 
-    print("%\n", 2.0*R);
+    print("%\n", str(2.0*R));
 
-    print("% == %\n", 3.0-4.0*I, Complex64.{3.0, -4.0});
+    print("% == %\n", str(3.0-4.0*I), str(Complex64.{3.0, -4.0}));
     assert(3.0 - 4.0 * I == Complex64.{3.0, -4.0});
 
 }

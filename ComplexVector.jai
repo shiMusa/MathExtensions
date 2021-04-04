@@ -1,6 +1,24 @@
 
 
 
+
+
+
+
+str :: (v: CVector64, indent: string = "    ") -> string {
+    builder: String_Builder;
+    init_string_builder(*builder);
+    print_to_builder(*builder, "\n%", indent);
+    for i: 0..v.dim-1 {
+        print_to_builder(*builder, "%, ", str(v[i]) );
+    }
+    return builder_to_string(*builder);
+}
+
+
+
+
+
 CVector64 :: struct {
     dim: int;
     data: []Complex64;
@@ -8,7 +26,7 @@ CVector64 :: struct {
 
 
 
-cvec64 :: (values: ..Complex64) -> CVector64 {
+cvec64 :: (values: ..Complex64) -> CVector64 #must {
     res : CVector64 = ---;
     res.dim = values.count;
     res.data = NewArray(values.count, Complex64);
@@ -18,7 +36,7 @@ cvec64 :: (values: ..Complex64) -> CVector64 {
     return res;
 }
 
-copy :: inline (v: CVector64) -> CVector64 {
+copy :: inline (v: CVector64) -> CVector64 #must {
     res : CVector64 = ---;
     res.dim = v.dim;
     res.data = array_copy(v.data);
@@ -54,7 +72,7 @@ operator == :: inline (a: CVector64, b: CVector64) -> bool {
 // }
 
 
-cvec64 :: (vec: Vector64) -> CVector64 {
+cvec64 :: (vec: Vector64) -> CVector64 #must {
     res := cvec64(vec.dim);
     for vec.data {
         res.data[it_index] = c64(it);
@@ -63,14 +81,14 @@ cvec64 :: (vec: Vector64) -> CVector64 {
 }
 
 
-cvec64 :: inline (dim: int) -> CVector64 {
+cvec64 :: inline (dim: int) -> CVector64 #must {
     res : CVector64;
     res.dim = dim;
     array_resize(*res.data, dim, false);
     return res;
 }
 
-cvec64_zeros :: inline (dim: int) -> CVector64 {
+cvec64_zeros :: inline (dim: int) -> CVector64 #must {
     res := cvec64(dim);
     for 0..dim-1 {
         res.data[it] = c64(0.0, 0.0);
@@ -78,7 +96,7 @@ cvec64_zeros :: inline (dim: int) -> CVector64 {
     return res;
 }
 
-cvec64_ones :: inline (dim: int) -> CVector64 {
+cvec64_ones :: inline (dim: int) -> CVector64 #must {
     res := cvec64(dim);
     for 0..dim-1 {
         res.data[it] = R;
@@ -86,7 +104,7 @@ cvec64_ones :: inline (dim: int) -> CVector64 {
     return res;
 }
 
-cvec64_basis :: inline (dim: int, el: int) -> CVector64 {
+cvec64_basis :: inline (dim: int, el: int) -> CVector64 #must {
     res := cvec64_zeros(dim);
     res.data[el] = R;
     return res;
@@ -96,7 +114,7 @@ cvec64_basis :: inline (dim: int, el: int) -> CVector64 {
 
 
 // inclusive bounds
-cvec64_subvector :: (v: CVector64, from: int, to: int) -> CVector64 {
+cvec64_subvector :: (v: CVector64, from: int, to: int) -> CVector64 #must {
     #if CHECKS {
         assert(to > from);
     }
@@ -112,7 +130,7 @@ cvec64_subvector :: (v: CVector64, from: int, to: int) -> CVector64 {
 
 
 
-operator + :: inline (a: CVector64, b: CVector64) -> CVector64 {
+operator + :: (a: CVector64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -124,7 +142,7 @@ operator + :: inline (a: CVector64, b: CVector64) -> CVector64 {
     return res;
 }
 
-operator + :: inline (a: CVector64, b: Vector64) -> CVector64 #symmetric {
+operator + :: (a: CVector64, b: Vector64) -> CVector64 #symmetric {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -136,7 +154,26 @@ operator + :: inline (a: CVector64, b: Vector64) -> CVector64 #symmetric {
     return res;
 }
 
-operator - :: inline (a: CVector64, b: CVector64) -> CVector64 {
+add :: (a: *CVector64, b: CVector64) {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
+    for 0..a.dim-1 {
+        a.data[it] += b[it];
+    }
+}
+add :: (a: *CVector64, b: Vector64) {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
+    for 0..a.dim-1 {
+        a.data[it] += b[it];
+    }
+}
+
+operator - :: (a: CVector64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -147,7 +184,7 @@ operator - :: inline (a: CVector64, b: CVector64) -> CVector64 {
     }
     return res;
 }
-operator - :: inline (a: CVector64, b: Vector64) -> CVector64 {
+operator - :: (a: CVector64, b: Vector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -158,7 +195,7 @@ operator - :: inline (a: CVector64, b: Vector64) -> CVector64 {
     }
     return res;
 }
-operator - :: inline (a: Vector64, b: CVector64) -> CVector64 {
+operator - :: (a: Vector64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -170,7 +207,26 @@ operator - :: inline (a: Vector64, b: CVector64) -> CVector64 {
     return res;
 }
 
-operator - :: inline (a: CVector64) -> CVector64 {
+sub :: (a: *CVector64, b: CVector64) {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
+    for 0..a.dim-1 {
+        a.data[it] -= b[it];
+    }
+}
+sub :: (a: *CVector64, b: Vector64) {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+
+    for 0..a.dim-1 {
+        a.data[it] -= b[it];
+    }
+}
+
+operator - :: (a: CVector64) -> CVector64 #must {
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = -a[it];
@@ -178,38 +234,70 @@ operator - :: inline (a: CVector64) -> CVector64 {
     return res;
 }
 
-operator * :: inline (a: CVector64, val: Complex64) -> CVector64 #symmetric {
+neg :: (a: *CVector64) {
+    for 0..a.dim-1 {
+        a.data[it] = -a.data[it];
+    }
+}
+
+operator * :: (a: CVector64, val: Complex64) -> CVector64 #symmetric {
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] * val;
     }
     return res;
 }
-operator * :: inline (a: CVector64, val: float64) -> CVector64 #symmetric {
+operator * :: (a: CVector64, val: float64) -> CVector64 #symmetric {
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] * val;
     }
     return res;
 }
+mul :: (a: *CVector64, val: Complex64) {
+    for 0..a.dim-1 {
+        a.data[it] *= val;
+    }
+    return res;
+}
+mul :: (a: *CVector64, val: float64) {
+    for 0..a.dim-1 {
+        a.data[it] *= val;
+    }
+    return res;
+}
 
-operator / :: inline (a: CVector64, val: Complex64) -> CVector64 {
+
+
+operator / :: (a: CVector64, val: Complex64) -> CVector64 #must {
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] / val;
     }
     return res;
 }
-operator / :: inline (a: CVector64, val: float64) -> CVector64 {
+operator / :: (a: CVector64, val: float64) -> CVector64 #must {
     res := cvec64(a.dim);
     for 0..a.dim-1 {
         res.data[it] = a[it] / val;
     }
     return res;
 }
+div :: (a: *CVector64, val: Complex64) {
+    for 0..a.dim-1 {
+        a.data[it] /= val;
+    }
+    return res;
+}
+div :: (a: *CVector64, val: float64) {
+    for 0..a.dim-1 {
+        a.data[it] /= val;
+    }
+    return res;
+}
 
 
-operator * :: inline (a: CVector64, b: CVector64) -> Complex64 {
+operator * :: (a: CVector64, b: CVector64) -> Complex64 #must {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -220,7 +308,7 @@ operator * :: inline (a: CVector64, b: CVector64) -> Complex64 {
     }
     return res;
 }
-operator * :: inline (a: CVector64, b: Vector64) -> Complex64 {
+operator * :: (a: CVector64, b: Vector64) -> Complex64 {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -231,7 +319,7 @@ operator * :: inline (a: CVector64, b: Vector64) -> Complex64 {
     }
     return res;
 }
-operator * :: inline (a: Vector64, b: CVector64) -> Complex64 {
+operator * :: (a: Vector64, b: CVector64) -> Complex64 {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -246,7 +334,7 @@ operator * :: inline (a: Vector64, b: CVector64) -> Complex64 {
 
 
 
-permute :: (v: CVector64, order: ..int) -> CVector64 {
+permute :: (v: CVector64, order: ..int) -> CVector64 #must {
     #if CHECKS {
         assert(v.dim == order.count);
     }
@@ -264,7 +352,7 @@ swap :: (v: CVector64, i: int, j: int) {
 
 
 
-conjugate :: (v: CVector64) -> CVector64 {
+conjugate :: (v: CVector64) -> CVector64 #must {
     res := cvec64(v.dim);
     for v.data {
         res.data[it_index] = conjugate(it);
@@ -277,7 +365,7 @@ conjugate :: (v: CVector64) -> CVector64 {
 
 
 
-outer_product :: (a: CVector64, b: CVector64) -> CMatrix64 {
+outer_product :: (a: CVector64, b: CVector64) -> CMatrix64 #must {
     res := cmat64(a.dim, b.dim);
     for i: 0..a.dim {
         for j: 0..b.dim {
@@ -287,7 +375,7 @@ outer_product :: (a: CVector64, b: CVector64) -> CMatrix64 {
     return res;
 }
 
-outer_product :: (a: Vector64, b: CVector64) -> CMatrix64 {
+outer_product :: (a: Vector64, b: CVector64) -> CMatrix64 #must {
     res := cmat64(a.dim, b.dim);
     for i: 0..a.dim {
         for j: 0..b.dim {
@@ -297,7 +385,7 @@ outer_product :: (a: Vector64, b: CVector64) -> CMatrix64 {
     return res;
 }
 
-outer_product :: (a: CVector64, b: Vector64) -> CMatrix64 {
+outer_product :: (a: CVector64, b: Vector64) -> CMatrix64 #must {
     res := cmat64(a.dim, b.dim);
     for i: 0..a.dim {
         for j: 0..b.dim {
@@ -308,13 +396,13 @@ outer_product :: (a: CVector64, b: Vector64) -> CMatrix64 {
 }
 
 
-operator / :: inline (a: CVector64, b: CVector64) -> CMatrix64 {
+operator / :: inline (a: CVector64, b: CVector64) -> CMatrix64 #must {
     return outer_product(a, b);
 }
-operator / :: inline (a: Vector64, b: CVector64) -> CMatrix64 {
+operator / :: inline (a: Vector64, b: CVector64) -> CMatrix64 #must {
     return outer_product(a, b);
 }
-operator / :: inline (a: CVector64, b: Vector64) -> CMatrix64 {
+operator / :: inline (a: CVector64, b: Vector64) -> CMatrix64 #must {
     return outer_product(a, b);
 }
 
@@ -323,7 +411,7 @@ operator / :: inline (a: CVector64, b: Vector64) -> CMatrix64 {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.4.10 Apply Elementary Reflector, page 170
-reflect :: (vec: CVector64, normal: CVector64) -> CVector64 {
+reflect :: (vec: CVector64, normal: CVector64) -> CVector64 #must {
     tau := 2.0 / (conjugate(normal) * normal);
     alpha := tau * conjugate(normal) * vec;
     return vec - normal * alpha;
@@ -376,7 +464,7 @@ norm_inf :: inline (v: CVector64) -> float64 {
 
 
 
-cross :: (a: CVector64, b: CVector64) -> CVector64 {
+cross :: (a: CVector64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.dim == 3 && b.dim == 3);
     }

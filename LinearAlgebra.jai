@@ -553,7 +553,7 @@ test_linear_algebra :: () {
         A := cmat64(2, 2, R, R, 2.0 - I, I);
         b := cvec64(I, c64(2.0, 4.0));
         res := solve_linear_2x2(A, b);
-        print("%\n", res);
+        print("%\n", str(res));
         assert(res == cvec64(
             -0.25 + 1.75*I,
             0.25 - 0.75*I
@@ -568,7 +568,7 @@ test_linear_algebra :: () {
         );
         b := cvec64(3.0*R, -I, R-2.0*I);
         res := solve_linear_left_triangular(L, b);
-        print("% = % ?\n", L * res, b);
+        print("% = % ?\n", str(L * res), str(b, ""));
         assert(L * res == b);
     }
 
@@ -599,7 +599,7 @@ test_linear_algebra :: () {
         cb := cvec64(b);
 
         res := solve_linear_right_quasi_triangular(cm,cb);
-        print("res = %\n", res);
+        print("res = %\n", str(res));
 
         test := norm_2(cm * res - cb);
         assert(test < 1.0e-10);
@@ -614,7 +614,7 @@ test_linear_algebra :: () {
         b := cvec64(R, 2.0*R, -4.0*R);
 
         res := solve_linear_left_trapezoidal(M, b);
-        print("sllt: %\n", res);
+        print("sllt: %\n", str(res));
         assert( approx(M*res, b) );
     }
 
@@ -626,7 +626,7 @@ test_linear_algebra :: () {
         b := cvec64(4*R, 6*R);
 
         res := solve_linear_right_trapezoidal(M, b);
-        print("slrt: %\n", res);
+        print("slrt: %\n", str(res));
         assert( approx(M*res, b) );
     }
     {
@@ -639,8 +639,8 @@ test_linear_algebra :: () {
             -1*R, 4*R
         );
         A := gaussian_factorization_no_pivot(M);
-        print("gaussian factorization:\n    %\n -> %\n", M, A);
-        assert( A == res , "\n% != %!", A, res);
+        print("gaussian factorization: % -> %\n", str(M), str(A));
+        assert( A == res , "%\n != %\n!", str(A), str(res));
     }
 
     {
@@ -651,7 +651,7 @@ test_linear_algebra :: () {
         b := cvec64(4*R, 6*I);
 
         res := solve_LRnp(M, b);
-        print("solve linear system via Gaussian factorization (no pivoting): %\n", res);
+        print("solve linear system via Gaussian factorization (no pivoting): %\n", str(res));
         assert(res == cvec64(2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
     }
 
@@ -664,7 +664,7 @@ test_linear_algebra :: () {
 
         A, rows, cols := gaussian_factorization_full_pivot(M);
 
-        print("A = %\n", A);
+        print("A = %\n", str(A));
     }
 
     {
@@ -677,7 +677,7 @@ test_linear_algebra :: () {
         A, rows, cols := gaussian_factorization_full_pivot(M);
         L, R := decompose_LR(A);
 
-        print("L = \n    %\nR = \n    %\n", L, R);
+        print("L = %\nR = %\n", str(L), str(R));
     }
 
     {
@@ -688,7 +688,7 @@ test_linear_algebra :: () {
         b := cvec64(4*R, 6*I);
 
         res := solve_LRfp(M, b);
-        print("solve linear system via Gaussian factorization (full pivoting): %\n", res);
+        print("solve linear system via Gaussian factorization (full pivoting): %\n", str(res));
         assert(approx(res, cvec64(2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
 
@@ -700,7 +700,7 @@ test_linear_algebra :: () {
         b := cvec64(4*R, 6*I);
 
         res := solve_LRrp(M, b);
-        print("solve linear system via Gaussian factorization (row pivoting): %\n", res);
+        print("solve linear system via Gaussian factorization (row pivoting): %\n", str(res));
         assert(approx(res, cvec64(2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
 
@@ -712,7 +712,7 @@ test_linear_algebra :: () {
         );
         one := cmat64_id(3,3);
         res := solve_linear_left_trapezoidal(L,one);
-        print("K = %\n", res);
+        print("K = %\n", str(res));
         assert(approx(res, cmat64(3,3,
             R, CZERO, CZERO,
             -I, R, CZERO, 
@@ -728,7 +728,7 @@ test_linear_algebra :: () {
         );
         one := cmat64_id(3,3);
         res := solve_linear_right_trapezoidal(M,one);
-        print("K = %\n", res);
+        print("K = %\n", str(res));
         assert(approx(res, cmat64(3,3,
             0.5*R, 0.5*R, 0.5-0.5*I,
             CZERO, I, CZERO,

@@ -1,6 +1,31 @@
 
 
 
+
+
+
+calculation :: (code: Code) #expand {
+    _pool: Pool.Pool;
+    Pool.set_allocators(*_pool);
+    
+    {
+        push_allocator(Pool.pool_allocator, *_pool);
+        #insert code;
+    }
+
+    print("The calculation pool contains % bytes.\n", _pool.memblock_size - _pool.bytes_left);
+    print("Releasing the pool now.\n");
+    Pool.release(*_pool);
+}
+
+
+
+
+
+
+
+
+
 #scope_module
 
 
@@ -139,5 +164,19 @@ test_utils :: () {
     {
         assert(Complex64 == super_type(Complex64, u8));
         assert(float64 == super_type(float32, float64));
+    }
+
+    {
+        a : float64 = ---;
+        M : CMatrix64 = ---;
+        calculation(#code {
+            x := 42.0; // 8 bytes
+            a = x;
+
+            copy(*M, cmat64_id(4,4)); // 2 * 8 bytes [Complex] * 16 = 256 bytes
+        }); // Pool allocated 264 bytes!
+        assert(a == 42.0);
+        print("M = %\n", M);
+        print("%\n", cmat64_id(4,4));
     }
 }

@@ -15,7 +15,10 @@ Feel free to add functionality and performance upgrades.
 Complex and reals numbers, vectors, matrices interoperate automatically (in most cases).
 Many functions specialize during compile-time on the real or complex variant (e.g. all the elementary functions).
 
+- Utils
+    - calculation(Code); will create and release a Pool of memory for all the allocations in the Code block.
 - Complex numbers +, -, *, /,
+    - str; for pretty printing
 - Elementary
     - sign(r)
     - factorial(z)
@@ -40,7 +43,9 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - synthetic_division
     - repeated_synthetic_division
 - complex/real vector: CVector64/Vector64; real vector with subset of these functions
+    - str; for pretty printing
     - operators [], ==, +, -, *, /
+    - in-place functions add, sub, neg, mul, div [CVector64]
     - multiple initialization functions
     - conjugate
     - outer_product
@@ -51,7 +56,9 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - permute
     - swap
 - complex/real matrix: CMatrix64/Matrix64; real matrix with subset of these functions
+    - str; for pretty printing
     - operators [], [][], ==, +, -, *, /
+    - in-place functions add, sub, neg, mul, div [CMatrix64]
     - multiple initialization functions
     - row, column
     - reflector

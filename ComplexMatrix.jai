@@ -3,13 +3,37 @@
 
 
 
+
+
+
+
+str :: (m: CMatrix64, indent: string = "    ") -> string {
+    builder: String_Builder;
+    init_string_builder(*builder);
+    append(*builder, "\n");
+    for i: 0..m.rows-1 {
+        append(*builder, indent);
+        for j: 0..m.cols-1 {
+            print_to_builder(*builder, "%, ", str(m[i][j]) );
+        }
+        append(*builder, "\n");
+    }
+    return builder_to_string(*builder);
+}
+
+
+
+
+
+
+
 CMatrix64 :: struct {
     rows: int;
     cols: int;
     data: []Complex64;
 }
 
-cmat64 :: (rows: int, cols: int) -> CMatrix64 {
+cmat64 :: (rows: int, cols: int) -> CMatrix64 #must {
     res : CMatrix64 = ---;
     res.rows = rows;
     res.cols = cols;
@@ -17,10 +41,16 @@ cmat64 :: (rows: int, cols: int) -> CMatrix64 {
     return res;
 }
 
-copy :: (m: CMatrix64) -> CMatrix64 {
+copy :: (m: CMatrix64) -> CMatrix64 #must {
     res := cmat64(m.rows, m.cols);
     res.data = array_copy(m.data);
     return res;
+}
+
+copy :: (to: *CMatrix64, from: CMatrix64) {
+    to.rows = from.rows;
+    to.cols = from.cols;
+    to.data = array_copy(from.data);
 }
 
 operator [] :: inline (m: CMatrix64, i: int) -> []Complex64 {
@@ -32,7 +62,7 @@ operator [] :: inline (m: CMatrix64, i: int) -> []Complex64 {
     return array_view_count(m.data, i * m.cols, m.cols);
 }
 
-row :: (m: CMatrix64, i: int) -> CVector64 {
+row :: (m: CMatrix64, i: int) -> CVector64 #must {
     #if CHECKS {
         assert(i >= 0 && i < m.rows);
     }
@@ -43,7 +73,7 @@ row :: (m: CMatrix64, i: int) -> CVector64 {
     return res;
 }
 
-column :: (m: CMatrix64, i: int) -> CVector64 {
+column :: (m: CMatrix64, i: int) -> CVector64 #must {
     #if CHECKS {
         assert(i >= 0 && i < m.cols);
     }
@@ -67,7 +97,7 @@ operator == :: inline (a: CMatrix64, b: CMatrix64) -> bool {
 }
 
 
-operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -79,7 +109,17 @@ operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
     return res;
 }
 
-operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+add :: (a: *CMatrix64, b: CMatrix64) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    for 0..a.data.count-1 {
+        a.data[it] += b.data[it];
+    }
+}
+
+operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -91,7 +131,17 @@ operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
     return res;
 }
 
-operator - :: (a: CMatrix64) -> CMatrix64 {
+sub :: (a: *CMatrix64, b: CMatrix64) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    for 0..a.data.count-1 {
+        a.data[it] -= b.data[it];
+    }
+}
+
+operator - :: (a: CMatrix64) -> CMatrix64 #must {
     res := cmat64(a.rows, a.cols);
     for 0..a.data.count-1 {
         res.data[it] = -a.data[it];
@@ -99,9 +149,15 @@ operator - :: (a: CMatrix64) -> CMatrix64 {
     return res;
 }
 
+neg :: (a: *CMatrix64) {
+    for a.data {
+        a.data[it_index] = -it;
+    }
+}
 
 
-operator * :: (a: CMatrix64, val: float64) -> CMatrix64 #symmetric {
+
+operator * :: (a: CMatrix64, val: float64) -> CMatrix64 #must #symmetric {
     res := cmat64(a.rows, a.cols);
     for a.data {
         res.data[it_index] = val * it;
@@ -109,7 +165,7 @@ operator * :: (a: CMatrix64, val: float64) -> CMatrix64 #symmetric {
     return res;
 }
 
-operator * :: (a: CMatrix64, val: Complex64) -> CMatrix64 #symmetric {
+operator * :: (a: CMatrix64, val: Complex64) -> CMatrix64 #must #symmetric {
     res := cmat64(a.rows, a.cols);
     for a.data {
         res.data[it_index] = val * it;
@@ -117,9 +173,19 @@ operator * :: (a: CMatrix64, val: Complex64) -> CMatrix64 #symmetric {
     return res;
 }
 
+mul :: (a: *CMatrix64, val: float64) {
+    for 0..a.data.count-1 {
+        a.data[it] *= val;
+    }
+}
+mul :: (a: *CMatrix64, val: Complex64) {
+    for 0..a.data.count-1 {
+        a.data[it] *= val;
+    }
+}
 
 
-operator / :: (a: CMatrix64, val: float64) -> CMatrix64 {
+operator / :: (a: CMatrix64, val: float64) -> CMatrix64 #must {
     res := cmat64(a.rows, a.cols);
     for a.data {
         res.data[it_index] = it / val;
@@ -127,12 +193,23 @@ operator / :: (a: CMatrix64, val: float64) -> CMatrix64 {
     return res;
 }
 
-operator / :: (a: CMatrix64, val: Complex64) -> CMatrix64 {
+operator / :: (a: CMatrix64, val: Complex64) -> CMatrix64 #must {
     res := cmat64(a.rows, a.cols);
     for a.data {
         res.data[it_index] = it / val;
     }
     return res;
+}
+
+div :: (a: *CMatrix64, val: float64) {
+    for 0..a.data.count-1 {
+        a.data[it] /= val;
+    }
+}
+div :: (a: *CMatrix64, val: Complex64) {
+    for 0..a.data.count-1 {
+        a.data[it] /= val;
+    }
 }
 
 
@@ -143,7 +220,7 @@ operator / :: (a: CMatrix64, val: Complex64) -> CMatrix64 {
 // According to Table 2.12, the best performing loop order is j/k/i with
 // the least number of cache misses.
 // WARNING: no dimension checks! Make sure you  know what you're doing.
-operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     #if CHECKS {
         assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
     }
@@ -151,9 +228,9 @@ operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
     res := cmat64_zeros(a.rows, b.cols);
     for j: 0..b.cols-1 {
         for k: 0..a.cols-1 {
+            tmp := b[k][j];
             for i: 0..a.rows-1 {
-                // set(res, i, j, get(res, i, j) + get(a, i, k) * get(b, k, j));
-                res[i][j] += a[i][k] * b[k][j];
+                res[i][j] += a[i][k] * tmp;
             }
         }
     }
@@ -161,9 +238,29 @@ operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
 }
 
 
+// TODO: think of a smart way to do in-place multiplication
+//
+// mul :: (a: CMatrix64, b: CMatrix64) {
+//     #if CHECKS {
+//         assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+//     }
+
+//     res := cmat64_zeros(a.rows, b.cols);
+//     for j: 0..b.cols-1 {
+//         for k: 0..a.cols-1 {
+//             tmp := b[k][j];
+//             for i: 0..a.rows-1 {
+//                 res[i][j] += a[i][k] * tmp;
+//             }
+//         }
+//     }
+//     return res;
+// }
 
 
-operator * :: (a: CMatrix64, b: CVector64) -> CVector64 {
+
+
+operator * :: (a: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
     }
@@ -171,14 +268,13 @@ operator * :: (a: CMatrix64, b: CVector64) -> CVector64 {
     res := cvec64_zeros(a.rows);
     for i: 0..a.rows-1 {
         for j: 0..a.cols-1 {
-            // res.data[i] += get(a, i, j) * b[j];
             res.data[i] += a[i][j] * b[j];
         }
     }
     return res;
 }
 
-operator * :: (a: CVector64, b: CMatrix64) -> CVector64 {
+operator * :: (a: CVector64, b: CMatrix64) -> CVector64 #must {
     #if CHECKS {
         assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
     }
@@ -186,14 +282,13 @@ operator * :: (a: CVector64, b: CMatrix64) -> CVector64 {
     res := cvec64_zeros(a.dim);
     for i: 0..a.dim-1 {
         for j: 0..b.rows-1 {
-            // res.data[i] += get(b, i, j) * a[j];
             res.data[i] += b[i][j] * a[j];
         }
     }
     return res;
 }
 
-operator * :: (a: CMatrix64, b: Vector64) -> CVector64 {
+operator * :: (a: CMatrix64, b: Vector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
     }
@@ -201,14 +296,13 @@ operator * :: (a: CMatrix64, b: Vector64) -> CVector64 {
     res := cvec64_zeros(a.rows);
     for i: 0..a.rows-1 {
         for j: 0..a.cols-1 {
-            // res.data[i] += get(a, i, j) * b[j];
             res.data[i] += a[i][j] * b[j];
         }
     }
     return res;
 }
 
-operator * :: (a: Vector64, b: CMatrix64) -> CVector64 {
+operator * :: (a: Vector64, b: CMatrix64) -> CVector64 #must {
     #if CHECKS {
         assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
     }
@@ -216,7 +310,6 @@ operator * :: (a: Vector64, b: CMatrix64) -> CVector64 {
     res := cvec64_zeros(a.dim);
     for i: 0..a.dim-1 {
         for j: 0..b.rows-1 {
-            // res.data[i] += get(b, i, j) * a[j];
             res.data[i] += b[i][j] * a[j];
         }
     }
@@ -228,7 +321,7 @@ operator * :: (a: Vector64, b: CMatrix64) -> CVector64 {
 
 
 
-cmat64 :: (m: Matrix64) -> CMatrix64 {
+cmat64 :: (m: Matrix64) -> CMatrix64 #must {
     res := cmat64(m.rows, m.cols);
     for 0..res.data.count-1 {
         res.data[it] = c64(m.data[it]);
@@ -236,14 +329,14 @@ cmat64 :: (m: Matrix64) -> CMatrix64 {
     return res;
 }
 
-cmat64 :: inline (dim: int) -> CMatrix64 {
+cmat64 :: inline (dim: int) -> CMatrix64 #must {
     return cmat64(dim, dim);
 }
 
-cmat64 :: inline (rows: int, cols: int, init: float64) -> CMatrix64 {
+cmat64 :: inline (rows: int, cols: int, init: float64) -> CMatrix64 #must {
     return cmat64(rows, cols, c64(init, 0.0));
 }
-cmat64 ::  (rows: int, cols: int, init: Complex64) -> CMatrix64 {
+cmat64 ::  (rows: int, cols: int, init: Complex64) -> CMatrix64 #must {
     m := cmat64(rows, cols);
     for 0..rows*cols-1 {
         m.data[it] = init;
@@ -262,7 +355,7 @@ cmat64 ::  (rows: int, cols: int, init: Complex64) -> CMatrix64 {
 //     return m;
 // }
 
-cmat64 :: (rows: int, cols: int, values: ..Complex64) -> CMatrix64 {
+cmat64 :: (rows: int, cols: int, values: ..Complex64) -> CMatrix64 #must {
     #if CHECKS {
         assert(values.count <= rows * cols, "Too many values: rows*cols = %, values.count = %", rows*cols, values.count);
     }
@@ -275,10 +368,10 @@ cmat64 :: (rows: int, cols: int, values: ..Complex64) -> CMatrix64 {
 }
 
 
-cmat64 :: inline (dim: int, init: float64) -> CMatrix64 {
+cmat64 :: inline (dim: int, init: float64) -> CMatrix64 #must {
     return cmat64(dim, dim, c64(init, 0.0));
 }
-cmat64 :: inline (dim: int, init: Complex64) -> CMatrix64 {
+cmat64 :: inline (dim: int, init: Complex64) -> CMatrix64 #must {
     return cmat64(dim, dim, init);
 }
 
@@ -286,11 +379,11 @@ cmat64 :: inline (dim: int, init: Complex64) -> CMatrix64 {
 
 
 
-cmat64_zeros :: inline (rows: int, cols: int) -> CMatrix64 {
+cmat64_zeros :: inline (rows: int, cols: int) -> CMatrix64 #must {
     return cmat64(rows, cols, 0.0);
 }
 
-cmat64_zeros :: inline (dim: int) -> CMatrix64 {
+cmat64_zeros :: inline (dim: int) -> CMatrix64 #must {
     return cmat64(dim, dim, 0.0);
 }
 
@@ -298,27 +391,26 @@ cmat64_zeros :: inline (dim: int) -> CMatrix64 {
 
 
 
-cmat64_ones :: inline (rows: int, cols: int) -> CMatrix64 {
+cmat64_ones :: inline (rows: int, cols: int) -> CMatrix64 #must {
     return cmat64(rows, cols, R);
 }
 
-cmat64_ones :: inline (dim: int) -> CMatrix64 {
+cmat64_ones :: inline (dim: int) -> CMatrix64 #must {
     return cmat64(dim, dim, R);
 }
 
 
 
-cmat64_id :: (rows: int, cols: int) -> CMatrix64 {
+cmat64_id :: (rows: int, cols: int) -> CMatrix64 #must {
     m := cmat64_zeros(rows, cols);
     dim := ifx rows <= cols then rows else cols;
     for 0..dim-1 {
         m[it][it] = R;
-        // set(m, it, it, R);
     }
     return m;
 }
 
-cmat64_id :: inline (dim: int) -> CMatrix64 {
+cmat64_id :: inline (dim: int) -> CMatrix64 #must {
     return cmat64_id(dim, dim);
 }
 
@@ -326,9 +418,13 @@ cmat64_id :: inline (dim: int) -> CMatrix64 {
 
 
 
-cmat64_reflector :: (normal: CVector64) -> CMatrix64 {
+cmat64_reflector :: (normal: CVector64) -> CMatrix64 #must {
+
     tau := c64(2.0)/(conjugate(normal)*normal);
-    return cmat64_id(normal.dim) - tau * normal / normal;
+
+    res := cmat64_id(normal.dim);
+    sub(res, tau * normal / normal);
+    return res;
 }
 
 
@@ -611,24 +707,24 @@ test_complex_matrix :: () {
     print("\n\nComplex Matrix -------------------------------\n\n");
     {
         m := cmat64_zeros(3, 3);
-        print("m = %\n", m);
+        print("%\n", str(m));
     }
     {
         a := 3;
         m := cmat64_zeros(a, a);
-        print("m = %\n", m);
+        print("%\n", str(m));
     }
 
 
 
     {
         m := cmat64(3, 3, 42.0);
-        print("m = %\n", m);
+        print("%\n", str(m));
     }
     {
         a := 3;
         m := cmat64(a, a, 42.0);
-        print("m = %\n", m);
+        print("%\n", str(m));
     }
 
 
@@ -636,12 +732,12 @@ test_complex_matrix :: () {
         m := cmat64(3, 3, 42.0);
         m[1][2] = R;
         assert(m[1][2] == c64(1.0, 0.0));
-        print("m = %\n", m);
+        print("m = \n%\n", str(m));
     }
 
     {
         m := cmat64_id(4);
-        print("m = %\n", m);
+        print("m = \n%\n", str(m));
         assert(m[0][1] == c64(0.0, 0.0));
         assert(m[1][1] == c64(1.0, 0.0));
         assert(m[2][1] == c64(0.0, 0.0));
@@ -656,16 +752,26 @@ test_complex_matrix :: () {
     }
 
     {
+        a := cmat64_id(2,2);
+        b := cmat64_id(2,2);
+        add(a, b);
+        assert(a == 2.0 * b);
+
+        a = a + b;
+        assert(a == 3.0 * b);
+    }
+
+    {
         m := cmat64(2, 2, R, c64(2.0), c64(3.0), c64(4.0));
-        print("m = %\n", m);
+        print("m = \n%\n", str(m));
         m = m * m;
-        print("m = %\n", m);
+        print("m = \n%\n", str(m));
     }
     {
         m := cmat64(2, 2, R, 2.0*R, 3.0*R, 4.0*R);
-        print("m = %\n", m);
+        print("m = \n%\n", str(m));
         m = m * m;
-        print("m = %\n", m);
+        print("m = \n%\n", str(m));
     }
     // {
     //     m := cmat64(1, 3, 1.0, 2.0, 3.0);
@@ -685,16 +791,16 @@ test_complex_matrix :: () {
 
     {
         m := cmat64(2, 2, R, I, c64(2.0, -1.0), 2.0 + 3.0*I);
-        print("m = %\n", m);
+        print("m = \n%\n", str(m));
         t1 := tensor(m, m);
-        print("t1 = %\n", t1);
+        print("t1 = \n%\n", str(t1));
         t2 := cmat64(4, 4,
             R            ,             I,             I,   -R           ,
             2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
             2.0 -       I, 1.0 + 2.0 * I, 2.0 + 3.0 * I, -3.0 +  2.0 * I,
             3.0 - 4.0 * I, 7.0 + 4.0 * I, 7.0 + 4.0 * I, -5.0 + 12.0 * I
         );
-        print("t2 = %\n", t2);
+        print("t2 = \n%\n", str(t2));
         assert(t1 == t2);
     }
 
