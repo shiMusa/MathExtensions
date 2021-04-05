@@ -47,7 +47,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - operators [], ==, +, -, *, /
     - in-place functions add, sub, neg, mul, div [CVector64]
     - multiple initialization functions
-    - conjugate
+    - conjugate, in-place conjugate
     - outer_product
     - reflect
     - norm(vec, n) with n ∈ ℝ, specialisations norm_2, norm_1, norm_inf
@@ -64,7 +64,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - reflector
     - submatrix
     - transpose
-    - conjugate
+    - conjugate, in-place conjugate
     - conjugate_transpose = dagger
     - tensor
     - norm_1, norm_inf, norm_frobenius
@@ -90,6 +90,8 @@ Many functions specialize during compile-time on the real or complex variant (e.
 
 ### Future Tasks
 
+- general
+    - due to the constant work and improvment, many functions could be optimized using e.g. in-place functions instead of allocating data.
 - linear algebra
     - LAPACK Scaling for Gaussian factorization (Algorithm 3.9.1 [1])
     - Iterative Improvement for Gaussian factorization (Algorithm 3.9.2 [1])

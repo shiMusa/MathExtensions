@@ -109,7 +109,7 @@ operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     return res;
 }
 
-add :: (a: *CMatrix64, b: CMatrix64) {
+add :: (a: CMatrix64, b: CMatrix64) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -131,7 +131,7 @@ operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     return res;
 }
 
-sub :: (a: *CMatrix64, b: CMatrix64) {
+sub :: (a: CMatrix64, b: CMatrix64) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -149,7 +149,7 @@ operator - :: (a: CMatrix64) -> CMatrix64 #must {
     return res;
 }
 
-neg :: (a: *CMatrix64) {
+neg :: (a: CMatrix64) {
     for a.data {
         a.data[it_index] = -it;
     }
@@ -173,12 +173,12 @@ operator * :: (a: CMatrix64, val: Complex64) -> CMatrix64 #must #symmetric {
     return res;
 }
 
-mul :: (a: *CMatrix64, val: float64) {
+mul :: (a: CMatrix64, val: float64) {
     for 0..a.data.count-1 {
         a.data[it] *= val;
     }
 }
-mul :: (a: *CMatrix64, val: Complex64) {
+mul :: (a: CMatrix64, val: Complex64) {
     for 0..a.data.count-1 {
         a.data[it] *= val;
     }
@@ -201,12 +201,12 @@ operator / :: (a: CMatrix64, val: Complex64) -> CMatrix64 #must {
     return res;
 }
 
-div :: (a: *CMatrix64, val: float64) {
+div :: (a: CMatrix64, val: float64) {
     for 0..a.data.count-1 {
         a.data[it] /= val;
     }
 }
-div :: (a: *CMatrix64, val: Complex64) {
+div :: (a: CMatrix64, val: Complex64) {
     for 0..a.data.count-1 {
         a.data[it] /= val;
     }
@@ -544,17 +544,22 @@ transpose :: (m: CMatrix64) -> CMatrix64 #must {
     return res;
 }
 
-// transpose :: (m: *Matrix64) {
-//     m.transp
 
-//     // for r: 0..m.rows-1 {
-//     //     for c: 0..m.cols-1 {
-//     //         i1 := r * m.cols + c;
-//     //         i2 := 
-//     //         set(<<m, c, r, get(<<m, r, c));
-//     //     }
-//     // }
+// TODO: finish in-place transpose
+//
+// transpose :: (m: *CMatrix64) {
+//     rs := m.rows;
+//     cs := m.cols;
+//     m.rows = m.cols;
+//     m.cols = rs;
+
+//     for i: 0..rs {
+//         for j:0..i-1 {
+//             m.data[], m[j][i]
+//         }
+//     }
 // }
+
 
 
 
@@ -564,6 +569,12 @@ conjugate :: (m: CMatrix64) -> CMatrix64 {
         res.data[it_index] = conjugate(it);
     }
     return res;
+}
+
+conjugate :: (m: *CMatrix64) {
+    for m.data {
+        m.data[it_index] = conjugate(it);
+    }
 }
 
 

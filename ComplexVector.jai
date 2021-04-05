@@ -154,7 +154,7 @@ operator + :: (a: CVector64, b: Vector64) -> CVector64 #symmetric {
     return res;
 }
 
-add :: (a: *CVector64, b: CVector64) {
+add :: (a: CVector64, b: CVector64) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -163,7 +163,7 @@ add :: (a: *CVector64, b: CVector64) {
         a.data[it] += b[it];
     }
 }
-add :: (a: *CVector64, b: Vector64) {
+add :: (a: CVector64, b: Vector64) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -207,7 +207,7 @@ operator - :: (a: Vector64, b: CVector64) -> CVector64 #must {
     return res;
 }
 
-sub :: (a: *CVector64, b: CVector64) {
+sub :: (a: CVector64, b: CVector64) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -216,7 +216,7 @@ sub :: (a: *CVector64, b: CVector64) {
         a.data[it] -= b[it];
     }
 }
-sub :: (a: *CVector64, b: Vector64) {
+sub :: (a: CVector64, b: Vector64) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }
@@ -234,7 +234,7 @@ operator - :: (a: CVector64) -> CVector64 #must {
     return res;
 }
 
-neg :: (a: *CVector64) {
+neg :: (a: CVector64) {
     for 0..a.dim-1 {
         a.data[it] = -a.data[it];
     }
@@ -254,17 +254,15 @@ operator * :: (a: CVector64, val: float64) -> CVector64 #symmetric {
     }
     return res;
 }
-mul :: (a: *CVector64, val: Complex64) {
+mul :: (a: CVector64, val: Complex64) {
     for 0..a.dim-1 {
         a.data[it] *= val;
     }
-    return res;
 }
-mul :: (a: *CVector64, val: float64) {
+mul :: (a: CVector64, val: float64) {
     for 0..a.dim-1 {
         a.data[it] *= val;
     }
-    return res;
 }
 
 
@@ -283,17 +281,15 @@ operator / :: (a: CVector64, val: float64) -> CVector64 #must {
     }
     return res;
 }
-div :: (a: *CVector64, val: Complex64) {
+div :: (a: CVector64, val: Complex64) {
     for 0..a.dim-1 {
         a.data[it] /= val;
     }
-    return res;
 }
-div :: (a: *CVector64, val: float64) {
+div :: (a: CVector64, val: float64) {
     for 0..a.dim-1 {
         a.data[it] /= val;
     }
-    return res;
 }
 
 
@@ -346,6 +342,18 @@ permute :: (v: CVector64, order: ..int) -> CVector64 #must {
     return res;
 }
 
+permute :: (v: *CVector64, order: ..int) {
+    #if CHECKS {
+        assert(v.dim == order.count);
+    }
+
+    for 0..v.dim-1 {
+        if order[it] <= it then continue;
+
+        v.data[it], v.data[order[it]] = swap(v.data[it], v.data[order[it]]);
+    }
+}
+
 swap :: (v: CVector64, i: int, j: int) {
     v.data[i], v.data[j] = swap(v.data[i], v.data[j]);
 }
@@ -359,7 +367,11 @@ conjugate :: (v: CVector64) -> CVector64 #must {
     }
     return res;
 }
-
+conjugate :: (v: *CVector64) {
+    for v.data {
+        v.data[it_index] = conjugate(it);
+    }
+}
 
 
 

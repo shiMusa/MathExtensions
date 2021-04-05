@@ -11,7 +11,7 @@
 // Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // solves the system A x = b with 2x2 matrix A
 sl2 :: solve_linear_2x2;
-solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
         assert(b.dim == 2, "b is not a 2-dim vector: dim = %", b.dim);
@@ -40,7 +40,7 @@ solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 {
 // solve the system Lx = b where L is a unit left-triangluar matrix
 // that means, all diagonals are 1 and all L_ij = 0 for j > i.
 sllta :: solve_linear_left_triangular;
-solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
         assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
@@ -67,7 +67,7 @@ solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 {
 // solve the system Rx = b where R is a right-triangluar matrix
 // that means all R_ij = 0 for j < i.
 slrta :: solve_linear_right_triangular;
-solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
         assert(is_right_triangular(R), "R is not right-triangular");
@@ -97,7 +97,7 @@ solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
 // Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
 // solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
 slrqta :: solve_linear_right_quasi_triangular;
-solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
         assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!");
@@ -151,7 +151,7 @@ solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64
 // Algorithm 3.4.8 Orthogonal Projection, page 167
 solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop :: solve_linear_orthogonal_projection;
-solve_linear_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(is_unitary(Q));
     }
@@ -166,7 +166,7 @@ solve_linear_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 
 // Algorithm 3.4.9 Successive Orthogonal Projection, page 168
 // not sure if this algo is useful. seems to be slower than the previous one.
 slsop :: solve_linear_successive_orthogonal_projection;
-solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(is_unitary(Q));
     }
@@ -188,7 +188,7 @@ solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) ->
 // Springer
 // 3.4.5.1 Left Trapezoidal, page 159
 slltz :: solve_linear_left_trapezoidal;
-solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(L.rows == b.dim);
         assert(is_left_trapezoidal(L));
@@ -215,7 +215,7 @@ solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 {
     return res;
 }
 
-solve_linear_left_trapezoidal :: (L: CMatrix64, M: CMatrix64) -> CMatrix64 {
+solve_linear_left_trapezoidal :: (L: CMatrix64, M: CMatrix64) -> CMatrix64 #must {
     #if CHECKS {
         assert(L.rows == M.rows);
     }
@@ -241,7 +241,7 @@ solve_linear_left_trapezoidal :: (L: CMatrix64, M: CMatrix64) -> CMatrix64 {
 // 3.4.5.2 Right Trapezoidal, page 160
 // There are degrees of freedom left. These are set to 0 here.
 slrtz :: solve_linear_right_trapezoidal;
-solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(R.rows == b.dim);
         assert(is_right_trapezoidal(R));
@@ -260,7 +260,7 @@ solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 {
 }
 
 
-solve_linear_right_trapezoidal :: (R: CMatrix64, M: CMatrix64) -> CMatrix64 {
+solve_linear_right_trapezoidal :: (R: CMatrix64, M: CMatrix64) -> CMatrix64 #must {
     #if CHECKS {
         assert(R.rows == M.rows);
     }
@@ -287,7 +287,7 @@ solve_linear_right_trapezoidal :: (R: CMatrix64, M: CMatrix64) -> CMatrix64 {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
-decompose_LR :: (M: CMatrix64) -> L: CMatrix64, R: CMatrix64 {
+decompose_LR :: (M: CMatrix64) -> L: CMatrix64 #must, R: CMatrix64 #must {
 
     L := cmat64_id(M.rows, M.cols);
     R := cmat64_zeros(M.rows, M.cols);
@@ -316,7 +316,7 @@ decompose_LR :: (M: CMatrix64) -> L: CMatrix64, R: CMatrix64 {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
-gaussian_factorization_no_pivot :: (M: CMatrix64) -> CMatrix64 {
+gaussian_factorization_no_pivot :: (M: CMatrix64) -> CMatrix64 #must {
     A := copy(M);
     m := M.rows;
     n := M.cols;
@@ -345,7 +345,7 @@ gaussian_factorization_no_pivot :: (M: CMatrix64) -> CMatrix64 {
 slgf_np :: solve_linear_gaussian_factorization_no_pivot;
 solve_LRnp :: solve_linear_gaussian_factorization_no_pivot;
 solve_LUnp :: solve_linear_gaussian_factorization_no_pivot;
-solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -370,15 +370,18 @@ solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: CVector64) -> 
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
-gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int, cols: []int {
+gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64 #must, rows: []int #must, cols: []int #must {
     A := copy(M);
     m := A.rows;
     n := A.cols;
 
-    rows : [..]int;
-    cols : [..]int;
-    array_resize(*rows, A.rows, false);
-    array_resize(*cols, A.cols, false);
+    // rows : [..]int;
+    // cols : [..]int;
+    // array_resize(*rows, A.rows, false);
+    // array_resize(*cols, A.cols, false);
+    rows := NewArray(A.rows, int, false);
+    cols := NewArray(A.cols, int, false);
+
     for 0..A.rows-1 {
         rows[it] = it;
     }
@@ -438,7 +441,7 @@ gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int, c
 slgf_fp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LRfp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LUfp :: solve_linear_gaussian_factorization_full_pivot;
-solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -466,13 +469,15 @@ solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: CVector64) -
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
-gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int {
+gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int  #must {
     A := copy(M);
     m := A.rows;
     n := A.cols;
 
-    rows : [..]int;
-    array_resize(*rows, A.rows, false);
+    // rows : [..]int;
+    // array_resize(*rows, A.rows, false);
+    rows := NewArray(A.rows, int, false);
+
     for 0..A.rows-1 {
         rows[it] = it;
     }
@@ -521,7 +526,7 @@ gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int {
 slgf_rp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LRrp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LUrp :: solve_linear_gaussian_factorization_row_pivot;
-solve_linear_gaussian_factorization_row_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 {
+solve_linear_gaussian_factorization_row_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
