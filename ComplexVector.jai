@@ -293,7 +293,7 @@ div :: (a: CVector64, val: float64) {
 }
 
 
-operator * :: (a: CVector64, b: CVector64) -> Complex64 #must {
+operator * :: (a: CVector64, b: CVector64) -> Complex64 {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
     }

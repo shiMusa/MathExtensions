@@ -121,9 +121,9 @@ one :: inline ($T: Type) -> T {
 
 DELTA :: 1.0e-6;
 approx :: (a: $T, b: T) -> bool {
-    #if T == CVector64 {
+    #if T == CVector64 || T == Vector64 {
         return norm_2(a - b) < DELTA;
-    } else #if T == CMatrix64 {
+    } else #if T == CMatrix64 || T == Matrix64 {
         return norm_frobenius(a - b) < DELTA;
     } else
         return abs(a - b) < DELTA;

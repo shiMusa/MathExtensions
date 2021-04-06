@@ -3,13 +3,36 @@
 
 
 
+
+
+
+str :: (m: Matrix64, indent: string = "    ") -> string {
+    builder: String_Builder;
+    init_string_builder(*builder);
+    append(*builder, "\n");
+    for i: 0..m.rows-1 {
+        append(*builder, indent);
+        for j: 0..m.cols-1 {
+            print_to_builder(*builder, "%, ", m[i][j] );
+        }
+        append(*builder, "\n");
+    }
+    return builder_to_string(*builder);
+}
+
+
+
+
+
+
+
 Matrix64 :: struct {
     rows: int;
     cols: int;
     data: []float64;
 }
 
-mat64 :: (rows: int, cols: int) -> Matrix64 {
+mat64 :: (rows: int, cols: int) -> Matrix64 #must {
     res : Matrix64 = ---;
     res.rows = rows;
     res.cols = cols;
@@ -17,12 +40,18 @@ mat64 :: (rows: int, cols: int) -> Matrix64 {
     return res;
 }
 
-copy :: (m: Matrix64) -> Matrix64 {
+copy :: (m: Matrix64) -> Matrix64 #must {
     res : Matrix64 = ---;
     res.cols = m.cols;
     res.rows = m.rows;
     res.data = array_copy(m.data);
     return res;
+}
+
+copy :: (to: *Matrix64, from: Matrix64) {
+    to.rows = from.rows;
+    to.cols = from.cols;
+    to.data = array_copy(from.data);
 }
 
 
@@ -34,11 +63,24 @@ operator [] :: inline (m: Matrix64, i: int) -> []float64 {
 
     return array_view_count(m.data, i * m.cols, m.cols);
 }
-
-row :: (m: Matrix64, i: int) -> Vector64 {
+row :: (m: Matrix64, i: int) -> Vector64 #must {
+    #if CHECKS {
+        assert(i >= 0 && i < m.rows);
+    }
     res := vec64(m.cols);
     for 0..m.cols-1 {
         res.data[it] = m[i][it];
+    }
+    return res;
+}
+
+column :: (m: Matrix64, i: int) -> Vector64 #must {
+    #if CHECKS {
+        assert(i >= 0 && i < m.cols);
+    }
+    res := vec64(m.rows);
+    for 0..m.rows-1 {
+        res.data[it] = m[it][i];
     }
     return res;
 }
@@ -56,7 +98,7 @@ operator == :: inline (a: Matrix64, b: Matrix64) -> bool {
 }
 
 
-operator + :: (a: Matrix64, b: Matrix64) -> Matrix64 {
+operator + :: (a: Matrix64, b: Matrix64) -> Matrix64 #must {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -67,8 +109,17 @@ operator + :: (a: Matrix64, b: Matrix64) -> Matrix64 {
     }
     return res;
 }
+add :: (a: Matrix64, b: Matrix64) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
 
-operator - :: (a: Matrix64, b: Matrix64) -> Matrix64 {
+    for 0..a.data.count-1 {
+        a.data[it] += b.data[it];
+    }
+}
+
+operator - :: (a: Matrix64, b: Matrix64) -> Matrix64 #must {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -79,29 +130,53 @@ operator - :: (a: Matrix64, b: Matrix64) -> Matrix64 {
     }
     return res;
 }
+sub :: (a: Matrix64, b: Matrix64) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
 
-operator - :: (a: Matrix64) -> Matrix64 {
+    for 0..a.data.count-1 {
+        a.data[it] -= b.data[it];
+    }
+}
+
+operator - :: (a: Matrix64) -> Matrix64 #must {
     res := mat64(a.rows, a.cols);
     for 0..a.data.count {
         res.data[it] = -a.data[it];
     }
     return res;
 }
+neg :: (a: Matrix64) {
+    for a.data {
+        a.data[it_index] = -it;
+    }
+}
 
-operator * :: (a: Matrix64, val: float64) -> Matrix64 #symmetric {
+operator * :: (a: Matrix64, val: float64) -> Matrix64 #must #symmetric {
     res := mat64(a.rows, a.cols);
     for a.data {
         res.data[it_index] = val * it;
     }
     return res;
 }
+mul :: (a: Matrix64, val: float64) {
+    for 0..a.data.count-1 {
+        a.data[it] *= val;
+    }
+}
 
-operator / :: (a: Matrix64, val: float64) -> Matrix64 {
+operator / :: (a: Matrix64, val: float64) -> Matrix64 #must {
     res := mat64(a.rows, a.cols);
     for a.data {
         res.data[it_index] = it / val;
     }
     return res;
+}
+div :: (a: Matrix64, val: float64) {
+    for 0..a.data.count-1 {
+        a.data[it] /= val;
+    }
 }
 
 
@@ -117,7 +192,7 @@ operator / :: (a: Matrix64, val: float64) -> Matrix64 {
 // that have much better perfomances! 
 //
 // WARNING: no dimension checks! Make sure you  know what you're doing.
-operator * :: (a: Matrix64, b: Matrix64) -> Matrix64 {
+operator * :: (a: Matrix64, b: Matrix64) -> Matrix64 #must {
     #if CHECKS {
         assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
     }
@@ -139,7 +214,7 @@ operator * :: (a: Matrix64, b: Matrix64) -> Matrix64 {
 
 
 
-operator * :: (a: Matrix64, b: Vector64) -> Vector64 {
+operator * :: (a: Matrix64, b: Vector64) -> Vector64 #must {
     #if CHECKS {
         assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
     }
@@ -154,7 +229,7 @@ operator * :: (a: Matrix64, b: Vector64) -> Vector64 {
     return res;
 }
 
-operator * :: (a: Vector64, b: Matrix64) -> Vector64 {
+operator * :: (a: Vector64, b: Matrix64) -> Vector64 #must {
     #if CHECKS {
         assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
     }
@@ -169,7 +244,7 @@ operator * :: (a: Vector64, b: Matrix64) -> Vector64 {
     return res;
 }
 
-operator * :: (a: Matrix64, b: CVector64) -> CVector64 {
+operator * :: (a: Matrix64, b: CVector64) -> CVector64 #must {
     #if CHECKS {
         assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
     }
@@ -184,7 +259,7 @@ operator * :: (a: Matrix64, b: CVector64) -> CVector64 {
     return res;
 }
 
-operator * :: (a: CVector64, b: Matrix64) -> CVector64 {
+operator * :: (a: CVector64, b: Matrix64) -> CVector64 #must {
     #if CHECKS {
         assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
     }
@@ -205,6 +280,13 @@ operator * :: (a: CVector64, b: Matrix64) -> CVector64 {
 
 
 
+operator / :: inline (a: Matrix64, b: Matrix64) -> Matrix64 #must {
+    return inverse(b) * a;
+}
+
+
+
+
 
 
 
@@ -212,7 +294,7 @@ mat64 :: inline (dim: int) -> Matrix64 {
     return mat64(dim, dim);
 }
 
-mat64 :: (rows: int, cols: int, init: float64) -> Matrix64 {
+mat64 :: (rows: int, cols: int, init: float64) -> Matrix64 #must {
     m := mat64(rows, cols);
     for 0..rows*cols-1 {
         m.data[it] = init;
@@ -220,7 +302,7 @@ mat64 :: (rows: int, cols: int, init: float64) -> Matrix64 {
     return m;
 }
 
-mat64 :: (rows: int, cols:int, values: ..float64) -> Matrix64 {
+mat64 :: (rows: int, cols:int, values: ..float64) -> Matrix64 #must {
     #if CHECKS {
         assert(values.count <= rows * cols, "Too many values: rows*cols = %, values.count = %", rows*cols, values.count);
     }
@@ -233,7 +315,7 @@ mat64 :: (rows: int, cols:int, values: ..float64) -> Matrix64 {
 }
 
 
-mat64 :: inline (dim: int, init: float64) -> Matrix64 {
+mat64 :: inline (dim: int, init: float64) -> Matrix64 #must {
     return mat64(dim, dim, init);
 }
 
@@ -241,11 +323,11 @@ mat64 :: inline (dim: int, init: float64) -> Matrix64 {
 
 
 
-mat64_zeros :: inline (rows: int, cols: int) -> Matrix64 {
+mat64_zeros :: inline (rows: int, cols: int) -> Matrix64 #must {
     return mat64(rows, cols, 0.0);
 }
 
-mat64_zeros :: inline (dim: int) -> Matrix64 {
+mat64_zeros :: inline (dim: int) -> Matrix64 #must {
     return mat64(dim, dim, 0.0);
 }
 
@@ -253,11 +335,11 @@ mat64_zeros :: inline (dim: int) -> Matrix64 {
 
 
 
-mat64_ones :: inline (rows: int, cols: int) -> Matrix64 {
+mat64_ones :: inline (rows: int, cols: int) -> Matrix64 #must {
     return mat64(rows, cols, 1.0);
 }
 
-mat64_ones :: inline (dim: int) -> Matrix64 {
+mat64_ones :: inline (dim: int) -> Matrix64 #must {
     return mat64(dim, dim, 1.0);
 }
 
@@ -288,7 +370,7 @@ set :: inline (m: Matrix64, row: int, col: int, val: float64) {
 }
 
 
-mat64_id :: (rows: int, cols: int) -> Matrix64 {
+mat64_id :: (rows: int, cols: int) -> Matrix64 #must {
     m := mat64_zeros(rows, cols);
     dim := ifx rows <= cols then rows else cols;
     for 0..dim-1 {
@@ -297,7 +379,7 @@ mat64_id :: (rows: int, cols: int) -> Matrix64 {
     return m;
 }
 
-mat64_id :: inline (dim: int) -> Matrix64 {
+mat64_id :: inline (dim: int) -> Matrix64 #must {
     return mat64_id(dim, dim);
 }
 
@@ -305,11 +387,11 @@ mat64_id :: inline (dim: int) -> Matrix64 {
 
 
 
-mat64_hadamard_2 :: inline () -> Matrix64 {
+mat64_hadamard_2 :: inline () -> Matrix64 #must {
     return mat64(2, 2, 1.0, 1.0, 1.0, -1.0);
 }
 
-mat64_hadamard :: inline (nestings: int) -> Matrix64 {
+mat64_hadamard :: inline (nestings: int) -> Matrix64 #must {
     #if CHECKS {
         assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
     }
@@ -322,8 +404,124 @@ mat64_hadamard :: inline (nestings: int) -> Matrix64 {
 
 
 
+
+mat64_reflector :: (normal: Vector64) -> Matrix64 #must {
+
+    tau := 2.0/(normal*normal);
+
+    res := mat64_id(normal.dim);
+    sub(res, tau * normal / normal);
+    return res;
+}
+
+
+// inclusive first bound, exclusive last bound
+mat64_submatrix :: (M: Matrix64, row_from: int, row_to: int, column_from: int, column_to: int) -> Matrix64 #must {
+    #if CHECKS {
+        assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
+        assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
+    }
+    res := mat64(row_to-row_from, column_to-column_from);
+
+    for i: 0..row_to-row_from-1 {
+        for j: 0..column_to-column_from-1 {
+            res[i][j] = M[i+row_from][j+column_from];
+        }
+    }
+
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+// there are faster ways of doing this.
+permute_rows :: (M: Matrix64, order: ..int) -> Matrix64 #must {
+    #if CHECKS {
+        assert(order.count == M.rows);
+    }
+
+    res := mat64(M.rows, M.cols);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            res[i][j] = M[order[i]][j];
+        }
+    }
+
+    return res;
+}
+
+// there are faster ways of doing this.
+permute_columns :: (M: Matrix64, order: ..int) -> Matrix64 #must {
+    #if CHECKS {
+        assert(order.count == M.cols);
+    }
+
+    res := mat64(M.rows, M.cols);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            res[i][j] = M[i][order[j]];
+        }
+    }
+
+    return res;
+}
+
+// there are faster ways of doing this.
+permute :: (M: Matrix64, row_order: []int, col_order: []int) -> Matrix64 #must {
+    #if CHECKS {
+        assert(row_order.count == M.rows);
+        assert(col_order.count == M.cols);
+    }
+
+    res := mat64(M.rows, M.cols);
+    for i: 0..M.rows-1 {
+        for j: 0..M.cols-1 {
+            res[i][j] = M[row_order[i]][col_order[j]];
+        }
+    }
+
+    return res;
+}
+
+
+swap_columns :: (M: Matrix64, i: int, j: int) {
+    #if CHECKS {
+        assert(i >= 0 && j >= 0 && i != j);
+        assert(i < M.cols && j < M.cols);
+    }
+
+    for 0..M.rows-1 {
+        M[it][i], M[it][j] = swap(M[it][i], M[it][j]);
+    }
+}
+
+swap_rows :: (M: Matrix64, i: int, j: int) {
+    #if CHECKS {
+        assert(i >= 0 && j >= 0 && i != j);
+        assert(i < M.rows && j < M.rows);
+    }
+
+    for 0..M.cols-1 {
+        M[i][it], M[j][it] = swap(M[i][it], M[j][it]);
+    }
+}
+
+
+
+
+
+
+
+
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: Matrix64, b: Matrix64) -> Matrix64 {
+tensor :: (a: Matrix64, b: Matrix64) -> Matrix64 #must {
     res := mat64(a.rows * b.rows, a.cols * b.cols);
     for r: 0..res.rows-1 {
         ar := r/b.rows;
@@ -376,13 +574,71 @@ transpose :: (m: Matrix64) -> Matrix64 #must {
 
 
 
-
-
-
-mat64_reflector :: (normal: Vector64) -> Matrix64 {
-    tau := 2.0/(normal*normal);
-    return mat64_id(normal.dim) - tau * normal / normal;
+conjugate :: (m: Matrix64) -> Matrix64 #must {
+    return copy(m);
 }
+
+conjugate :: (m: *Matrix64) {}
+
+
+conjugate_transpose :: inline (m: Matrix64) -> Matrix64 #must {
+    return transpose(m);
+}
+
+
+
+
+
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Lemma 3.5.4 Matrix Norms, page 176
+
+// this needs the largest eigenvalue
+// norm_2 :: inline (v: CVector64) -> float64 {
+//     return norm(v, 2.0);
+// }
+
+norm_1 :: (m: Matrix64) -> float64 {
+    res : float64 = 0.0;
+
+    for j: 0..m.cols {
+        sum : float64 = 0.0;
+        for i: 0..m.rows {
+            sum += abs(m[i][j]);
+        }
+        res = ifx res < sum then sum else res;
+    }
+
+    return res;
+}
+
+norm_inf :: (m: Matrix64) -> float64 {
+    res : float64 = 0.0;
+
+    for i: 0..m.rows {
+        sum : float64 = 0.0;
+        for j: 0..m.cols {
+            sum += abs(m[i][j]);
+        }
+        res = ifx res < sum then sum else res;
+    }
+
+    return res;
+}
+
+norm_frobenius :: (m: Matrix64) -> float64 {
+    sum : float64 = 0.0;
+    for m.data {
+        sum += abs(it);
+    }
+    return sum;
+}
+
+
+
 
 
 

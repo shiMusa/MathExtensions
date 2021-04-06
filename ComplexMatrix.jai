@@ -108,8 +108,28 @@ operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     }
     return res;
 }
+operator + :: (a: CMatrix64, b: Matrix64) -> CMatrix64 #must #symmetric {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    res := cmat64(a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = a.data[it] + b.data[it];
+    }
+    return res;
+}
 
 add :: (a: CMatrix64, b: CMatrix64) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    for 0..a.data.count-1 {
+        a.data[it] += b.data[it];
+    }
+}
+add :: (a: CMatrix64, b: Matrix64) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -130,8 +150,39 @@ operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     }
     return res;
 }
+operator - :: (a: CMatrix64, b: Matrix64) -> CMatrix64 #must {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    res := cmat64(a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = a.data[it] - b.data[it];
+    }
+    return res;
+}
+operator - :: (a: Matrix64, b: CMatrix64) -> CMatrix64 #must {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    res := cmat64(a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = a.data[it] - b.data[it];
+    }
+    return res;
+}
 
 sub :: (a: CMatrix64, b: CMatrix64) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    for 0..a.data.count-1 {
+        a.data[it] -= b.data[it];
+    }
+}
+sub :: (a: CMatrix64, b: Matrix64) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
     }
@@ -236,6 +287,38 @@ operator * :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     }
     return res;
 }
+operator * :: (a: CMatrix64, b: Matrix64) -> CMatrix64 #must {
+    #if CHECKS {
+        assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+    }
+
+    res := cmat64_zeros(a.rows, b.cols);
+    for j: 0..b.cols-1 {
+        for k: 0..a.cols-1 {
+            tmp := b[k][j];
+            for i: 0..a.rows-1 {
+                res[i][j] += a[i][k] * tmp;
+            }
+        }
+    }
+    return res;
+}
+operator * :: (a: Matrix64, b: CMatrix64) -> CMatrix64 #must {
+    #if CHECKS {
+        assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+    }
+
+    res := cmat64_zeros(a.rows, b.cols);
+    for j: 0..b.cols-1 {
+        for k: 0..a.cols-1 {
+            tmp := b[k][j];
+            for i: 0..a.rows-1 {
+                res[i][j] += a[i][k] * tmp;
+            }
+        }
+    }
+    return res;
+}
 
 
 // TODO: think of a smart way to do in-place multiplication
@@ -323,6 +406,12 @@ operator * :: (a: Vector64, b: CMatrix64) -> CVector64 #must {
 
 
 operator / :: inline (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+    return inverse(b) * a;
+}
+operator / :: inline (a: CMatrix64, b: Matrix64) -> CMatrix64 {
+    return inverse(b) * a;
+}
+operator / :: inline (a: Matrix64, b: CMatrix64) -> CMatrix64 {
     return inverse(b) * a;
 }
 
@@ -430,6 +519,21 @@ cmat64_id :: inline (dim: int) -> CMatrix64 #must {
 
 
 
+cmat64_hadamard_2 :: inline () -> CMatrix64 {
+    return cmat64(2, 2, R, R, R, -R);
+}
+
+cmat64_hadamard :: inline (nestings: int) -> CMatrix64 {
+    #if CHECKS {
+        assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
+    }
+    if nestings == 0 {
+        return cmat64_hadamard_2();
+    }
+    return tensor(cmat64_hadamard_2(), cmat64_hadamard(nestings-1));
+}
+
+
 
 
 cmat64_reflector :: (normal: CVector64) -> CMatrix64 #must {
@@ -443,7 +547,7 @@ cmat64_reflector :: (normal: CVector64) -> CMatrix64 #must {
 
 
 // inclusive first bound, exclusive last bound
-cmat64_submatrix :: (M: CMatrix64, row_from: int, row_to: int, column_from: int, column_to: int) -> CMatrix64 {
+cmat64_submatrix :: (M: CMatrix64, row_from: int, row_to: int, column_from: int, column_to: int) -> CMatrix64 #must {
     #if CHECKS {
         assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
         assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
@@ -463,7 +567,7 @@ cmat64_submatrix :: (M: CMatrix64, row_from: int, row_to: int, column_from: int,
 
 
 // there are faster ways of doing this.
-permute_rows :: (M: CMatrix64, order: ..int) -> CMatrix64 {
+permute_rows :: (M: CMatrix64, order: ..int) -> CMatrix64 #must {
     #if CHECKS {
         assert(order.count == M.rows);
     }
@@ -479,7 +583,7 @@ permute_rows :: (M: CMatrix64, order: ..int) -> CMatrix64 {
 }
 
 // there are faster ways of doing this.
-permute_columns :: (M: CMatrix64, order: ..int) -> CMatrix64 {
+permute_columns :: (M: CMatrix64, order: ..int) -> CMatrix64 #must {
     #if CHECKS {
         assert(order.count == M.cols);
     }
@@ -495,7 +599,7 @@ permute_columns :: (M: CMatrix64, order: ..int) -> CMatrix64 {
 }
 
 // there are faster ways of doing this.
-permute :: (M: CMatrix64, row_order: []int, col_order: []int) -> CMatrix64 {
+permute :: (M: CMatrix64, row_order: []int, col_order: []int) -> CMatrix64 #must {
     #if CHECKS {
         assert(row_order.count == M.rows);
         assert(col_order.count == M.cols);
@@ -577,7 +681,7 @@ transpose :: (m: CMatrix64) -> CMatrix64 #must {
 
 
 
-conjugate :: (m: CMatrix64) -> CMatrix64 {
+conjugate :: (m: CMatrix64) -> CMatrix64 #must {
     res := cmat64(m.cols, m.rows);
     for m.data {
         res.data[it_index] = conjugate(it);
@@ -592,7 +696,7 @@ conjugate :: (m: *CMatrix64) {
 }
 
 
-conjugate_transpose :: inline (m: CMatrix64) -> CMatrix64 {
+conjugate_transpose :: inline (m: CMatrix64) -> CMatrix64 #must {
     return conjugate(transpose(m));
 }
 dagger :: conjugate_transpose;
@@ -606,7 +710,7 @@ dagger :: conjugate_transpose;
 
 
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+tensor :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     res := cmat64(a.rows * b.rows, a.cols * b.cols);
     for r: 0..res.rows-1 {
         ar := r/b.rows;
@@ -624,7 +728,7 @@ tensor :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
 }
 
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: CMatrix64, b: Matrix64) -> CMatrix64 {
+tensor :: (a: CMatrix64, b: Matrix64) -> CMatrix64 #must {
     res := cmat64(a.rows * b.rows, a.cols * b.cols);
     for r: 0..res.rows-1 {
         ar := r/b.rows;
@@ -642,7 +746,7 @@ tensor :: (a: CMatrix64, b: Matrix64) -> CMatrix64 {
 }
 
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: Matrix64, b: CMatrix64) -> CMatrix64 {
+tensor :: (a: Matrix64, b: CMatrix64) -> CMatrix64 #must {
     res := cmat64(a.rows * b.rows, a.cols * b.cols);
     for r: 0..res.rows-1 {
         ar := r/b.rows;

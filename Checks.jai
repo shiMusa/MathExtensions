@@ -139,12 +139,21 @@ is_right_quasi_triangular :: (R: CMatrix64) -> bool {
 is_unitary :: (U: CMatrix64) -> bool {
     return is_quadratic(U) && dagger(U)*U == cmat64_id(U.rows);
 }
+is_unitary :: (U: Matrix64) -> bool {
+    return is_quadratic(U) && transpose(U)*U == mat64_id(U.rows);
+}
 
-is_left_trapezoidal :: inline (M: CMatrix64) -> bool {
+is_left_trapezoidal :: inline (M: $T) -> bool {
+    #if CHECKS {
+        assert(T == CMatrix64 || T == Matrix64, "not a matrix");
+    }
     return M.rows >= M.cols && is_left_triangular(M);
 }
 
-is_right_trapezoidal :: inline (M: CMatrix64) -> bool {
+is_right_trapezoidal :: inline (M: $T) -> bool {
+    #if CHECKS {
+        assert(T == CMatrix64 || T == Matrix64, "not a matrix");
+    }
     return M.cols >= M.rows && is_right_triangular(M);
 }
 
