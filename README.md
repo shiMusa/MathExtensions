@@ -87,6 +87,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - decompose_LR
     - gaussian_factorization_(no, full, row)_pivot
     - solve_linear_gaussian_factorization_(no, full, row)\_pivot = slgf_(n, f, r)p = solve_LR(n, f, r)p
+    - inverse(M); M quadratic matrix ∈ ℂ
 
 ### Future Tasks
 

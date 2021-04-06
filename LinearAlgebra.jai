@@ -545,6 +545,24 @@ solve_linear_gaussian_factorization_row_pivot :: (A: CMatrix64, b: CVector64) ->
 
 
 
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Algorithm 3.10.1 Matrix Inverse, page 261
+inverse :: (A: CMatrix64) -> CMatrix64 {
+    #if CHECKS {
+        assert(is_quadratic(A));
+    }
+    M, rows := gaussian_factorization_row_pivot(A);
+    L, R := decompose_LR(M);
+
+    Y := solve_linear_left_trapezoidal(L, cmat64_id(A.rows, A.cols));
+    X := solve_linear_right_trapezoidal(R, Y);
+    return permute_columns(X, ..rows);
+}
+
+
+
 
 
 
@@ -738,6 +756,21 @@ test_linear_algebra :: () {
             0.5*R, 0.5*R, 0.5-0.5*I,
             CZERO, I, CZERO,
             CZERO, CZERO, 0.5-0.5*I
+        )));
+    }
+
+    {
+        M := cmat64(3, 3,
+            2*R, I, -2*R,
+            CZERO, -I, 2*I,
+            R, CZERO, R+I
+        );
+        iM := inverse(M);
+        print("iM = %\n", str(iM));
+        assert(approx(iM, cmat64(3,3,
+            c64(0.25, 0.25), c64(0.25, 0.25), c64(0.5, -0.5),
+            -0.5*R, -0.5*R+I, R,
+            -0.25*R, -0.25*R, 0.5*R
         )));
     }
 }
