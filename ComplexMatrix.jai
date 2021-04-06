@@ -662,6 +662,10 @@ transpose :: (m: CMatrix64) -> CMatrix64 #must {
     return res;
 }
 
+transpose :: (m: *CMatrix64) {
+    <<m = transpose(<<m);
+}
+
 
 // TODO: finish in-place transpose
 //
@@ -698,6 +702,10 @@ conjugate :: (m: *CMatrix64) {
 
 conjugate_transpose :: inline (m: CMatrix64) -> CMatrix64 #must {
     return conjugate(transpose(m));
+}
+conjugate_transpose :: inline (m: *CMatrix64) {
+    transpose(m);
+    conjugate(m);
 }
 dagger :: conjugate_transpose;
 // hermitian :: conjugate_transpose;

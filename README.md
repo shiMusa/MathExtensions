@@ -46,8 +46,8 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - str; for pretty printing
     - operators [], ==, +, -, *, /
     - in-place functions add, sub, neg, mul, div [CVector64]
-    - multiple initialization functions
-    - conjugate, in-place conjugate
+    - multiple initialization functions (zeros, ones, basis, varargs, etc.)
+    - conjugate
     - outer_product
     - reflect
     - norm(vec, n) with n ∈ ℝ, specialisations norm_2, norm_1, norm_inf
@@ -59,12 +59,12 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - str; for pretty printing
     - operators [], [][], ==, +, -, *, /
     - in-place functions add, sub, neg, mul, div [CMatrix64]
-    - multiple initialization functions
+    - multiple initialization functions (1, zeros, ones, hadamard, varargs, etc.)
     - row, column
     - reflector
     - submatrix
     - transpose
-    - conjugate, in-place conjugate
+    - conjugate
     - conjugate_transpose = dagger
     - tensor
     - norm_1, norm_inf, norm_frobenius

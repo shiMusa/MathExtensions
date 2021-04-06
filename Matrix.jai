@@ -560,17 +560,9 @@ transpose :: (m: Matrix64) -> Matrix64 #must {
     return res;
 }
 
-// transpose :: (m: *Matrix64) {
-//     m.transp
-
-//     // for r: 0..m.rows-1 {
-//     //     for c: 0..m.cols-1 {
-//     //         i1 := r * m.cols + c;
-//     //         i2 := 
-//     //         set(<<m, c, r, get(<<m, r, c));
-//     //     }
-//     // }
-// }
+transpose :: (m: *Matrix64) {
+    <<m = transpose(<<m);
+}
 
 
 
@@ -585,6 +577,9 @@ conjugate_transpose :: inline (m: Matrix64) -> Matrix64 #must {
     return transpose(m);
 }
 
+conjugate_transpose :: inline (m: *Matrix64) {
+    transpose(m);
+}
 
 
 
