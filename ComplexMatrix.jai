@@ -321,6 +321,20 @@ operator * :: (a: Vector64, b: CMatrix64) -> CVector64 #must {
 
 
 
+
+operator / :: inline (a: CMatrix64, b: CMatrix64) -> CMatrix64 {
+    return inverse(b) * a;
+}
+
+
+
+
+
+
+
+
+
+
 cmat64 :: (m: Matrix64) -> CMatrix64 #must {
     res := cmat64(m.rows, m.cols);
     for 0..res.data.count-1 {

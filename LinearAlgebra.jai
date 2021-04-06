@@ -370,7 +370,10 @@ solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: CVector64) -> 
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
-gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64 #must, rows: []int #must, cols: []int #must {
+gaussian_factorization_full_pivot :: (M: CMatrix64) -> 
+    CMatrix64 #must, rows: []int #must, cols: []int #must, 
+    row_permutations: int, col_permutations: int {
+
     A := copy(M);
     m := A.rows;
     n := A.cols;
@@ -381,6 +384,8 @@ gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64 #must, rows: []
     // array_resize(*cols, A.cols, false);
     rows := NewArray(A.rows, int, false);
     cols := NewArray(A.cols, int, false);
+    row_permutations := 0;
+    col_permutations := 0;
 
     for 0..A.rows-1 {
         rows[it] = it;
@@ -413,10 +418,12 @@ gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64 #must, rows: []
         if ii > k {
             swap_rows(A, k, ii);
             rows[k], rows[ii] = swap(rows[k], rows[ii]);
+            row_permutations += 1;
         }
         if jj > k {
             swap_columns(A, k, jj);
             cols[k], cols[jj] = swap(cols[k], cols[jj]);
+            col_permutations += 1;
         }
 
         for i: k+1..m-1 {
@@ -429,7 +436,7 @@ gaussian_factorization_full_pivot :: (M: CMatrix64) -> CMatrix64 #must, rows: []
         }
     }
 
-    return A, rows, cols;
+    return A, rows, cols, row_permutations, col_permutations;
 }
 
 
@@ -469,7 +476,7 @@ solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: CVector64) -
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
-gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int  #must {
+gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64 #must, rows: []int, permutations: int {
     A := copy(M);
     m := A.rows;
     n := A.cols;
@@ -477,6 +484,7 @@ gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int  #m
     // rows : [..]int;
     // array_resize(*rows, A.rows, false);
     rows := NewArray(A.rows, int, false);
+    permutations := 0;
 
     for 0..A.rows-1 {
         rows[it] = it;
@@ -502,6 +510,7 @@ gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int  #m
         if ii > k {
             swap_rows(A, k, ii);
             rows[k], rows[ii] = swap(rows[k], rows[ii]);
+            permutations += 1;
         }
 
         for i: k+1..m-1 {
@@ -514,7 +523,7 @@ gaussian_factorization_row_pivot :: (M: CMatrix64) -> CMatrix64, rows: []int  #m
         }
     }
 
-    return A, rows;
+    return A, rows, permutations;
 }
 
 
@@ -561,6 +570,39 @@ inverse :: (A: CMatrix64) -> CMatrix64 {
     return permute_columns(X, ..rows);
 }
 
+
+
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// 3.11 Determinants, page 263
+//
+// it is not recommended to calculate the dterminant of large matrices
+det :: determinant;
+determinant :: (A: CMatrix64) -> Complex64 {
+    #if CHECKS {
+        assert(is_quadratic(A));
+    }
+
+    if A.rows == 2 {
+        return A[0][0]*A[1][1] - A[0][1]*A[1][0];
+    } // implement optimized formula for 3x3 matrix
+
+    M, rows, permutations := gaussian_factorization_row_pivot(A);
+    L, R := decompose_LR(M);
+
+    p := c64(1.0);
+    for 0..R.rows-1 {
+        p *= R[it][it];
+    }
+
+    // +1 for even, -1 for odd num of permutations
+    s := 2.0 * cast(float64)(permutations % 2 == 0) - 1.0;
+
+    return s * p;
+}
 
 
 
@@ -772,5 +814,16 @@ test_linear_algebra :: () {
             -0.5*R, -0.5*R+I, R,
             -0.25*R, -0.25*R, 0.5*R
         )));
+    }
+
+    {
+        M := cmat64(3, 3,
+            2*R, I, -2*R,
+            CZERO, -I, 2*I,
+            R, CZERO, R+I
+        );
+        d := determinant(M);
+        print("det(M) = %\n", d);
+        assert(d == -4*I);
     }
 }
