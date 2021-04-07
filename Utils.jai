@@ -142,6 +142,95 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
+
+
+
+
+// meant to be used in the form of
+//     #insert #run unroll(...);
+// generates functions
+//     fun_name :: inline (x0: ?, x1: ?,...) -> otypes[?] {...}
+// by accessing the generic function
+//     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
+// writing specialized versions with return types;
+specialize :: (backend_name: string, fun_name: string, itypes: [][]Type, otypes: [][]Type) -> string {
+    assert(itypes.count == otypes.count);
+
+    builder: String_Builder;
+    defer free_buffers(*builder);
+
+    for f: 0..itypes.count-1 {
+        n := itypes[f].count;
+
+        print_to_builder(*builder, "% :: inline (", fun_name);
+        for i: 0..itypes[f].count-1 {
+            print_to_builder(*builder, "x%: %", i, itypes[f][i]);
+            if i != itypes[f].count-1 {
+                append(*builder, ", ");
+            }
+        }
+        append(*builder, ") -> ");
+        for i: 0..otypes[f].count-1 {
+            print_to_builder(*builder, "%", otypes[f][i]);
+            if i != otypes[f].count-1 {
+                append(*builder, ", ");
+            }
+        }
+        
+        append(*builder, " {\n");
+
+
+        for i: 0..otypes[f].count-1 {
+            print_to_builder(*builder, 
+                "    x% : %;\n", i+n, otypes[f][i]
+            );
+        }
+
+
+        print_to_builder(*builder, "    %(", backend_name);
+        for i: 0..itypes[f].count-1 {
+            print_to_builder(*builder, "x%", i);
+            if i != itypes[f].count-1 {
+                append(*builder, ", ");
+            } else if otypes[f].count != 0 {
+                append(*builder, ", ");
+            }
+        }
+        for i: 0..otypes[f].count-1 {
+            print_to_builder(*builder, "*x%", i+n);
+            if i != otypes[f].count-1 {
+                append(*builder, ", ");
+            }
+        }
+
+        append(*builder, ");\n");
+        
+        append(*builder, "    return ");
+        for i: 0..otypes[f].count-1 {
+            print_to_builder(*builder, "x%", i+n);
+            if i != otypes[f].count-1 {
+                append(*builder, ", ");
+            }
+        }
+        append(*builder, ";\n");
+
+        append(*builder, "}\n");
+    }
+
+    s := builder_to_string(*builder);
+    print("Functions created: \n%\n", s);
+    return s;
+}
+
+
+
+
+
+
+
+
+
+
 test_utils :: () {
     print("\n\nUtils -------------------------------\n\n");
     assert(sign(2.0) == 1.0);

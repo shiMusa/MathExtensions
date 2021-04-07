@@ -1,16 +1,20 @@
 
 #load "Utils.jai";
+
 #load "Elementary.jai";
-#load "Complex.jai";
+#load "Complex64.jai";
 #load "Polynomials.jai";
 #load "Approximations.jai";
-#load "Matrix.jai";
-#load "ComplexMatrix.jai";
-#load "Vector.jai";
-#load "ComplexVector.jai";
+
+#load "Matrix64.jai";
+#load "Vector64.jai";
+
+#load "CMatrix64.jai";
+#load "CVector64.jai";
+
 #load "LinearAlgebra.jai";
 #load "Checks.jai";
-#load "VectorT.jai";
+#load "Vector.jai";
 
 CHECKS :: true;
 

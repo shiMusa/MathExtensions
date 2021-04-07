@@ -436,22 +436,25 @@ reflect :: (vec: CVector64, normal: CVector64) -> CVector64 #must {
 // Texts in computational science and engineering 18
 // Springer
 // Definition 3.5.2 Norms, page 171
-norm :: (v: CVector64, n: float64) -> float64 {
-    if n == Math.FLOAT64_INFINITY {
-        m := abs(v[0]);
-        for 1..v.dim-1 {
-            tmp := abs(v[it]);
-            m = ifx m < tmp then tmp else m;
+norm :: (v: CVector64, $$n: float64) -> float64 {
+
+    #if is_constant(n) {
+        #if n == Math.FLOAT64_INFINITY {
+            m := abs(v[0]);
+            for 1..v.dim-1 {
+                tmp := abs(v[it]);
+                m = ifx m < tmp then tmp else m;
+            }
+            return m;
+        } else #if n == 1.0 {
+            res : float64 = 0.0;
+            for 0..v.dim-1 {
+                res := abs(v[it]);
+            }
+            return res;
+        } else #if n == 2.0 {
+            return sqrt( (conjugate(v) * v).real, float64 );
         }
-        return m;
-    } else if n == 1.0 {
-        res : float64 = 0.0;
-        for 0..v.dim-1 {
-            res := abs(v[it]);
-        }
-        return res;
-    } else if n == 2.0 {
-        return sqrt( (conjugate(v) * v).real, float64 );
     } else {
         res : float64 = 0.0;
         for 0..v.dim-1 {
