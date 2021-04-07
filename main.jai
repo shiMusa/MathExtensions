@@ -14,11 +14,14 @@ main :: () {
     test_polynomials();
     test_approximations();
     
-    test_matrix();
-    test_complex_matrix();
-    test_vector();
-    test_linear_algebra();
-    test_checks();
+    // test_matrix();
+    // test_real_vector();
 
-    test_vectort();
+    // test_complex_vector();
+    // test_complex_matrix();
+    
+    // test_checks();
+    // test_linear_algebra();
+
+    test_vector();
 }

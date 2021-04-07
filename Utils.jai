@@ -65,28 +65,28 @@ f64 :: inline (num: $T) -> float64 {
 
 
 
-Super :: struct (T1: Type, T2: Type) {
-    T :: #run super_type(T1, T2);
-}
+// Super :: struct (T1: Type, T2: Type) {
+//     T :: #run super_type(T1, T2);
+// }
 
 
 super_type :: inline ($a: Type, $b: Type) -> Type {
     #if a == Complex64 || b == Complex64 {
         return Complex64;
-    } else if a == float64 || b == float64 {
-        return float64;
-    } else if a == float32 || b == float32 {
-        return float32;
-    } else if a == s64 || b == s64 {
-        return s64;
     } else
-        return s32;
-    
-    // if a == s32 || b == s32 {
-    //     return s32;
-    // } else if a == s16 || b == s16 {
-    //     return s16;
-    // } else if a == s8 || 
+        return float64;
+}
+
+is_minor_type :: inline ($base: Type, $b: Type) -> bool {
+    #if base == Complex64 {
+        return true;
+    } else {
+        #if b == Complex64 {
+            return false;
+        } else {
+            return true;
+        }
+    }
 }
 
 
@@ -121,11 +121,11 @@ one :: inline ($T: Type) -> T {
 
 DELTA :: 1.0e-6;
 approx :: (a: $T, b: T) -> bool {
-    #if T == CVector64 || T == Vector64 {
-        return norm_2(a - b) < DELTA;
-    } else #if T == CMatrix64 || T == Matrix64 {
-        return norm_frobenius(a - b) < DELTA;
-    } else
+    // #if T == CVector64 || T == Vector64 {
+    //     return norm_2(a - b) < DELTA;
+    // } else #if T == CMatrix64 || T == Matrix64 {
+    //     return norm_frobenius(a - b) < DELTA;
+    // } else
         return abs(a - b) < DELTA;
 }
 
@@ -153,7 +153,7 @@ next_power_of_two :: inline (x : int) -> int {
 // by accessing the generic function
 //     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
 // writing specialized versions with return types;
-specialize :: (backend_name: string, fun_name: string, itypes: [][]Type, otypes: [][]Type) -> string {
+specialize :: (backend_name: string, fun_name: string, itypes: [][]string, otypes: [][]string) -> string {
     assert(itypes.count == otypes.count);
 
     builder: String_Builder;
@@ -182,7 +182,7 @@ specialize :: (backend_name: string, fun_name: string, itypes: [][]Type, otypes:
 
         for i: 0..otypes[f].count-1 {
             print_to_builder(*builder, 
-                "    x% : %;\n", i+n, otypes[f][i]
+                "    x% : % = ---;\n", i+n, otypes[f][i]
             );
         }
 
@@ -255,17 +255,17 @@ test_utils :: () {
         assert(float64 == super_type(float32, float64));
     }
 
-    {
-        a : float64 = ---;
-        M : CMatrix64 = ---;
-        calculation(#code {
-            x := 42.0; // 8 bytes
-            a = x;
+    // {
+    //     a : float64 = ---;
+    //     M : CMatrix64 = ---;
+    //     calculation(#code {
+    //         x := 42.0; // 8 bytes
+    //         a = x;
 
-            copy(*M, cmat64_id(4,4)); // 2 * 8 bytes [Complex] * 16 = 256 bytes
-        }); // Pool allocated 264 bytes!
-        assert(a == 42.0);
-        print("M = %\n", M);
-        print("%\n", cmat64_id(4,4));
-    }
+    //         copy(*M, cmat64_id(4,4)); // 2 * 8 bytes [Complex] * 16 = 256 bytes
+    //     }); // Pool allocated 264 bytes!
+    //     assert(a == 42.0);
+    //     print("M = %\n", M);
+    //     print("%\n", cmat64_id(4,4));
+    // }
 }

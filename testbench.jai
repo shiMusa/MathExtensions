@@ -42,7 +42,7 @@ get_variants :: (types: ..Type) -> string {
 
 
 
-unroll :: (fun_name: string, itypes: [][]Type, otypes: [][]Type) -> string {
+specialize :: (backend_name: string, fun_name: string, itypes: [][]string, otypes: [][]string) -> string {
     assert(itypes.count == otypes.count);
 
     builder: String_Builder;
@@ -76,7 +76,7 @@ unroll :: (fun_name: string, itypes: [][]Type, otypes: [][]Type) -> string {
         }
 
 
-        print_to_builder(*builder, "    _%(", fun_name);
+        print_to_builder(*builder, "    %(", backend_name);
         for i: 0..itypes[f].count-1 {
             print_to_builder(*builder, "x%", i);
             if i != itypes[f].count-1 {
@@ -113,12 +113,7 @@ unroll :: (fun_name: string, itypes: [][]Type, otypes: [][]Type) -> string {
 
 
 
-
-
-
-
-
-#insert #run unroll("bar",.[.[int], .[float64]], .[.[int], .[float64]]);
+#insert #run specialize("_bar", "bar",.[.["int"], .["float64"]], .[.["int"], .["float64"]]);
 
 _bar :: (a: $A, b: *$B) {
     <<b = cast(B) ( cast(A)(2) * a );

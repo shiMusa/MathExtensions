@@ -82,9 +82,9 @@ cvec64 :: (vec: Vector64) -> CVector64 #must {
 
 
 cvec64 :: inline (dim: int) -> CVector64 #must {
-    res : CVector64;
+    res : CVector64 = ---;
     res.dim = dim;
-    array_resize(*res.data, dim, false);
+    res.data = NewArray(dim, Complex64, false);
     return res;
 }
 
@@ -113,7 +113,7 @@ cvec64_basis :: inline (dim: int, el: int) -> CVector64 #must {
 
 
 
-// inclusive bounds
+// inclusive left, exclusive right bounds
 cvec64_subvector :: (v: CVector64, from: int, to: int) -> CVector64 #must {
     #if CHECKS {
         assert(to > from);

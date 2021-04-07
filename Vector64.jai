@@ -346,7 +346,7 @@ angle :: (a: Vector64, b: Vector64) -> float64 {
 
 
 
-test_vector :: () {
+test_real_vector :: () {
     print("\n\nVector -------------------------------\n\n");
 
     {
