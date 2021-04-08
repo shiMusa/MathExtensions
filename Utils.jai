@@ -21,7 +21,44 @@ calculation :: (code: Code) #expand {
 
 
 
+ncast :: inline ($T: Type, num: $N) -> T {
+    #if T == Complex64 {
+        #if N == Complex64 {
+            return num;
+        } else {
+            return c64(cast(float64)num);
+            // res : Complex64;
+            // res.real = cast(float64) num;
+            // res.imag = 0.0;
+            // return res;
+        }
+    } else {
+        #if N == Complex64 {
+            return cast(T) num.real;
+        } else
+            return cast(T) num;
+    }
+}
 
+zero :: inline ($T: Type) -> T {
+    return ncast(T, 0);
+}
+
+one :: inline ($T: Type) -> T {
+    return ncast(T, 1);
+}
+
+
+
+DELTA :: 1.0e-6;
+approx :: (a: $T, b: T) -> bool {
+    // #if T == CVector64 || T == Vector64 {
+    //     return norm_2(a - b) < DELTA;
+    // } else #if T == CMatrix64 || T == Matrix64 {
+    //     return norm_frobenius(a - b) < DELTA;
+    // } else
+        return abs(a - b) < DELTA;
+}
 
 
 
@@ -90,46 +127,6 @@ is_minor_type :: inline ($base: Type, $b: Type) -> bool {
 }
 
 
-ncast :: inline ($T: Type, num: $N) -> T {
-    #if T == Complex64 {
-        #if N == Complex64 {
-            return num;
-        } else {
-            return c64(cast(float64)num);
-            // res : Complex64;
-            // res.real = cast(float64) num;
-            // res.imag = 0.0;
-            // return res;
-        }
-    } else {
-        #if N == Complex64 {
-            return cast(T) num.real;
-        } else
-            return cast(T) num;
-    }
-}
-
-zero :: inline ($T: Type) -> T {
-    return ncast(T, 0);
-}
-
-one :: inline ($T: Type) -> T {
-    return ncast(T, 1);
-}
-
-
-
-DELTA :: 1.0e-6;
-approx :: (a: $T, b: T) -> bool {
-    // #if T == CVector64 || T == Vector64 {
-    //     return norm_2(a - b) < DELTA;
-    // } else #if T == CMatrix64 || T == Matrix64 {
-    //     return norm_frobenius(a - b) < DELTA;
-    // } else
-        return abs(a - b) < DELTA;
-}
-
-
 
 
 // Copied over from Hash_Table.jai
@@ -144,16 +141,42 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
+COMBI_V_V : [4][2]string : .[
+    .["Vector(float64)", "Vector(float64)"],
+    .["Vector(float64)", "Vector(Complex64)"],
+    .["Vector(Complex64)", "Vector(float64)"],
+    .["Vector(Complex64)", "Vector(Complex64)"],
+];
+COMBI_V_X : [4][2]string : .[
+    .["Vector(float64)", "float64"],
+    .["Vector(float64)", "Complex64"],
+    .["Vector(Complex64)", "float64"],
+    .["Vector(Complex64)", "Complex64"] 
+];
+COMBI_V : [4][1]string : .[
+    .["Vector(float64)"],
+    .["Vector(Complex64)"],
+    .["Vector(Complex64)"],
+    .["Vector(Complex64)"],
+];
+COMBI_X : [4][1]string : .[
+    .["float64"],
+    .["Complex64"],
+    .["Complex64"],
+    .["Complex64"],
+];
+
 
 
 // meant to be used in the form of
-//     #insert #run unroll(...);
+//     #insert #run specialize(...);
 // generates functions
-//     fun_name :: inline (x0: ?, x1: ?,...) -> otypes[?] {...}
+//     fun_name :: inline (x0: itypes[i][0], x1: itypes[i][1],...) -> otypes[i][0], otypes[i][1],... {...}
 // by accessing the generic function
 //     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
 // writing specialized versions with return types;
 specialize :: (backend_name: string, fun_name: string, itypes: [][]string, otypes: [][]string) -> string {
+
     assert(itypes.count == otypes.count);
 
     builder: String_Builder;

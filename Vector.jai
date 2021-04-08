@@ -135,19 +135,7 @@ vec_subvector :: (v: Vector($T), from: int, to: int) -> Vector(T) {
 
 
 
-#insert #run specialize("_add", "operator +",
-    .[ // input
-        .["Vector(float64)", "Vector(float64)"],
-        .["Vector(float64)", "Vector(Complex64)"],
-        .["Vector(Complex64)", "Vector(float64)"],
-        .["Vector(Complex64)", "Vector(Complex64)"] 
-    ], .[ // output
-        .["Vector(float64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"]
-    ]
-);
+#insert #run specialize("_add", "operator +", COMBI_V_V, COMBI_V);
 _add :: (a: Vector($A), b: Vector($B), res: *Vector($C)) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
@@ -167,19 +155,7 @@ add :: (a: *Vector($A), b: Vector($B)) {
     }
 }
 
-#insert #run specialize("_sub", "operator -",
-    .[ // input
-        .["Vector(float64)", "Vector(float64)"],
-        .["Vector(float64)", "Vector(Complex64)"],
-        .["Vector(Complex64)", "Vector(float64)"],
-        .["Vector(Complex64)", "Vector(Complex64)"] 
-    ], .[ // output
-        .["Vector(float64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"]
-    ]
-);
+#insert #run specialize("_sub", "operator -", COMBI_V_V, COMBI_V);
 _sub :: (a: Vector($A), b: Vector($B), res: *Vector($C)) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
@@ -214,19 +190,7 @@ neg :: (a: *Vector($A)) {
     }
 }
 
-#insert #run specialize("_mul", "operator *",
-    .[ // input
-        .["Vector(float64)", "float64"],
-        .["Vector(float64)", "Complex64"],
-        .["Vector(Complex64)", "float64"],
-        .["Vector(Complex64)", "Complex64"] 
-    ], .[ // output
-        .["Vector(float64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"]
-    ]
-);
+#insert #run specialize("_mul", "operator *", COMBI_V_V, COMBI_V);
 _mul :: inline (a: Vector($A), val: $B, res: *Vector($C)) {
     <<res = vec(C, a.dim);
     for 0..a.dim-1 {
@@ -243,19 +207,7 @@ mul :: inline (a: *Vector($A), val: $B) {
     }
 }
 
-#insert #run specialize("_div", "operator /",
-    .[ // input
-        .["Vector(float64)", "float64"],
-        .["Vector(float64)", "Complex64"],
-        .["Vector(Complex64)", "float64"],
-        .["Vector(Complex64)", "Complex64"] 
-    ], .[ // output
-        .["Vector(float64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"]
-    ]
-);
+#insert #run specialize("_div", "operator /", COMBI_V_X, COMBI_V);
 _div :: inline (a: Vector($A), val: $B, res: *Vector($C)) {
     <<res = vec(C, a.dim);
     for 0..a.dim-1 {
@@ -275,19 +227,7 @@ div :: inline (a: *Vector($A), val: $B) {
 
 
 
-#insert #run specialize("_mul", "operator *",
-    .[ // input
-        .["Vector(float64)", "Vector(float64)"],
-        .["Vector(float64)", "Vector(Complex64)"],
-        .["Vector(Complex64)", "Vector(float64)"],
-        .["Vector(Complex64)", "Vector(Complex64)"] 
-    ], .[ // output
-        .["float64"],
-        .["Complex64"],
-        .["Complex64"],
-        .["Complex64"]
-    ]
-);
+#insert #run specialize("_mul", "operator *", COMBI_V_V, COMBI_X);
 _mul :: inline (a: Vector($A), b: Vector($B), res: *$C) {
     <<res = zero(C);
     for 0..a.dim-1 {
@@ -401,19 +341,7 @@ conjugate :: (v: *Vector($V)) {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.4.10 Apply Elementary Reflector, page 170
-#insert #run specialize("_reflect", "reflect",
-    .[ // input
-        .["Vector(float64)", "Vector(float64)"],
-        .["Vector(float64)", "Vector(Complex64)"],
-        .["Vector(Complex64)", "Vector(float64)"],
-        .["Vector(Complex64)", "Vector(Complex64)"],
-    ], .[ // output
-        .["Vector(float64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-    ]
-);
+#insert #run specialize("_reflect", "reflect", COMBI_V_V, COMBI_V);
 _reflect :: (vec: Vector($A), normal: Vector($B), res: *Vector($C)) {
     tau := 2.0 / (conjugate(normal) * normal);
     alpha := tau * conjugate(normal) * vec;
@@ -469,19 +397,7 @@ norm_inf :: inline (v: Vector($T)) -> float64 {
 
 
 
-#insert #run specialize("_cross", "cross",
-    .[ // input
-        .["Vector(float64)", "Vector(float64)"],
-        .["Vector(float64)", "Vector(Complex64)"],
-        .["Vector(Complex64)", "Vector(float64)"],
-        .["Vector(Complex64)", "Vector(Complex64)"],
-    ], .[ // output
-        .["Vector(float64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-        .["Vector(Complex64)"],
-    ]
-);
+#insert #run specialize("_cross", "cross", COMBI_V_V, COMBI_V);
 _cross :: (a: Vector($A), b: Vector($B), res: *Vector($C)) {
     #if CHECKS {
         assert(a.dim == 3 && b.dim == 3);
@@ -517,7 +433,9 @@ angle :: (a: Vector($A), b: Vector($B)) -> float64 {
 // compiler bug: 
 // the compiler won't find the operators generated with this method
 // unless a stupid custom-named function is called first
-#insert #run specialize("_init", "init", .[.[]], .[.["int"]]);
+DUMMY_IN : [1][0]string : .[.[]];
+DUMMY_OUT : [1][1]string : .[.["int"]];
+#insert #run specialize("_init", "init", DUMMY_IN, DUMMY_OUT);
 _init :: (ret: *int) {}
 
 
@@ -535,3 +453,4 @@ test_vector :: () {
         print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.T);
     }
 }
+
