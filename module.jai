@@ -22,5 +22,6 @@ CHECKS :: true;
 #scope_module
 
 #import "Basic";
-Math :: #import "Math";
-Pool :: #import "Pool";
+Math   :: #import "Math";
+Pool   :: #import "Pool";
+String :: #import "String";

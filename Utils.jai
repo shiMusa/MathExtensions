@@ -141,29 +141,23 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
-COMBI_V_V : [4][2]string : .[
-    .["Vector(float64)", "Vector(float64)"],
-    .["Vector(float64)", "Vector(Complex64)"],
-    .["Vector(Complex64)", "Vector(float64)"],
-    .["Vector(Complex64)", "Vector(Complex64)"],
+COMBI_V_V_V :: string.[
+    "Vector(float64) & Vector(float64) => Vector(float64)",
+    "Vector(float64) & Vector(Complex64) => Vector(Complex64)",
+    "Vector(Complex64) & Vector(float64) => Vector(Complex64)",
+    "Vector(Complex64) & Vector(Complex64) => Vector(Complex64)",
 ];
-COMBI_V_X : [4][2]string : .[
-    .["Vector(float64)", "float64"],
-    .["Vector(float64)", "Complex64"],
-    .["Vector(Complex64)", "float64"],
-    .["Vector(Complex64)", "Complex64"] 
+COMBI_V_X_V :: string.[
+    "Vector(float64) & float64 => Vector(float64)",
+    "Vector(float64) & Complex64 => Vector(Complex64)",
+    "Vector(Complex64) & float64 => Vector(Complex64)",
+    "Vector(Complex64) & Complex64 => Vector(Complex64)",
 ];
-COMBI_V : [4][1]string : .[
-    .["Vector(float64)"],
-    .["Vector(Complex64)"],
-    .["Vector(Complex64)"],
-    .["Vector(Complex64)"],
-];
-COMBI_X : [4][1]string : .[
-    .["float64"],
-    .["Complex64"],
-    .["Complex64"],
-    .["Complex64"],
+COMBI_V_V_X :: string.[
+    "Vector(float64) & Vector(float64) => float64",
+    "Vector(float64) & Vector(Complex64) => Complex64",
+    "Vector(Complex64) & Vector(float64) => Complex64",
+    "Vector(Complex64) & Vector(Complex64) => Complex64",
 ];
 
 
@@ -175,53 +169,73 @@ COMBI_X : [4][1]string : .[
 // by accessing the generic function
 //     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
 // writing specialized versions with return types;
-specialize :: (backend_name: string, fun_name: string, itypes: [][]string, otypes: [][]string) -> string {
+specialize :: (backend_name: string, fun_name: string, iotypes: []string) -> string {
 
-    assert(itypes.count == otypes.count);
 
     builder: String_Builder;
     defer free_buffers(*builder);
 
-    for f: 0..itypes.count-1 {
-        n := itypes[f].count;
+    for f: 0..iotypes.count-1 {
+
+        itypes : []string = ---;
+        otypes : []string = ---;
+        {
+            tmp := String.split(iotypes[f], "=>");
+            print("splitted at => : %\n", tmp);
+
+            itmp := tmp[0];
+            otmp := tmp[1];
+
+            itypes = String.split(itmp, "&");
+            otypes = String.split(otmp, "&");
+
+            print("itypes : %\n", itypes);
+            print("otypes : %\n", otypes);
+        }
+
+        n := itypes.count;
 
         print_to_builder(*builder, "% :: inline (", fun_name);
-        for i: 0..itypes[f].count-1 {
-            print_to_builder(*builder, "x%: %", i, itypes[f][i]);
-            if i != itypes[f].count-1 {
+        for i: 0..itypes.count-1 {
+            print_to_builder(*builder, "x%: %", i, itypes[i]);
+            if i != itypes.count-1 {
                 append(*builder, ", ");
             }
         }
-        append(*builder, ") -> ");
-        for i: 0..otypes[f].count-1 {
-            print_to_builder(*builder, "%", otypes[f][i]);
-            if i != otypes[f].count-1 {
-                append(*builder, ", ");
+        append(*builder, ") ");
+
+        if otypes.count != 0 {
+            append(*builder, "-> ");
+            for i: 0..otypes.count-1 {
+                print_to_builder(*builder, "%", otypes[i]);
+                if i != otypes.count-1 {
+                    append(*builder, ", ");
+                }
             }
         }
         
         append(*builder, " {\n");
 
 
-        for i: 0..otypes[f].count-1 {
+        for i: 0..otypes.count-1 {
             print_to_builder(*builder, 
-                "    x% : % = ---;\n", i+n, otypes[f][i]
+                "    x% : % = ---;\n", i+n, otypes[i]
             );
         }
 
 
         print_to_builder(*builder, "    %(", backend_name);
-        for i: 0..itypes[f].count-1 {
+        for i: 0..itypes.count-1 {
             print_to_builder(*builder, "x%", i);
-            if i != itypes[f].count-1 {
+            if i != itypes.count-1 {
                 append(*builder, ", ");
-            } else if otypes[f].count != 0 {
+            } else if otypes.count != 0 {
                 append(*builder, ", ");
             }
         }
-        for i: 0..otypes[f].count-1 {
+        for i: 0..otypes.count-1 {
             print_to_builder(*builder, "*x%", i+n);
-            if i != otypes[f].count-1 {
+            if i != otypes.count-1 {
                 append(*builder, ", ");
             }
         }
@@ -229,9 +243,9 @@ specialize :: (backend_name: string, fun_name: string, itypes: [][]string, otype
         append(*builder, ");\n");
         
         append(*builder, "    return ");
-        for i: 0..otypes[f].count-1 {
+        for i: 0..otypes.count-1 {
             print_to_builder(*builder, "x%", i+n);
-            if i != otypes[f].count-1 {
+            if i != otypes.count-1 {
                 append(*builder, ", ");
             }
         }
