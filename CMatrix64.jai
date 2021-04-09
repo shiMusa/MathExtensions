@@ -97,6 +97,14 @@ operator == :: inline (a: CMatrix64, b: CMatrix64) -> bool {
 }
 
 
+
+
+
+
+
+
+
+
 operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);

@@ -31,11 +31,11 @@ binomial :: inline (from: $T, choose: T) -> T {
 
 
 
-conjugate :: inline (a: $T) -> T {
-    #if T == Complex64 {
-        return c64(a.real, -a.imag);
-    } else
-        return a;
+conjugate :: inline (a: Complex64) -> Complex64 {
+    return c64(a.real, -a.imag);
+}
+conjugate :: inline (a: float64) -> float64 {
+    return a;
 }
 
 

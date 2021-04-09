@@ -14,7 +14,7 @@ main :: () {
     test_polynomials();
     test_approximations();
     
-    // test_matrix();
+    // test_real_matrix();
     // test_real_vector();
 
     // test_complex_vector();
@@ -24,4 +24,5 @@ main :: () {
     // test_linear_algebra();
 
     test_vector();
+    test_matrix();
 }

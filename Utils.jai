@@ -161,6 +161,32 @@ COMBI_V_V_X :: string.[
 ];
 
 
+COMBI_M_M_M :: string.[
+    "Matrix(float64) & Matrix(float64) => Matrix(float64)",
+    "Matrix(float64) & Matrix(Complex64) => Matrix(Complex64)",
+    "Matrix(Complex64) & Matrix(float64) => Matrix(Complex64)",
+    "Matrix(Complex64) & Matrix(Complex64) => Matrix(Complex64)",
+];
+COMBI_M_V_V :: string.[
+    "Matrix(float64) & Vector(float64) => Vector(float64)",
+    "Matrix(float64) & Vector(Complex64) => Vector(Complex64)",
+    "Matrix(Complex64) & Vector(float64) => Vector(Complex64)",
+    "Matrix(Complex64) & Vector(Complex64) => Vector(Complex64)",
+];
+COMBI_V_M_V :: string.[
+    "Vector(float64) & Matrix(float64) => Vector(float64)",
+    "Vector(float64) & Matrix(Complex64) => Vector(Complex64)",
+    "Vector(Complex64) & Matrix(float64) => Vector(Complex64)",
+    "Vector(Complex64) & Matrix(Complex64) => Vector(Complex64)",
+];
+COMBI_M_X_M :: string.[
+    "Matrix(float64) & float64 => Matrix(float64)",
+    "Matrix(float64) & Complex64 => Matrix(Complex64)",
+    "Matrix(Complex64) & float64 => Matrix(Complex64)",
+    "Matrix(Complex64) & Complex64 => Matrix(Complex64)",
+];
+
+
 
 // meant to be used in the form of
 //     #insert #run specialize(...);
@@ -169,7 +195,7 @@ COMBI_V_V_X :: string.[
 // by accessing the generic function
 //     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
 // writing specialized versions with return types;
-specialize :: (backend_name: string, fun_name: string, iotypes: []string) -> string {
+specialize :: (backend_name: string, fun_name: string, iotypes: []string, o_opts: []string = .[]) -> string {
 
 
     builder: String_Builder;
@@ -181,7 +207,7 @@ specialize :: (backend_name: string, fun_name: string, iotypes: []string) -> str
         otypes : []string = ---;
         {
             tmp := String.split(iotypes[f], "=>");
-            print("splitted at => : %\n", tmp);
+            // print("splitted at => : %\n", tmp);
 
             itmp := tmp[0];
             otmp := tmp[1];
@@ -189,8 +215,8 @@ specialize :: (backend_name: string, fun_name: string, iotypes: []string) -> str
             itypes = String.split(itmp, "&");
             otypes = String.split(otmp, "&");
 
-            print("itypes : %\n", itypes);
-            print("otypes : %\n", otypes);
+            // print("itypes : %\n", itypes);
+            // print("otypes : %\n", otypes);
         }
 
         n := itypes.count;
@@ -208,6 +234,12 @@ specialize :: (backend_name: string, fun_name: string, iotypes: []string) -> str
             append(*builder, "-> ");
             for i: 0..otypes.count-1 {
                 print_to_builder(*builder, "%", otypes[i]);
+                
+                // options for output types such as #symmetric, #must, etc.
+                if i < o_opts.count {
+                    print_to_builder(*builder, " %", o_opts[i]);
+                }
+                
                 if i != otypes.count-1 {
                     append(*builder, ", ");
                 }

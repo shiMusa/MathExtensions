@@ -642,7 +642,7 @@ norm_frobenius :: (m: Matrix64) -> float64 {
 
 
 
-test_matrix :: () {
+test_real_matrix :: () {
     print("\n\nMatrix -------------------------------\n\n");
     {
         m := mat64(3, 3);
