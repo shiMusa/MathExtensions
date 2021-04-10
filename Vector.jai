@@ -23,6 +23,9 @@ Vector :: struct (T: Type) {
 }
 
 operator [] :: inline (v: Vector($T), i: int) -> T {
+    #if CHECKS {
+        assert(i < v.dim, "index out of dimensions: i = %, dim = %\n", i, v.dim);
+    }
     return v.data[i];
 }
 
@@ -82,7 +85,7 @@ vec_basis :: inline ($type: Type, dim: int, el: int) -> Vector(type) {
 
 vec :: ($type: Type, v: Vector) -> Vector(type) {
     res := vec(type, v.dim);
-    for 0..res.dim {
+    for 0..res.dim-1 {
         res.data[it] = ncast(type, v[it]);
     }
     return res;
@@ -93,7 +96,7 @@ vec_subvector :: (v: Vector($T), from: int, to: int) -> Vector(T) {
     #if CHECKS {
         assert(to > from);
     }
-    res := vec64(T, to-from);
+    res := vec(T, to-from);
     for 0..to-from-1 {
         res.data[it] = v[it + from];
     }
@@ -109,7 +112,7 @@ add :: (a: *Vector($A), b: Vector($B)) {
         assert(is_minor_type(A, B));
     }
     for 0..a.dim-1 {
-        a.data[it] += ncast(A, b[it]);
+        a.data[it] += b[it];
     }
 }
 
@@ -119,7 +122,7 @@ sub :: (a: *Vector($A), b: Vector($B)) {
         assert(is_minor_type(A, B));
     }
     for 0..a.dim-1 {
-        a.data[it] -= ncast(A, b[it]);
+        a.data[it] -= b[it];
     }
 }
 
@@ -138,7 +141,7 @@ mul :: inline (a: *Vector($A), val: $B) {
         assert(is_minor_type(A,B));
     }
     for 0..a.dim-1 {
-        a.data[it] *= ncast(A, val);
+        a.data[it] *= val;
     }
 }
 
@@ -149,7 +152,7 @@ div :: inline (a: *Vector($A), val: $B) {
         assert(is_minor_type(A,B));
     }
     for 0..a.dim-1 {
-        a.data[it] /= ncast(A, val);
+        a.data[it] /= val;
     }
 }
 

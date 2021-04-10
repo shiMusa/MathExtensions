@@ -1,5 +1,11 @@
-sign :: inline (x: $T) -> T {
-    return 2 * ncast(T, x >= 1) - one(T);
+// maybe return int?
+sign :: inline (x: $T) -> float64 {
+    #if T == Complex64 {
+        if x.real == 0.0 then return sign(x.imag);
+        return sign(x.real);
+    } else {
+        return 2.0 * cast(float64)(cast(float64)x >= 0.0) - 1.0;
+    }
 }
 
 
@@ -41,13 +47,20 @@ conjugate :: inline (a: float64) -> float64 {
 
 // |z|²
 abs_sq :: inline (a: $T) -> float64 {
+    #if CHECKS {
+        assert(is_a_scalar(T), "abs_sq not defined for non-scalars!");
+    }
     #if T == Complex64 {
         return a.real * a.real + a.imag * a.imag;
-    } else 
-        return a * a;
+    } else {
+        return ncast(float64, a * a); // not clear why this cast is necessary...?
+    }
 }
 
 abs :: inline (a: $T) -> float64 {
+    #if CHECKS {
+        assert(is_a_scalar(T), "abs_sq not defined for non-scalars!");
+    }
     return Math.sqrt(abs_sq(a));
 }
 

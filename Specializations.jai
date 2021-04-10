@@ -71,9 +71,9 @@ _mul :: (a: $A, b: $B, res: *$C) {
         <<res = mat_zeros(C.T, a.rows, b.cols);
         for j: 0..b.cols-1 {
             for k: 0..a.cols-1 {
-                tmp := ncast(C.T, b[k][j]);
+                tmp := b[k][j];
                 for i: 0..a.rows-1 {
-                    (<<res)[i][j] += ncast(C.T, a[i][k]) * tmp;
+                    (<<res)[i][j] += a[i][k] * tmp;
                 }
             }
         }
@@ -88,7 +88,7 @@ _mul :: (a: $A, b: $B, res: *$C) {
         <<res = vec_zeros(C.T, a.rows);
         for i: 0..a.rows-1 {
             for j: 0..a.cols-1 {
-                res.data[i] += ncast(C.T, a[i][j]) * ncast(C.T, b[j]);
+                res.data[i] += a[i][j] * b[j];
             }
         }
 
@@ -102,7 +102,7 @@ _mul :: (a: $A, b: $B, res: *$C) {
         <<res = vec_zeros(C.T, b.cols);
         for j: 0..b.rows-1 {
             for i: 0..a.dim-1 {
-                res.data[j] += ncast(C.T, a[i]) * ncast(C.T, b[i][j]);
+                res.data[j] += a[i] * b[i][j];
             }
         }
 
@@ -111,21 +111,21 @@ _mul :: (a: $A, b: $B, res: *$C) {
         // print("M_X_M\n");
         <<res = mat(C.T, a.rows, a.cols);
         for 0..a.data.count-1 {
-            res.data[it] = ncast(C.T, a.data[it]) * ncast(C.T, b);
+            res.data[it] = a.data[it] * b;
         }
 
     // V * V -> X
     } else #if #run is_a_vector(A) && is_a_vector(B) && is_a_scalar(C) {
         <<res = zero(C);
         for 0..a.dim-1 {
-            <<res == ncast(C, a[it] * b[it]);
+            <<res == a[it] * b[it];
         }
 
     // V * X -> V
     } else #if #run is_a_vector(A) && is_a_scalar(B) && is_a_vector(C) {
         <<res = vec(C.T, a.dim);
         for 0..a.dim-1 {
-            res.data[it] = ncast(C.T, a[it]) * ncast(C.T, b);
+            res.data[it] = a[it] * b;
         }
     }
     
@@ -169,7 +169,6 @@ _div :: (a: $A, b: $B, res: *$C) {
     // M / X -> M
     } else #if #run is_a_matrix(A) && is_a_scalar(B) && is_a_matrix(C) {
         // print("M_X_M\n");
-        assert(C == Matrix);
         <<res = mat(C.T, a.rows, a.cols);
         for 0..a.data.count-1 {
             res.data[it] = a.data[it] / b;

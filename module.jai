@@ -6,17 +6,11 @@
 #load "Polynomials.jai";
 #load "Approximations.jai";
 
-// #load "Matrix64.jai";
-// #load "Vector64.jai";
-
-// #load "CMatrix64.jai";
-// #load "CVector64.jai";
-
-// #load "LinearAlgebra.jai";
-#load "Checks.jai";
+#load "Specializations.jai";
 #load "Vector.jai";
 #load "Matrix.jai";
-#load "Specializations.jai";
+#load "Checks.jai";
+#load "LinearAlgebra.jai";
 
 CHECKS :: true;
 

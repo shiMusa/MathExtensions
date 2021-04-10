@@ -117,7 +117,7 @@ add :: (a: *Matrix($A), b:Matrix($B)) {
         assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
-        a.data[it] += ncast(A, b.data[it]);
+        a.data[it] += b.data[it];
     }
 }
 
@@ -128,7 +128,7 @@ sub :: (a: *Matrix($A), b:Matrix($B)) {
         assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
-        a.data[it] -= ncast(A, b.data[it]);
+        a.data[it] -= b.data[it];
     }
 }
 
@@ -157,7 +157,7 @@ div :: (a: *Matrix($A), b: Complex64) {
         assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
-        a.data[it] /= ncast(A, b);
+        a.data[it] /= b;
     }
 }
 div :: (a: *Matrix($A), b: float64) {
@@ -165,66 +165,9 @@ div :: (a: *Matrix($A), b: float64) {
         assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
-        a.data[it] /= ncast(A, b);
+        a.data[it] /= b;
     }
 }
-
-
-
-
-// // Scientific Computing, Vol I: Linear and nonlinear equations
-// // Texts in computational science and engineering 18
-// // Springer
-// // 2.11 Case Study: Matrix-Matrix Multiplication, page 118
-// // According to Table 2.12, the best performing loop order is j/k/i with
-// // the least number of cache misses.
-// #insert #run specialize("_mul", "operator *", COMBI_M_M_M);
-// _mul :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
-//     #if CHECKS {
-//         assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
-//     }
-
-//     <<res = mat_zeros(C, a.rows, b.cols);
-//     for j: 0..b.cols-1 {
-//         for k: 0..a.cols-1 {
-//             tmp := ncast(C, b[k][j]);
-//             for i: 0..a.rows-1 {
-//                 (<<res)[i][j] += ncast(C, a[i][k]) * tmp;
-//             }
-//         }
-//     }
-// }
-// // TODO: think of a smart way to do in-place multiplication
-
-
-
-// #insert #run specialize("_mul", "operator *", COMBI_M_V_V);
-// _mul :: (a: Matrix($A), b: Vector($B), res: *Vector($C)) {
-//     #if CHECKS {
-//         assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
-//     }
-
-//     <<res = vec_zeros(C, a.rows);
-//     for i: 0..a.rows-1 {
-//         for j: 0..a.cols-1 {
-//             res.data[i] += ncast(C, a[i][j]) * ncast(C, b[j]);
-//         }
-//     }
-// }
-// #insert #run specialize("_mul", "operator *", COMBI_V_M_V);
-// _mul :: (a: Vector($A), b: Matrix($B), res: *Vector($C)) {
-//     #if CHECKS {
-//         assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
-//     }
-
-//     <<res = vec_zeros(C, a.dim);
-//     for i: 0..a.dim-1 {
-//         for j: 0..b.rows-1 {
-//             res.data[i] += ncast(C, b[i][j]) * ncast(C, a[j]);
-//         }
-//     }
-// }
-
 
 
 
@@ -241,16 +184,6 @@ mat :: (rows: int, cols: int, init: $T) -> Matrix(T) #must {
     return m;
 }
 
-
-
-// TODO: wait for compiler bug fix
-// mat :: inline(rows: int, cols: int, values: ..float64) -> Matrix {
-//     m := mat_zeros(rows, cols);
-//     for values {
-//         m.data[it_index] = c64(it, 0.0);
-//     }
-//     return m;
-// }
 
 mat :: (rows: int, cols: int, values: ..$T) -> Matrix(T) #must {
     #if CHECKS {
@@ -327,7 +260,7 @@ mat_hadamard :: inline ($type: Type, nestings: int) -> Matrix(type) {
 
 
 mat_reflector :: (normal: Vector($T)) -> Matrix(T) #must {
-    tau := ncast(T, 2.0)/(conjugate(normal)*normal);
+    tau := ncast(T, 2)/(conjugate(normal)*normal);
 
     res := mat_id(T, normal.dim);
     sub(res, tau * normal / normal);
@@ -412,7 +345,7 @@ swap_columns :: (M: *Matrix($T), i: int, j: int) {
     }
 
     for 0..M.rows-1 {
-        M[it][i], M[it][j] = swap(M[it][i], M[it][j]);
+        (<<M)[it][i], (<<M)[it][j] = swap((<<M)[it][i], (<<M)[it][j]);
     }
 }
 
@@ -423,7 +356,7 @@ swap_rows :: (M: *Matrix($T), i: int, j: int) {
     }
 
     for 0..M.cols-1 {
-        M[i][it], M[j][it] = swap(M[i][it], M[j][it]);
+        (<<M)[i][it], (<<M)[j][it] = swap((<<M)[i][it], (<<M)[j][it]);
     }
 }
 
@@ -506,8 +439,7 @@ _tensor :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
             ac := c/b.cols;
             bc := c % b.cols;
 
-            (<<res)[r][c] = ncast(C, a[ar][ac]) * ncast(C, b[br][bc]);
-            // set(res, r, c, get(a, ar, ac) * get(b, br, bc));
+            (<<res)[r][c] = a[ar][ac] * b[br][bc];
         }
     }
 }

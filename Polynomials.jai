@@ -170,9 +170,9 @@ test_polynomials :: () {
     r1 : float64;
     r2 : float64;
     r1, r2 = solve_quadratic_real(0.0, 0.0, 0.0); print("%, %\n", r1, r2); assert(Math.isnan(r1)); assert(Math.isnan(r2)); 
-    r1, r2 = solve_quadratic_real(1.0, 0.0,-1.0); print("%, %\n", r1, r2); assert(r1 == -1); assert(r2 == 1); 
+    r1, r2 = solve_quadratic_real(1.0, 0.0,-1.0); print("%, %\n", r1, r2); assert(r1 == 1.0); assert(r2 == -1.0); 
     r1, r2 = solve_quadratic_real(1.0, 0.0, 1.0); print("%, %\n", r1, r2); assert(Math.isnan(r1)); assert(Math.isnan(r2)); 
-    r1, r2 = solve_quadratic_real(1.0, 0.0,-9.0); print("%, %\n", r1, r2); assert(r1 == -3); assert(r2 == 3); 
+    r1, r2 = solve_quadratic_real(1.0, 0.0,-9.0); print("%, %\n", r1, r2); assert(r1 == 3); assert(r2 == -3); 
     r1, r2 = solve_quadratic_real(1.0, 6.0, 9.0); print("%, %\n", r1, r2); assert(r1 == -3); assert(r2 == -3); 
     r1, r2 = solve_quadratic_real(1.0, 2.0,-3.0); print("%, %\n", r1, r2); assert(r1 == -3); assert(r2 == 1); 
 

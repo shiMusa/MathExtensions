@@ -11,7 +11,8 @@
 // Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // solves the system A x = b with 2x2 matrix A
 sl2 :: solve_linear_2x2;
-solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_2x2", "solve_linear_2x2", COMBI_M_V_V);
+_solve_linear_2x2 :: (A: Matrix($T), b: Vector($V), res: *Vector($C)) {
     #if CHECKS {
         assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
         assert(b.dim == 2, "b is not a 2-dim vector: dim = %", b.dim);
@@ -22,36 +23,8 @@ solve_linear_2x2 :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
     mu := A / sigma;
     det := mu[0][0] * mu[1][1] - mu[0][1] * mu[1][0];
     g := b/sigma;
-    return cmat64(2, 2, mu[1][1], -mu[0][1], -mu[1][0], mu[0][0]) * g / det;
+    <<res = mat(2, 2, mu[1][1], -mu[0][1], -mu[1][0], mu[0][0]) * g / det;
 }
-solve_linear_2x2 :: (A: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
-        assert(b.dim == 2, "b is not a 2-dim vector: dim = %", b.dim);
-    }
-
-    sigma := max(abs(A[0][0]), abs(A[0][1]), abs(A[1][0]), abs(A[1][1]));
-
-    mu := A / sigma;
-    det := mu[0][0] * mu[1][1] - mu[0][1] * mu[1][0];
-    g := b/sigma;
-    return cmat64(2, 2, mu[1][1], -mu[0][1], -mu[1][0], mu[0][0]) * g / det;
-}
-solve_linear_2x2 :: (A: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
-        assert(b.dim == 2, "b is not a 2-dim vector: dim = %", b.dim);
-    }
-
-    sigma := max(abs(A[0][0]), abs(A[0][1]), abs(A[1][0]), abs(A[1][1]));
-
-    mu := A / sigma;
-    det := mu[0][0] * mu[1][1] - mu[0][1] * mu[1][0];
-    g := b/sigma;
-    return mat64(2, 2, mu[1][1], -mu[0][1], -mu[1][0], mu[0][0]) * g / det;
-}
-
-
 
 
 
@@ -66,56 +39,24 @@ solve_linear_2x2 :: (A: Matrix64, b: Vector64) -> Vector64 #must {
 // solve the system Lx = b where L is a unit left-triangluar matrix
 // that means, all diagonals are 1 and all L_ij = 0 for j > i.
 sllta :: solve_linear_left_triangular;
-solve_linear_left_triangular :: (L: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_left_triangular", "solve_linear_left_triangular", COMBI_M_V_V);
+_solve_linear_left_triangular :: (L: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
         assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
         assert(is_left_triangular(L), "L is not left-triangular");
     }
 
-    res := cvec64(b.dim);
+    <<res = vec(U, b.dim);
     for i: 0..b.dim-1 {
-        sum := CZERO;
+        sum := zero(U);
         for j: 0..i-1 {
-            sum += L[i][j]*res[j];
+            sum += L[i][j] * res.data[j];
         }
         res.data[i] = b[i] - sum;
     }
-    return res;
 }
-solve_linear_left_triangular :: (L: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
-        assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
-        assert(is_left_triangular(L), "L is not left-triangular");
-    }
 
-    res := cvec64(b.dim);
-    for i: 0..b.dim-1 {
-        sum := CZERO;
-        for j: 0..i-1 {
-            sum += L[i][j]*res[j];
-        }
-        res.data[i] = b[i] - sum;
-    }
-    return res;
-}solve_linear_left_triangular :: (L: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
-        assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
-        assert(is_left_triangular(L), "L is not left-triangular");
-    }
-
-    res := vec64(b.dim);
-    for i: 0..b.dim-1 {
-        sum : float64 = 0.0;
-        for j: 0..i-1 {
-            sum += L[i][j]*res[j];
-        }
-        res.data[i] = b[i] - sum;
-    }
-    return res;
-}
 
 
 
@@ -126,59 +67,25 @@ solve_linear_left_triangular :: (L: CMatrix64, b: Vector64) -> CVector64 #must {
 // solve the system Rx = b where R is a right-triangluar matrix
 // that means all R_ij = 0 for j < i.
 slrta :: solve_linear_right_triangular;
-solve_linear_right_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_right_triangular", "solve_linear_right_triangular", COMBI_M_V_V);
+_solve_linear_right_triangular :: (R: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
         assert(is_right_triangular(R), "R is not right-triangular");
     }
 
-    res := cvec64(b.dim);
+    <<res = vec(U, b.dim);
     i : int;
     for 0..b.dim-1 {
         i = b.dim-1 - it;
-        sum := CZERO;
+        sum := zero(U);
         for j: i+1..b.dim-1 {
-            sum += R[i][j]*res[j];
+            sum += R[i][j]*res.data[j];
         }
         res.data[i] = (b[i] - sum)/R[i][i];
     }
-    return res;
 }
-solve_linear_right_triangular :: (R: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
-        assert(is_right_triangular(R), "R is not right-triangular");
-    }
 
-    res := cvec64(b.dim);
-    i : int;
-    for 0..b.dim-1 {
-        i = b.dim-1 - it;
-        sum := CZERO;
-        for j: i+1..b.dim-1 {
-            sum += R[i][j]*res[j];
-        }
-        res.data[i] = (b[i] - sum)/R[i][i];
-    }
-    return res;
-}solve_linear_right_triangular :: (R: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
-        assert(is_right_triangular(R), "R is not right-triangular");
-    }
-
-    res := vec64(b.dim);
-    i : int;
-    for 0..b.dim-1 {
-        i = b.dim-1 - it;
-        sum : float64 = 0.0;
-        for j: i+1..b.dim-1 {
-            sum += R[i][j]*res[j];
-        }
-        res.data[i] = (b[i] - sum)/R[i][i];
-    }
-    return res;
-}
 
 
 
@@ -191,37 +98,38 @@ solve_linear_right_triangular :: (R: CMatrix64, b: Vector64) -> CVector64 #must 
 // Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
 // solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
 slrqta :: solve_linear_right_quasi_triangular;
-solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_right_quasi_triangular", "solve_linear_right_quasi_triangular", COMBI_M_V_V);
+_solve_linear_right_quasi_triangular :: (R: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
         assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!");
     }
-    res := cvec64(b.dim);
+    <<res = vec(U, b.dim);
 
     n := b.dim;
     i := n-1; // start with last row and wrap from bottom to up
     while i >= 0 {
         // check if 2x2 block by looking at left column
         // the term `|| i == 0` was missing
-        if (i > 0 && R[i][i-1] == CZERO) || i == 0 {
-            sum := CZERO;
+        if (i > 0 && R[i][i-1] == zero(U)) || i == 0 {
+            sum := zero(U);
             for j: i+1..n-1 {
-                sum += R[i][j] * res[j];
+                sum += R[i][j] * res.data[j];
             }
             res.data[i] = (b[i] - sum)/R[i][i];
             i -= 1;
         } else if i > 0 { // so now we have a 2x2 block where R[i][i] is the bottom-right element
-            A := cmat64(2, 2, 
+            A := mat(2, 2, 
                 R[i-1][i-1], R[i-1][i],
                 R[i][i-1], R[i][i]
             );
-            sum1 := CZERO;
-            sum2 := CZERO;
+            sum1 := zero(U);
+            sum2 := zero(U);
             for j: i+1..n-1 {
-                sum1 += R[i-1][j] * res[j];
-                sum2 += R[i][j] * res[j];
+                sum1 += R[i-1][j] * res.data[j];
+                sum2 += R[i][j] * res.data[j];
             }
-            c := cvec64(
+            c := vec(U,
                 b[i-1] - sum1,
                 b[i] - sum2
             );
@@ -231,92 +139,8 @@ solve_linear_right_quasi_triangular :: (R: CMatrix64, b: CVector64) -> CVector64
             i -= 2;
         }
     }
-    return res;
 }
-solve_linear_right_quasi_triangular :: (R: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
-        assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!");
-    }
-    res := cvec64(b.dim);
 
-    n := b.dim;
-    i := n-1; // start with last row and wrap from bottom to up
-    while i >= 0 {
-        // check if 2x2 block by looking at left column
-        // the term `|| i == 0` was missing
-        if (i > 0 && R[i][i-1] == CZERO) || i == 0 {
-            sum := CZERO;
-            for j: i+1..n-1 {
-                sum += R[i][j] * res[j];
-            }
-            res.data[i] = (b[i] - sum)/R[i][i];
-            i -= 1;
-        } else if i > 0 { // so now we have a 2x2 block where R[i][i] is the bottom-right element
-            A := cmat64(2, 2, 
-                R[i-1][i-1], R[i-1][i],
-                R[i][i-1], R[i][i]
-            );
-            sum1 := CZERO;
-            sum2 := CZERO;
-            for j: i+1..n-1 {
-                sum1 += R[i-1][j] * res[j];
-                sum2 += R[i][j] * res[j];
-            }
-            c := cvec64(
-                b[i-1] - sum1,
-                b[i] - sum2
-            );
-            tmp := solve_linear_2x2(A, c);
-            res.data[i-1] = tmp[0];
-            res.data[i]   = tmp[1];
-            i -= 2;
-        }
-    }
-    return res;
-}
-solve_linear_right_quasi_triangular :: (R: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
-        assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!");
-    }
-    res := vec64(b.dim);
-
-    n := b.dim;
-    i := n-1; // start with last row and wrap from bottom to up
-    while i >= 0 {
-        // check if 2x2 block by looking at left column
-        // the term `|| i == 0` was missing
-        if (i > 0 && R[i][i-1] == 0.0) || i == 0 {
-            sum : float64 = 0.0;
-            for j: i+1..n-1 {
-                sum += R[i][j] * res[j];
-            }
-            res.data[i] = (b[i] - sum)/R[i][i];
-            i -= 1;
-        } else if i > 0 { // so now we have a 2x2 block where R[i][i] is the bottom-right element
-            A := mat64(2, 2, 
-                R[i-1][i-1], R[i-1][i],
-                R[i][i-1], R[i][i]
-            );
-            sum1 : float64 = 0.0;
-            sum2 : float64 = 0.0;
-            for j: i+1..n-1 {
-                sum1 += R[i-1][j] * res[j];
-                sum2 += R[i][j] * res[j];
-            }
-            c := vec64(
-                b[i-1] - sum1,
-                b[i] - sum2
-            );
-            tmp := solve_linear_2x2(A, c);
-            res.data[i-1] = tmp[0];
-            res.data[i]   = tmp[1];
-            i -= 2;
-        }
-    }
-    return res;
-}
 
 
 
@@ -329,27 +153,18 @@ solve_linear_right_quasi_triangular :: (R: Matrix64, b: Vector64) -> Vector64 #m
 // Algorithm 3.4.8 Orthogonal Projection, page 167
 solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop :: solve_linear_orthogonal_projection;
-solve_linear_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_orthogonal_projection", "solve_linear_orthogonal_projection", COMBI_M_V_V);
+_solve_linear_orthogonal_projection :: (Q: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(is_unitary(Q));
     }
 
-    return dagger(Q) * b;
+    <<res = dagger(Q) * b;
 }
-solve_linear_orthogonal_projection :: (Q: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(is_unitary(Q));
-    }
 
-    return dagger(Q) * b;
-}
-solve_linear_orthogonal_projection :: (Q: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(is_unitary(Q));
-    }
 
-    return transpose(Q) * b;
-}
+
+
 
 
 // Scientific Computing, Vol I: Linear and nonlinear equations
@@ -358,51 +173,23 @@ solve_linear_orthogonal_projection :: (Q: Matrix64, b: Vector64) -> Vector64 #mu
 // Algorithm 3.4.9 Successive Orthogonal Projection, page 168
 // not sure if this algo is useful. seems to be slower than the previous one.
 slsop :: solve_linear_successive_orthogonal_projection;
-solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_successive_orthogonal_projection", "solve_linear_successive_orthogonal_projection", COMBI_M_V_V);
+_solve_linear_successive_orthogonal_projection :: (Q: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(is_unitary(Q));
     }
     bb := copy(b);
 
-    res := cvec64(bb.dim);
+    <<res = vec(U, bb.dim);
     for i: 0..bb.dim-1 {
         q := row(Q, i);
         res.data[i] = conjugate(q) * bb; // not sure if this is performant...
-        bb = bb - q * res[i];
+        bb = bb - q * res.data[i];
     }
-
-    return res;
 }
-solve_linear_successive_orthogonal_projection :: (Q: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(is_unitary(Q));
-    }
-    bb := cvec64(b);
 
-    res := cvec64(bb.dim);
-    for i: 0..bb.dim-1 {
-        q := row(Q, i);
-        res.data[i] = conjugate(q) * bb; // not sure if this is performant...
-        bb = bb - q * res[i];
-    }
 
-    return res;
-}
-solve_linear_successive_orthogonal_projection :: (Q: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(is_unitary(Q));
-    }
-    bb := copy(b);
 
-    res := vec64(bb.dim);
-    for i: 0..bb.dim-1 {
-        q := row(Q, i);
-        res.data[i] = q * bb; // not sure if this is performant...
-        bb = bb - q * res[i];
-    }
-
-    return res;
-}
 
 
 // Scientific Computing, Vol I: Linear and nonlinear equations
@@ -410,107 +197,47 @@ solve_linear_successive_orthogonal_projection :: (Q: Matrix64, b: Vector64) -> V
 // Springer
 // 3.4.5.1 Left Trapezoidal, page 159
 slltz :: solve_linear_left_trapezoidal;
-solve_linear_left_trapezoidal :: (L: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_left_trapezoidal_mv", "solve_linear_left_trapezoidal", COMBI_M_V_V);
+_solve_linear_left_trapezoidal_mv :: (L: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(L.rows == b.dim);
         assert(is_left_trapezoidal(L));
     }
 
-    L2 := cmat64_submatrix(L, 0, L.cols, 0, L.cols);
-    b2 := cvec64_subvector(b, 0, L.cols);
+    L2 := mat_submatrix(L, 0, L.cols, 0, L.cols);
+    b2 := vec_subvector(b, 0, L.cols);
 
-    // print("given \n    L = %\n    b = %\n", L, b);
-    // print("supsystem \n    L2 = %\n    b2 = %\n", L2, b2);
-
-    res := solve_linear_left_triangular(L2, b2);
+    <<res = solve_linear_left_triangular(L2, b2);
 
     #if CHECKS {
         if L.cols == L.rows {
-            assert( approx( L2 * res, b2 ) );
+            assert( approx( L2 * <<res, b2 ) );
         } else {
-            L3 := cmat64_submatrix(L, L.cols, L.rows, 0, L.cols);
-            b3 := cvec64_subvector(b, L.cols, L.rows);
-            assert( approx(L3 * res, b3) );
+            L3 := mat_submatrix(L, L.cols, L.rows, 0, L.cols);
+            b3 := vec_subvector(b, L.cols, L.rows);
+            assert( approx(L3 * <<res, b3) );
         }
     }
-
-    return res;
-}
-solve_linear_left_trapezoidal :: (L: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(L.rows == b.dim);
-        assert(is_left_trapezoidal(L));
-    }
-
-    L2 := cmat64_submatrix(L, 0, L.cols, 0, L.cols);
-    b2 := vec64_subvector(b, 0, L.cols);
-
-    // print("given \n    L = %\n    b = %\n", L, b);
-    // print("supsystem \n    L2 = %\n    b2 = %\n", L2, b2);
-
-    res := solve_linear_left_triangular(L2, b2);
-
-    #if CHECKS {
-        if L.cols == L.rows {
-            assert( approx( L2 * res, cvec64(b2) ) );
-        } else {
-            L3 := cmat64_submatrix(L, L.cols, L.rows, 0, L.cols);
-            b3 := vec64_subvector(b, L.cols, L.rows);
-            assert( approx(L3 * res, cvec64(b3)) );
-        }
-    }
-
-    return res;
-}
-solve_linear_left_trapezoidal :: (L: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(L.rows == b.dim);
-        assert(is_left_trapezoidal(L));
-    }
-
-    L2 := mat64_submatrix(L, 0, L.cols, 0, L.cols);
-    b2 := vec64_subvector(b, 0, L.cols);
-
-    // print("given \n    L = %\n    b = %\n", L, b);
-    // print("supsystem \n    L2 = %\n    b2 = %\n", L2, b2);
-
-    res := solve_linear_left_triangular(L2, b2);
-
-    #if CHECKS {
-        if L.cols == L.rows {
-            assert( approx( L2 * res, b2 ) );
-        } else {
-            L3 := mat64_submatrix(L, L.cols, L.rows, 0, L.cols);
-            b3 := vec64_subvector(b, L.cols, L.rows);
-            assert( approx(L3 * res, b3) );
-        }
-    }
-
-    return res;
 }
 
-solve_linear_left_trapezoidal :: (L: $T, M: T) -> T #must {
+
+#insert #run specialize("_solve_linear_left_trapezoidal_mm", "solve_linear_left_trapezoidal", COMBI_M_M_M);
+_solve_linear_left_trapezoidal_mm :: (L: Matrix($T), M: Matrix($U), res: *Matrix($V)) {
     #if CHECKS {
-        assert(T == CMatrix64 || T == Matrix64, "not a matrix");
         assert(L.rows == M.rows);
     }
 
-    #if T == CMatrix64 {
-        res := cmat64(L.cols, M.cols);
-    } else {
-        res := mat64(L.cols, M.cols);
-    }
+    <<res = mat(V, L.cols, M.cols);
 
     for j: 0..M.cols-1 {
         b := column(M, j);
         tmp := solve_linear_left_trapezoidal(L, b);
         for tmp.data {
-            res[it_index][j] = it;
+            (<<res)[it_index][j] = it;
         }
     }
-
-    return res;
 }
+
 
 
 
@@ -520,79 +247,39 @@ solve_linear_left_trapezoidal :: (L: $T, M: T) -> T #must {
 // 3.4.5.2 Right Trapezoidal, page 160
 // There are degrees of freedom left. These are set to 0 here.
 slrtz :: solve_linear_right_trapezoidal;
-solve_linear_right_trapezoidal :: (R: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_right_trapezoidal_mv", "solve_linear_right_trapezoidal", COMBI_M_V_V);
+_solve_linear_right_trapezoidal_mv :: (R: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(R.rows == b.dim);
         assert(is_right_trapezoidal(R));
     }
 
-    R2 := cmat64_submatrix(R, 0, R.rows, 0, R.rows);
+    R2 := mat_submatrix(R, 0, R.rows, 0, R.rows);
 
-    res := solve_linear_right_triangular(R2, b);
+    tmp := solve_linear_right_triangular(R2, b);
 
-    rvec := cvec64_zeros(R.cols);
-    for 0..res.dim-1 {
-        rvec.data[it] = res[it];
+    <<res = vec_zeros(U, R.cols);
+    for 0..tmp.dim-1 {
+        res.data[it] = tmp[it];
     }
-
-    return rvec;
-}
-solve_linear_right_trapezoidal :: (R: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(R.rows == b.dim);
-        assert(is_right_trapezoidal(R));
-    }
-
-    R2 := cmat64_submatrix(R, 0, R.rows, 0, R.rows);
-
-    res := solve_linear_right_triangular(R2, b);
-
-    rvec := cvec64_zeros(R.cols);
-    for 0..res.dim-1 {
-        rvec.data[it] = res[it];
-    }
-
-    return rvec;
-}
-solve_linear_right_trapezoidal :: (R: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(R.rows == b.dim);
-        assert(is_right_trapezoidal(R));
-    }
-
-    R2 := mat64_submatrix(R, 0, R.rows, 0, R.rows);
-
-    res := solve_linear_right_triangular(R2, b);
-
-    rvec := vec64_zeros(R.cols);
-    for 0..res.dim-1 {
-        rvec.data[it] = res[it];
-    }
-
-    return rvec;
 }
 
 
-solve_linear_right_trapezoidal :: (R: $T, M: T) -> T #must {
+#insert #run specialize("_solve_linear_right_trapezoidal_mm", "solve_linear_right_trapezoidal", COMBI_M_M_M);
+_solve_linear_right_trapezoidal_mm :: (R: Matrix($T), M: Matrix($V), res: *Matrix($U)) {
     #if CHECKS {
         assert(R.rows == M.rows);
     }
     
-    #if T == CMatrix64 {
-        res := cmat64(R.cols, M.cols);
-    } else {
-        res := mat64(R.cols, M.cols);
-    }
+    <<res = mat(U, R.cols, M.cols);
 
     for j: 0..M.cols-1 {
         b := column(M, j);
         tmp := solve_linear_right_trapezoidal(R, b);
         for tmp.data {
-            res[it_index][j] = it;
+            (<<res)[it_index][j] = it;
         }
     }
-
-    return res;
 }
 
 
@@ -604,20 +291,11 @@ solve_linear_right_trapezoidal :: (R: $T, M: T) -> T #must {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
-decompose_LR :: (M: $T) -> L: T #must, R: T #must {
-    #if CHECKS {
-        assert(T == CMatrix64 || T == Matrix64, "not a matrix");
-    }
+decompose_LR :: (M: Matrix($T)) -> L: Matrix(T) #must, R: Matrix(T) #must {
 
-    #if T == CMatrix64 {
-        L := cmat64_id(M.rows, M.cols);
-        R := cmat64_zeros(M.rows, M.cols);
-        L[0][0] = c64(1.0, 0.0);
-    } else {
-        L := mat64_id(M.rows, M.cols);
-        R := mat64_zeros(M.rows, M.cols);
-        L[0][0] = 1.0;
-    }
+    L := mat_id(T, M.rows, M.cols);
+    R := mat_zeros(T, M.rows, M.cols);
+    L[0][0] = one(T);
 
     for i: 0..M.rows-1 {
         for j: 0..M.cols-1 {
@@ -642,16 +320,12 @@ decompose_LR :: (M: $T) -> L: T #must, R: T #must {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
-gaussian_factorization_no_pivot :: (M: $T) -> T #must {
-    #if CHECKS {
-        assert(T == CMatrix64 || T == Matrix64, "not a matrix");
-    }
-    
+gaussian_factorization_no_pivot :: (M: Matrix($T)) -> Matrix(T) #must {
     A := copy(M);
     m := M.rows;
     n := M.cols;
     for k: 0..min(m,n)-1 {
-        assert(abs(A[k][k]) != 0.0, "\nCannot perform Gaussain factorization due to 0 in diagonal.");
+        assert(abs(A[k][k]) != zero(T), "\nCannot perform Gaussain factorization due to 0 in diagonal.");
 
         for i: k+1..m-1 {
             A[i][k] = A[i][k]/A[k][k];
@@ -675,7 +349,8 @@ gaussian_factorization_no_pivot :: (M: $T) -> T #must {
 slgf_np :: solve_linear_gaussian_factorization_no_pivot;
 solve_LRnp :: solve_linear_gaussian_factorization_no_pivot;
 solve_LUnp :: solve_linear_gaussian_factorization_no_pivot;
-solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_gaussian_factorization_no_pivot", "solve_linear_gaussian_factorization_no_pivot", COMBI_M_V_V);
+_solve_linear_gaussian_factorization_no_pivot :: (A: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -684,35 +359,7 @@ solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: CVector64) -> 
     L, R := decompose_LR(M);
 
     y := solve_linear_left_trapezoidal(L, b);
-    x := solve_linear_right_trapezoidal(R, y);
-
-    return x;
-}
-solve_linear_gaussian_factorization_no_pivot :: (A: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(A.rows == b.dim);
-    }
-
-    M := gaussian_factorization_no_pivot(A);
-    L, R := decompose_LR(M);
-
-    y := solve_linear_left_trapezoidal(L, b);
-    x := solve_linear_right_trapezoidal(R, y);
-
-    return x;
-}
-solve_linear_gaussian_factorization_no_pivot :: (A: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(A.rows == b.dim);
-    }
-
-    M := gaussian_factorization_no_pivot(A);
-    L, R := decompose_LR(M);
-
-    y := solve_linear_left_trapezoidal(L, b);
-    x := solve_linear_right_trapezoidal(R, y);
-
-    return x;
+    <<res = solve_linear_right_trapezoidal(R, y);
 }
 
 
@@ -726,14 +373,13 @@ solve_linear_gaussian_factorization_no_pivot :: (A: Matrix64, b: Vector64) -> Ve
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
-gaussian_factorization_full_pivot :: (M: $T) -> 
-    T #must, rows: []int #must, cols: []int #must, 
-    row_permutations: int, col_permutations: int {
-
-    #if CHECKS {
-        assert(T == CMatrix64 || T == Matrix64, "not a matrix");
-    }
-
+gaussian_factorization_full_pivot :: (M: Matrix($T))
+ -> Matrix(T) #must, 
+    rows: []int #must, 
+    cols: []int #must, 
+    row_permutations: int, 
+    col_permutations: int 
+{
     A := copy(M);
     m := A.rows;
     n := A.cols;
@@ -776,12 +422,12 @@ gaussian_factorization_full_pivot :: (M: $T) ->
         // instead of swapping, use the permutation arrays rows and cols to access the 
         // entries of A. Should be faster?
         if ii > k {
-            swap_rows(A, k, ii);
+            swap_rows(*A, k, ii);
             rows[k], rows[ii] = swap(rows[k], rows[ii]);
             row_permutations += 1;
         }
         if jj > k {
-            swap_columns(A, k, jj);
+            swap_columns(*A, k, jj);
             cols[k], cols[jj] = swap(cols[k], cols[jj]);
             col_permutations += 1;
         }
@@ -801,6 +447,11 @@ gaussian_factorization_full_pivot :: (M: $T) ->
 
 
 
+
+
+
+
+
 // Scientific Computing, Vol I: Linear and nonlinear equations
 // Texts in computational science and engineering 18
 // Springer
@@ -808,7 +459,8 @@ gaussian_factorization_full_pivot :: (M: $T) ->
 slgf_fp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LRfp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LUfp :: solve_linear_gaussian_factorization_full_pivot;
-solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_gaussian_factorization_full_pivot", "solve_linear_gaussian_factorization_full_pivot", COMBI_M_V_V);
+_solve_linear_gaussian_factorization_full_pivot :: (A: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -818,37 +470,7 @@ solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: CVector64) -
 
     y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
     w := solve_linear_right_trapezoidal(R, y);
-    x := permute(w, ..cols);
-
-    return x;
-}
-solve_linear_gaussian_factorization_full_pivot :: (A: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(A.rows == b.dim);
-    }
-
-    M, rows, cols := gaussian_factorization_full_pivot(A);
-    L, R := decompose_LR(M);
-
-    y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    w := solve_linear_right_trapezoidal(R, y);
-    x := permute(w, ..cols);
-
-    return x;
-}
-solve_linear_gaussian_factorization_full_pivot :: (A: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(A.rows == b.dim);
-    }
-
-    M, rows, cols := gaussian_factorization_full_pivot(A);
-    L, R := decompose_LR(M);
-
-    y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    w := solve_linear_right_trapezoidal(R, y);
-    x := permute(w, ..cols);
-
-    return x;
+    <<res = permute(w, ..cols);
 }
 
 
@@ -864,24 +486,17 @@ solve_linear_gaussian_factorization_full_pivot :: (A: Matrix64, b: Vector64) -> 
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
-gaussian_factorization_row_pivot :: (M: $T) -> T #must, rows: []int, permutations: int {
-    #if CHECKS {
-        assert(T == CMatrix64 || T == Matrix64, "not a matrix");
-    }
-    
+gaussian_factorization_row_pivot :: (M: Matrix($T)) -> Matrix(T) #must, rows: []int, permutations: int {
     A := copy(M);
     m := A.rows;
     n := A.cols;
 
-    // rows : [..]int;
-    // array_resize(*rows, A.rows, false);
     rows := NewArray(A.rows, int, false);
     permutations := 0;
 
     for 0..A.rows-1 {
         rows[it] = it;
     }
-
 
     for k: 0..min(m,n)-1 {
         ii := k;
@@ -900,7 +515,7 @@ gaussian_factorization_row_pivot :: (M: $T) -> T #must, rows: []int, permutation
         // instead of swapping, use the permutation arrays rows and cols to access the 
         // entries of A. Should be faster?
         if ii > k {
-            swap_rows(A, k, ii);
+            swap_rows(*A, k, ii);
             rows[k], rows[ii] = swap(rows[k], rows[ii]);
             permutations += 1;
         }
@@ -927,7 +542,8 @@ gaussian_factorization_row_pivot :: (M: $T) -> T #must, rows: []int, permutation
 slgf_rp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LRrp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LUrp :: solve_linear_gaussian_factorization_row_pivot;
-solve_linear_gaussian_factorization_row_pivot :: (A: CMatrix64, b: CVector64) -> CVector64 #must {
+#insert #run specialize("_solve_linear_gaussian_factorization_row_pivot", "solve_linear_gaussian_factorization_row_pivot", COMBI_M_V_V);
+_solve_linear_gaussian_factorization_row_pivot :: (A: Matrix($T), b: Vector($V), res: *Vector($U)) {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -936,35 +552,7 @@ solve_linear_gaussian_factorization_row_pivot :: (A: CMatrix64, b: CVector64) ->
     L, R := decompose_LR(M);
 
     y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    w := solve_linear_right_trapezoidal(R, y);
-
-    return w;
-}
-solve_linear_gaussian_factorization_row_pivot :: (A: CMatrix64, b: Vector64) -> CVector64 #must {
-    #if CHECKS {
-        assert(A.rows == b.dim);
-    }
-
-    M, rows := gaussian_factorization_row_pivot(A);
-    L, R := decompose_LR(M);
-
-    y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    w := solve_linear_right_trapezoidal(R, y);
-
-    return w;
-}
-solve_linear_gaussian_factorization_row_pivot :: (A: Matrix64, b: Vector64) -> Vector64 #must {
-    #if CHECKS {
-        assert(A.rows == b.dim);
-    }
-
-    M, rows := gaussian_factorization_row_pivot(A);
-    L, R := decompose_LR(M);
-
-    y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    w := solve_linear_right_trapezoidal(R, y);
-
-    return w;
+    <<res = solve_linear_right_trapezoidal(R, y);
 }
 
 
@@ -976,21 +564,17 @@ solve_linear_gaussian_factorization_row_pivot :: (A: Matrix64, b: Vector64) -> V
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 3.10.1 Matrix Inverse, page 261
-inverse :: (A: $T) -> T {
-    
+inverse :: (A: Matrix($T)) -> Matrix(T) {
     #if CHECKS {
-        assert(T == CMatrix64 || T == Matrix64, "only for matrices");
         assert(is_quadratic(A));
     }
+
     M, rows := gaussian_factorization_row_pivot(A);
     L, R := decompose_LR(M);
 
-    #if T == CMatrix64 {
-        Y := solve_linear_left_trapezoidal(L, cmat64_id(A.rows, A.cols));
-    } else {
-        Y := solve_linear_left_trapezoidal(L, mat64_id(A.rows, A.cols));
-    }
+    Y := solve_linear_left_trapezoidal(L, mat_id(T, A.rows, A.cols));
     X := solve_linear_right_trapezoidal(R, Y);
+
     return permute_columns(X, ..rows);
 }
 
@@ -1005,7 +589,7 @@ inverse :: (A: $T) -> T {
 //
 // it is not recommended to calculate the dterminant of large matrices
 det :: determinant;
-determinant :: (A: CMatrix64) -> Complex64 {
+determinant :: (A: Matrix($T)) -> T {
     #if CHECKS {
         assert(is_quadratic(A));
     }
@@ -1017,29 +601,7 @@ determinant :: (A: CMatrix64) -> Complex64 {
     M, rows, permutations := gaussian_factorization_row_pivot(A);
     L, R := decompose_LR(M);
 
-    p := c64(1.0);
-    for 0..R.rows-1 {
-        p *= R[it][it];
-    }
-
-    // +1 for even, -1 for odd num of permutations
-    s := 2.0 * cast(float64)(permutations % 2 == 0) - 1.0;
-
-    return s * p;
-}
-determinant :: (A: Matrix64) -> float64 {
-    #if CHECKS {
-        assert(is_quadratic(A));
-    }
-
-    if A.rows == 2 {
-        return A[0][0]*A[1][1] - A[0][1]*A[1][0];
-    } // implement optimized formula for 3x3 matrix
-
-    M, rows, permutations := gaussian_factorization_row_pivot(A);
-    L, R := decompose_LR(M);
-
-    p : float64 = 1.0;
+    p := one(T);
     for 0..R.rows-1 {
         p *= R[it][it];
     }
@@ -1061,35 +623,35 @@ test_linear_algebra :: () {
     print("\n\nLinear Algebra -------------------------------\n\n");
 
     {
-        A := cmat64(2, 2, R, R, 2.0 - I, I);
-        b := cvec64(I, c64(2.0, 4.0));
+        A := mat(2, 2, R, R, 2.0 - I, I);
+        b := vec(Complex64, I, c64(2.0, 4.0));
         res := solve_linear_2x2(A, b);
         print("%\n", str(res));
-        assert(res == cvec64(
+        assert(res == vec(Complex64, 
             -0.25 + 1.75*I,
             0.25 - 0.75*I
         ));
     }
 
     {
-        L := cmat64(3, 3,
+        L := mat(3, 3,
             R, CZERO, CZERO,
             3.0*R, R, CZERO,
             I, R+I, R
         );
-        b := cvec64(3.0*R, -I, R-2.0*I);
+        b := vec(Complex64, 3.0*R, -I, R-2.0*I);
         res := solve_linear_left_triangular(L, b);
         print("% = % ?\n", str(L * res), str(b, ""));
         assert(L * res == b);
     }
 
     {
-        M := cmat64(3, 3,
+        M := mat(3, 3,
             2.0*R, I, R-2.0*I,
             CZERO, R, 3.0*I,
             CZERO, CZERO, -3.0*R
         );
-        b := cvec64(3.0*R, -I, R-2.0*I);
+        b := vec(Complex64, 3.0*R, -I, R-2.0*I);
         res := solve_linear_right_triangular(M, b);
 
         test := norm_2(M * res - b);
@@ -1098,16 +660,16 @@ test_linear_algebra :: () {
     }
 
     {
-        m := mat64(4, 4,
+        m := mat(4, 4,
             1, 3, 4, 5,
             0, 2, 3, 4,
             0, 1, 2, 3,
             0, 0, 0, 2
         );
-        cm := cmat64(m);
+        cm := mat(Complex64, m);
         
-        b := vec64(2,3,4,5);
-        cb := cvec64(b);
+        b := vec(float64, 2,3,4,5);
+        cb := vec(Complex64, b);
 
         res := solve_linear_right_quasi_triangular(cm,cb);
         print("res = %\n", str(res));
@@ -1117,12 +679,12 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(3, 2, 
+        M := mat(3, 2, 
             R, CZERO, 
             -R, R, 
             -R, -R
         );
-        b := cvec64(R, 2.0*R, -4.0*R);
+        b := vec(Complex64, R, 2.0*R, -4.0*R);
 
         res := solve_linear_left_trapezoidal(M, b);
         print("sllt: %\n", str(res));
@@ -1130,22 +692,22 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(2, 3, 
+        M := mat(2, 3, 
             R, R, CZERO, 
             CZERO, R, CZERO 
         );
-        b := cvec64(4*R, 6*R);
+        b := vec(Complex64, 4*R, 6*R);
 
         res := solve_linear_right_trapezoidal(M, b);
         print("slrt: %\n", str(res));
         assert( approx(M*res, b) );
     }
     {
-        M := cmat64(2,2,
+        M := mat(2,2,
             2*R, 3*R,
             -2*R, R
         );
-        res := cmat64(2,2,
+        res := mat(2,2,
             2*R, 3*R,
             -1*R, 4*R
         );
@@ -1155,19 +717,19 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(2,2,
+        M := mat(2,2,
             R, I,
             -3*R, 2.0 - I
         );
-        b := cvec64(4*R, 6*I);
+        b := vec(Complex64, 4*R, 6*I);
 
         res := solve_LRnp(M, b);
         print("solve linear system via Gaussian factorization (no pivoting): %\n", str(res));
-        assert(res == cvec64(2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
+        assert(res == vec(Complex64, 2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
     }
 
     {
-        M := cmat64(3,3,
+        M := mat(3,3,
             CZERO, 4*R, -3*R,
             2*R, CZERO, 4*R,
             3*R, -5*R, 3*R
@@ -1179,7 +741,7 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(3,3,
+        M := mat(3,3,
             CZERO, 4*R, -3*R,
             2*R, CZERO, 4*R,
             3*R, -5*R, 3*R
@@ -1192,39 +754,39 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(2,2,
+        M := mat(2,2,
             R, I,
             -3*R, 2.0 - I
         );
-        b := cvec64(4*R, 6*I);
+        b := vec(Complex64, 4*R, 6*I);
 
         res := solve_LRfp(M, b);
         print("solve linear system via Gaussian factorization (full pivoting): %\n", str(res));
-        assert(approx(res, cvec64(2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
+        assert(approx(res, vec(Complex64, 2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
 
     {
-        M := cmat64(2,2,
+        M := mat(2,2,
             R, I,
             -3*R, 2.0 - I
         );
-        b := cvec64(4*R, 6*I);
+        b := vec(Complex64, 4*R, 6*I);
 
         res := solve_LRrp(M, b);
         print("solve linear system via Gaussian factorization (row pivoting): %\n", str(res));
-        assert(approx(res, cvec64(2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
+        assert(approx(res, vec(Complex64, 2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
 
     {
-        L := cmat64(3,3,
+        L := mat(3,3,
             R, CZERO, CZERO,
             I, R, CZERO,
             2*R, 3+I, R
         );
-        one := cmat64_id(3,3);
+        one := mat_id(Complex64, 3, 3);
         res := solve_linear_left_trapezoidal(L,one);
         print("K = %\n", str(res));
-        assert(approx(res, cmat64(3,3,
+        assert(approx(res, mat(3,3,
             R, CZERO, CZERO,
             -I, R, CZERO, 
             -3+3*I, -3-I, R
@@ -1232,15 +794,15 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(3,3,
+        M := mat(3,3,
             2*R, I, -2*R,
             CZERO, -I, CZERO,
             CZERO, CZERO, 1+I
         );
-        one := cmat64_id(3,3);
+        one := mat_id(Complex64, 3, 3);
         res := solve_linear_right_trapezoidal(M,one);
         print("K = %\n", str(res));
-        assert(approx(res, cmat64(3,3,
+        assert(approx(res, mat(3,3,
             0.5*R, 0.5*R, 0.5-0.5*I,
             CZERO, I, CZERO,
             CZERO, CZERO, 0.5-0.5*I
@@ -1248,14 +810,14 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(3, 3,
+        M := mat(3, 3,
             2*R, I, -2*R,
             CZERO, -I, 2*I,
             R, CZERO, R+I
         );
         iM := inverse(M);
         print("iM = %\n", str(iM));
-        assert(approx(iM, cmat64(3,3,
+        assert(approx(iM, mat(3,3,
             c64(0.25, 0.25), c64(0.25, 0.25), c64(0.5, -0.5),
             -0.5*R, -0.5*R+I, R,
             -0.25*R, -0.25*R, 0.5*R
@@ -1263,7 +825,7 @@ test_linear_algebra :: () {
     }
 
     {
-        M := cmat64(3, 3,
+        M := mat(3, 3,
             2*R, I, -2*R,
             CZERO, -I, 2*I,
             R, CZERO, R+I

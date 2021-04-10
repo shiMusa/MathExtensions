@@ -27,19 +27,48 @@ calculation :: (code: Code) #expand {
 is_a_matrix :: inline (T: Type) -> bool {
     return T == Matrix(Complex64)
         || T == Matrix(float64)
-        || T == Matrix(float32); // possibly more
+        || T == Matrix(float32)
+        || T == Matrix(float)
+        || T == Matrix(int)
+        || T == Matrix(s64)
+        || T == Matrix(s32)
+        || T == Matrix(s16)
+        || T == Matrix(u64)
+        || T == Matrix(u32)
+        || T == Matrix(u16)
+        || T == Matrix(u8)
+        ;
 }
 is_a_vector :: inline (T: Type) -> bool {
     return T == Vector(Complex64)
         || T == Vector(float64)
-        || T == Vector(float32); // possibly more
+        || T == Vector(float32)
+        || T == Vector(float)
+        || T == Vector(int)
+        || T == Vector(s64)
+        || T == Vector(s32)
+        || T == Vector(s16)
+        || T == Vector(u64)
+        || T == Vector(u32)
+        || T == Vector(u16)
+        || T == Vector(u8)
+        ;
 }
 is_a_scalar :: inline (T: Type) -> bool {
     return T == Complex64
         || T == float64
-        || T == float32; // possibly more
+        || T == float32
+        || T == float
+        || T == int
+        || T == s64
+        || T == s32
+        || T == s16
+        || T == u64
+        || T == u32
+        || T == u16
+        || T == u8
+        ;
 }
-
 
 
 
@@ -48,21 +77,25 @@ is_a_scalar :: inline (T: Type) -> bool {
 
 
 ncast :: inline ($T: Type, num: $N) -> T {
-    #if T == Complex64 {
-        #if N == Complex64 {
-            return num;
-        } else {
-            return c64(cast(float64)num);
-            // res : Complex64;
-            // res.real = cast(float64) num;
-            // res.imag = 0.0;
-            // return res;
-        }
+    #if CHECKS {
+        assert(is_a_scalar(T) && is_a_scalar(N), "cannot cast between non-scalars! T = %, N = %\n", T, N);
+    }
+
+    // #if #run !is_a_scalar(T) || !is_a_scalar(N) {
+    //     print("cannot cast between non-scalars! T = %, N = %\n", T, N);
+    //     assert(false);
+    // }
+
+    #if T == N {
+        return num;
+    } else #if T == Complex64 {
+        return c64(cast(float64)num);
+    } else #if #run is_a_scalar(N) && N != Complex64 {
+        // print("num = %, N = %\n", num, N);
+        return cast,no_check(T) num; // TODO other types?
     } else {
-        #if N == Complex64 {
-            return cast(T) num.real;
-        } else
-            return cast(T) num;
+        assert(N != Complex64, "cannot cast complex to real number!");
+        return zero(T);
     }
 }
 
@@ -78,11 +111,11 @@ one :: inline ($T: Type) -> T {
 
 DELTA :: 1.0e-6;
 approx :: (a: $T, b: T) -> bool {
-    // #if T == CVector64 || T == Vector64 {
-    //     return norm_2(a - b) < DELTA;
-    // } else #if T == CMatrix64 || T == Matrix64 {
-    //     return norm_frobenius(a - b) < DELTA;
-    // } else
+    #if #run is_a_vector(T) {
+        return norm_2(a - b) < DELTA;
+    } else #if #run is_a_matrix(T) {
+        return norm_frobenius(a - b) < DELTA;
+    } else
         return abs(a - b) < DELTA;
 }
 
@@ -118,12 +151,6 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 }
 
 
-
-
-
-f64 :: inline (num: $T) -> float64 {
-    return ncast(float64, num);
-}
 
 
 
