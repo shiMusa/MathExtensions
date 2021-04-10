@@ -26,16 +26,6 @@ operator [] :: inline (v: Vector($T), i: int) -> T {
     return v.data[i];
 }
 
-operator == :: inline (a: Vector, b: Vector) -> bool {
-    #if CHECKS {
-        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
-    }
-
-    for a.data {
-        if it != b.data[it_index] then return false;
-    }
-    return true;
-}
 
 
 
@@ -48,28 +38,6 @@ vec :: ($type: Type, values: ..$T) -> Vector(type) {
     }
     return res;
 }
-
-
-// #placeholder vec;
-// #insert #run specialize("_vec", "vec2", 
-//     .[
-//         // .["..int"],
-//         .["..float64"],
-//         .["..Complex64"],
-//     ], .[
-//         // .["Vector(float64)"],
-//         .["Vector(float64)"],
-//         .["Vector(Complex64)"],
-//     ]
-// );
-// _vec :: inline (values: []$T, res: *Vector($V)) {
-//     #if T == Complex64 {
-//         <<res = vec(Complex64, values);
-//     } else {
-//         <<res = vec(float64, values);
-//     }
-// }
-
 
 
 copy :: (v: Vector($T)) -> Vector(T) {
@@ -135,16 +103,6 @@ vec_subvector :: (v: Vector($T), from: int, to: int) -> Vector(T) {
 
 
 
-#insert #run specialize("_add", "operator +", COMBI_V_V_V);
-_add :: (a: Vector($A), b: Vector($B), res: *Vector($C)) {
-    #if CHECKS {
-        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
-    }
-    <<res = vec(C, a.dim);
-    for 0..a.dim-1 {
-        res.data[it] = ncast(C, a[it]) + ncast(C, b[it]);
-    }
-}
 add :: (a: *Vector($A), b: Vector($B)) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
@@ -155,18 +113,6 @@ add :: (a: *Vector($A), b: Vector($B)) {
     }
 }
 
-#insert #run specialize("_sub", "operator -", COMBI_V_V_V);
-_sub :: (a: Vector($A), b: Vector($B), res: *Vector($C)) {
-    #if CHECKS {
-        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
-    }
-
-    <<res = vec(C, a.dim);
-    for 0..a.dim-1 {
-        res.data[it] = ncast(C, a[it]) - ncast(C, b[it]);
-    }
-    return res;
-}
 sub :: (a: *Vector($A), b: Vector($B)) {
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
@@ -177,27 +123,16 @@ sub :: (a: *Vector($A), b: Vector($B)) {
     }
 }
 
-operator - :: inline (a: Vector($A)) -> Vector(A) {
-    res := vec(A, a.dim);
-    for 0..a.dim-1 {
-        res.data[it] = -a[it];
-    }
-    return res;
-}
+
+
 neg :: (a: *Vector($A)) {
     for 0..a.dim-1 {
         a.data[it] = -a.data[it];
     }
 }
 
-#insert #run specialize("_mul", "operator *", COMBI_V_V_V);
-_mul :: inline (a: Vector($A), val: $B, res: *Vector($C)) {
-    <<res = vec(C, a.dim);
-    for 0..a.dim-1 {
-        res.data[it] = ncast(C, a[it]) * ncast(C, val);
-    }
-    return res;
-}
+
+
 mul :: inline (a: *Vector($A), val: $B) {
     #if CHECKS {
         assert(is_minor_type(A,B));
@@ -207,14 +142,8 @@ mul :: inline (a: *Vector($A), val: $B) {
     }
 }
 
-#insert #run specialize("_div", "operator /", COMBI_V_X_V);
-_div :: inline (a: Vector($A), val: $B, res: *Vector($C)) {
-    <<res = vec(C, a.dim);
-    for 0..a.dim-1 {
-        res.data[it] = ncast(C, a[it]) / ncast(C, val);
-    }
-    return res;
-}
+
+
 div :: inline (a: *Vector($A), val: $B) {
     #if CHECKS {
         assert(is_minor_type(A,B));
@@ -223,23 +152,6 @@ div :: inline (a: *Vector($A), val: $B) {
         a.data[it] /= ncast(A, val);
     }
 }
-
-
-
-
-#insert #run specialize("_mul", "operator *", COMBI_V_V_X);
-_mul :: inline (a: Vector($A), b: Vector($B), res: *$C) {
-    <<res = zero(C);
-    for 0..a.dim-1 {
-        <<res += ncast(C, a[it] * b[it]);
-    }
-    return res;
-}
-
-
-
-
-
 
 
 
@@ -292,64 +204,6 @@ conjugate :: (v: *Vector($V)) {
 
 
 
-// outer_product :: (a: Vector($V), b: Vector($V)) -> CMatrix64 #must {
-//     res := cmat64(a.dim, b.dim);
-//     for i: 0..a.dim {
-//         for j: 0..b.dim {
-//             res[i][j] = a[i] * b[j];
-//         }
-//     }
-//     return res;
-// }
-
-// outer_product :: (a: Vector64, b: CVector64) -> CMatrix64 #must {
-//     res := cmat64(a.dim, b.dim);
-//     for i: 0..a.dim {
-//         for j: 0..b.dim {
-//             res[i][j] = a[i] * b[j];
-//         }
-//     }
-//     return res;
-// }
-
-// outer_product :: (a: CVector64, b: Vector64) -> CMatrix64 #must {
-//     res := cmat64(a.dim, b.dim);
-//     for i: 0..a.dim {
-//         for j: 0..b.dim {
-//             res[i][j] = a[i] * b[j];
-//         }
-//     }
-//     return res;
-// }
-
-
-// operator / :: inline (a: CVector64, b: CVector64) -> CMatrix64 #must {
-//     return outer_product(a, b);
-// }
-// operator / :: inline (a: Vector64, b: CVector64) -> CMatrix64 #must {
-//     return outer_product(a, b);
-// }
-// operator / :: inline (a: CVector64, b: Vector64) -> CMatrix64 #must {
-//     return outer_product(a, b);
-// }
-
-
-
-
-
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.4.10 Apply Elementary Reflector, page 170
-#insert #run specialize("_reflect", "reflect", COMBI_V_V_V);
-_reflect :: (vec: Vector($A), normal: Vector($B), res: *Vector($C)) {
-    tau := 2.0 / (conjugate(normal) * normal);
-    alpha := tau * conjugate(normal) * vec;
-    <<res = vec - normal * alpha;
-}
-
-
-
 
 // Scientific Computing, Vol I: Linear and nonlinear equations
 // Texts in computational science and engineering 18
@@ -373,15 +227,24 @@ norm :: (v: Vector($T), $$n: float64) -> float64 {
             return res;
         } else #if n == 2.0 {
             return sqrt( (conjugate(v) * v).real, float64 );
+        } else {
+            return _generic_norm(v, n);
         }
     } else {
-        res : float64 = 0.0;
-        for 0..v.dim-1 {
-            res += pow(abs(v[it]), n, float64);
-        }
-        return pow(res, 1.0/n, float64);
+        return _generic_norm(v, n);
     }
 }
+
+#scope_file
+_generic_norm :: inline (v: Vector($T), n: float64) -> float64 {
+    res : float64 = 0.0;
+    for 0..v.dim-1 {
+        res += pow(abs(v[it]), n, float64);
+    }
+    return pow(res, 1.0/n, float64);
+}
+#scope_export
+
 
 norm_2 :: inline (v: Vector($T)) -> float64 {
     return norm(v, 2.0);
@@ -393,20 +256,6 @@ norm_1 :: inline (v: Vector($T)) -> float64 {
 
 norm_inf :: inline (v: Vector($T)) -> float64 {
     return norm(v, Math.FLOAT64_INFINITY);
-}
-
-
-
-#insert #run specialize("_cross", "cross", COMBI_V_V_V);
-_cross :: (a: Vector($A), b: Vector($B), res: *Vector($C)) {
-    #if CHECKS {
-        assert(a.dim == 3 && b.dim == 3);
-    }
-    <<res = vec(C, 
-        a[1]*b[2] - a[2]*b[1], 
-        a[2]*b[0] - a[0]*b[2],
-        a[0]*b[1] - a[1]*b[0]
-    );
 }
 
 

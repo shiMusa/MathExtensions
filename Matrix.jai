@@ -93,17 +93,6 @@ column :: (m: Matrix($T), i: int) -> Vector(T) #must {
     return res;
 }
 
-operator == :: inline (a: Matrix($T), b: Matrix(T)) -> bool {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
-
-    r := true;
-    for a.data {
-        r = r & (it == b.data[it_index]);
-    }
-    return a.rows == b.rows && a.cols == b.cols && r;
-}
 
 
 
@@ -111,18 +100,6 @@ operator == :: inline (a: Matrix($T), b: Matrix(T)) -> bool {
 
 
 
-
-#insert #run specialize("_add", "operator +", COMBI_M_M_M);
-_add :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
-
-    <<res = mat(C, a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] + b.data[it];
-    }
-}
 add :: (a: *Matrix($A), b:Matrix($B)) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
@@ -134,17 +111,6 @@ add :: (a: *Matrix($A), b:Matrix($B)) {
 }
 
 
-#insert #run specialize("_sub", "operator -", COMBI_M_M_M);
-_sub :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
-
-    <<res = mat(C, a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] - b.data[it];
-    }
-}
 sub :: (a: *Matrix($A), b:Matrix($B)) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
@@ -159,18 +125,6 @@ sub :: (a: *Matrix($A), b:Matrix($B)) {
 
 
 
-
-
-
-operator - :: (a: Matrix($T)) -> Matrix(T) #must {
-    res := mat(T, a.rows, a.cols);
-
-    for 0..a.data.count-1 {
-        res.data[it] = -a.data[it];
-    }
-
-    return res;
-}
 neg :: (a: Matrix($T)) {
     for a.data {
         a.data[it_index] = -it;
@@ -184,38 +138,9 @@ neg :: (a: Matrix($T)) {
 
 
 
-#insert #run specialize("_mulx", "operator *", COMBI_M_X_M, .["#symmetric"]);
-_mulx :: (a: Matrix($A), b: $B, res: *Matrix($C)) {
-    <<res = mat(C, a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = ncast(C, a.data[it]) * ncast(C, b);
-    }
-}
-mul :: (a: *Matrix($A), b: Complex64) {
-    #if CHECKS {
-        assert(is_minor_type(A, B));
-    }
-    for 0..a.data.count-1 {
-        a.data[it] *= ncast(A, b);
-    }
-}
-mul :: (a: *Matrix($A), b: float64) {
-    #if CHECKS {
-        assert(is_minor_type(A, B));
-    }
-    for 0..a.data.count-1 {
-        a.data[it] *= ncast(A, b);
-    }
-}
 
 
-#insert #run specialize("_divx", "operator /", COMBI_M_X_M);
-_divx :: (a: Matrix($A), b: $B, res: *Matrix($C)) {
-    <<res = mat(C, a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = ncast(C, a.data[it]) / ncast(C, b);
-    }
-}
+
 div :: (a: *Matrix($A), b: Complex64) {
     #if CHECKS {
         assert(is_minor_type(A, B));
@@ -236,79 +161,58 @@ div :: (a: *Matrix($A), b: float64) {
 
 
 
+// // Scientific Computing, Vol I: Linear and nonlinear equations
+// // Texts in computational science and engineering 18
+// // Springer
+// // 2.11 Case Study: Matrix-Matrix Multiplication, page 118
+// // According to Table 2.12, the best performing loop order is j/k/i with
+// // the least number of cache misses.
+// #insert #run specialize("_mul", "operator *", COMBI_M_M_M);
+// _mul :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
+//     #if CHECKS {
+//         assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+//     }
+
+//     <<res = mat_zeros(C, a.rows, b.cols);
+//     for j: 0..b.cols-1 {
+//         for k: 0..a.cols-1 {
+//             tmp := ncast(C, b[k][j]);
+//             for i: 0..a.rows-1 {
+//                 (<<res)[i][j] += ncast(C, a[i][k]) * tmp;
+//             }
+//         }
+//     }
+// }
+// // TODO: think of a smart way to do in-place multiplication
 
 
 
+// #insert #run specialize("_mul", "operator *", COMBI_M_V_V);
+// _mul :: (a: Matrix($A), b: Vector($B), res: *Vector($C)) {
+//     #if CHECKS {
+//         assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
+//     }
 
+//     <<res = vec_zeros(C, a.rows);
+//     for i: 0..a.rows-1 {
+//         for j: 0..a.cols-1 {
+//             res.data[i] += ncast(C, a[i][j]) * ncast(C, b[j]);
+//         }
+//     }
+// }
+// #insert #run specialize("_mul", "operator *", COMBI_V_M_V);
+// _mul :: (a: Vector($A), b: Matrix($B), res: *Vector($C)) {
+//     #if CHECKS {
+//         assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
+//     }
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// 2.11 Case Study: Matrix-Matrix Multiplication, page 118
-// According to Table 2.12, the best performing loop order is j/k/i with
-// the least number of cache misses.
-
-
-
-
-#insert #run specialize("_mul", "operator *", COMBI_M_M_M);
-_mul :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
-    #if CHECKS {
-        assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
-    }
-
-    <<res = mat_zeros(C, a.rows, b.cols);
-    for j: 0..b.cols-1 {
-        for k: 0..a.cols-1 {
-            tmp := ncast(C, b[k][j]);
-            for i: 0..a.rows-1 {
-                (<<res)[i][j] += ncast(C, a[i][k]) * tmp;
-            }
-        }
-    }
-}
-// TODO: think of a smart way to do in-place multiplication
-
-
-
-#insert #run specialize("_mul", "operator *", COMBI_M_V_V);
-_mul :: (a: Matrix($A), b: Vector($B), res: *Vector($C)) {
-    #if CHECKS {
-        assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
-    }
-
-    <<res = vec_zeros(C, a.rows);
-    for i: 0..a.rows-1 {
-        for j: 0..a.cols-1 {
-            res.data[i] += ncast(C, a[i][j]) * ncast(C, b[j]);
-        }
-    }
-}
-#insert #run specialize("_mul", "operator *", COMBI_V_M_V);
-_mul :: (a: Vector($A), b: Matrix($B), res: *Vector($C)) {
-    #if CHECKS {
-        assert(b.cols == a.dim, "Dimensions mismatch: b.cols = %, a.dim = %", b.cols, a.dim);
-    }
-
-    <<res = vec_zeros(C, a.dim);
-    for i: 0..a.dim-1 {
-        for j: 0..b.rows-1 {
-            res.data[i] += ncast(C, b[i][j]) * ncast(C, a[j]);
-        }
-    }
-}
-
-
-
-
-
-#insert #run specialize("_div", "operator /", COMBI_M_M_M);
-_div :: inline (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
-    <<res = inverse(b) * a;
-}
-
-
-
+//     <<res = vec_zeros(C, a.dim);
+//     for i: 0..a.dim-1 {
+//         for j: 0..b.rows-1 {
+//             res.data[i] += ncast(C, b[i][j]) * ncast(C, a[j]);
+//         }
+//     }
+// }
 
 
 
@@ -318,7 +222,7 @@ mat :: inline ($type: Type, dim: int) -> Matrix(type) #must {
     return mat(type, dim, dim);
 }
 
-mat ::  (rows: int, cols: int, init: $T) -> Matrix(T) #must {
+mat :: (rows: int, cols: int, init: $T) -> Matrix(T) #must {
     m := mat(T, rows, cols);
     for 0..rows*cols-1 {
         m.data[it] = init;
@@ -722,7 +626,11 @@ test_matrix :: () {
     {
         a := mat_id(float64, 2,2);
         b := mat_id(float64, 2,2);
+        print("a = \n%\n", str(a));
+        print("b = \n%\n", str(b));
         add(*a, b);
+        print("a = \n%\n", str(a));
+        print("2 b = \n%\n", 2.0 * b);
         assert(a == 2.0 * b);
 
         a = a + b;

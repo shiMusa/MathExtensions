@@ -84,17 +84,6 @@ column :: (m: CMatrix64, i: int) -> CVector64 #must {
     return res;
 }
 
-operator == :: inline (a: CMatrix64, b: CMatrix64) -> bool {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
-
-    r := true;
-    for a.data {
-        r = r & (it == b.data[it_index]);
-    }
-    return a.rows == b.rows && a.cols == b.cols && r;
-}
 
 
 
@@ -104,29 +93,6 @@ operator == :: inline (a: CMatrix64, b: CMatrix64) -> bool {
 
 
 
-
-operator + :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
-
-    res := cmat64(a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] + b.data[it];
-    }
-    return res;
-}
-operator + :: (a: CMatrix64, b: Matrix64) -> CMatrix64 #must #symmetric {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
-
-    res := cmat64(a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] + b.data[it];
-    }
-    return res;
-}
 
 add :: (a: CMatrix64, b: CMatrix64) {
     #if CHECKS {
@@ -147,39 +113,9 @@ add :: (a: CMatrix64, b: Matrix64) {
     }
 }
 
-operator - :: (a: CMatrix64, b: CMatrix64) -> CMatrix64 #must {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
 
-    res := cmat64(a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] - b.data[it];
-    }
-    return res;
-}
-operator - :: (a: CMatrix64, b: Matrix64) -> CMatrix64 #must {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
 
-    res := cmat64(a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] - b.data[it];
-    }
-    return res;
-}
-operator - :: (a: Matrix64, b: CMatrix64) -> CMatrix64 #must {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
 
-    res := cmat64(a.rows, a.cols);
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] - b.data[it];
-    }
-    return res;
-}
 
 sub :: (a: CMatrix64, b: CMatrix64) {
     #if CHECKS {

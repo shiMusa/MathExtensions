@@ -21,6 +21,32 @@ calculation :: (code: Code) #expand {
 
 
 
+
+
+
+is_a_matrix :: inline (T: Type) -> bool {
+    return T == Matrix(Complex64)
+        || T == Matrix(float64)
+        || T == Matrix(float32); // possibly more
+}
+is_a_vector :: inline (T: Type) -> bool {
+    return T == Vector(Complex64)
+        || T == Vector(float64)
+        || T == Vector(float32); // possibly more
+}
+is_a_scalar :: inline (T: Type) -> bool {
+    return T == Complex64
+        || T == float64
+        || T == float32; // possibly more
+}
+
+
+
+
+
+
+
+
 ncast :: inline ($T: Type, num: $N) -> T {
     #if T == Complex64 {
         #if N == Complex64 {
@@ -142,50 +168,80 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 COMBI_V_V_V :: string.[
-    "Vector(float64) & Vector(float64) => Vector(float64)",
-    "Vector(float64) & Vector(Complex64) => Vector(Complex64)",
-    "Vector(Complex64) & Vector(float64) => Vector(Complex64)",
+    "Vector(float64)   & Vector(float64)   => Vector(float64)",
+    "Vector(float64)   & Vector(Complex64) => Vector(Complex64)",
+    "Vector(Complex64) & Vector(float64)   => Vector(Complex64)",
     "Vector(Complex64) & Vector(Complex64) => Vector(Complex64)",
 ];
+COMBI_V_V_M :: string.[
+    "Vector(float64)   & Vector(float64)   => Matrix(float64)",
+    "Vector(float64)   & Vector(Complex64) => Matrix(Complex64)",
+    "Vector(Complex64) & Vector(float64)   => Matrix(Complex64)",
+    "Vector(Complex64) & Vector(Complex64) => Matrix(Complex64)",
+];
 COMBI_V_X_V :: string.[
-    "Vector(float64) & float64 => Vector(float64)",
-    "Vector(float64) & Complex64 => Vector(Complex64)",
-    "Vector(Complex64) & float64 => Vector(Complex64)",
+    "Vector(float64)   & float64   => Vector(float64)",
+    "Vector(float64)   & Complex64 => Vector(Complex64)",
+    "Vector(Complex64) & float64   => Vector(Complex64)",
     "Vector(Complex64) & Complex64 => Vector(Complex64)",
 ];
 COMBI_V_V_X :: string.[
-    "Vector(float64) & Vector(float64) => float64",
-    "Vector(float64) & Vector(Complex64) => Complex64",
-    "Vector(Complex64) & Vector(float64) => Complex64",
+    "Vector(float64)   & Vector(float64)   => float64",
+    "Vector(float64)   & Vector(Complex64) => Complex64",
+    "Vector(Complex64) & Vector(float64)   => Complex64",
     "Vector(Complex64) & Vector(Complex64) => Complex64",
 ];
 
 
 COMBI_M_M_M :: string.[
-    "Matrix(float64) & Matrix(float64) => Matrix(float64)",
-    "Matrix(float64) & Matrix(Complex64) => Matrix(Complex64)",
-    "Matrix(Complex64) & Matrix(float64) => Matrix(Complex64)",
+    "Matrix(float64)   & Matrix(float64)   => Matrix(float64)",
+    "Matrix(float64)   & Matrix(Complex64) => Matrix(Complex64)",
+    "Matrix(Complex64) & Matrix(float64)   => Matrix(Complex64)",
     "Matrix(Complex64) & Matrix(Complex64) => Matrix(Complex64)",
 ];
 COMBI_M_V_V :: string.[
-    "Matrix(float64) & Vector(float64) => Vector(float64)",
-    "Matrix(float64) & Vector(Complex64) => Vector(Complex64)",
-    "Matrix(Complex64) & Vector(float64) => Vector(Complex64)",
+    "Matrix(float64)   & Vector(float64)   => Vector(float64)",
+    "Matrix(float64)   & Vector(Complex64) => Vector(Complex64)",
+    "Matrix(Complex64) & Vector(float64)   => Vector(Complex64)",
     "Matrix(Complex64) & Vector(Complex64) => Vector(Complex64)",
 ];
 COMBI_V_M_V :: string.[
-    "Vector(float64) & Matrix(float64) => Vector(float64)",
-    "Vector(float64) & Matrix(Complex64) => Vector(Complex64)",
-    "Vector(Complex64) & Matrix(float64) => Vector(Complex64)",
+    "Vector(float64)   & Matrix(float64)   => Vector(float64)",
+    "Vector(float64)   & Matrix(Complex64) => Vector(Complex64)",
+    "Vector(Complex64) & Matrix(float64)   => Vector(Complex64)",
     "Vector(Complex64) & Matrix(Complex64) => Vector(Complex64)",
 ];
 COMBI_M_X_M :: string.[
-    "Matrix(float64) & float64 => Matrix(float64)",
-    "Matrix(float64) & Complex64 => Matrix(Complex64)",
-    "Matrix(Complex64) & float64 => Matrix(Complex64)",
+    "Matrix(float64)   & float64   => Matrix(float64)",
+    "Matrix(float64)   & Complex64 => Matrix(Complex64)",
+    "Matrix(Complex64) & float64   => Matrix(Complex64)",
     "Matrix(Complex64) & Complex64 => Matrix(Complex64)",
 ];
 
+
+
+COMBI_M_M_b :: string.[
+    "Matrix(float64)   & Matrix(float64)   => bool",
+    "Matrix(float64)   & Matrix(Complex64) => bool",
+    "Matrix(Complex64) & Matrix(float64)   => bool",
+    "Matrix(Complex64) & Matrix(Complex64) => bool",
+];
+COMBI_V_V_b :: string.[
+    "Vector(float64)   & Vector(float64)   => bool",
+    "Vector(float64)   & Vector(Complex64) => bool",
+    "Vector(Complex64) & Vector(float64)   => bool",
+    "Vector(Complex64) & Vector(Complex64) => bool",
+];
+
+
+COMBI_M_M :: string.[
+    "Matrix(float64)   => Matrix(float64)",
+    "Matrix(Complex64) => Matrix(Complex64)",
+];
+COMBI_V_V :: string.[
+    "Vector(float64)   => Vector(float64)",
+    "Vector(Complex64) => Vector(Complex64)",
+];
 
 
 // meant to be used in the form of
