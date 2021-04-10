@@ -13,7 +13,7 @@
 // #load "CVector64.jai";
 
 // #load "LinearAlgebra.jai";
-// #load "Checks.jai";
+#load "Checks.jai";
 #load "Vector.jai";
 #load "Matrix.jai";
 #load "Specializations.jai";

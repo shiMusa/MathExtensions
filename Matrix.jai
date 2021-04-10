@@ -58,6 +58,17 @@ mat :: ($type: Type, rows: int, cols: int) -> Matrix(type) #must {
     return res;
 }
 
+mat :: ($type: Type, m: Matrix($T)) -> Matrix(type) #must {
+    res : Matrix(type) = ---;
+    res.rows = m.rows;
+    res.cols = m.cols;
+    res.data = NewArray(m.rows*m.cols, type, initialized=false);
+    for m.data {
+        res.data[it_index] = ncast(type, it);
+    }
+    return res;
+}
+
 copy :: (m: Matrix($T)) -> Matrix(T) #must {
     res := mat(T, m.rows, m.cols);
     res.data = array_copy(m.data);

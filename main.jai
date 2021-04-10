@@ -20,7 +20,7 @@ main :: () {
     // test_complex_vector();
     // test_complex_matrix();
     
-    // test_checks();
+    test_checks();
     // test_linear_algebra();
 
     test_vector();
