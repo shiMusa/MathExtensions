@@ -35,7 +35,7 @@ str :: (m: Matrix($T), indent: string = "    ") -> string {
 // Fig. 3.5 Matrix class derivation tree, page 268
 MATRIX_FLAGS :: enum_flags u32 {
     SQUARE                             :: (1 <<  0);
-        SYMMETRIC                      :: (1 <<  1) + xx SQUARE; // transpose(A) = A
+        SYMMETRIC                      :: (1 <<  1) + xx SQUARE;
             SYMMETRIC_POSITIVE         :: (1 <<  2) + xx SYMMETRIC;
         UPPER_HESSENBERG               :: (1 <<  3) + xx SQUARE;
     ORTHOGONAL                         :: (1 <<  4);
@@ -48,6 +48,7 @@ MATRIX_FLAGS :: enum_flags u32 {
             UPPER_TRIANGULAR           :: (1 << 11) + xx UPPER_TRAPEZOIDAL;
             UNIT_UPPER_TRAPEZOIDAL     :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
                 UNIT_UPPER_TRIANGULAR  :: (1 << 13) + xx UNIT_UPPER_TRAPEZOIDAL;
+    
     HERMITIAN                          :: (1 << 14) + xx SQUARE; // not the same as symmetric for complex matrices
 }
 

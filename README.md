@@ -10,6 +10,12 @@ second.
 
 Feel free to add functionality and performance upgrades.
 
+## Current thoughts
+
+- I just refactored the code to use generic types, e.g. Matrix(T). I hope this works out well.
+- next steps are to use the newly introduced flags for matrices.
+- I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
+
 ## Currently Implemented
 
 Complex and reals numbers, vectors, matrices interoperate automatically (in most cases).
@@ -117,3 +123,4 @@ Write (at least some) tests contained in each file.
 ## Ressources
 
 [1] Scientific Computing, Vol I: Linear and nonlinear equations, Texts in computational science and engineering 18, Springer
+[2] Matrix Computations, 4th Edition; Gene H. Golub & Charles F. Van Loan; Johns Hopkins University Press, Baltimore; 2013
