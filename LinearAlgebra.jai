@@ -619,6 +619,31 @@ determinant :: (A: Matrix($T)) -> T {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 test_linear_algebra :: () {
     print("\n\nLinear Algebra -------------------------------\n\n");
 

@@ -29,13 +29,46 @@ str :: (m: Matrix($T), indent: string = "    ") -> string {
 
 
 
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Fig. 3.5 Matrix class derivation tree, page 268
+MATRIX_FLAGS :: enum_flags u32 {
+    SQUARE                             :: (1 <<  0);
+        SYMMETRIC                      :: (1 <<  1) + xx SQUARE; // transpose(A) = A
+            SYMMETRIC_POSITIVE         :: (1 <<  2) + xx SYMMETRIC;
+        UPPER_HESSENBERG               :: (1 <<  3) + xx SQUARE;
+    ORTHOGONAL                         :: (1 <<  4);
+    TRAPEZOIDAL                        :: (1 <<  5);
+        LOWER_TRAPEZOIDAL              :: (1 <<  6) + xx TRAPEZOIDAL;
+            LOWER_TRIANGULAR           :: (1 <<  7) + xx LOWER_TRAPEZOIDAL;
+            UNIT_LOWER_TRAPEZOIDAL     :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
+                UNIT_LOWER_TRIANGULAR  :: (1 <<  9) + xx UNIT_LOWER_TRAPEZOIDAL;
+        UPPER_TRAPEZOIDAL              :: (1 << 10) + xx TRAPEZOIDAL;
+            UPPER_TRIANGULAR           :: (1 << 11) + xx UPPER_TRAPEZOIDAL;
+            UNIT_UPPER_TRAPEZOIDAL     :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
+                UNIT_UPPER_TRIANGULAR  :: (1 << 13) + xx UNIT_UPPER_TRAPEZOIDAL;
+    HERMITIAN                          :: (1 << 14) + xx SQUARE; // not the same as symmetric for complex matrices
+}
+
+
+is :: inline (m: Matrix($T), flag: MATRIX_FLAGS) -> bool {
+    return (m.flags & flag) > 0;
+}
+
+
 
 
 Matrix :: struct(T: Type) {
     rows: int;
     cols: int;
     data: []T;
+    flags: MATRIX_FLAGS = 0;
 }
+
+
+
+
 
 operator [] :: inline (m: Matrix($T), i: int) -> []T {
     #if CHECKS {
@@ -632,5 +665,12 @@ test_matrix :: () {
 
         S := mat_submatrix(M, 1, 3, 1, 3);
         assert(S == mat(2,2, 4*R, 5*R, 7*R, 8*R));
+    }
+
+    {
+        print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
+        m : Matrix(float64) = ---;
+        m.flags = .UNIT_LOWER_TRIANGULAR;
+        assert( is(m, .TRAPEZOIDAL) );
     }
 }
