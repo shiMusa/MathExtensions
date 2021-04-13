@@ -3,8 +3,6 @@
 
 
 
-
-
 #insert #run specialize("_equal", "operator ==", COMBI_M_M_b);
 #insert #run specialize("_equal", "operator ==", COMBI_V_V_b);
 _equal :: inline (a: $A, b: $B, res: *bool) {
@@ -37,6 +35,26 @@ _equal :: inline (a: $A, b: $B, res: *bool) {
         assert(false);
     }
 }
+
+
+
+
+
+
+
+
+
+
+#insert #run specialize("_axpy", "axpy", string.[
+    "Matrix(float64) & float64 & Vector(float64)",
+]);
+_axpy :: (a: *$A, b: $B, c: $C) {
+
+}
+
+
+
+
 
 
 

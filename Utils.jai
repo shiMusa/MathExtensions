@@ -125,11 +125,9 @@ approx :: (a: $T, b: T) -> bool {
 #scope_module
 
 
-
-
 array_view_range :: inline (arr: []$T, from: s64, to: s64) -> []T {
     #if CHECKS {
-        assert(to < arr.count, "Index out of bounds: to = %, arr.count = %", to, arr.count);
+        assert(to < arr.count, "Index out of bounds: to = %, arr.count = %" , to, arr.count); 
         assert(from < to, "Negative range: from = %, to = %", from, to);
     }
     res := arr;
@@ -189,8 +187,6 @@ next_power_of_two :: inline (x : int) -> int {
     while x > p p += p;
     return p;
 }
-
-
 
 
 
@@ -259,7 +255,6 @@ COMBI_V_V_b :: string.[
     "Vector(Complex64) & Vector(float64)   => bool",
     "Vector(Complex64) & Vector(Complex64) => bool",
 ];
-
 
 COMBI_M_M :: string.[
     "Matrix(float64)   => Matrix(float64)",
