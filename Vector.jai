@@ -355,6 +355,53 @@ reflect :: (a: Vector($A), b: Vector($B)) -> Vector($C) #modify {
 
 
 
+
+
+
+
+
+// Matrix Computations, 4th edition
+// The Johns Hopkins University Press
+// Algorithm 1.1.2 Saxpy, page 4
+saxpy :: (a: *Vector($A), b: Vector($B), factor: $C) {
+    #if CHECKS {
+        assert(is_minor_type(A, B) && is_minor_type(A, C));
+    }
+
+    for 0..a.dim-1 {
+        a.data[it] += factor * b.data[it];
+    }
+}
+
+
+
+// Matrix Computations, 4th edition
+// The Johns Hopkins University Press
+// Algorithm 1.1.3 Row-Oriented Gaxpy, page 5
+gaxpy :: (y: *Vector($T), A: Matrix($U), x: Vector($V)) {
+    #if CHECKS {
+        assert(is_minor_type(T, U) && is_minor_type(T, V));
+        assert(y.dim == A.rows);
+        assert(A.cols == x.dim);
+    }
+
+    for i: 0..b.rows {
+        for j: 0..b.cols {
+            y.data[i] += A[i][j] * x.data[j];
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 /*
 ######## ########     ###    ##    ##  ######  ########
    ##    ##     ##   ## ##   ###   ## ##    ## ##

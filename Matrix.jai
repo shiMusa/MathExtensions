@@ -55,22 +55,23 @@ str :: (m: Matrix($T), indent: string = "    ") -> string {
 // Springer
 // Fig. 3.5 Matrix class derivation tree, page 268
 MATRIX_FLAGS :: enum_flags u32 {
-    SQUARE                             :: (1 <<  0);
-        SYMMETRIC                      :: (1 <<  1) + xx SQUARE;
-            SYMMETRIC_POSITIVE         :: (1 <<  2) + xx SYMMETRIC;
-        UPPER_HESSENBERG               :: (1 <<  3) + xx SQUARE;
-    ORTHOGONAL                         :: (1 <<  4);
-    TRAPEZOIDAL                        :: (1 <<  5);
-        LOWER_TRAPEZOIDAL              :: (1 <<  6) + xx TRAPEZOIDAL;
-            LOWER_TRIANGULAR           :: (1 <<  7) + xx LOWER_TRAPEZOIDAL;
-            UNIT_LOWER_TRAPEZOIDAL     :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
-                UNIT_LOWER_TRIANGULAR  :: (1 <<  9) + xx UNIT_LOWER_TRAPEZOIDAL;
-        UPPER_TRAPEZOIDAL              :: (1 << 10) + xx TRAPEZOIDAL;
-            UPPER_TRIANGULAR           :: (1 << 11) + xx UPPER_TRAPEZOIDAL;
-            UNIT_UPPER_TRAPEZOIDAL     :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
-                UNIT_UPPER_TRIANGULAR  :: (1 << 13) + xx UNIT_UPPER_TRAPEZOIDAL;
-    
-    HERMITIAN                          :: (1 << 14) + xx SQUARE; // not the same as symmetric for complex matrices
+    SQUARE                 :: (1 <<  0);
+    SYMMETRIC              :: (1 <<  1) + xx SQUARE;
+    SYMMETRIC_POSITIVE     :: (1 <<  2) + xx SYMMETRIC;
+    UPPER_HESSENBERG       :: (1 <<  3);
+    LOWER_HESSENBERG       :: (1 << 16); 
+    ORTHOGONAL             :: (1 <<  4);
+    TRAPEZOIDAL            :: (1 <<  5);
+    LOWER_TRAPEZOIDAL      :: (1 <<  6) + xx TRAPEZOIDAL;
+    LOWER_TRIANGULAR       :: (1 <<  7) + xx LOWER_TRAPEZOIDAL;
+    UNIT_LOWER_TRAPEZOIDAL :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
+    UNIT_LOWER_TRIANGULAR  :: (1 <<  9) + xx UNIT_LOWER_TRAPEZOIDAL;
+    UPPER_TRAPEZOIDAL      :: (1 << 10) + xx TRAPEZOIDAL;
+    UPPER_TRIANGULAR       :: (1 << 11) + xx UPPER_TRAPEZOIDAL;
+    UNIT_UPPER_TRAPEZOIDAL :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
+    UNIT_UPPER_TRIANGULAR  :: (1 << 13) + xx UNIT_UPPER_TRAPEZOIDAL;    
+    HERMITIAN              :: (1 << 14) + xx SQUARE; // not the same as symmetric for complex matrices
+    DIAGONAL               :: (1 << 15);
 }
 
 
@@ -358,6 +359,11 @@ operator == :: (a: Matrix($A), b: Matrix($B)) -> bool {
 // 2.11 Case Study: Matrix-Matrix Multiplication, page 118
 // According to Table 2.12, the best performing loop order is j/k/i with
 // the least number of cache misses.
+//
+// Similar discussion in:
+// Matrix Computations, 4th edition
+// The Johns Hopkins University Press
+// Algorithm 1.1.5 ijk Matrix Multiplication, page 8
 operator * :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
     C = dominant_type(A, B);
 }{
@@ -426,7 +432,14 @@ operator * :: (a: Matrix($A), b: $B) -> Matrix($C) #modify {
 }
 
 
-
+mul :: (a: *Matrix($A), b: $B) {
+    #if CHECKS {
+        assert(is_minor_type(A, B));
+    }
+    for 0..a.data.count-1 {
+        a.data[it] *= b;
+    }
+}
 
 
 
@@ -562,6 +575,44 @@ neg :: (a: Matrix($T)) {
         a.data[it_index] = -it;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Matrix Computations, 4th edition
+// The Johns Hopkins University Press
+// Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
+// Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
+// C = C + A*B
+saxpy :: (c: *Matrix($C), a: Matrix($A), b: Matrix($B)) {
+    #if CHECKS {
+        assert(is_minor_type(C, A) && is_minor_type(C, B));
+        assert(c.rows == a.rows);
+        assert(c.cols == b.cols);
+        assert(a.cols == b.rows);
+    }
+
+    for j: 0..c.cols-1 {
+        for k: 0.. a.cols-1 {
+            tmp := b[k][j];
+            for i: 0..c.rows-1 {
+                c[i][j] += a[i][k] * tmp;
+            }
+        }
+    }
+}
+
 
 
 

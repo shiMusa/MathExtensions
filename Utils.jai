@@ -4,7 +4,7 @@
 
 
 
-calculation :: (code: Code) #expand {
+pool :: (code: Code) #expand {
     _pool: Pool.Pool;
     Pool.set_allocators(*_pool);
     
@@ -24,37 +24,39 @@ calculation :: (code: Code) #expand {
 
 
 
-is_a_matrix :: inline (T: Type) -> bool {
-    return T == Matrix(Complex64)
-        || T == Matrix(float64)
-        || T == Matrix(float32)
-        || T == Matrix(float)
-        || T == Matrix(int)
-        || T == Matrix(s64)
-        || T == Matrix(s32)
-        || T == Matrix(s16)
-        || T == Matrix(u64)
-        || T == Matrix(u32)
-        || T == Matrix(u16)
-        || T == Matrix(u8)
-        ;
-}
-is_a_vector :: inline (T: Type) -> bool {
-    return T == Vector(Complex64)
-        || T == Vector(float64)
-        || T == Vector(float32)
-        || T == Vector(float)
-        || T == Vector(int)
-        || T == Vector(s64)
-        || T == Vector(s32)
-        || T == Vector(s16)
-        || T == Vector(u64)
-        || T == Vector(u32)
-        || T == Vector(u16)
-        || T == Vector(u8)
-        ;
-}
-is_a_scalar :: inline (T: Type) -> bool {
+// is_a_matrix :: inline (T: Type) -> bool {
+//     return T == Matrix(Complex64)
+//         || T == Matrix(float64)
+//         || T == Matrix(float32)
+//         || T == Matrix(float)
+//         || T == Matrix(int)
+//         || T == Matrix(s64)
+//         || T == Matrix(s32)
+//         || T == Matrix(s16)
+//         || T == Matrix(u64)
+//         || T == Matrix(u32)
+//         || T == Matrix(u16)
+//         || T == Matrix(u8)
+//         ;
+// }
+// is_a_vector :: inline (T: Type) -> bool {
+//     return T == Vector(Complex64)
+//         || T == Vector(float64)
+//         || T == Vector(float32)
+//         || T == Vector(float)
+//         || T == Vector(int)
+//         || T == Vector(s64)
+//         || T == Vector(s32)
+//         || T == Vector(s16)
+//         || T == Vector(u64)
+//         || T == Vector(u32)
+//         || T == Vector(u16)
+//         || T == Vector(u8)
+//         ;
+// }
+
+
+is_scalar :: inline (T: Type) -> bool {
     return T == Complex64
         || T == float64
         || T == float32
@@ -69,30 +71,24 @@ is_a_scalar :: inline (T: Type) -> bool {
         || T == u8
         ;
 }
+is_scalar :: (A: *Type_Info) -> bool {
+    return A == type_info(Complex64) || A.type == .FLOAT || A.type == .INTEGER || A.type == .BOOL;
+}
 
 
 
 
 
 
-
-ncast :: inline ($T: Type, num: $N) -> T {
-    #if CHECKS {
-        assert(is_a_scalar(T) && is_a_scalar(N), "cannot cast between non-scalars! T = %, N = %\n", T, N);
-    }
-
-    // #if #run !is_a_scalar(T) || !is_a_scalar(N) {
-    //     print("cannot cast between non-scalars! T = %, N = %\n", T, N);
-    //     assert(false);
-    // }
-
+ncast :: inline ($T: Type, num: $N) -> T #modify {
+    if !is_scalar(N) || !is_scalar(T) { N = null; return; }    
+} {
     #if T == N {
         return num;
     } else #if T == Complex64 {
         return c64(cast(float64)num);
-    } else #if #run is_a_scalar(N) && N != Complex64 {
-        // print("num = %, N = %\n", num, N);
-        return cast,no_check(T) num; // TODO other types?
+    } else #if N != Complex64 {
+        return cast,no_check(T) num;
     } else {
         assert(N != Complex64, "cannot cast complex to real number!");
         return zero(T);
@@ -109,14 +105,21 @@ one :: inline ($T: Type) -> T {
 
 
 
+
 DELTA :: 1.0e-6;
-approx :: (a: $T, b: T) -> bool {
-    #if #run is_a_vector(T) {
-        return norm_2(a - b) < DELTA;
-    } else #if #run is_a_matrix(T) {
-        return norm_frobenius(a - b) < DELTA;
-    } else
-        return abs(a - b) < DELTA;
+approx :: inline (a: Vector($T), b: Vector($U)) -> bool {
+    return norm_2(a - b) < DELTA;
+}
+approx :: inline (a: Matrix($T), b: Matrix($U)) -> bool {
+    return norm_frobenius(a - b) < DELTA;
+}
+approx :: inline (a: $T, b: $U) -> bool #modify {
+    if !is_scalar(T) || !is_scalar(U) {
+        U = null; // reject non-scalars
+        return;
+    }
+} {
+    return abs(a - b) < DELTA;
 }
 
 
@@ -167,18 +170,6 @@ dominant_type :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
     return type_info(float64);
 }
 
-is_scalar :: (A: *Type_Info) -> bool {
-    return A == type_info(Complex64) || A.type == .FLOAT || A.type == .INTEGER || A.type == .BOOL;
-}
-
-
-super_type :: inline ($a: Type, $b: Type) -> Type {
-    #if a == Complex64 || b == Complex64 {
-        return Complex64;
-    } else
-        return float64;
-}
-
 is_minor_type :: inline ($base: Type, $b: Type) -> bool {
     #if base == Complex64 {
         return true;
@@ -204,184 +195,109 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
-COMBI_V_V_V :: string.[
-    "Vector(float64)   & Vector(float64)   => Vector(float64)",
-    "Vector(float64)   & Vector(Complex64) => Vector(Complex64)",
-    "Vector(Complex64) & Vector(float64)   => Vector(Complex64)",
-    "Vector(Complex64) & Vector(Complex64) => Vector(Complex64)",
-];
-COMBI_V_V_M :: string.[
-    "Vector(float64)   & Vector(float64)   => Matrix(float64)",
-    "Vector(float64)   & Vector(Complex64) => Matrix(Complex64)",
-    "Vector(Complex64) & Vector(float64)   => Matrix(Complex64)",
-    "Vector(Complex64) & Vector(Complex64) => Matrix(Complex64)",
-];
-COMBI_V_X_V :: string.[
-    "Vector(float64)   & float64   => Vector(float64)",
-    "Vector(float64)   & Complex64 => Vector(Complex64)",
-    "Vector(Complex64) & float64   => Vector(Complex64)",
-    "Vector(Complex64) & Complex64 => Vector(Complex64)",
-];
-COMBI_V_V_X :: string.[
-    "Vector(float64)   & Vector(float64)   => float64",
-    "Vector(float64)   & Vector(Complex64) => Complex64",
-    "Vector(Complex64) & Vector(float64)   => Complex64",
-    "Vector(Complex64) & Vector(Complex64) => Complex64",
-];
+
+// // meant to be used in the form of
+// //     #insert #run specialize(...);
+// // generates functions
+// //     fun_name :: inline (x0: itypes[i][0], x1: itypes[i][1],...) -> otypes[i][0], otypes[i][1],... {...}
+// // by accessing the generic function
+// //     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
+// // writing specialized versions with return types;
+// specialize :: (backend_name: string, fun_name: string, iotypes: []string, o_opts: []string = .[]) -> string {
 
 
-COMBI_M_M_M :: string.[
-    "Matrix(float64)   & Matrix(float64)   => Matrix(float64)",
-    "Matrix(float64)   & Matrix(Complex64) => Matrix(Complex64)",
-    "Matrix(Complex64) & Matrix(float64)   => Matrix(Complex64)",
-    "Matrix(Complex64) & Matrix(Complex64) => Matrix(Complex64)",
-];
-COMBI_M_V_V :: string.[
-    "Matrix(float64)   & Vector(float64)   => Vector(float64)",
-    "Matrix(float64)   & Vector(Complex64) => Vector(Complex64)",
-    "Matrix(Complex64) & Vector(float64)   => Vector(Complex64)",
-    "Matrix(Complex64) & Vector(Complex64) => Vector(Complex64)",
-];
-COMBI_V_M_V :: string.[
-    "Vector(float64)   & Matrix(float64)   => Vector(float64)",
-    "Vector(float64)   & Matrix(Complex64) => Vector(Complex64)",
-    "Vector(Complex64) & Matrix(float64)   => Vector(Complex64)",
-    "Vector(Complex64) & Matrix(Complex64) => Vector(Complex64)",
-];
-COMBI_M_X_M :: string.[
-    "Matrix(float64)   & float64   => Matrix(float64)",
-    "Matrix(float64)   & Complex64 => Matrix(Complex64)",
-    "Matrix(Complex64) & float64   => Matrix(Complex64)",
-    "Matrix(Complex64) & Complex64 => Matrix(Complex64)",
-];
+//     builder: String_Builder;
+//     defer free_buffers(*builder);
 
+//     for f: 0..iotypes.count-1 {
 
+//         itypes : []string = ---;
+//         otypes : []string = ---;
+//         {
+//             tmp := String.split(iotypes[f], "=>");
+//             // print("splitted at => : %\n", tmp);
 
-COMBI_M_M_b :: string.[
-    "Matrix(float64)   & Matrix(float64)   => bool",
-    "Matrix(float64)   & Matrix(Complex64) => bool",
-    "Matrix(Complex64) & Matrix(float64)   => bool",
-    "Matrix(Complex64) & Matrix(Complex64) => bool",
-];
-COMBI_V_V_b :: string.[
-    "Vector(float64)   & Vector(float64)   => bool",
-    "Vector(float64)   & Vector(Complex64) => bool",
-    "Vector(Complex64) & Vector(float64)   => bool",
-    "Vector(Complex64) & Vector(Complex64) => bool",
-];
+//             itmp := tmp[0];
+//             otmp := tmp[1];
 
-COMBI_M_M :: string.[
-    "Matrix(float64)   => Matrix(float64)",
-    "Matrix(Complex64) => Matrix(Complex64)",
-];
-COMBI_V_V :: string.[
-    "Vector(float64)   => Vector(float64)",
-    "Vector(Complex64) => Vector(Complex64)",
-];
+//             itypes = String.split(itmp, "&");
+//             otypes = String.split(otmp, "&");
 
+//             // print("itypes : %\n", itypes);
+//             // print("otypes : %\n", otypes);
+//         }
 
-// meant to be used in the form of
-//     #insert #run specialize(...);
-// generates functions
-//     fun_name :: inline (x0: itypes[i][0], x1: itypes[i][1],...) -> otypes[i][0], otypes[i][1],... {...}
-// by accessing the generic function
-//     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
-// writing specialized versions with return types;
-specialize :: (backend_name: string, fun_name: string, iotypes: []string, o_opts: []string = .[]) -> string {
+//         n := itypes.count;
 
+//         print_to_builder(*builder, "% :: inline (", fun_name);
+//         for i: 0..itypes.count-1 {
+//             print_to_builder(*builder, "x%: %", i, itypes[i]);
+//             if i != itypes.count-1 {
+//                 append(*builder, ", ");
+//             }
+//         }
+//         append(*builder, ") ");
 
-    builder: String_Builder;
-    defer free_buffers(*builder);
-
-    for f: 0..iotypes.count-1 {
-
-        itypes : []string = ---;
-        otypes : []string = ---;
-        {
-            tmp := String.split(iotypes[f], "=>");
-            // print("splitted at => : %\n", tmp);
-
-            itmp := tmp[0];
-            otmp := tmp[1];
-
-            itypes = String.split(itmp, "&");
-            otypes = String.split(otmp, "&");
-
-            // print("itypes : %\n", itypes);
-            // print("otypes : %\n", otypes);
-        }
-
-        n := itypes.count;
-
-        print_to_builder(*builder, "% :: inline (", fun_name);
-        for i: 0..itypes.count-1 {
-            print_to_builder(*builder, "x%: %", i, itypes[i]);
-            if i != itypes.count-1 {
-                append(*builder, ", ");
-            }
-        }
-        append(*builder, ") ");
-
-        if otypes.count != 0 {
-            append(*builder, "-> ");
-            for i: 0..otypes.count-1 {
-                print_to_builder(*builder, "%", otypes[i]);
+//         if otypes.count != 0 {
+//             append(*builder, "-> ");
+//             for i: 0..otypes.count-1 {
+//                 print_to_builder(*builder, "%", otypes[i]);
                 
-                // options for output types such as #symmetric, #must, etc.
-                if i < o_opts.count {
-                    print_to_builder(*builder, " %", o_opts[i]);
-                }
+//                 // options for output types such as #symmetric, #must, etc.
+//                 if i < o_opts.count {
+//                     print_to_builder(*builder, " %", o_opts[i]);
+//                 }
                 
-                if i != otypes.count-1 {
-                    append(*builder, ", ");
-                }
-            }
-        }
+//                 if i != otypes.count-1 {
+//                     append(*builder, ", ");
+//                 }
+//             }
+//         }
         
-        append(*builder, " {\n");
+//         append(*builder, " {\n");
 
 
-        for i: 0..otypes.count-1 {
-            print_to_builder(*builder, 
-                "    x% : % = ---;\n", i+n, otypes[i]
-            );
-        }
+//         for i: 0..otypes.count-1 {
+//             print_to_builder(*builder, 
+//                 "    x% : % = ---;\n", i+n, otypes[i]
+//             );
+//         }
 
 
-        print_to_builder(*builder, "    %(", backend_name);
-        for i: 0..itypes.count-1 {
-            print_to_builder(*builder, "x%", i);
-            if i != itypes.count-1 {
-                append(*builder, ", ");
-            } else if otypes.count != 0 {
-                append(*builder, ", ");
-            }
-        }
-        for i: 0..otypes.count-1 {
-            print_to_builder(*builder, "*x%", i+n);
-            if i != otypes.count-1 {
-                append(*builder, ", ");
-            }
-        }
+//         print_to_builder(*builder, "    %(", backend_name);
+//         for i: 0..itypes.count-1 {
+//             print_to_builder(*builder, "x%", i);
+//             if i != itypes.count-1 {
+//                 append(*builder, ", ");
+//             } else if otypes.count != 0 {
+//                 append(*builder, ", ");
+//             }
+//         }
+//         for i: 0..otypes.count-1 {
+//             print_to_builder(*builder, "*x%", i+n);
+//             if i != otypes.count-1 {
+//                 append(*builder, ", ");
+//             }
+//         }
 
-        append(*builder, ");\n");
+//         append(*builder, ");\n");
         
-        append(*builder, "    return ");
-        for i: 0..otypes.count-1 {
-            print_to_builder(*builder, "x%", i+n);
-            if i != otypes.count-1 {
-                append(*builder, ", ");
-            }
-        }
-        append(*builder, ";\n");
+//         append(*builder, "    return ");
+//         for i: 0..otypes.count-1 {
+//             print_to_builder(*builder, "x%", i+n);
+//             if i != otypes.count-1 {
+//                 append(*builder, ", ");
+//             }
+//         }
+//         append(*builder, ";\n");
 
-        append(*builder, "}\n");
-    }
+//         append(*builder, "}\n");
+//     }
 
-    s := builder_to_string(*builder);
-    print("Functions created: \n%\n", s);
-    return s;
-}
+//     s := builder_to_string(*builder);
+//     print("Functions created: \n%\n", s);
+//     return s;
+// }
 
 
 
@@ -411,10 +327,10 @@ test_utils :: () {
         print("%\n", v);
     }
 
-    {
-        assert(Complex64 == super_type(Complex64, u8));
-        assert(float64 == super_type(float32, float64));
-    }
+    // {
+    //     assert(Complex64 == super_type(Complex64, u8));
+    //     assert(float64 == super_type(float32, float64));
+    // }
 
     // {
     //     a : float64 = ---;

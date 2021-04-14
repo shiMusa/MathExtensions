@@ -48,7 +48,7 @@ conjugate :: inline (a: float64) -> float64 {
 // |z|²
 abs_sq :: inline (a: $T) -> float64 {
     #if CHECKS {
-        assert(is_a_scalar(T), "abs_sq not defined for non-scalars!");
+        assert(is_scalar(T), "abs_sq not defined for non-scalars!");
     }
     #if T == Complex64 {
         return a.real * a.real + a.imag * a.imag;
@@ -59,7 +59,7 @@ abs_sq :: inline (a: $T) -> float64 {
 
 abs :: inline (a: $T) -> float64 {
     #if CHECKS {
-        assert(is_a_scalar(T), "abs_sq not defined for non-scalars!");
+        assert(is_scalar(T), "abs_sq not defined for non-scalars!");
     }
     return Math.sqrt(abs_sq(a));
 }
