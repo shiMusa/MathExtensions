@@ -71,12 +71,13 @@ MATRIX_FLAGS :: enum_flags u32 {
     UNIT_UPPER_TRAPEZOIDAL :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
     UNIT_UPPER_TRIANGULAR  :: (1 << 13) + xx UNIT_UPPER_TRAPEZOIDAL;    
     HERMITIAN              :: (1 << 14) + xx SQUARE; // not the same as symmetric for complex matrices
-    DIAGONAL               :: (1 << 15);
+    DIAGONAL               :: (1 << 15) + xx BAND;
+    BAND                   :: (1 << 17) + xx TRAPEZOIDAL;
 }
 
 
-is :: inline (m: Matrix($T), flag: MATRIX_FLAGS) -> bool {
-    return (m.flags & flag) > 0;
+is :: inline (m: Matrix($T, $flags), flag: MATRIX_FLAGS) -> bool {
+    return (flags & flag) > 0;
 }
 
 
@@ -96,11 +97,10 @@ is :: inline (m: Matrix($T), flag: MATRIX_FLAGS) -> bool {
 
 
 
-Matrix :: struct(T: Type) {
+Matrix :: struct(T: Type, flags: MATRIX_FLAGS = #run zero(u32)) {
     rows: int;
     cols: int;
     data: []T;
-    flags: MATRIX_FLAGS = 0;
 }
 
 
@@ -115,6 +115,17 @@ operator [] :: inline (m: Matrix($T), i: int) -> []T {
 
     return array_view_count(m.data, i * m.cols, m.cols);
 }
+
+get :: inline (m: $M/Matrix, i: int, j: int) -> M.T {
+    // #if is(m, .BAND) {
+    //     return m.data[]
+    // }
+    return m.data[i * m.cols + j];
+}
+
+set :: inline (m: $M/Matrix, i: int, j: int, val: $U) {
+    m.data[i * m.cols + j] = ncast(M.T, val);
+} 
 
 
 
@@ -988,8 +999,7 @@ test_matrix :: () {
 
     {
         print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
-        m : Matrix(float64) = ---;
-        m.flags = .UNIT_LOWER_TRIANGULAR;
+        m : Matrix(float64, .UNIT_LOWER_TRIANGULAR) = ---;
         assert( is(m, .TRAPEZOIDAL) );
     }
 }
