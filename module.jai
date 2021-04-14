@@ -6,7 +6,6 @@
 #load "Polynomials.jai";
 #load "Approximations.jai";
 
-#load "Operators.jai";
 #load "Vector.jai";
 #load "Matrix.jai";
 #load "Checks.jai";

@@ -158,6 +158,20 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 // }
 
 
+
+// This works only for Complex64 and float64 for now.
+dominant_type :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
+    if A == type_info(Complex64) || B == type_info(Complex64) {
+        return type_info(Complex64);
+    }
+    return type_info(float64);
+}
+
+is_scalar :: (A: *Type_Info) -> bool {
+    return A == type_info(Complex64) || A.type == .FLOAT || A.type == .INTEGER || A.type == .BOOL;
+}
+
+
 super_type :: inline ($a: Type, $b: Type) -> Type {
     #if a == Complex64 || b == Complex64 {
         return Complex64;

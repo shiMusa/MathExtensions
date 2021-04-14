@@ -337,33 +337,125 @@ column :: (m: Matrix($T), i: int) -> Vector(T) #must {
 
 
 
-add :: (a: *Matrix($A), b:Matrix($B)) {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-        assert(is_minor_type(A, B));
-    }
-    for 0..a.data.count-1 {
-        a.data[it] += b.data[it];
-    }
-}
 
-
-sub :: (a: *Matrix($A), b:Matrix($B)) {
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-        assert(is_minor_type(A, B));
+operator == :: (a: Matrix($A), b: Matrix($B)) -> bool {
+    if a.rows != b.rows || a.cols != b.cols {
+            return false;
     }
-    for 0..a.data.count-1 {
-        a.data[it] -= b.data[it];
-    }
-}
-
-
-neg :: (a: Matrix($T)) {
     for a.data {
-        a.data[it_index] = -it;
+        if it != b.data[it_index] {
+            return false;
+        }
     }
+    return true;
 }
+
+
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// 2.11 Case Study: Matrix-Matrix Multiplication, page 118
+// According to Table 2.12, the best performing loop order is j/k/i with
+// the least number of cache misses.
+operator * :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+    C = dominant_type(A, B);
+}{
+    #if CHECKS {
+        assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+    }
+
+    res := mat_zeros(C, a.rows, b.cols);
+    for j: 0..b.cols-1 {
+        for k: 0..a.cols-1 {
+            tmp := b[k][j];
+            for i: 0..a.rows-1 {
+                res[i][j] += a[i][k] * tmp;
+            }
+        }
+    }
+
+    return res;
+}
+
+operator * :: (a: Matrix($A), b: Vector($B)) -> Vector($C) #modify {
+    C = dominant_type(A, B);
+}{
+    #if CHECKS {
+        assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
+    }
+
+    res := vec_zeros(C, a.rows);
+    for i: 0..a.rows-1 {
+        for j: 0..a.cols-1 {
+            res.data[i] += a[i][j] * b[j];
+        }
+    }
+
+    return res;
+}
+
+operator * :: (a: Vector($A), b: Matrix($B)) -> Vector($C) #modify {
+    C = dominant_type(A, B);
+}{
+    #if CHECKS {
+        assert(a.dim == b.rows, "Dimensions mismatch: a.dim = %, b.rows = %", a.dim, b.rows);
+    }
+
+    res := vec_zeros(C, b.cols);
+    for j: 0..b.rows-1 {
+        for i: 0..a.dim-1 {
+            res.data[j] += a[i] * b[i][j];
+        }
+    }
+
+    return res;
+}
+
+operator * :: (a: Matrix($A), b: $B) -> Matrix($C) #modify {
+    if !is_scalar(B) { C = null; return; }
+    C = dominant_type(A, B);
+} #symmetric {
+
+    res := mat(C, a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = a.data[it] * b;
+    }
+
+    return res;
+}
+
+
+
+
+
+
+
+
+
+operator / :: inline (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+    C = dominant_type(A, B);
+} { 
+    return inverse(b) * a;
+}
+
+operator / :: (a: Vector($A), b: Matrix($B)) -> Matrix($C) #modify {
+    C = dominant_type(A, B);
+} { 
+    return inverse(b) * a;
+}
+
+operator / :: inline (a: Matrix($A), b: $B) -> Matrix($C) #modify {
+    if !is_scalar(B) { C = null; return; }
+    C = dominant_type(A, B);
+} { 
+    res := mat(C, a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = a.data[it] / b;
+    }
+    return res;
+}
+
 
 
 div :: (a: *Matrix($A), b: Complex64) {
@@ -382,6 +474,96 @@ div :: (a: *Matrix($A), b: float64) {
         a.data[it] /= b;
     }
 }
+
+
+
+
+
+
+
+operator + :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+    C = dominant_type(A, B);
+}{
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    res := mat(C, a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = a.data[it] + b.data[it];
+    }
+    return res;
+}
+
+
+
+
+
+add :: (a: *Matrix($A), b:Matrix($B)) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+        assert(is_minor_type(A, B));
+    }
+    for 0..a.data.count-1 {
+        a.data[it] += b.data[it];
+    }
+}
+
+
+
+
+
+
+
+
+operator - :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+    C = dominant_type(A, B);
+}{
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+    }
+
+    res := mat(C, a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = a.data[it] - b.data[it];
+    }
+    return res;
+}
+
+
+
+sub :: (a: *Matrix($A), b:Matrix($B)) {
+    #if CHECKS {
+        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
+        assert(is_minor_type(A, B));
+    }
+    for 0..a.data.count-1 {
+        a.data[it] -= b.data[it];
+    }
+}
+
+
+
+
+
+operator - :: (a: Matrix($A)) -> Matrix(A) {
+    res := mat(A, a.rows, a.cols);
+    for 0..a.data.count-1 {
+        res.data[it] = -a.data[it];
+    }
+    return res;
+}
+
+
+
+
+neg :: (a: Matrix($T)) {
+    for a.data {
+        a.data[it_index] = -it;
+    }
+}
+
+
 
 
 
@@ -539,9 +721,10 @@ dagger :: conjugate_transpose;
 
 
 // https://www.wikiwand.com/en/Tensor_product
-#insert #run specialize("_tensor", "tensor", COMBI_M_M_M);
-_tensor :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
-    <<res = mat(C, a.rows * b.rows, a.cols * b.cols);
+tensor :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+    C = dominant_type(A, B);
+} {
+    res := mat(C, a.rows * b.rows, a.cols * b.cols);
     for r: 0..res.rows-1 {
         ar := r/b.rows;
         br := r % b.rows;
@@ -550,9 +733,10 @@ _tensor :: (a: Matrix($A), b: Matrix($B), res: *Matrix($C)) {
             ac := c/b.cols;
             bc := c % b.cols;
 
-            (<<res)[r][c] = a[ar][ac] * b[br][bc];
+            res[r][c] = a[ar][ac] * b[br][bc];
         }
     }
+    return res;
 }
 
 
@@ -633,25 +817,10 @@ norm_frobenius :: (m: Matrix($T)) -> float64 {
 */
 ////////////////////////////////////////////////////////////////////////////////////////
 
-
-
-
-#scope_file
-// compiler bug: 
-// the compiler won't find the operators generated with this method
-// unless a stupid custom-named function is called first
-// DUMMY_IN : [1][0]string : .[.[]];
-// DUMMY_OUT : [1][1]string : .[.["int"]];
-#insert #run specialize("_init", "init", .["=> int"]);
-_init :: (ret: *int) {}
-
-
-
 #scope_module
 
 test_matrix :: () {
     print("\n\nMatrix(T) -------------------------------\n\n");
-    init();
     {
         m := mat_zeros(float64, 3, 3);
         print("%\n", str(m));

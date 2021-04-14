@@ -11,8 +11,9 @@
 // Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // solves the system A x = b with 2x2 matrix A
 sl2 :: solve_linear_2x2;
-#insert #run specialize("_solve_linear_2x2", "solve_linear_2x2", COMBI_M_V_V);
-_solve_linear_2x2 :: (A: Matrix($T), b: Vector($V), res: *Vector($C)) {
+solve_linear_2x2 :: (A: Matrix($T), b: Vector($B)) -> Vector($C) #modify {
+    C = dominant_type(T, B);    
+} {
     #if CHECKS {
         assert(A.rows == 2 && A.cols == 2, "A is not 2x2 matrix: % rows, % columns", A.rows, A.cols);
         assert(b.dim == 2, "b is not a 2-dim vector: dim = %", b.dim);
@@ -23,7 +24,7 @@ _solve_linear_2x2 :: (A: Matrix($T), b: Vector($V), res: *Vector($C)) {
     mu := A / sigma;
     det := mu[0][0] * mu[1][1] - mu[0][1] * mu[1][0];
     g := b/sigma;
-    <<res = mat(2, 2, mu[1][1], -mu[0][1], -mu[1][0], mu[0][0]) * g / det;
+    return mat(2, 2, mu[1][1], -mu[0][1], -mu[1][0], mu[0][0]) * g / det;
 }
 
 
@@ -39,15 +40,16 @@ _solve_linear_2x2 :: (A: Matrix($T), b: Vector($V), res: *Vector($C)) {
 // solve the system Lx = b where L is a unit left-triangluar matrix
 // that means, all diagonals are 1 and all L_ij = 0 for j > i.
 sllta :: solve_linear_left_triangular;
-#insert #run specialize("_solve_linear_left_triangular", "solve_linear_left_triangular", COMBI_M_V_V);
-_solve_linear_left_triangular :: (L: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_left_triangular :: (L: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(is_quadratic(L), "L is not quadratic! % rows, % columns", L.rows, L.cols);
         assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1");
         assert(is_left_triangular(L), "L is not left-triangular");
     }
 
-    <<res = vec(U, b.dim);
+    res := vec(U, b.dim);
     for i: 0..b.dim-1 {
         sum := zero(U);
         for j: 0..i-1 {
@@ -55,6 +57,7 @@ _solve_linear_left_triangular :: (L: Matrix($T), b: Vector($V), res: *Vector($U)
         }
         res.data[i] = b[i] - sum;
     }
+    return res;
 }
 
 
@@ -67,14 +70,15 @@ _solve_linear_left_triangular :: (L: Matrix($T), b: Vector($V), res: *Vector($U)
 // solve the system Rx = b where R is a right-triangluar matrix
 // that means all R_ij = 0 for j < i.
 slrta :: solve_linear_right_triangular;
-#insert #run specialize("_solve_linear_right_triangular", "solve_linear_right_triangular", COMBI_M_V_V);
-_solve_linear_right_triangular :: (R: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_right_triangular :: (R: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
         assert(is_right_triangular(R), "R is not right-triangular");
     }
 
-    <<res = vec(U, b.dim);
+    res := vec(U, b.dim);
     i : int;
     for 0..b.dim-1 {
         i = b.dim-1 - it;
@@ -84,6 +88,7 @@ _solve_linear_right_triangular :: (R: Matrix($T), b: Vector($V), res: *Vector($U
         }
         res.data[i] = (b[i] - sum)/R[i][i];
     }
+    return res;
 }
 
 
@@ -98,13 +103,14 @@ _solve_linear_right_triangular :: (R: Matrix($T), b: Vector($V), res: *Vector($U
 // Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
 // solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
 slrqta :: solve_linear_right_quasi_triangular;
-#insert #run specialize("_solve_linear_right_quasi_triangular", "solve_linear_right_quasi_triangular", COMBI_M_V_V);
-_solve_linear_right_quasi_triangular :: (R: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_right_quasi_triangular :: (R: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(is_quadratic(R), "R is not quadratic! % rows, % columns", R.rows, R.cols);
         assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!");
     }
-    <<res = vec(U, b.dim);
+    res := vec(U, b.dim);
 
     n := b.dim;
     i := n-1; // start with last row and wrap from bottom to up
@@ -139,6 +145,7 @@ _solve_linear_right_quasi_triangular :: (R: Matrix($T), b: Vector($V), res: *Vec
             i -= 2;
         }
     }
+    return res;
 }
 
 
@@ -153,13 +160,14 @@ _solve_linear_right_quasi_triangular :: (R: Matrix($T), b: Vector($V), res: *Vec
 // Algorithm 3.4.8 Orthogonal Projection, page 167
 solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop :: solve_linear_orthogonal_projection;
-#insert #run specialize("_solve_linear_orthogonal_projection", "solve_linear_orthogonal_projection", COMBI_M_V_V);
-_solve_linear_orthogonal_projection :: (Q: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_orthogonal_projection :: (Q: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(is_unitary(Q));
     }
 
-    <<res = dagger(Q) * b;
+    return dagger(Q) * b;
 }
 
 
@@ -173,19 +181,21 @@ _solve_linear_orthogonal_projection :: (Q: Matrix($T), b: Vector($V), res: *Vect
 // Algorithm 3.4.9 Successive Orthogonal Projection, page 168
 // not sure if this algo is useful. seems to be slower than the previous one.
 slsop :: solve_linear_successive_orthogonal_projection;
-#insert #run specialize("_solve_linear_successive_orthogonal_projection", "solve_linear_successive_orthogonal_projection", COMBI_M_V_V);
-_solve_linear_successive_orthogonal_projection :: (Q: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_successive_orthogonal_projection :: (Q: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(is_unitary(Q));
     }
     bb := copy(b);
 
-    <<res = vec(U, bb.dim);
+    res := vec(U, bb.dim);
     for i: 0..bb.dim-1 {
         q := row(Q, i);
         res.data[i] = conjugate(q) * bb; // not sure if this is performant...
         bb = bb - q * res.data[i];
     }
+    return res;
 }
 
 
@@ -197,8 +207,9 @@ _solve_linear_successive_orthogonal_projection :: (Q: Matrix($T), b: Vector($V),
 // Springer
 // 3.4.5.1 Left Trapezoidal, page 159
 slltz :: solve_linear_left_trapezoidal;
-#insert #run specialize("_solve_linear_left_trapezoidal_mv", "solve_linear_left_trapezoidal", COMBI_M_V_V);
-_solve_linear_left_trapezoidal_mv :: (L: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_left_trapezoidal :: (L: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(L.rows == b.dim);
         assert(is_left_trapezoidal(L));
@@ -207,35 +218,40 @@ _solve_linear_left_trapezoidal_mv :: (L: Matrix($T), b: Vector($V), res: *Vector
     L2 := mat_submatrix(L, 0, L.cols, 0, L.cols);
     b2 := vec_subvector(b, 0, L.cols);
 
-    <<res = solve_linear_left_triangular(L2, b2);
+    res := solve_linear_left_triangular(L2, b2);
 
     #if CHECKS {
         if L.cols == L.rows {
-            assert( approx( L2 * <<res, b2 ) );
+            assert( approx( L2 * res, b2 ) );
         } else {
             L3 := mat_submatrix(L, L.cols, L.rows, 0, L.cols);
             b3 := vec_subvector(b, L.cols, L.rows);
-            assert( approx(L3 * <<res, b3) );
+            assert( approx(L3 * res, b3) );
         }
     }
+
+    return res;
 }
 
 
-#insert #run specialize("_solve_linear_left_trapezoidal_mm", "solve_linear_left_trapezoidal", COMBI_M_M_M);
-_solve_linear_left_trapezoidal_mm :: (L: Matrix($T), M: Matrix($U), res: *Matrix($V)) {
+solve_linear_left_trapezoidal :: (L: Matrix($T), M: Matrix($U)) -> Matrix($V) #modify {
+    V = dominant_type(T, U);
+} {
     #if CHECKS {
         assert(L.rows == M.rows);
     }
 
-    <<res = mat(V, L.cols, M.cols);
+    res := mat(V, L.cols, M.cols);
 
     for j: 0..M.cols-1 {
         b := column(M, j);
         tmp := solve_linear_left_trapezoidal(L, b);
         for tmp.data {
-            (<<res)[it_index][j] = it;
+            res[it_index][j] = it;
         }
     }
+
+    return res;
 }
 
 
@@ -247,8 +263,9 @@ _solve_linear_left_trapezoidal_mm :: (L: Matrix($T), M: Matrix($U), res: *Matrix
 // 3.4.5.2 Right Trapezoidal, page 160
 // There are degrees of freedom left. These are set to 0 here.
 slrtz :: solve_linear_right_trapezoidal;
-#insert #run specialize("_solve_linear_right_trapezoidal_mv", "solve_linear_right_trapezoidal", COMBI_M_V_V);
-_solve_linear_right_trapezoidal_mv :: (R: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_right_trapezoidal :: (R: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(R.rows == b.dim);
         assert(is_right_trapezoidal(R));
@@ -258,28 +275,32 @@ _solve_linear_right_trapezoidal_mv :: (R: Matrix($T), b: Vector($V), res: *Vecto
 
     tmp := solve_linear_right_triangular(R2, b);
 
-    <<res = vec_zeros(U, R.cols);
+    res := vec_zeros(U, R.cols);
     for 0..tmp.dim-1 {
         res.data[it] = tmp[it];
     }
+    return res;
 }
 
 
-#insert #run specialize("_solve_linear_right_trapezoidal_mm", "solve_linear_right_trapezoidal", COMBI_M_M_M);
-_solve_linear_right_trapezoidal_mm :: (R: Matrix($T), M: Matrix($V), res: *Matrix($U)) {
+solve_linear_right_trapezoidal :: (R: Matrix($T), M: Matrix($V)) -> Matrix($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(R.rows == M.rows);
     }
     
-    <<res = mat(U, R.cols, M.cols);
+    res := mat(U, R.cols, M.cols);
 
     for j: 0..M.cols-1 {
         b := column(M, j);
         tmp := solve_linear_right_trapezoidal(R, b);
         for tmp.data {
-            (<<res)[it_index][j] = it;
+            res[it_index][j] = it;
         }
     }
+
+    return res;
 }
 
 
@@ -349,8 +370,9 @@ gaussian_factorization_no_pivot :: (M: Matrix($T)) -> Matrix(T) #must {
 slgf_np :: solve_linear_gaussian_factorization_no_pivot;
 solve_LRnp :: solve_linear_gaussian_factorization_no_pivot;
 solve_LUnp :: solve_linear_gaussian_factorization_no_pivot;
-#insert #run specialize("_solve_linear_gaussian_factorization_no_pivot", "solve_linear_gaussian_factorization_no_pivot", COMBI_M_V_V);
-_solve_linear_gaussian_factorization_no_pivot :: (A: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_gaussian_factorization_no_pivot :: (A: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -359,7 +381,7 @@ _solve_linear_gaussian_factorization_no_pivot :: (A: Matrix($T), b: Vector($V), 
     L, R := decompose_LR(M);
 
     y := solve_linear_left_trapezoidal(L, b);
-    <<res = solve_linear_right_trapezoidal(R, y);
+    return solve_linear_right_trapezoidal(R, y);
 }
 
 
@@ -384,10 +406,6 @@ gaussian_factorization_full_pivot :: (M: Matrix($T))
     m := A.rows;
     n := A.cols;
 
-    // rows : [..]int;
-    // cols : [..]int;
-    // array_resize(*rows, A.rows, false);
-    // array_resize(*cols, A.cols, false);
     rows := NewArray(A.rows, int, false);
     cols := NewArray(A.cols, int, false);
     row_permutations := 0;
@@ -459,8 +477,9 @@ gaussian_factorization_full_pivot :: (M: Matrix($T))
 slgf_fp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LRfp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LUfp :: solve_linear_gaussian_factorization_full_pivot;
-#insert #run specialize("_solve_linear_gaussian_factorization_full_pivot", "solve_linear_gaussian_factorization_full_pivot", COMBI_M_V_V);
-_solve_linear_gaussian_factorization_full_pivot :: (A: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_gaussian_factorization_full_pivot :: (A: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -470,7 +489,7 @@ _solve_linear_gaussian_factorization_full_pivot :: (A: Matrix($T), b: Vector($V)
 
     y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
     w := solve_linear_right_trapezoidal(R, y);
-    <<res = permute(w, ..cols);
+    return permute(w, ..cols);
 }
 
 
@@ -542,8 +561,9 @@ gaussian_factorization_row_pivot :: (M: Matrix($T)) -> Matrix(T) #must, rows: []
 slgf_rp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LRrp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LUrp :: solve_linear_gaussian_factorization_row_pivot;
-#insert #run specialize("_solve_linear_gaussian_factorization_row_pivot", "solve_linear_gaussian_factorization_row_pivot", COMBI_M_V_V);
-_solve_linear_gaussian_factorization_row_pivot :: (A: Matrix($T), b: Vector($V), res: *Vector($U)) {
+solve_linear_gaussian_factorization_row_pivot :: (A: Matrix($T), b: Vector($V)) -> Vector($U) #modify {
+    U = dominant_type(T, V);
+} {
     #if CHECKS {
         assert(A.rows == b.dim);
     }
@@ -552,7 +572,7 @@ _solve_linear_gaussian_factorization_row_pivot :: (A: Matrix($T), b: Vector($V),
     L, R := decompose_LR(M);
 
     y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    <<res = solve_linear_right_trapezoidal(R, y);
+    return solve_linear_right_trapezoidal(R, y);
 }
 
 
@@ -641,6 +661,18 @@ determinant :: (A: Matrix($T)) -> T {
 
 
 
+
+////////////////////////////////////////////////////////////////////////////////////////
+/*
+      ######## ########  ######  ########  ######
+           ##    ##       ##    ##    ##    ##    ##
+           ##    ##       ##          ##    ##
+           ##    ######    ######     ##     ######
+           ##    ##             ##    ##          ##
+           ##    ##       ##    ##    ##    ##    ##
+           ##    ########  ######     ##     ######
+*/
+////////////////////////////////////////////////////////////////////////////////////////
 
 
 

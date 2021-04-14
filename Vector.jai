@@ -1,6 +1,18 @@
 
 
 
+
+/*
+ ######  ######## ########
+##    ##    ##    ##     ##
+##          ##    ##     ##
+ ######     ##    ########
+      ##    ##    ##   ##
+##    ##    ##    ##    ##
+ ######     ##    ##     ##
+*/
+
+
 str :: (v: Vector($T), indent: string = "    ") -> string {
     builder: String_Builder;
     init_string_builder(*builder);
@@ -17,6 +29,17 @@ str :: (v: Vector($T), indent: string = "    ") -> string {
 
 
 
+
+/*
+ ######  ######## ########  ##     ##  ######  ########
+##    ##    ##    ##     ## ##     ## ##    ##    ##
+##          ##    ##     ## ##     ## ##          ##
+ ######     ##    ########  ##     ## ##          ##
+      ##    ##    ##   ##   ##     ## ##          ##
+##    ##    ##    ##    ##  ##     ## ##    ##    ##
+ ######     ##    ##     ##  #######   ######     ##
+*/
+
 Vector :: struct (T: Type) {
     dim: int;
     data: []T;
@@ -30,6 +53,16 @@ operator [] :: inline (v: Vector($T), i: int) -> T {
 }
 
 
+
+/*
+#### ##    ## #### ######## ####    ###    ##       #### ######## ########
+ ##  ###   ##  ##     ##     ##    ## ##   ##        ##       ##  ##
+ ##  ####  ##  ##     ##     ##   ##   ##  ##        ##      ##   ##
+ ##  ## ## ##  ##     ##     ##  ##     ## ##        ##     ##    ######
+ ##  ##  ####  ##     ##     ##  ######### ##        ##    ##     ##
+ ##  ##   ###  ##     ##     ##  ##     ## ##        ##   ##      ##
+#### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
+*/
 
 
 vec :: ($type: Type, values: ..$T) -> Vector(type) {
@@ -104,34 +137,56 @@ vec_subvector :: (v: Vector($T), from: int, to: int) -> Vector(T) {
 }
 
 
+/*
+ #######  ########  ######## ########     ###    ########  #######  ########   ######
+##     ## ##     ## ##       ##     ##   ## ##      ##    ##     ## ##     ## ##    ##
+##     ## ##     ## ##       ##     ##  ##   ##     ##    ##     ## ##     ## ##
+##     ## ########  ######   ########  ##     ##    ##    ##     ## ########   ######
+##     ## ##        ##       ##   ##   #########    ##    ##     ## ##   ##         ##
+##     ## ##        ##       ##    ##  ##     ##    ##    ##     ## ##    ##  ##    ##
+ #######  ##        ######## ##     ## ##     ##    ##     #######  ##     ##  ######
+*/
 
 
-add :: (a: *Vector($A), b: Vector($B)) {
-    #if CHECKS {
-        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
-        assert(is_minor_type(A, B));
+
+operator == :: (a: Vector($A), b: Vector($B)) -> bool {
+    if a.dim != b.dim {
+        return false;
     }
-    for 0..a.dim-1 {
-        a.data[it] += b[it];
+    for a.data {
+        if it != b.data[it_index] {
+            return false;
+        }
     }
+    return true;
 }
 
-sub :: (a: *Vector($A), b: Vector($B)) {
+
+
+
+operator * :: (a: Vector($A), b: Vector($B)) -> $C #modify {
+    C = dominant_type(A, B);
+}{
     #if CHECKS {
         assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
-        assert(is_minor_type(A, B));
     }
+
+    res := zero(C);
     for 0..a.dim-1 {
-        a.data[it] -= b[it];
+        res += a[it] * b[it];
     }
+    return res;
 }
 
-
-
-neg :: (a: *Vector($A)) {
+operator * :: (a: Vector($A), b: $B) -> $C #modify {
+    if !is_scalar(B) { C = null; return; }
+    C = dominant_type(A, B);
+} #symmetric {
+    res := vec(C, a.dim);
     for 0..a.dim-1 {
-        a.data[it] = -a.data[it];
+        res.data[it] = a[it] * b;
     }
+    return res;
 }
 
 
@@ -147,6 +202,29 @@ mul :: inline (a: *Vector($A), val: $B) {
 
 
 
+
+
+
+
+
+
+operator / :: inline (a: Vector($A), b: Vector($B)) -> Matrix($C) #modify {
+    C = dominant_type(A, B);
+}{
+    return outer_product(a, b);
+}
+
+operator / :: (a: Vector($A), b: $B) -> Vector($C) #modify {
+    if !is_scalar(B) { C = null; return; }
+    C = dominant_type(A, B);
+} {
+    res := vec(C, a.dim);
+    for 0..a.dim-1 {
+        res.data[it] = a[it] / b;
+    }
+    return res;
+}
+
 div :: inline (a: *Vector($A), val: $B) {
     #if CHECKS {
         assert(is_minor_type(A,B));
@@ -156,9 +234,136 @@ div :: inline (a: *Vector($A), val: $B) {
     }
 }
 
+outer_product :: (a: Vector($A), b: Vector($B)) -> Vector($C) #modify {
+    C = dominant_type(A, B);
+} {
+    res := mat(C, a.dim, b.dim);
+    for i: 0..a.dim-1 {
+        for j: 0..b.dim-1 {
+            res[i][j] = a[i] * b[j];
+        }
+    }
+    return res;
+}
 
 
 
+
+
+
+operator + :: (a: Vector($A), b: Vector($B)) -> Vector($C) #modify {
+    C = dominant_type(A, B);
+} {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+    res := vec(C, a.dim);
+    for 0..a.dim-1 {
+        res.data[it] = a[it] + b[it];
+    }
+    return res;
+}
+
+add :: (a: *Vector($A), b: Vector($B)) {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+        assert(is_minor_type(A, B));
+    }
+    for 0..a.dim-1 {
+        a.data[it] += b[it];
+    }
+}
+
+
+
+
+operator - :: (a: Vector($A), b: Vector($B)) -> Vector($C) #modify {
+    C = dominant_type(A, B);
+} {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+    }
+    res := vec(C, a.dim);
+    for 0..a.dim-1 {
+        res.data[it] = a[it] - b[it];
+    }
+    return res;
+}
+
+sub :: (a: *Vector($A), b: Vector($B)) {
+    #if CHECKS {
+        assert(a.dim == b.dim, "Vectors have different dimensions: a.dim = %, b.dim = %", a.dim, b.dim);
+        assert(is_minor_type(A, B));
+    }
+    for 0..a.dim-1 {
+        a.data[it] -= b[it];
+    }
+}
+
+
+
+
+operator - :: (a: Vector($A)) -> Vector(A) {
+    res := vec(C, a.dim);
+    for 0..a.dim-1 {
+        res.data[it] = -a[it];
+    }
+    return res;
+}
+
+neg :: (a: *Vector($A)) {
+    for 0..a.dim-1 {
+        a.data[it] = -a.data[it];
+    }
+}
+
+
+
+
+
+
+
+
+
+cross :: (a: Vector($A), b: Vector($B)) -> Vector($C) #modify {
+    C = dominant_type(A, B);
+} {
+    #if CHECKS {
+        assert(a.dim == 3 && b.dim == 3);
+    }
+    return vec(C, 
+        a[1]*b[2] - a[2]*b[1], 
+        a[2]*b[0] - a[0]*b[2],
+        a[0]*b[1] - a[1]*b[0]
+    );
+}
+
+
+reflect :: (a: Vector($A), b: Vector($B)) -> Vector($C) #modify {
+    C = dominant_type(A, B);
+} {
+    tau := 2.0 / (conjugate(normal) * normal);
+    alpha := tau * conjugate(normal) * vec;
+    return vec - normal * alpha;
+}
+
+
+
+
+
+
+
+
+
+/*
+######## ########     ###    ##    ##  ######  ########
+   ##    ##     ##   ## ##   ###   ## ##    ## ##
+   ##    ##     ##  ##   ##  ####  ## ##       ##
+   ##    ########  ##     ## ## ## ##  ######  ######
+   ##    ##   ##   ######### ##  ####       ## ##
+   ##    ##    ##  ##     ## ##   ### ##    ## ##
+   ##    ##     ## ##     ## ##    ##  ######  ##
+*/
 
 permute :: (v: Vector($V), order: ..int) -> Vector(V) {
     #if CHECKS {
@@ -206,7 +411,15 @@ conjugate :: (v: *Vector($V)) {
 
 
 
-
+/*
+        ##        ######   ######     ###    ##          ###    ########
+         ##      ##    ## ##    ##   ## ##   ##         ## ##   ##     ##
+          ##     ##       ##        ##   ##  ##        ##   ##  ##     ##
+#######    ##     ######  ##       ##     ## ##       ##     ## ########
+          ##           ## ##       ######### ##       ######### ##   ##
+         ##      ##    ## ##    ## ##     ## ##       ##     ## ##    ##
+        ##        ######   ######  ##     ## ######## ##     ## ##     ##
+*/
 
 // Scientific Computing, Vol I: Linear and nonlinear equations
 // Texts in computational science and engineering 18
@@ -279,23 +492,23 @@ angle :: (a: Vector($A), b: Vector($B)) -> float64 {
 
 
 
-
-
-#scope_file
-// compiler bug: 
-// the compiler won't find the operators generated with this method
-// unless a stupid custom-named function is called first
-// DUMMY_IN : [1][0]string : .[.[]];
-// DUMMY_OUT : [1][1]string : .[.["int"]];
-#insert #run specialize("_init", "init", .["=> int"]);
-_init :: (ret: *int) {}
+////////////////////////////////////////////////////////////////////////////////////////
+/*
+      ######## ########  ######  ########  ######
+           ##    ##       ##    ##    ##    ##    ##
+           ##    ##       ##          ##    ##
+           ##    ######    ######     ##     ######
+           ##    ##             ##    ##          ##
+           ##    ##       ##    ##    ##    ##    ##
+           ##    ########  ######     ##     ######
+*/
+////////////////////////////////////////////////////////////////////////////////////////
 
 
 
 #scope_module
 test_vector :: () {
     print("\n\nVector -------------------------------\n\n");
-    init();
     {
         v := vec(float64, 1.0, 2.0, 3.0, 4.0, 5.0);
         print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, type_of(v), v.T);
