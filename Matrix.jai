@@ -55,29 +55,30 @@ str :: (m: Matrix($T), indent: string = "    ") -> string {
 // Springer
 // Fig. 3.5 Matrix class derivation tree, page 268
 MATRIX_FLAGS :: enum_flags u32 {
+    NONE                   :: 0;
     SQUARE                 :: (1 <<  0);
     SYMMETRIC              :: (1 <<  1) + xx SQUARE;
     SYMMETRIC_POSITIVE     :: (1 <<  2) + xx SYMMETRIC;
     UPPER_HESSENBERG       :: (1 <<  3);
-    LOWER_HESSENBERG       :: (1 << 16); 
-    ORTHOGONAL             :: (1 <<  4);
-    TRAPEZOIDAL            :: (1 <<  5);
-    LOWER_TRAPEZOIDAL      :: (1 <<  6) + xx TRAPEZOIDAL;
-    LOWER_TRIANGULAR       :: (1 <<  7) + xx LOWER_TRAPEZOIDAL;
-    UNIT_LOWER_TRAPEZOIDAL :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
-    UNIT_LOWER_TRIANGULAR  :: (1 <<  9) + xx UNIT_LOWER_TRAPEZOIDAL;
-    UPPER_TRAPEZOIDAL      :: (1 << 10) + xx TRAPEZOIDAL;
-    UPPER_TRIANGULAR       :: (1 << 11) + xx UPPER_TRAPEZOIDAL;
-    UNIT_UPPER_TRAPEZOIDAL :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
-    UNIT_UPPER_TRIANGULAR  :: (1 << 13) + xx UNIT_UPPER_TRAPEZOIDAL;    
-    HERMITIAN              :: (1 << 14) + xx SQUARE; // not the same as symmetric for complex matrices
-    DIAGONAL               :: (1 << 15) + xx BAND;
+    LOWER_HESSENBERG       :: (1 <<  4); 
+    ORTHOGONAL             :: (1 <<  5);
+    TRAPEZOIDAL            :: (1 <<  6);
+    LOWER_TRAPEZOIDAL      :: (1 <<  7) + xx TRAPEZOIDAL;
+    LOWER_TRIANGULAR       :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
+    UNIT_LOWER_TRAPEZOIDAL :: (1 <<  9) + xx LOWER_TRAPEZOIDAL;
+    UNIT_LOWER_TRIANGULAR  :: (1 << 10) + xx UNIT_LOWER_TRAPEZOIDAL;
+    UPPER_TRAPEZOIDAL      :: (1 << 11) + xx TRAPEZOIDAL;
+    UPPER_TRIANGULAR       :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
+    UNIT_UPPER_TRAPEZOIDAL :: (1 << 13) + xx UPPER_TRAPEZOIDAL;
+    UNIT_UPPER_TRIANGULAR  :: (1 << 14) + xx UNIT_UPPER_TRAPEZOIDAL;    
+    HERMITIAN              :: (1 << 15) + xx SQUARE; // not the same as symmetric for complex matrices
+    DIAGONAL               :: (1 << 16) + xx BAND;
     BAND                   :: (1 << 17) + xx TRAPEZOIDAL;
 }
 
 
-is :: inline (m: Matrix($T, $flags), flag: MATRIX_FLAGS) -> bool {
-    return (flags & flag) > 0;
+is :: inline (m: Matrix($T), flag: MATRIX_FLAGS) -> bool {
+    return (m.flags & flag) > 0;
 }
 
 
@@ -97,10 +98,11 @@ is :: inline (m: Matrix($T, $flags), flag: MATRIX_FLAGS) -> bool {
 
 
 
-Matrix :: struct(T: Type, flags: MATRIX_FLAGS = #run zero(u32)) {
+Matrix :: struct(T: Type) {
     rows: int;
     cols: int;
     data: []T;
+    flags: MATRIX_FLAGS = .NONE;
 }
 
 
@@ -146,18 +148,20 @@ set :: inline (m: $M/Matrix, i: int, j: int, val: $U) {
 */
 
 
-mat :: ($type: Type, rows: int, cols: int) -> Matrix(type) #must {
+mat :: ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
     res : Matrix(type) = ---;
     res.rows = rows;
     res.cols = cols;
+    res.flags = flags;
     res.data = NewArray(rows*cols, type, initialized=false);
     return res;
 }
 
-mat :: ($type: Type, m: Matrix($T)) -> Matrix(type) #must {
+mat :: ($type: Type, m: $M/Matrix) -> Matrix(type) #must {
     res : Matrix(type) = ---;
     res.rows = m.rows;
     res.cols = m.cols;
+    res.flags = m.flags;
     res.data = NewArray(m.rows*m.cols, type, initialized=false);
     for m.data {
         res.data[it_index] = ncast(type, it);
@@ -165,13 +169,13 @@ mat :: ($type: Type, m: Matrix($T)) -> Matrix(type) #must {
     return res;
 }
 
-copy :: (m: Matrix($T)) -> Matrix(T) #must {
-    res := mat(T, m.rows, m.cols);
+copy :: (m: $M/Matrix) -> Matrix(M.T) #must {
+    res := mat(M.T, m.rows, m.cols, m.flags);
     res.data = array_copy(m.data);
     return res;
 }
 
-copy :: (to: *Matrix($T), from: Matrix(T)) {
+copy :: (to: *$M/Matrix, from: M) {
     to.rows = from.rows;
     to.cols = from.cols;
     to.data = array_copy(from.data);
@@ -179,12 +183,12 @@ copy :: (to: *Matrix($T), from: Matrix(T)) {
 
 
 
-mat :: inline ($type: Type, dim: int) -> Matrix(type) #must {
-    return mat(type, dim, dim);
+mat :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
+    return mat(type, dim, dim, flags);
 }
 
-mat :: (rows: int, cols: int, init: $T) -> Matrix(T) #must {
-    m := mat(T, rows, cols);
+mat :: (rows: int, cols: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
+    m := mat(T, rows, cols, flags);
     for 0..rows*cols-1 {
         m.data[it] = init;
     }
@@ -193,12 +197,12 @@ mat :: (rows: int, cols: int, init: $T) -> Matrix(T) #must {
 
 
 
-mat :: (rows: int, cols: int, values: ..$T) -> Matrix(T) #must {
+mat :: (rows: int, cols: int, values: ..$T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
     #if CHECKS {
         assert(values.count <= rows * cols, "Too many values: rows*cols = %, values.count = %", rows*cols, values.count);
     }
 
-    m := mat_zeros(T, rows, cols);
+    m := mat_zeros(T, rows, cols, flags);
     for values {
         m.data[it_index] = it;
     }
@@ -206,37 +210,37 @@ mat :: (rows: int, cols: int, values: ..$T) -> Matrix(T) #must {
 }
 
 
-mat :: inline (dim: int, init: $T) -> Matrix(T) #must {
-    return mat(dim, dim, init);
+mat :: inline (dim: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
+    return mat(dim, dim, init, flags);
 }
 
 
 
 
-mat_zeros :: inline ($type: Type, rows: int, cols: int) -> Matrix(type) #must {
-    return mat(rows, cols, zero(type));
+mat_zeros :: inline ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
+    return mat(rows, cols, zero(type), flags);
 }
 
-mat_zeros :: inline ($type: Type, dim: int) -> Matrix(type) #must {
-    return mat(dim, dim, zero(type));
+mat_zeros :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
+    return mat(dim, dim, zero(type), flags);
 }
 
 
 
 
 
-mat_ones :: inline ($type: Type, rows: int, cols: int) -> Matrix(type) #must {
-    return mat(rows, cols, one(type));
+mat_ones :: inline ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
+    return mat(rows, cols, one(type), flags);
 }
 
-mat_ones :: inline ($type: Type, dim: int) -> Matrix(type) #must {
-    return mat(dim, dim, one(type));
+mat_ones :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
+    return mat(dim, dim, one(type), flags);
 }
 
 
 
 mat_id :: ($type: Type, rows: int, cols: int) -> Matrix(type) #must {
-    m := mat_zeros(type, rows, cols);
+    m := mat_zeros(type, rows, cols, .DIAGONAL);
     dim := ifx rows <= cols then rows else cols;
     for 0..dim-1 {
         m[it][it] = one(type);
@@ -251,7 +255,8 @@ mat_id :: inline ($type: Type, dim: int) -> Matrix(type) #must {
 
 
 mat_hadamard_2 :: inline ($type: Type) -> Matrix(type) {
-    return mat(2, 2, one(type), one(type), one(type), -one(type));
+    flags :: .NONE; // @update
+    return mat(2, 2, one(type), one(type), one(type), -one(type), flags);
 }
 
 mat_hadamard :: ($type: Type, nestings: int) -> Matrix(type) {
@@ -280,11 +285,11 @@ mat_submatrix :: (M: Matrix($T), row_from: int, row_to: int, column_from: int, c
         assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
         assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
     }
-    res := mat(T, row_to-row_from, column_to-column_from);
+    res := mat(T, row_to-row_from, column_to-column_from, M.flags);
 
     for i: 0..row_to-row_from-1 {
         for j: 0..column_to-column_from-1 {
-            res[i][j] = M[i+row_from][j+column_from];
+            set(res, i, j, get(M, i+row_from, j+column_from));
         }
     }
 
@@ -999,7 +1004,8 @@ test_matrix :: () {
 
     {
         print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
-        m : Matrix(float64, .UNIT_LOWER_TRIANGULAR) = ---;
+        m : Matrix(float64) = ---;
+        m.flags = .UNIT_LOWER_TRIANGULAR;
         assert( is(m, .TRAPEZOIDAL) );
     }
 }
