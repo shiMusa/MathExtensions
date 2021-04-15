@@ -105,10 +105,6 @@ Matrix :: struct(T: Type) {
     flags: MATRIX_FLAGS = .NONE;
 }
 
-
-
-
-
 operator [] :: inline (m: Matrix($T), i: int) -> []T {
     #if CHECKS {
         assert(i >= 0, "Row-index negative! i = %", i);
@@ -118,16 +114,21 @@ operator [] :: inline (m: Matrix($T), i: int) -> []T {
     return array_view_count(m.data, i * m.cols, m.cols);
 }
 
-get :: inline (m: $M/Matrix, i: int, j: int) -> M.T {
-    // #if is(m, .BAND) {
-    //     return m.data[]
-    // }
+get :: inline (m: Matrix($T), i: int, j: int) -> T {
     return m.data[i * m.cols + j];
 }
 
-set :: inline (m: $M/Matrix, i: int, j: int, val: $U) {
-    m.data[i * m.cols + j] = ncast(M.T, val);
+get :: inline (m: Matrix($T), i: int) -> T {
+    return m.data[i];
+}
+
+set :: inline (m: Matrix($T), i: int, j: int, val: $U) {
+    m.data[i * m.cols + j] = ncast(T, val);
 } 
+
+set :: inline (m: Matrix($T), i: int, val: $U) {
+    m.data[i] = ncast(T, val);
+}
 
 
 
@@ -163,24 +164,23 @@ mat :: ($type: Type, m: $M/Matrix) -> Matrix(type) #must {
     res.cols = m.cols;
     res.flags = m.flags;
     res.data = NewArray(m.rows*m.cols, type, initialized=false);
-    for m.data {
-        res.data[it_index] = ncast(type, it);
+    for 0..m.rows*m.cols-1 {
+        res.data[it] = ncast(type, get(m,it));
     }
     return res;
 }
 
-copy :: (m: $M/Matrix) -> Matrix(M.T) #must {
-    res := mat(M.T, m.rows, m.cols, m.flags);
+copy :: (m: Matrix($T)) -> Matrix(T) #must {
+    res := mat(T, m.rows, m.cols, m.flags);
     res.data = array_copy(m.data);
     return res;
 }
 
-copy :: (to: *$M/Matrix, from: M) {
+copy :: (to: *Matrix($T), from: Matrix(T)) {
     to.rows = from.rows;
     to.cols = from.cols;
     to.data = array_copy(from.data);
 }
-
 
 
 mat :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
