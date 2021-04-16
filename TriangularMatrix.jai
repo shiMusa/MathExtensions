@@ -17,7 +17,7 @@
 
 */
 
-str :: (m: Matrix($T), indent: string = "    ") -> string {
+str :: (m: TriangularMatrix($T), indent: string = "    ") -> string {
     builder: String_Builder;
     init_string_builder(*builder);
     append(*builder, "\n");
@@ -38,51 +38,6 @@ str :: (m: Matrix($T), indent: string = "    ") -> string {
 
 
 
-/*
-
-######## ##          ###     ######    ######
-##       ##         ## ##   ##    ##  ##    ##
-##       ##        ##   ##  ##        ##
-######   ##       ##     ## ##   ####  ######
-##       ##       ######### ##    ##        ##
-##       ##       ##     ## ##    ##  ##    ##
-##       ######## ##     ##  ######    ######
-
-*/
-
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Fig. 3.5 Matrix class derivation tree, page 268
-MATRIX_FLAGS :: enum_flags u32 {
-    NONE                   :: 0;
-    SQUARE                 :: (1 <<  0);
-    SYMMETRIC              :: (1 <<  1) + xx SQUARE;
-    SYMMETRIC_POSITIVE     :: (1 <<  2) + xx SYMMETRIC;
-    UPPER_HESSENBERG       :: (1 <<  3);
-    LOWER_HESSENBERG       :: (1 <<  4); 
-    ORTHOGONAL             :: (1 <<  5);
-    TRAPEZOIDAL            :: (1 <<  6);
-    LOWER_TRAPEZOIDAL      :: (1 <<  7) + xx TRAPEZOIDAL;
-    LOWER_TRIANGULAR       :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
-    UNIT_LOWER_TRAPEZOIDAL :: (1 <<  9) + xx LOWER_TRAPEZOIDAL;
-    UNIT_LOWER_TRIANGULAR  :: (1 << 10) + xx UNIT_LOWER_TRAPEZOIDAL;
-    UPPER_TRAPEZOIDAL      :: (1 << 11) + xx TRAPEZOIDAL;
-    UPPER_TRIANGULAR       :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
-    UNIT_UPPER_TRAPEZOIDAL :: (1 << 13) + xx UPPER_TRAPEZOIDAL;
-    UNIT_UPPER_TRIANGULAR  :: (1 << 14) + xx UNIT_UPPER_TRAPEZOIDAL;    
-    HERMITIAN              :: (1 << 15) + xx SQUARE; // not the same as symmetric for complex matrices
-    DIAGONAL               :: (1 << 16) + xx BAND;
-    BAND                   :: (1 << 17) + xx TRAPEZOIDAL;
-}
-
-
-is :: inline (m: $M/Matrix, flag: MATRIX_FLAGS) -> bool {
-    return (m.flags & flag) > 0;
-}
-
-
-
 
 
 
@@ -98,35 +53,52 @@ is :: inline (m: $M/Matrix, flag: MATRIX_FLAGS) -> bool {
 
 
 
-Matrix :: struct(T: Type) {
-    rows: int;
-    cols: int;
-    data: []T;
-    flags: MATRIX_FLAGS = .NONE;
+TriangularMatrix :: struct(T: Type) {
+    using M : Matrix;
+    isUpper : bool;
 }
 
-operator [] :: inline (m: Matrix($T), i: int) -> []T {
+get :: inline (m: TriangularMatrix($T), i: int, j: int) -> T {
     #if CHECKS {
-        assert(i >= 0, "Row-index negative! i = %", i);
-        assert(i < m.rows, "Row-index out of bounds: % rows", m.rows);
+        assert(
+            (m.isUpper && j >= i) || (!m.isUpper && i >= j),
+            "index out of bounds!"
+        );
     }
-
-    return array_view_count(m.data, i * m.cols, m.cols);
+    r : int = ---;
+    if m.isUpper {
+        // 1 + 2 + ... + n   = n*(n+1)/2
+        // 0 + 1 + ... + n-1 = (n-1)*n/2
+        r = i * m.cols - (i-1) * i/2
+    } else {
+        r = i * (i+1) / 2;
+    }
+    return m.data[r + j];  
 }
 
-get :: inline (m: Matrix($T), i: int, j: int) -> T {
-    return m.data[i * m.cols + j];
-}
-
-get :: inline (m: Matrix($T), i: int) -> T {
+get :: inline (m: TriangularMatrix($T), i: int) -> T {
     return m.data[i];
 }
 
-set :: inline (m: Matrix($T), i: int, j: int, val: $U) {
-    m.data[i * m.cols + j] = ncast(T, val);
+set :: inline (m: TriangularMatrix($T), i: int, j: int, val: $U) {
+    #if CHECKS {
+        assert(
+            (m.isUpper && j >= i) || (!m.isUpper && i >= j),
+            "index out of bounds!"
+        );
+    }
+    r : int = ---; 
+    if m.isUpper {
+        // 1 + 2 + ... + n   = n*(n+1)/2
+        // 0 + 1 + ... + n-1 = (n-1)*n/2
+        r = i * m.cols - (i-1) * i/2
+    } else {
+        r = i * (i+1) / 2;
+    }
+    m.data[r + j] = ncast(T, val);
 } 
 
-set :: inline (m: Matrix($T), i: int, val: $U) {
+set :: inline (m: TriangularMatrix($T), i: int, val: $U) {
     m.data[i] = ncast(T, val);
 }
 
@@ -149,48 +121,64 @@ set :: inline (m: Matrix($T), i: int, val: $U) {
 */
 
 
-mat :: ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    res : Matrix(type) = ---;
+#scope_file
+data_size :: (rows: int, cols: int) -> int {
+    minDim := min(rows, cols);
+    maxDim := max(rows, cols);
+    trisize := minDim * (minDim+1) / 2;
+    return trisize + minDim * (maxDim - minDim);
+    // e.g.
+    // M = | 1 2 : 3 4 5|
+    //     |   6 : 7 8 9|
+}
+#scope_export
+
+
+tri_mat :: ($type: Type, rows: int, cols: int, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(type) #must {
+    res : TriangularMatrix(type) = ---;
     res.rows = rows;
     res.cols = cols;
     res.flags = flags;
-    res.data = NewArray(rows*cols, type, initialized=false);
+    res.isUpper = isUpper;
+    res.data = NewArray(data_size(rows, cols), type, initialized=false);
     return res;
 }
 
-mat :: ($type: Type, m: $M/Matrix) -> Matrix(type) #must {
-    res : Matrix(type) = ---;
+tri_mat :: ($type: Type, m: $M/TriangularMatrix) -> TriangularMatrix(type) #must {
+    res : TriangularMatrix(type) = ---;
     res.rows = m.rows;
     res.cols = m.cols;
+    res.isUpper = m.isUpper;
     res.flags = m.flags;
-    res.data = NewArray(m.rows*m.cols, type, initialized=false);
-    for 0..m.rows*m.cols-1 {
-        res.data[it] = ncast(type, get(m,it));
+    res.data = NewArray(m.data.count, type, initialized=false);
+    for 0..m.data.count-1 {
+        set(res, it, ncast(type, get(m, it)));
     }
     return res;
 }
 
-copy :: (m: Matrix($T)) -> Matrix(T) #must {
-    res := mat(T, m.rows, m.cols, m.flags);
+copy :: (m: TriangularMatrix($T)) -> TriangularMatrix(T) #must {
+    res := tri_mat(T, m.rows, m.cols, m.flags, m.isUpper);
     res.data = array_copy(m.data);
     return res;
 }
 
-copy :: (to: *Matrix($T), from: Matrix(T)) {
+copy :: (to: *TriangularMatrix($T), from: TriangularMatrix(T)) {
     to.rows = from.rows;
     to.cols = from.cols;
+    to.isUpper = from.isUpper;
     to.data = array_copy(from.data);
 }
 
 
-mat :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(type, dim, dim, flags);
+tri_mat :: inline ($type: Type, dim: int, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(type) #must {
+    return tri_mat(type, dim, dim, isUpper, flags);
 }
 
 
-mat :: (rows: int, cols: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
-    m := mat(T, rows, cols, flags);
-    for 0..rows*cols-1 {
+tri_mat :: (rows: int, cols: int, init: $T, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(T) #must {
+    m := tri_mat(T, rows, cols, isUpper, flags);
+    for 0..m.data.count-1 {
         m.data[it] = init;
     }
     return m;
@@ -198,15 +186,12 @@ mat :: (rows: int, cols: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T
 
 
 
-mat :: (rows: int, cols: int, values: ..$T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
+tri_mat :: (rows: int, cols: int, values: ..$T, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(T) #must {
     #if CHECKS {
-        assert(
-            values.count <= rows * cols, 
-            "Too many values: rows*cols = %, values.count = %", rows*cols, values.count
-        );
+        assert(values.count <= data_size(rows, cols), "Too many values: rows*cols = %, values.count = %", rows*cols, values.count);
     }
 
-    m := mat_zeros(T, rows, cols, flags);
+    m := tri_mat_zeros(T, rows, cols, isUpper, flags);
     for values {
         m.data[it_index] = it;
     }
@@ -214,136 +199,47 @@ mat :: (rows: int, cols: int, values: ..$T, flags: MATRIX_FLAGS = .NONE) -> Matr
 }
 
 
-mat :: inline (dim: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
-    return mat(dim, dim, init, flags);
+tri_mat :: inline (dim: int, init: $T, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(T) #must {
+    return tri_mat(dim, dim, init, isUpper, flags);
 }
 
 
 
 
-mat_zeros :: inline ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(rows, cols, zero(type), flags);
+tri_mat_zeros :: inline ($type: Type, rows: int, cols: int, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(type) #must {
+    return tri_mat(rows, cols, zero(type), isUpper, flags);
 }
 
-mat_zeros :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(dim, dim, zero(type), flags);
-}
-
-
-
-
-
-mat_ones :: inline ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(rows, cols, one(type), flags);
-}
-
-mat_ones :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(dim, dim, one(type), flags);
+tri_mat_zeros :: inline ($type: Type, dim: int, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(type) #must {
+    return tri_mat(dim, dim, zero(type), isUpper, flags);
 }
 
 
 
-mat_id :: ($type: Type, rows: int, cols: int) -> Matrix(type) #must {
-    m := mat_zeros(type, rows, cols, .DIAGONAL);
+
+tri_mat_ones :: inline ($type: Type, rows: int, cols: int, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(type) #must {
+    return tri_mat(rows, cols, one(type), isUpper, flags);
+}
+
+tri_mat_ones :: inline ($type: Type, dim: int, isUpper: bool, flags: MATRIX_FLAGS = .NONE) -> TriangularMatrix(type) #must {
+    return tri_mat(dim, dim, one(type), isUpper, flags);
+}
+
+
+
+tri_mat_id :: ($type: Type, rows: int, cols: int, isUpper: bool) -> TriangularMatrix(type) #must {
+    m := tri_mat_zeros(type, rows, cols, isUpper, .DIAGONAL);
     dim := ifx rows <= cols then rows else cols;
     for 0..dim-1 {
-        m[it][it] = one(type);
+        set(m, it, it, one(type));
     }
     return m;
 }
 
-mat_id :: inline ($type: Type, dim: int) -> Matrix(type) #must {
-    return mat_id(type, dim, dim);
+tri_mat_id :: inline ($type: Type, dim: int, isUpper: bool) -> TriangularMatrix(type) #must {
+    return tri_mat_id(type, dim, dim, isUpper);
 }
 
-
-
-mat_hadamard_2 :: inline ($type: Type) -> Matrix(type) {
-    flags :: .NONE; // @update
-    return mat(2, 2, one(type), one(type), one(type), -one(type), flags);
-}
-
-mat_hadamard :: ($type: Type, nestings: int) -> Matrix(type) {
-    #if CHECKS {
-        assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
-    }
-    if nestings == 0 {
-        return mat_hadamard_2(type);
-    }
-    return tensor(mat_hadamard_2(type), mat_hadamard(type, nestings-1));
-}
-
-
-mat_reflector :: (normal: Vector($T)) -> Matrix(T) #must {
-    tau := ncast(T, 2)/(conjugate(normal)*normal);
-
-    res := mat_id(T, normal.dim);
-    sub(res, tau * normal / normal);
-    return res;
-}
-
-
-
-
-
-
-// inclusive first bound, exclusive last bound
-mat_submatrix :: (M: $T/Matrix, row_from: int, row_to: int, column_from: int, column_to: int) -> Matrix(T.T) #must {
-    #if CHECKS {
-        assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
-        assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
-    }
-    res := mat(T.T, row_to-row_from, column_to-column_from, M.flags);
-
-    for i: 0..row_to-row_from-1 {
-        for j: 0..column_to-column_from-1 {
-            set(res, i, j, get(M, i+row_from, j+column_from));
-        }
-    }
-
-    return res;
-}
-
-
-
-
-
-
-
-
-
-/*
-########   #######  ##      ##          ######   #######  ##       ##     ## ##     ## ##    ##
-##     ## ##     ## ##  ##  ##         ##    ## ##     ## ##       ##     ## ###   ### ###   ##
-##     ## ##     ## ##  ##  ##         ##       ##     ## ##       ##     ## #### #### ####  ##
-########  ##     ## ##  ##  ##         ##       ##     ## ##       ##     ## ## ### ## ## ## ##
-##   ##   ##     ## ##  ##  ##         ##       ##     ## ##       ##     ## ##     ## ##  ####
-##    ##  ##     ## ##  ##  ##         ##    ## ##     ## ##       ##     ## ##     ## ##   ###
-##     ##  #######   ###  ###           ######   #######  ########  #######  ##     ## ##    ##
-*/
-
-
-row :: (m: $M/Matrix, i: int) -> Vector(M.T) #must {
-    #if CHECKS {
-        assert(i >= 0 && i < m.rows);
-    }
-    res := vec(T, m.cols);
-    for 0..m.cols-1 {
-        res.data[it] = get(m, i, it);
-    }
-    return res;
-}
-
-column :: (m: $M/Matrix, i: int) -> Vector(M.T) #must {
-    #if CHECKS {
-        assert(i >= 0 && i < m.cols);
-    }
-    res := vec(T, m.rows);
-    for 0..m.rows-1 {
-        res.data[it] = get(m, it, i);
-    }
-    return res;
-}
 
 
 

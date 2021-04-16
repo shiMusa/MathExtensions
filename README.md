@@ -16,6 +16,8 @@ Feel free to add functionality and performance upgrades.
 - next steps are to use the newly introduced flags for matrices.
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
 
+There are more thoughts written down in [the document outlining some of my thoughts](https://github.com/shiMusa/MathExtensions/blob/flags-and-other-matrix-types/Thoughts.md).
+
 ## Currently Implemented
 
 Complex and reals numbers, vectors, matrices interoperate automatically (in most cases).
