@@ -98,9 +98,8 @@ is :: inline (m: $M/Matrix, flag: MATRIX_FLAGS) -> bool {
 
 
 
-Matrix :: struct(T: Type) {
-    rows: int;
-    cols: int;
+Matrix :: struct(_T: Type) {
+    using _m: Mat(_T);
     data: []T;
     flags: MATRIX_FLAGS = .NONE;
 }
@@ -327,7 +326,7 @@ row :: (m: $M/Matrix, i: int) -> Vector(M.T) #must {
     #if CHECKS {
         assert(i >= 0 && i < m.rows);
     }
-    res := vec(T, m.cols);
+    res := vec(M.T, m.cols);
     for 0..m.cols-1 {
         res.data[it] = get(m, i, it);
     }
@@ -338,7 +337,7 @@ column :: (m: $M/Matrix, i: int) -> Vector(M.T) #must {
     #if CHECKS {
         assert(i >= 0 && i < m.cols);
     }
-    res := vec(T, m.rows);
+    res := vec(M.T, m.rows);
     for 0..m.rows-1 {
         res.data[it] = get(m, it, i);
     }

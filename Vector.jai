@@ -40,8 +40,8 @@ str :: (v: Vector($T), indent: string = "    ") -> string {
  ######     ##    ##     ##  #######   ######     ##
 */
 
-Vector :: struct (T: Type) {
-    dim: int;
+Vector :: struct (_T: Type) {
+    using _v: Vec(_T);
     data: []T;
 }
 
@@ -356,9 +356,15 @@ reflect :: (a: Vector($A), b: Vector($B)) -> Vector($C) #modify {
 
 
 
-
-
-
+/*
+             ###    ##     ## ########  ##    ##
+ ##   ##    ## ##    ##   ##  ##     ##  ##  ##
+  ## ##    ##   ##    ## ##   ##     ##   ####
+######### ##     ##    ###    ########     ##
+  ## ##   #########   ## ##   ##           ##
+ ##   ##  ##     ##  ##   ##  ##           ##
+          ##     ## ##     ## ##           ##
+*/
 
 // Matrix Computations, 4th edition
 // The Johns Hopkins University Press

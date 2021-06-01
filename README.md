@@ -27,7 +27,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - calculation(Code); will create and release a Pool of memory for all the allocations in the Code block.
 - Complex numbers +, -, *, /,
     - str; for pretty printing
-- Elementary
+- Elementary (z ∈ ℂ)
     - sign(r)
     - factorial(z)
     - binomial(from, choose)
@@ -39,7 +39,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - log(z)
     - pow(z)
     - sqrt(z)
-    - phase(magnitude, angle) [both complex]
+    - phase(magnitude ∈ ℂ, angle ∈ ℂ)
     - sin, cos, tan, cot, sec, csc on ℂ
     - asin, acos, atan, acot, asec, acsc on ℂ
     - sinh, cosh, tanh, coth, sech, csch on ℂ

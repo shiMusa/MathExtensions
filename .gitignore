@@ -2,3 +2,6 @@
 *.exe
 *.pdb
 testbench.*
+tests
+old
+zig-cache

@@ -303,7 +303,26 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
+pshift := 0;
+println_shift :: inline (levels: int) {
+    pshift += 4 * levels;
+}
 
+
+println :: inline (msg: string, args: ..Any) {
+    for 0..pshift {
+        print(" ");
+    }
+    print(msg, ..args);
+    print("\n");
+}
+
+println :: inline (arg: Any) {
+    for 0..pshift {
+        print(" ");
+    }
+    print("%\n", arg);
+}
 
 
 
