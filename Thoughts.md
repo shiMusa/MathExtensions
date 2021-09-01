@@ -16,10 +16,32 @@ To enable these specializations, algorithms in general should require `$T/Matrix
 Specialized functions can be overloaded to explicitly require e.g. `TriangluarMatrix(T)` for improved performance.
 
 Other planned specializations are:
+
 - `BandMatrix(T)`
 - `NeighbourMatrix(T)`; name not final; similar to `BandMatrix` but with periodic boundary conditions
 - `SparseMatrix(T)`, `SparseVector(T)`
 - and more to come...
+
+
+#### On generic functions 
+_2021.08.31_
+
+The only three ways of writing a generic function are
+
+- `foo :: (x: $T)` for any type `T`
+- `foo :: (x: $T/Matrix)` for any `T` that has the same fields as `Matrix`
+- `foo :: (x: $Matrix(T))` for a generic matrix with type `T`
+
+The first solution might collide with other functions meant to be applied to e.g. vectors instead of matrices. So the functions should be named uniquely, such as
+```Jai
+matrix_foo :: (m: $M)
+vector_foo :: (v: $V)
+```
+
+That means, we have to **tell** the user to comply with a certain standard, meaning we have to manually explain the interface of the types we're using (e.g. above `$M`, `$T`, etc).
+
+
+
 
 ### Hybrid Matrices
 

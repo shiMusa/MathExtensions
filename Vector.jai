@@ -1,4 +1,24 @@
 
+// #### ##    ## ######## ######## ########  ########    ###     ######  ########
+//  ##  ###   ##    ##    ##       ##     ## ##         ## ##   ##    ## ##
+//  ##  ####  ##    ##    ##       ##     ## ##        ##   ##  ##       ##
+//  ##  ## ## ##    ##    ######   ########  ######   ##     ## ##       ######
+//  ##  ##  ####    ##    ##       ##   ##   ##       ######### ##       ##
+//  ##  ##   ###    ##    ##       ##    ##  ##       ##     ## ##    ## ##
+// #### ##    ##    ##    ######## ##     ## ##       ##     ##  ######  ########
+
+
+/*
+
+All implementations of a Vector should have the following methods:
+
+set(*vec, i, val) : set val as the i-th element of vector
+get(*vec, i) -> vec.T : get the i-th element (readonly)
+dim(*vec) -> int : dimensions of vector
+
+
+*/
+
 
 
 
