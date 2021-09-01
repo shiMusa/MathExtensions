@@ -107,10 +107,10 @@ one :: inline ($T: Type) -> T {
 
 
 DELTA :: 1.0e-6;
-approx :: inline (a: Vector($T), b: Vector($U)) -> bool {
+approx :: inline (a: Vector($T, $N), b: Vector($U, N)) -> bool {
     return norm_2(a - b) < DELTA;
 }
-approx :: inline (a: Matrix($T), b: Matrix($U)) -> bool {
+approx :: inline (a: Matrix($T, $N, $M), b: Matrix($U, N, M)) -> bool {
     return norm_frobenius(a - b) < DELTA;
 }
 approx :: inline (a: $T, b: $U) -> bool #modify {
@@ -196,108 +196,114 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
-// // meant to be used in the form of
-// //     #insert #run specialize(...);
-// // generates functions
-// //     fun_name :: inline (x0: itypes[i][0], x1: itypes[i][1],...) -> otypes[i][0], otypes[i][1],... {...}
-// // by accessing the generic function
-// //     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
-// // writing specialized versions with return types;
-// specialize :: (backend_name: string, fun_name: string, iotypes: []string, o_opts: []string = .[]) -> string {
+// meant to be used in the form of
+//     #insert #run specialize(...);
+// generates functions
+//     fun_name :: inline (x0: itypes[i][0], x1: itypes[i][1],...) -> otypes[i][0], otypes[i][1],... {...}
+// by accessing the generic function
+//     _fun_name :: (x0: $A, x1: $B, ..., xn: *$NA, xn+1: *$NB, ...) {...}
+// writing specialized versions with return types;
+// E.g.
+// _foo :: (a: $A, b: int, c: *$C) {...}
+// #insert #run specialize("_foo", "foo", .[
+//     "float & int => float",
+//     "int   & int => int"
+// ]);
+specialize :: (backend_name: string, fun_name: string, iotypes: []string, o_opts: []string = .[]) -> string {
 
 
-//     builder: String_Builder;
-//     defer free_buffers(*builder);
+    builder: String_Builder;
+    defer free_buffers(*builder);
 
-//     for f: 0..iotypes.count-1 {
+    for f: 0..iotypes.count-1 {
 
-//         itypes : []string = ---;
-//         otypes : []string = ---;
-//         {
-//             tmp := String.split(iotypes[f], "=>");
-//             // print("splitted at => : %\n", tmp);
+        itypes : []string = ---;
+        otypes : []string = ---;
+        {
+            tmp := String.split(iotypes[f], "=>");
+            // print("splitted at => : %\n", tmp);
 
-//             itmp := tmp[0];
-//             otmp := tmp[1];
+            itmp := tmp[0];
+            otmp := tmp[1];
 
-//             itypes = String.split(itmp, "&");
-//             otypes = String.split(otmp, "&");
+            itypes = String.split(itmp, "&");
+            otypes = String.split(otmp, "&");
 
-//             // print("itypes : %\n", itypes);
-//             // print("otypes : %\n", otypes);
-//         }
+            // print("itypes : %\n", itypes);
+            // print("otypes : %\n", otypes);
+        }
 
-//         n := itypes.count;
+        n := itypes.count;
 
-//         print_to_builder(*builder, "% :: inline (", fun_name);
-//         for i: 0..itypes.count-1 {
-//             print_to_builder(*builder, "x%: %", i, itypes[i]);
-//             if i != itypes.count-1 {
-//                 append(*builder, ", ");
-//             }
-//         }
-//         append(*builder, ") ");
+        print_to_builder(*builder, "% :: inline (", fun_name);
+        for i: 0..itypes.count-1 {
+            print_to_builder(*builder, "x%: %", i, itypes[i]);
+            if i != itypes.count-1 {
+                append(*builder, ", ");
+            }
+        }
+        append(*builder, ") ");
 
-//         if otypes.count != 0 {
-//             append(*builder, "-> ");
-//             for i: 0..otypes.count-1 {
-//                 print_to_builder(*builder, "%", otypes[i]);
+        if otypes.count != 0 {
+            append(*builder, "-> ");
+            for i: 0..otypes.count-1 {
+                print_to_builder(*builder, "%", otypes[i]);
                 
-//                 // options for output types such as #symmetric, #must, etc.
-//                 if i < o_opts.count {
-//                     print_to_builder(*builder, " %", o_opts[i]);
-//                 }
+                // options for output types such as #symmetric, #must, etc.
+                if i < o_opts.count {
+                    print_to_builder(*builder, " %", o_opts[i]);
+                }
                 
-//                 if i != otypes.count-1 {
-//                     append(*builder, ", ");
-//                 }
-//             }
-//         }
+                if i != otypes.count-1 {
+                    append(*builder, ", ");
+                }
+            }
+        }
         
-//         append(*builder, " {\n");
+        append(*builder, " {\n");
 
 
-//         for i: 0..otypes.count-1 {
-//             print_to_builder(*builder, 
-//                 "    x% : % = ---;\n", i+n, otypes[i]
-//             );
-//         }
+        for i: 0..otypes.count-1 {
+            print_to_builder(*builder, 
+                "    x% : % = ---;\n", i+n, otypes[i]
+            );
+        }
 
 
-//         print_to_builder(*builder, "    %(", backend_name);
-//         for i: 0..itypes.count-1 {
-//             print_to_builder(*builder, "x%", i);
-//             if i != itypes.count-1 {
-//                 append(*builder, ", ");
-//             } else if otypes.count != 0 {
-//                 append(*builder, ", ");
-//             }
-//         }
-//         for i: 0..otypes.count-1 {
-//             print_to_builder(*builder, "*x%", i+n);
-//             if i != otypes.count-1 {
-//                 append(*builder, ", ");
-//             }
-//         }
+        print_to_builder(*builder, "    %(", backend_name);
+        for i: 0..itypes.count-1 {
+            print_to_builder(*builder, "x%", i);
+            if i != itypes.count-1 {
+                append(*builder, ", ");
+            } else if otypes.count != 0 {
+                append(*builder, ", ");
+            }
+        }
+        for i: 0..otypes.count-1 {
+            print_to_builder(*builder, "*x%", i+n);
+            if i != otypes.count-1 {
+                append(*builder, ", ");
+            }
+        }
 
-//         append(*builder, ");\n");
+        append(*builder, ");\n");
         
-//         append(*builder, "    return ");
-//         for i: 0..otypes.count-1 {
-//             print_to_builder(*builder, "x%", i+n);
-//             if i != otypes.count-1 {
-//                 append(*builder, ", ");
-//             }
-//         }
-//         append(*builder, ";\n");
+        append(*builder, "    return ");
+        for i: 0..otypes.count-1 {
+            print_to_builder(*builder, "x%", i+n);
+            if i != otypes.count-1 {
+                append(*builder, ", ");
+            }
+        }
+        append(*builder, ";\n");
 
-//         append(*builder, "}\n");
-//     }
+        append(*builder, "}\n");
+    }
 
-//     s := builder_to_string(*builder);
-//     print("Functions created: \n%\n", s);
-//     return s;
-// }
+    s := builder_to_string(*builder);
+    print("Functions created: \n%\n", s);
+    return s;
+}
 
 
 

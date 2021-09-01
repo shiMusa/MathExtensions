@@ -3,13 +3,13 @@
 
 
 
-is_quadratic :: (m: Matrix($T)) -> bool {
-    return m.cols == m.rows;
-}
+// is_quadratic :: (m: Matrix($T)) -> bool {
+//     return m.cols == m.rows;
+// }
 
-is_diagonal_unit :: (m: Matrix($T)) -> bool {
+is_diagonal_unit :: (m: Matrix($T, $N, $M)) -> bool {
     res := true;
-    n := min(m.cols, m.rows);
+    n :: #run min(N, M);
     for 0..n-1 {
         if m[it][it] != one(T) then return false;
     }
@@ -18,9 +18,9 @@ is_diagonal_unit :: (m: Matrix($T)) -> bool {
 
 
 // checks if values != 0 are only in the bottom left corner
-is_left_triangular :: (m: Matrix($T)) -> bool {
-    for i: 0..m.rows-1 {
-        for j: i+1..m.cols-1 {
+is_left_triangular :: (m: Matrix($T, $N, $M)) -> bool {
+    for i: 0..N-1 {
+        for j: i+1..M-1 {
             if m[i][j] != zero(T) then return false;
         }
     }
@@ -28,8 +28,8 @@ is_left_triangular :: (m: Matrix($T)) -> bool {
 }
 
 // checks if values != 0 are only in the top right corner
-is_right_triangular :: (m: Matrix($T)) -> bool {
-    for i: 0..m.rows-1 {
+is_right_triangular :: (m: Matrix($T, $N, $M)) -> bool {
+    for i: 0..N-1 {
         for j: 0..i-1 {
             if m[i][j] != zero(T) then return false;
         }
@@ -37,8 +37,8 @@ is_right_triangular :: (m: Matrix($T)) -> bool {
     return true;
 }
 
-is_right_quasi_triangular :: (R: Matrix($T)) -> bool {
-    for i: 0..R.rows-1 {
+is_right_quasi_triangular :: (R: Matrix($T, $N, $M)) -> bool {
+    for i: 0..N-1 {
         for j: 0..i-2 {
             if i>j+1 { 
                 if R[i][j] != zero(T) {
@@ -74,16 +74,16 @@ is_right_quasi_triangular :: (R: Matrix($T)) -> bool {
     return true;
 }
 
-is_unitary :: (U: Matrix($T)) -> bool {
+is_unitary :: (U: Matrix($T, $N, $M)) -> bool {
     return is_quadratic(U) && is_diagonal_unit(dagger(U)*U);
 }
 
-is_left_trapezoidal :: inline (M: Matrix($T)) -> bool {
-    return M.rows >= M.cols && is_left_triangular(M);
+is_left_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
+    return N >= M && is_left_triangular(m);
 }
 
-is_right_trapezoidal :: inline (M: Matrix($T)) -> bool {
-    return M.cols >= M.rows && is_right_triangular(M);
+is_right_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
+    return M >= N && is_right_triangular(m);
 }
 
 

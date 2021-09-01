@@ -3,14 +3,14 @@
 
 #load "Elementary.jai";
 #load "Complex64.jai";
-#load "Polynomials.jai";
-#load "Approximations.jai";
+// #load "Polynomials.jai";
+// #load "Approximations.jai";
 
 #load "Types.jai";
 #load "Vector.jai";
 #load "Matrix.jai";
 #load "Checks.jai";
-#load "LinearAlgebra.jai";
+// #load "LinearAlgebra.jai";
 
 CHECKS :: true;
 

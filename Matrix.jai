@@ -17,13 +17,13 @@
 
 */
 
-str :: (m: Matrix($T), indent: string = "    ") -> string {
+str :: (m: Matrix($T, $N, $M), indent: string = "    ") -> string {
     builder: String_Builder;
     init_string_builder(*builder);
     append(*builder, "\n");
-    for i: 0..m.rows-1 {
+    for i: 0..N-1 {
         append(*builder, indent);
-        for j: 0..m.cols-1 {
+        for j: 0..M-1 {
             #if T == Complex64 {
                 print_to_builder(*builder, "%, ", str(m[i][j]) );
             } else {
@@ -77,7 +77,7 @@ MATRIX_FLAGS :: enum_flags u32 {
 }
 
 
-is :: inline (m: $M/Matrix, flag: MATRIX_FLAGS) -> bool {
+is :: inline (m: Matrix($T, $N, $M), flag: MATRIX_FLAGS) -> bool {
     return (m.flags & flag) > 0;
 }
 
@@ -98,38 +98,19 @@ is :: inline (m: $M/Matrix, flag: MATRIX_FLAGS) -> bool {
 
 
 
-Matrix :: struct(_T: Type) {
-    using _m: Mat(_T);
-    data: []T;
+Matrix :: struct(T: Type, N: int, M: int) {
+    data: [N*M]T;
     flags: MATRIX_FLAGS = .NONE;
 }
 
-operator [] :: inline (m: Matrix($T), i: int) -> []T {
+operator [] :: inline (m: Matrix($T, $N, $M), i: int) -> []T {
     #if CHECKS {
         assert(i >= 0, "Row-index negative! i = %", i);
-        assert(i < m.rows, "Row-index out of bounds: % rows", m.rows);
+        assert(i < N, "Row-index out of bounds: % rows", N);
     }
 
-    return array_view_count(m.data, i * m.cols, m.cols);
+    return array_view_count(m.data, i * M, M);
 }
-
-get :: inline (m: Matrix($T), i: int, j: int) -> T {
-    return m.data[i * m.cols + j];
-}
-
-get :: inline (m: Matrix($T), i: int) -> T {
-    return m.data[i];
-}
-
-set :: inline (m: Matrix($T), i: int, j: int, val: $U) {
-    m.data[i * m.cols + j] = ncast(T, val);
-} 
-
-set :: inline (m: Matrix($T), i: int, val: $U) {
-    m.data[i] = ncast(T, val);
-}
-
-
 
 
 
@@ -148,48 +129,32 @@ set :: inline (m: Matrix($T), i: int, val: $U) {
 */
 
 
-mat :: ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    res : Matrix(type) = ---;
-    res.rows = rows;
-    res.cols = cols;
-    res.flags = flags;
-    res.data = NewArray(rows*cols, type, initialized=false);
-    return res;
-}
-
-mat :: ($type: Type, m: $M/Matrix) -> Matrix(type) #must {
-    res : Matrix(type) = ---;
-    res.rows = m.rows;
-    res.cols = m.cols;
+mat_cast :: ($type: Type, m: Matrix($T, $N, $M)) -> Matrix(type, N, M) #must {
+    res : Matrix(type, N, M) = ---;
     res.flags = m.flags;
-    res.data = NewArray(m.rows*m.cols, type, initialized=false);
-    for 0..m.rows*m.cols-1 {
-        res.data[it] = ncast(type, get(m,it));
+
+    for m.data {
+        res.data[it_index] = it;
     }
+
     return res;
 }
 
-copy :: (m: Matrix($T)) -> Matrix(T) #must {
+copy :: (m: Matrix($T, N, M)) -> Matrix(T) #must {
     res := mat(T, m.rows, m.cols, m.flags);
     res.data = array_copy(m.data);
     return res;
 }
 
-copy :: (to: *Matrix($T), from: Matrix(T)) {
-    to.rows = from.rows;
-    to.cols = from.cols;
+copy :: (to: *Matrix($T, $N, $M), from: Matrix(T, N, M)) {
     to.data = array_copy(from.data);
 }
 
 
-mat :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(type, dim, dim, flags);
-}
-
-
-mat :: (rows: int, cols: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
-    m := mat(T, rows, cols, flags);
-    for 0..rows*cols-1 {
+mat :: ($rows: int, $cols: int, init: $T, $flags: MATRIX_FLAGS = .NONE) -> Matrix(T, rows, cols) #must {
+    m : Matrix(T, rows, cols) = ---;
+    m.flags = flags;
+    for 0..N*M-1 {
         m.data[it] = init;
     }
     return m;
@@ -197,15 +162,9 @@ mat :: (rows: int, cols: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T
 
 
 
-mat :: (rows: int, cols: int, values: ..$T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
-    #if CHECKS {
-        assert(
-            values.count <= rows * cols, 
-            "Too many values: rows*cols = %, values.count = %", rows*cols, values.count
-        );
-    }
-
-    m := mat_zeros(T, rows, cols, flags);
+mat :: ($rows: int, $cols: int, values: [rows * cols]$T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T, rows, cols) #must {
+    m : Matrix(T, rows, cols);
+    m.flags = flags;
     for values {
         m.data[it_index] = it;
     }
@@ -213,70 +172,66 @@ mat :: (rows: int, cols: int, values: ..$T, flags: MATRIX_FLAGS = .NONE) -> Matr
 }
 
 
-mat :: inline (dim: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T) #must {
+mat :: inline ($dim: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T, dim, dim) #must {
     return mat(dim, dim, init, flags);
 }
 
 
-
-
-mat_zeros :: inline ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(rows, cols, zero(type), flags);
-}
-
-mat_zeros :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
-    return mat(dim, dim, zero(type), flags);
-}
-
-
-
-
-
-mat_ones :: inline ($type: Type, rows: int, cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
+mat_ones :: inline ($type: Type, $rows: int, $cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type, rows, cols) #must {
     return mat(rows, cols, one(type), flags);
 }
 
-mat_ones :: inline ($type: Type, dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type) #must {
+mat_ones :: inline ($type: Type, $dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type, dim, dim) #must {
     return mat(dim, dim, one(type), flags);
 }
 
 
 
-mat_id :: ($type: Type, rows: int, cols: int) -> Matrix(type) #must {
-    m := mat_zeros(type, rows, cols, .DIAGONAL);
-    dim := ifx rows <= cols then rows else cols;
+mat_id :: ($type: Type, $rows: int, $cols: int) -> Matrix(type, rows, cols) #must {
+    m : Matrix(type, rows, cols);
+    m.flags = .DIAGONAL;
+
+    #if rows <= cols {
+        dim :: rows;
+    } else {
+        dim :: cols;
+    }
+
     for 0..dim-1 {
         m[it][it] = one(type);
     }
     return m;
 }
 
-mat_id :: inline ($type: Type, dim: int) -> Matrix(type) #must {
+mat_id :: inline ($type: Type, $dim: int) -> Matrix(type, dim, dim) #must {
     return mat_id(type, dim, dim);
 }
 
 
 
-mat_hadamard_2 :: inline ($type: Type) -> Matrix(type) {
-    flags :: .NONE; // @update
-    return mat(2, 2, one(type), one(type), one(type), -one(type), flags);
+mat_hadamard_2 :: inline ($type: Type) -> Matrix(type, 2, 2) {
+    // TODO: update flags
+    return mat(2, 2, one(type), one(type), one(type), -one(type), .NONE);
 }
 
-mat_hadamard :: ($type: Type, nestings: int) -> Matrix(type) {
+mat_hadamard :: ($type: Type, $nestings: int) -> Matrix(type, D, D) #modify {
+    D = 1 << nestings;
+} {
     #if CHECKS {
-        assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
+        #assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
     }
-    if nestings == 0 {
+    #if nestings == 0 {
         return mat_hadamard_2(type);
+    } else {
+        return tensor(mat_hadamard_2(type), mat_hadamard(type, nestings-1));
     }
-    return tensor(mat_hadamard_2(type), mat_hadamard(type, nestings-1));
 }
 
 
-mat_reflector :: (normal: Vector($T)) -> Matrix(T) #must {
+mat_reflector :: (normal: Vector($T, $N)) -> Matrix(T, N, N) #must {
     tau := ncast(T, 2)/(conjugate(normal)*normal);
 
-    res := mat_id(T, normal.dim);
+    res := mat_id(T, N);
     sub(res, tau * normal / normal);
     return res;
 }
@@ -287,16 +242,17 @@ mat_reflector :: (normal: Vector($T)) -> Matrix(T) #must {
 
 
 // inclusive first bound, exclusive last bound
-mat_submatrix :: (M: $T/Matrix, row_from: int, row_to: int, column_from: int, column_to: int) -> Matrix(T.T) #must {
+mat_submatrix :: (M: Matrix($T, $N, $M), $row_from: int, $row_to: int, $column_from: int, $column_to: int) -> Matrix(T, row_to-row_from, column_to-column_from) #must {
     #if CHECKS {
-        assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
-        assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
+        #assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
+        #assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
     }
-    res := mat(T.T, row_to-row_from, column_to-column_from, M.flags);
+    res : Matrix(T, row_to-row_from, column_to-column_from) = ---;
+    res.flags = .NONE;
 
     for i: 0..row_to-row_from-1 {
         for j: 0..column_to-column_from-1 {
-            set(res, i, j, get(M, i+row_from, j+column_from));
+            res[i][j] = M[i+row_from][j+column_from];
         }
     }
 
@@ -322,24 +278,24 @@ mat_submatrix :: (M: $T/Matrix, row_from: int, row_to: int, column_from: int, co
 */
 
 
-row :: (m: $M/Matrix, i: int) -> Vector(M.T) #must {
+row :: (m: Matrix($T, $N, $M), i: int) -> Vector(T, M) #must {
     #if CHECKS {
-        assert(i >= 0 && i < m.rows);
+        assert(i >= 0 && i < N);
     }
-    res := vec(M.T, m.cols);
-    for 0..m.cols-1 {
-        res.data[it] = get(m, i, it);
+    res : Vector(T, M);
+    for 0..M-1 {
+        res.data[it] = m[i][it];
     }
     return res;
 }
 
-column :: (m: $M/Matrix, i: int) -> Vector(M.T) #must {
+column :: (m: Matrix($T, $N, $M), j: int) -> Vector(T, N) #must {
     #if CHECKS {
-        assert(i >= 0 && i < m.cols);
+        assert(i >= 0 && i < M);
     }
-    res := vec(M.T, m.rows);
-    for 0..m.rows-1 {
-        res.data[it] = get(m, it, i);
+    res : Vector(T, N) = ---;
+    for 0..N-1 {
+        res.data[it] = m[it][i];
     }
     return res;
 }
@@ -362,16 +318,17 @@ column :: (m: $M/Matrix, i: int) -> Vector(M.T) #must {
 
 
 
-operator == :: (a: Matrix($A), b: Matrix($B)) -> bool {
-    if a.rows != b.rows || a.cols != b.cols {
-            return false;
-    }
-    for a.data {
-        if it != b.data[it_index] {
-            return false;
+operator == :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> bool {
+    #if aN != bN || aM != bM {
+        return false;
+    } else {
+        for a.data {
+            if it != b.data[it_index] {
+                return false;
+            }
         }
+        return true;
     }
-    return true;
 }
 
 
@@ -387,18 +344,18 @@ operator == :: (a: Matrix($A), b: Matrix($B)) -> bool {
 // Matrix Computations, 4th edition
 // The Johns Hopkins University Press
 // Algorithm 1.1.5 ijk Matrix Multiplication, page 8
-operator * :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+operator * :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix($C, aN, bM) #modify {
     C = dominant_type(A, B);
 }{
     #if CHECKS {
-        assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
+        #assert(aM == bN, "Matrix dimensions don't match: a.cols = %, b.rows = %", aM, bN);
     }
 
-    res := mat_zeros(C, a.rows, b.cols);
-    for j: 0..b.cols-1 {
-        for k: 0..a.cols-1 {
+    res : Matrix(C, aN, bM);
+    for j: 0..bM-1 {
+        for k: 0..aM-1 {
             tmp := b[k][j];
-            for i: 0..a.rows-1 {
+            for i: 0..aN-1 {
                 res[i][j] += a[i][k] * tmp;
             }
         }
@@ -407,16 +364,16 @@ operator * :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
     return res;
 }
 
-operator * :: (a: Matrix($A), b: Vector($B)) -> Vector($C) #modify {
+operator * :: (a: Matrix($A, $aN, $aM), b: Vector($B, $bN)) -> Vector($C, aN) #modify {
     C = dominant_type(A, B);
 }{
     #if CHECKS {
-        assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
+        #assert(aM == bN, "Dimensions mismatch: a.cols = %, b.dim = %", aM, bN);
     }
 
-    res := vec_zeros(C, a.rows);
-    for i: 0..a.rows-1 {
-        for j: 0..a.cols-1 {
+    res : Vector(C, aN);
+    for i: 0..aN-1 {
+        for j: 0..aM-1 {
             res.data[i] += a[i][j] * b[j];
         }
     }
@@ -424,16 +381,16 @@ operator * :: (a: Matrix($A), b: Vector($B)) -> Vector($C) #modify {
     return res;
 }
 
-operator * :: (a: Vector($A), b: Matrix($B)) -> Vector($C) #modify {
+operator * :: (a: Vector($A, $aN), b: Matrix($B, $bN, $bM)) -> Vector($C, bM) #modify {
     C = dominant_type(A, B);
 }{
     #if CHECKS {
-        assert(a.dim == b.rows, "Dimensions mismatch: a.dim = %, b.rows = %", a.dim, b.rows);
+        #assert(aN == bN, "Dimensions mismatch: a.dim = %, b.rows = %", aN, bN);
     }
 
-    res := vec_zeros(C, b.cols);
-    for j: 0..b.rows-1 {
-        for i: 0..a.dim-1 {
+    res : Vector(C, bM);
+    for j: 0..bN-1 {
+        for i: 0..aN-1 {
             res.data[j] += a[i] * b[i][j];
         }
     }
@@ -441,12 +398,14 @@ operator * :: (a: Vector($A), b: Matrix($B)) -> Vector($C) #modify {
     return res;
 }
 
-operator * :: (a: Matrix($A), b: $B) -> Matrix($C) #modify {
+operator * :: (a: Matrix($A, $N, $M), b: $B) -> Matrix($C, N, M) #modify {
     if !is_scalar(B) { C = null; return; }
     C = dominant_type(A, B);
 } #symmetric {
 
-    res := mat(C, a.rows, a.cols);
+    res : Matrix(C, N, M) = ---;
+    res.flags = a.flags;
+
     for 0..a.data.count-1 {
         res.data[it] = a.data[it] * b;
     }
@@ -455,9 +414,9 @@ operator * :: (a: Matrix($A), b: $B) -> Matrix($C) #modify {
 }
 
 
-mul :: (a: *Matrix($A), b: $B) {
+mul :: (a: *Matrix($A, $N, $M), b: $B) {
     #if CHECKS {
-        assert(is_minor_type(A, B));
+        #assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] *= b;
@@ -469,23 +428,25 @@ mul :: (a: *Matrix($A), b: $B) {
 
 
 
-operator / :: inline (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+operator / :: inline (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix($C, aM, bM) #modify {
     C = dominant_type(A, B);
 } { 
     return inverse(b) * a;
 }
 
-operator / :: (a: Vector($A), b: Matrix($B)) -> Matrix($C) #modify {
+operator / :: (a: Vector($A, $aN), b: Matrix($B, $bN, $bM)) -> Matrix($C, bM, aN) #modify {
     C = dominant_type(A, B);
 } { 
     return inverse(b) * a;
 }
 
-operator / :: inline (a: Matrix($A), b: $B) -> Matrix($C) #modify {
+operator / :: inline (a: Matrix($A, $N, $M), b: $B) -> Matrix($C, N, M) #modify {
     if !is_scalar(B) { C = null; return; }
     C = dominant_type(A, B);
 } { 
-    res := mat(C, a.rows, a.cols);
+    res : Matrix(C, N, M) = ---;
+    res.flags = a.flags;
+
     for 0..a.data.count-1 {
         res.data[it] = a.data[it] / b;
     }
@@ -494,17 +455,10 @@ operator / :: inline (a: Matrix($A), b: $B) -> Matrix($C) #modify {
 
 
 
-div :: (a: *Matrix($A), b: Complex64) {
+div :: (a: *Matrix($A, $N, $M), b: $B) {
     #if CHECKS {
-        assert(is_minor_type(A, B));
-    }
-    for 0..a.data.count-1 {
-        a.data[it] /= b;
-    }
-}
-div :: (a: *Matrix($A), b: float64) {
-    #if CHECKS {
-        assert(is_minor_type(A, B));
+        #assert(is_scalar(B));
+        #assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] /= b;
@@ -514,17 +468,12 @@ div :: (a: *Matrix($A), b: float64) {
 
 
 
-
-
-
-operator + :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+operator + :: (a: Matrix($A, $N, $M), b: Matrix($B, N, M)) -> Matrix($C, N, M) #modify {
     C = dominant_type(A, B);
 }{
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
+    res : Matrix(C, N, M) = ---;
+    res.flags = .NONE;
 
-    res := mat(C, a.rows, a.cols);
     for 0..a.data.count-1 {
         res.data[it] = a.data[it] + b.data[it];
     }
@@ -535,9 +484,8 @@ operator + :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
 
 
 
-add :: (a: *Matrix($A), b:Matrix($B)) {
+add :: (a: *Matrix($A, $N, $M), b:Matrix($B, N, M)) {
     #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
         assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
@@ -552,14 +500,12 @@ add :: (a: *Matrix($A), b:Matrix($B)) {
 
 
 
-operator - :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+operator - :: (a: Matrix($A, $N, $M), b: Matrix($B, N, M)) -> Matrix($C, N, M) #modify {
     C = dominant_type(A, B);
 }{
-    #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-    }
+    res : Matrix(C, N, M) = ---;
+    res.flags = .NONE;
 
-    res := mat(C, a.rows, a.cols);
     for 0..a.data.count-1 {
         res.data[it] = a.data[it] - b.data[it];
     }
@@ -568,10 +514,9 @@ operator - :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
 
 
 
-sub :: (a: *Matrix($A), b:Matrix($B)) {
+sub :: (a: *Matrix($A, $N, $M), b:Matrix($B, N, M)) {
     #if CHECKS {
-        assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-        assert(is_minor_type(A, B));
+        #assert(is_minor_type(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] -= b.data[it];
@@ -582,8 +527,10 @@ sub :: (a: *Matrix($A), b:Matrix($B)) {
 
 
 
-operator - :: (a: Matrix($A)) -> Matrix(A) {
-    res := mat(A, a.rows, a.cols);
+operator - :: (a: Matrix($A, $N, $M)) -> Matrix(A, N, M) {
+    res : Matrix(A, N, M) = ---;
+    res.flags = a.flags;
+
     for 0..a.data.count-1 {
         res.data[it] = -a.data[it];
     }
@@ -593,7 +540,7 @@ operator - :: (a: Matrix($A)) -> Matrix(A) {
 
 
 
-neg :: (a: Matrix($T)) {
+neg :: (a: Matrix($T, $N, $M)) {
     for a.data {
         a.data[it_index] = -it;
     }
@@ -618,18 +565,15 @@ neg :: (a: Matrix($T)) {
 // Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
 // Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
 // C = C + A*B
-saxpy :: (c: *Matrix($C), a: Matrix($A), b: Matrix($B)) {
+saxpy :: (c: *Matrix($C, $cN, $cM), a: Matrix($A, cN, $aM), b: Matrix($B, aM, cM)) {
     #if CHECKS {
-        assert(is_minor_type(C, A) && is_minor_type(C, B));
-        assert(c.rows == a.rows);
-        assert(c.cols == b.cols);
-        assert(a.cols == b.rows);
+        #assert(is_minor_type(C, A) && is_minor_type(C, B));
     }
 
-    for j: 0..c.cols-1 {
-        for k: 0.. a.cols-1 {
+    for j: 0..cM-1 {
+        for k: 0..aM-1 {
             tmp := b[k][j];
-            for i: 0..c.rows-1 {
+            for i: 0..cN-1 {
                 c[i][j] += a[i][k] * tmp;
             }
         }
@@ -663,15 +607,17 @@ saxpy :: (c: *Matrix($C), a: Matrix($A), b: Matrix($B)) {
 
 
 // there are faster ways of doing this.
-permute_rows :: (M: Matrix($T), order: ..int) -> Matrix(T) #must {
+permute_rows :: (m: Matrix($T, $N, $M), order: ..int) -> Matrix(T, N, M) #must {
     #if CHECKS {
-        assert(order.count == M.rows);
+        assert(order.count == N);
     }
 
-    res := mat(T, M.rows, M.cols);
-    for i: 0..M.rows-1 {
-        for j: 0..M.cols-1 {
-            res[i][j] = M[order[i]][j];
+    res : Matrix(T, N, M) = ---;
+    res.flags = .NONE;
+
+    for i: 0..N-1 {
+        for j: 0..M-1 {
+            res[i][j] = m[order[i]][j];
         }
     }
 
@@ -679,15 +625,17 @@ permute_rows :: (M: Matrix($T), order: ..int) -> Matrix(T) #must {
 }
 
 // there are faster ways of doing this.
-permute_columns :: (M: Matrix($T), order: ..int) -> Matrix(T) #must {
+permute_columns :: (m: Matrix($T, $N, $M), order: ..int) -> Matrix(T, N, M) #must {
     #if CHECKS {
-        assert(order.count == M.cols);
+        assert(order.count == M);
     }
 
-    res := mat(T, M.rows, M.cols);
-    for i: 0..M.rows-1 {
-        for j: 0..M.cols-1 {
-            res[i][j] = M[i][order[j]];
+    res : Matrix(T, N, M) = ---;
+    res.flags = .NONE;
+
+    for i: 0..N-1 {
+        for j: 0..M-1 {
+            res[i][j] = m[i][order[j]];
         }
     }
 
@@ -695,16 +643,18 @@ permute_columns :: (M: Matrix($T), order: ..int) -> Matrix(T) #must {
 }
 
 // there are faster ways of doing this.
-permute :: (M: Matrix($T), row_order: []int, col_order: []int) -> Matrix(T) #must {
+permute :: (m: Matrix($T, $N, $M), row_order: []int, col_order: []int) -> Matrix(T, N, M) #must {
     #if CHECKS {
-        assert(row_order.count == M.rows);
-        assert(col_order.count == M.cols);
+        assert(row_order.count == N);
+        assert(col_order.count == M);
     }
 
-    res := mat(T, M.rows, M.cols);
-    for i: 0..M.rows-1 {
-        for j: 0..M.cols-1 {
-            res[i][j] = M[row_order[i]][col_order[j]];
+    res : Matrix(T, N, M) = ---;
+    res.flags = .NONE;
+
+    for i: 0..N-1 {
+        for j: 0..M-1 {
+            res[i][j] = m[row_order[i]][col_order[j]];
         }
     }
 
@@ -712,25 +662,29 @@ permute :: (M: Matrix($T), row_order: []int, col_order: []int) -> Matrix(T) #mus
 }
 
 
-swap_columns :: (M: *Matrix($T), i: int, j: int) {
+swap_columns :: (m: *Matrix($T, $N, $M), i: int, j: int) {
     #if CHECKS {
-        assert(i >= 0 && j >= 0 && i != j);
-        assert(i < M.cols && j < M.cols);
+        assert(i >= 0 && j >= 0);
+        assert(i < M && j < M);
     }
 
-    for 0..M.rows-1 {
-        (<<M)[it][i], (<<M)[it][j] = swap((<<M)[it][i], (<<M)[it][j]);
+    if i == j then return;
+
+    for 0..N-1 {
+        (<<m)[it][i], (<<m)[it][j] = swap((<<m)[it][i], (<<m)[it][j]);
     }
 }
 
-swap_rows :: (M: *Matrix($T), i: int, j: int) {
+swap_rows :: (m: *Matrix($T, $N, $M), i: int, j: int) {
     #if CHECKS {
-        assert(i >= 0 && j >= 0 && i != j);
-        assert(i < M.rows && j < M.rows);
+        assert(i >= 0 && j >= 0);
+        assert(i < m.rows && j < m.rows);
     }
 
-    for 0..M.cols-1 {
-        (<<M)[i][it], (<<M)[j][it] = swap((<<M)[i][it], (<<M)[j][it]);
+    if i == j then return;
+
+    for 0..M-1 {
+        (<<m)[i][it], (<<m)[j][it] = swap((<<m)[i][it], (<<m)[j][it]);
     }
 }
 
@@ -738,10 +692,10 @@ swap_rows :: (M: *Matrix($T), i: int, j: int) {
 
 
 
-transpose :: (m: Matrix($T)) -> Matrix(T) #must {
-    res := mat(T, m.cols, m.rows);
-    for r: 0..m.rows-1 {
-        for c: 0..m.cols-1 {
+transpose :: (m: Matrix($T, $N, $M)) -> Matrix(T, M, N) #must {
+    res : Matrix(T, M, N);
+    for r: 0..N-1 {
+        for c: 0..M-1 {
             res[c][r] = m[r][c];
         }
     }
@@ -749,7 +703,7 @@ transpose :: (m: Matrix($T)) -> Matrix(T) #must {
 }
 
 // There are better ways to do this!
-transpose :: (m: *Matrix($T)) {
+transpose :: (m: *Matrix($T, $N, $M)) {
     <<m = transpose(<<m);
 }
 
@@ -757,11 +711,13 @@ transpose :: (m: *Matrix($T)) {
 
 
 
-conjugate :: (m: Matrix($T)) -> Matrix(T) #must {
+conjugate :: (m: Matrix($T, $N, $M)) -> Matrix(T, N, M) #must {
     #if T != Complex64 {
         return m;
     } else {
-        res := mat(T, m.cols, m.rows);
+        res : Matrix(T, N, M);
+        res.flags = m.flags;
+
         for m.data {
             res.data[it_index] = conjugate(it);
         }
@@ -769,7 +725,7 @@ conjugate :: (m: Matrix($T)) -> Matrix(T) #must {
     }
 }
 
-conjugate :: (m: *Matrix($T)) {
+conjugate :: (m: *Matrix($T, $N, $M)) {
     #if T != Complex64 {
         return;
     } else {
@@ -780,10 +736,10 @@ conjugate :: (m: *Matrix($T)) {
 }
 
 
-conjugate_transpose :: inline (m: Matrix($T)) -> Matrix(T) #must {
+conjugate_transpose :: inline (m: Matrix($T, $N, $M)) -> Matrix(T, M, N) #must {
     return conjugate(transpose(m));
 }
-conjugate_transpose :: inline (m: *Matrix($T)) {
+conjugate_transpose :: inline (m: *Matrix($T, $N, $M)) {
     transpose(m);
     conjugate(m);
 }
@@ -795,17 +751,19 @@ dagger :: conjugate_transpose;
 
 
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
+tensor :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix($C, aN*bN, aM*bM) #modify {
     C = dominant_type(A, B);
 } {
-    res := mat(C, a.rows * b.rows, a.cols * b.cols);
-    for r: 0..res.rows-1 {
-        ar := r/b.rows;
-        br := r % b.rows;
+    res : Matrix(C, aN * bN, aM * bM) = ---;
+    res.flags = .NONE;
+
+    for r: 0..res.M-1 {
+        ar := r/bN;
+        br := r % bN;
         
-        for c: 0..res.cols-1 {
-            ac := c/b.cols;
-            bc := c % b.cols;
+        for c: 0..res.M-1 {
+            ac := c/bM;
+            bc := c % bM;
 
             res[r][c] = a[ar][ac] * b[br][bc];
         }
@@ -839,12 +797,12 @@ tensor :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
 //     return norm(v, 2.0);
 // }
 
-norm_1 :: (m: Matrix($T)) -> float64 {
+norm_1 :: (m: Matrix($T, $N, $M)) -> float64 {
     res : float64 = 0.0;
 
-    for j: 0..m.cols {
+    for j: 0..M {
         sum : float64 = 0.0;
-        for i: 0..m.rows {
+        for i: 0..N {
             sum += abs(m[i][j]);
         }
         res = ifx res < sum then sum else res;
@@ -853,12 +811,12 @@ norm_1 :: (m: Matrix($T)) -> float64 {
     return res;
 }
 
-norm_inf :: (m: Matrix($T)) -> float64 {
+norm_inf :: (m: Matrix($T, $N, $M)) -> float64 {
     res : float64 = 0.0;
 
-    for i: 0..m.rows {
+    for i: 0..N {
         sum : float64 = 0.0;
-        for j: 0..m.cols {
+        for j: 0..M {
             sum += abs(m[i][j]);
         }
         res = ifx res < sum then sum else res;
@@ -867,7 +825,7 @@ norm_inf :: (m: Matrix($T)) -> float64 {
     return res;
 }
 
-norm_frobenius :: (m: Matrix($T)) -> float64 {
+norm_frobenius :: (m: Matrix($T, $N, $M)) -> float64 {
     sum : float64 = 0.0;
     for m.data {
         sum += abs(it);
@@ -896,12 +854,12 @@ norm_frobenius :: (m: Matrix($T)) -> float64 {
 test_matrix :: () {
     print("\n\nMatrix(T) -------------------------------\n\n");
     {
-        m := mat_zeros(float64, 3, 3);
+        m : Matrix(float64, 3, 3);
         print("%\n", str(m));
     }
     {
-        a := 3;
-        m := mat_zeros(float64, a, a);
+        a :: 3;
+        m : Matrix(float64, a, a);
         print("%\n", str(m));
     }
 
@@ -912,7 +870,7 @@ test_matrix :: () {
         print("%\n", str(m));
     }
     {
-        a := 3;
+        a :: 3;
         m := mat(a, a, 42.0);
         print("%\n", str(m));
     }
@@ -935,7 +893,7 @@ test_matrix :: () {
     }
 
     {
-        m := mat_zeros(Complex64, 3);
+        m : Matrix(Complex64, 3, 3);
         m[0][2] = R;
         m = transpose(m);
         assert(m[2][0] == R);
@@ -1011,7 +969,7 @@ test_matrix :: () {
 
     {
         print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
-        m : Matrix(float64) = ---;
+        m : Matrix(float64, 4, 4) = ---;
         m.flags = .UNIT_LOWER_TRIANGULAR;
         assert( is(m, .TRAPEZOIDAL) );
     }
