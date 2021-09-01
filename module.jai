@@ -1,5 +1,6 @@
 
 #load "Utils.jai";
+#load "Specialize.jai";
 
 #load "Elementary.jai";
 #load "Complex64.jai";

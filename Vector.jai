@@ -227,26 +227,21 @@ outer_product :: (a: Vector($A, $N), b: Vector($B, $M)) -> Matrix($C, N, M) #mod
 
 
 
-// add :: (a: Vector($A, $N), b: Vector($B, N), c: *Vector($C, N)) {
-//     #if CHECKS {
-//         #assert(is_minor_type(C,A));
-//         #assert(is_minor_type(C,B));
-//     }
-//     for 0..N-1 {
-//         c.data[it] = a[it] + b[it];
-//     }
-// }
-
-
-operator + :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
-    C = dominant_type(A, B);
-} {
-    res : Vector(C, N) = ---;
+_add :: inline (a: Vector($A, $N), b: Vector($B, N), c: *Vector($C, N)) {
     for 0..N-1 {
-        res.data[it] = a[it] + b[it];
+        c.data[it] = a[it] + b[it];
     }
-    return res;
 }
+#insert #run specialize("_add", "operator +", V_V_V);
+// operator + :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
+//     C = dominant_type(A, B);
+// } {
+//     res : Vector(C, N) = ---;
+//     for 0..N-1 {
+//         res.data[it] = a[it] + b[it];
+//     }
+//     return res;
+// }
 
 add :: (a: *Vector($A, $N), b: Vector($B, N)) {
     #if CHECKS {
@@ -522,7 +517,6 @@ angle :: (a: Vector($A, $N), b: Vector($B, N)) -> float64 {
 
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////
 /*
       ######## ########  ######  ########  ######
@@ -534,11 +528,23 @@ angle :: (a: Vector($A, $N), b: Vector($B, N)) -> float64 {
            ##    ########  ######     ##     ######
 */
 ////////////////////////////////////////////////////////////////////////////////////////
-
+#scope_file
+// compiler bug: 
+// the compiler won't find the operators generated with this method
+// unless a stupid custom-named function is called first
+// DUMMY_IN : [1][0]string : .[.[]];
+// DUMMY_OUT : [1][1]string : .[.["int"]];
+#insert #run specialize("_init", "init", .["=> int"]);
+_init :: (ret: *int) {}
 
 
 #scope_module
 test_vector :: () {
+    
+    // see note above
+    init();
+
+
     print("\n\nVector -------------------------------\n\n");
     {
         v := vec(float64.[1.0, 2.0, 3.0, 4.0, 5.0]);
