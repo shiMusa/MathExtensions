@@ -53,7 +53,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
 - vector: `Vector($Type, $Dim)`; real or complex vector with
     - `str`; for pretty printing
     - operators `[]`, `==`, `+`, `-`, `*`, `/`
-    - in-place functions add, sub, neg, mul, div [CVector64]
+    - in-place functions add, sub, neg, mul, div
     - multiple initialization functions (ones, basis, varargs, etc.)
     - `conjugate`
     - `outer_product`
