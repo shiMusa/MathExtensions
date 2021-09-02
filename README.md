@@ -125,4 +125,5 @@ Write (at least some) tests contained in each file.
 ## Ressources
 
 [1] Scientific Computing, Vol I: Linear and nonlinear equations, Texts in computational science and engineering 18, Springer
+
 [2] Matrix Computations, 4th Edition; Gene H. Golub & Charles F. Van Loan; Johns Hopkins University Press, Baltimore; 2013
