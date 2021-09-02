@@ -50,11 +50,11 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - `polynom(x, ..a)` = a[0] x^n + a[1] x^{n-1} + ... + a[n] x^0, with a,x ∈ ℝ,ℂ
     - `synthetic_division`
     - `repeated_synthetic_division`
-- vector: `Vector($T)`; real or complex vector with
+- vector: `Vector($Type, $Dim)`; real or complex vector with
     - `str`; for pretty printing
     - operators `[]`, `==`, `+`, `-`, `*`, `/`
     - in-place functions add, sub, neg, mul, div [CVector64]
-    - multiple initialization functions (zeros, ones, basis, varargs, etc.)
+    - multiple initialization functions (ones, basis, varargs, etc.)
     - `conjugate`
     - `outer_product`
     - `reflect`
@@ -63,12 +63,12 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - `angle`
     - `permute`
     - `swap`
-- matrix: `Matrix($T)`; real or complex
+- matrix: `Matrix($Type, $Rows, $Cols)`; real or complex
     - `str`; for pretty printing
     - operators [], `[][]`, `==`, `+`, `-`, `*`, `/`
     - `row`, `column`
     - in-place functions `add`, `sub`, `neg`, `mul`, `div`
-    - multiple initialization functions (1, zeros, ones, hadamard, varargs, etc.)
+    - multiple initialization functions (1, ones, hadamard, varargs, etc.)
     - `reflector`
     - `submatrix`
     - `transpose`
@@ -79,7 +79,6 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - `permute_rows`, `permute_columns`, `permute`
     - `swap_columns`, `swap_rows`
 - checks
-    - `is_quadratic(M)`
     - `is_diagonal_unit(M)`
     - `is_(left, right)\_triangular(M)`
     - `is_right_quasi_triangular(M)`
