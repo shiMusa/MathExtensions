@@ -21,7 +21,11 @@ is_diagonal_unit :: (m: Matrix($T, $N, $M)) -> bool {
 is_left_triangular :: (m: Matrix($T, $N, $M)) -> bool {
     for i: 0..N-1 {
         for j: i+1..M-1 {
-            if m[i][j] != zero(T) then return false;
+            #if T == Complex64 || T == float64 || T == float32 {
+                if !approx(m[i][j], zero(T)) then return false;
+            } else {
+                if m[i][j] != zero(T) then return false;
+            }
         }
     }
     return true;
@@ -31,7 +35,11 @@ is_left_triangular :: (m: Matrix($T, $N, $M)) -> bool {
 is_right_triangular :: (m: Matrix($T, $N, $M)) -> bool {
     for i: 0..N-1 {
         for j: 0..i-1 {
-            if m[i][j] != zero(T) then return false;
+            #if T == Complex64 || T == float64 || T == float32 {
+                if !approx(m[i][j], zero(T)) then return false;
+            } else {
+                if m[i][j] != zero(T) then return false;
+            }
         }
     }
     return true;
@@ -78,10 +86,12 @@ is_unitary :: (U: Matrix($T, $N, $M)) -> bool {
     return is_quadratic(U) && is_diagonal_unit(dagger(U)*U);
 }
 
+// more rows than columns
 is_left_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
     return N >= M && is_left_triangular(m);
 }
 
+// more columns than rows
 is_right_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
     return M >= N && is_right_triangular(m);
 }
@@ -93,24 +103,20 @@ is_right_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
 test_checks :: () {
     print("\n\nChecks -------------------------------\n\n");
     {
-        assert(is_quadratic(mat_ones(Complex64, 5, 5)));
-        assert(!is_quadratic(mat_ones(Complex64, 2, 5)));
-    }
-    {
         m := mat_id(Complex64, 3,3);
         assert(is_diagonal_unit(m));
         m[1][1] = 2.0*R;
         assert(!is_diagonal_unit(m));
     }
     {
-        m := mat_zeros(Complex64, 4, 4);
+        m : Matrix(Complex64, 4, 4);
         m[3][0] = 42.0*R;
         assert(is_left_triangular(m));
         m[0][3] = 42.0*R;
         assert(!is_left_triangular(m));
     }
     {
-        m := mat_zeros(Complex64, 4, 4);
+        m : Matrix(Complex64, 4, 4);
         m[0][3] = 42.0*R;
         assert(is_right_triangular(m));
         m[3][0] = 42.0*R;
@@ -123,7 +129,7 @@ test_checks :: () {
             0, 1, 2, 3,
             0, 0, 0, 2
         );
-        cm := mat(Complex64, m);
+        cm := mat_cast(Complex64, m);
 
         assert(is_right_quasi_triangular(m));
         m = transpose(m);

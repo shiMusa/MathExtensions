@@ -72,6 +72,19 @@ vec :: (values: [$N]$T) -> Vector(T, N) {
     return vec(T, values);
 }
 
+vec :: inline ($dim: int, values: ..$T) -> Vector(T, dim) {
+    return vec(dim, T, ..values);
+}
+
+vec :: ($dim: int, $type: Type, values: ..$T) -> Vector(type, dim) {
+    assert(dim == values.count, "dimension mismatch: dim(%) != values.count(%)\n", dim, values.count);
+    res : Vector(type, dim);
+    for values {
+        res.data[it_index] = ncast(type, it);
+    }
+    return res;
+}
+
 
 copy :: (v: Vector($T, $N)) -> Vector(T, N) {
     res : Vector(T, N) = ---;
@@ -105,8 +118,11 @@ vec_cast :: ($type: Type, v: Vector($T, $N)) -> Vector(type, N) {
 vec_subvector :: (v: Vector($T, $N), $from: int, $to: int) -> Vector(T, to-from) {
     #if CHECKS {
         #assert(to > from);
-        #assert(to < N);
+        #assert(to <= N);
         #assert(from >= 0);
+        // #assert(to > from, "bounds not possible: to(%) <= from(%)\n", to, from);
+        // #assert(to < N, "bound not possible: to(%) >= N(%)\n", to, N);
+        // #assert(from >= 0, "bound not possible: from(%) < 0\n", from);
     }
     res : Vector(T, to-from) = ---;
     for 0..to-from-1 {
@@ -144,21 +160,16 @@ operator == :: (a: Vector($A, $N), b: Vector($B, $M)) -> bool {
 
 
 
-operator * :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
-    C = dominant_type(A, B);
-}{
-    res := Vector(C, N);
+operator * :: (a: Vector($A, $N), b: Vector($B, N)) -> UpCast(A,B).T {
+    res := zero(UpCast(A,B).T);
     for 0..N-1 {
-        res.data[it] += a[it] * b[it];
+        res += a[it] * b[it];
     }
     return res;
 }
 
-operator * :: (a: Vector($A, $N), b: $B) -> $C #modify {
-    if !is_scalar(B) { C = null; return; }
-    C = dominant_type(A, B);
-} #symmetric {
-    res : Vector(C, N) = ---;
+operator * :: (a: Vector($A, $N), b: Scalar($B)) -> UpCast(A,B).T #symmetric {
+    res : Vector(UpCast(A,B).T, N) = ---;
     for 0..N-1 {
         res.data[it] = a[it] * b;
     }
@@ -167,12 +178,12 @@ operator * :: (a: Vector($A, $N), b: $B) -> $C #modify {
 
 
 
-mul :: inline (a: *Vector($A, $N), val: $B) {
+mul :: inline (a: *Vector($A, $N), b: Scalar($B)) {
     #if CHECKS {
-        #assert(is_minor_type(A,B));
+        #assert(is_minor_number(A,B));
     }
     for 0..N-1 {
-        a.data[it] *= val;
+        a.data[it] *= b.value;
     }
 }
 
@@ -184,36 +195,29 @@ mul :: inline (a: *Vector($A, $N), val: $B) {
 
 
 
-operator / :: inline (a: Vector($A, $N), b: Vector($B, M)) -> Matrix($C, N, M) #modify {
-    C = dominant_type(A, B);
-}{
+operator / :: inline (a: Vector($A, $N), b: Vector($B, $M)) -> Matrix(UpCast(A,B).T, N, M) {
     return outer_product(a, b);
 }
 
-operator / :: (a: Vector($A, $N), b: $B) -> Vector($C, N) #modify {
-    if !is_scalar(B) { C = null; return; }
-    C = dominant_type(A, B);
-} {
-    res : Vector(C, N) = ---;
+operator / :: (a: Vector($A, $N), b: Scalar($B)) -> Vector(UpCast(A,B).T, N) {
+    res : Vector(UpCast(A,B).T, N) = ---;
     for 0..N-1 {
-        res.data[it] = a[it] / b;
+        res.data[it] = a[it] / b.value;
     }
     return res;
 }
 
-div :: inline (a: *Vector($A, $N), val: $B) {
+div :: inline (a: *Vector($A, $N), b: Scalar($B)) {
     #if CHECKS {
-        #assert(is_minor_type(A,B));
+        #assert(is_minor_number(A,B));
     }
     for 0..N-1 {
-        a.data[it] /= val;
+        a.data[it] /= b.value;
     }
 }
 
-outer_product :: (a: Vector($A, $N), b: Vector($B, $M)) -> Matrix($C, N, M) #modify {
-    C = dominant_type(A, B);
-} {
-    res : Matrix(C, N, M) = ---;
+outer_product :: (a: Vector($A, $N), b: Vector($B, $M)) -> Matrix(UpCast(A,B).T, N, M) {
+    res : Matrix(UpCast(A,B).T, N, M) = ---;
     for i: 0..N-1 {
         for j: 0..M-1 {
             res[i][j] = a[i] * b[j];
@@ -227,25 +231,17 @@ outer_product :: (a: Vector($A, $N), b: Vector($B, $M)) -> Matrix($C, N, M) #mod
 
 
 
-_add :: inline (a: Vector($A, $N), b: Vector($B, N), c: *Vector($C, N)) {
+operator + :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
+    res : Vector(UpCast(A,B).T, N) = ---;
     for 0..N-1 {
-        c.data[it] = a[it] + b[it];
+        res.data[it] = a[it] + b[it];
     }
+    return res;
 }
-#insert #run specialize("_add", "operator +", V_V_V);
-// operator + :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
-//     C = dominant_type(A, B);
-// } {
-//     res : Vector(C, N) = ---;
-//     for 0..N-1 {
-//         res.data[it] = a[it] + b[it];
-//     }
-//     return res;
-// }
 
 add :: (a: *Vector($A, $N), b: Vector($B, N)) {
     #if CHECKS {
-        #assert(is_minor_type(A, B));
+        #assert(is_minor_number(A, B));
     }
     for 0..N-1 {
         a.data[it] += b[it];
@@ -255,10 +251,8 @@ add :: (a: *Vector($A, $N), b: Vector($B, N)) {
 
 
 
-operator - :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
-    C = dominant_type(A, B);
-} {
-    res : Vector(C, N) = ---;
+operator - :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
+    res : Vector(UpCast(A,B).T, N) = ---;
     for 0..N-1 {
         res.data[it] = a[it] - b[it];
     }
@@ -267,7 +261,7 @@ operator - :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
 
 sub :: (a: *Vector($A, $N), b: Vector($B, N)) {
     #if CHECKS {
-        #assert(is_minor_type(A, B));
+        #assert(is_minor_number(A, B));
     }
     for 0..N-1 {
         a.data[it] -= b[it];
@@ -299,10 +293,9 @@ neg :: (a: *Vector($A, $N)) {
 
 
 
-cross :: (a: Vector($A, 3), b: Vector($B, 3)) -> Vector($C, 3) #modify {
-    C = dominant_type(A, B);
-} {
-    res : Vector(C, N) = ---;
+cross :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
+    #assert(N == 3);
+    res : Vector(UpCast(A,B).T, N) = ---;
     res.data[0] = a[1]*b[2] - a[2]*b[1];
     res.data[1] = a[2]*b[0] - a[0]*b[2];
     res.data[2] = a[0]*b[1] - a[1]*b[0];
@@ -310,9 +303,7 @@ cross :: (a: Vector($A, 3), b: Vector($B, 3)) -> Vector($C, 3) #modify {
 }
 
 
-reflect :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
-    C = dominant_type(A, B);
-} {
+reflect :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
     tau := 2.0 / (conjugate(normal) * normal);
     alpha := tau * conjugate(normal) * vec;
     return vec - normal * alpha;
@@ -342,7 +333,7 @@ reflect :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector($C, N) #modify {
 // Algorithm 1.1.2 Saxpy, page 4
 saxpy :: (a: *Vector($A, $N), b: Vector($B, N), factor: $C) {
     #if CHECKS {
-        #assert(is_minor_type(A, B) && is_minor_type(A, C));
+        #assert(is_minor_number(A, B) && is_minor_number(A, C));
     }
 
     for 0..N-1 {
@@ -357,7 +348,7 @@ saxpy :: (a: *Vector($A, $N), b: Vector($B, N), factor: $C) {
 // Algorithm 1.1.3 Row-Oriented Gaxpy, page 5
 gaxpy :: (y: *Vector($T, $N), A: Matrix($U, N, M), x: Vector($V, $M)) {
     #if CHECKS {
-        #assert(is_minor_type(T, U) && is_minor_type(T, V));
+        #assert(is_minor_number(T, U) && is_minor_number(T, V));
     }
 
     for i: 0..N {
@@ -528,26 +519,13 @@ angle :: (a: Vector($A, $N), b: Vector($B, N)) -> float64 {
            ##    ########  ######     ##     ######
 */
 ////////////////////////////////////////////////////////////////////////////////////////
-#scope_file
-// compiler bug: 
-// the compiler won't find the operators generated with this method
-// unless a stupid custom-named function is called first
-// DUMMY_IN : [1][0]string : .[.[]];
-// DUMMY_OUT : [1][1]string : .[.["int"]];
-#insert #run specialize("_init", "init", .["=> int"]);
-_init :: (ret: *int) {}
-
 
 #scope_module
 test_vector :: () {
-    
-    // see note above
-    init();
-
 
     print("\n\nVector -------------------------------\n\n");
     {
-        v := vec(float64.[1.0, 2.0, 3.0, 4.0, 5.0]);
+        v := vec(5, float64, 1.0, 2.0, 3.0, 4.0, 5.0);
         print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, type_of(v), v.T);
         a := v + v;
         print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.T);

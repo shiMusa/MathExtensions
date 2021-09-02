@@ -26,11 +26,15 @@ Complex64 :: struct {
     imag: float64;
 }
 
-c64 :: (re: float64 = 0.0, im: float64 = 0.0) -> Complex64 {
-    r: Complex64 = ---;
-    r.real = re;
-    r.imag = im;
-    return r;
+c64 :: inline ($$re: float64 = 0.0, $$im: float64 = 0.0) -> Complex64 {
+    #if is_constant(re) && is_constant(im) {
+        return Complex64.{re, im};
+    } else {
+        r: Complex64 = ---;
+        r.real = re;
+        r.imag = im;
+        return r;
+    }
 }
 
 operator + :: inline (a: Complex64, b: Complex64) -> Complex64 {

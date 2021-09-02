@@ -285,7 +285,7 @@ operator == :: (a: Matrix($A), b: Matrix($B)) -> bool {
 // The Johns Hopkins University Press
 // Algorithm 1.1.5 ijk Matrix Multiplication, page 8
 operator * :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 }{
     #if CHECKS {
         assert(a.cols == b.rows, "Matrix dimensions don't match: a.cols = %, b.rows = %", a.cols, b.rows);
@@ -305,7 +305,7 @@ operator * :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
 }
 
 operator * :: (a: Matrix($A), b: Vector($B)) -> Vector($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 }{
     #if CHECKS {
         assert(a.cols == b.dim, "Dimensions mismatch: a.cols = %, b.dim = %", a.cols, b.dim);
@@ -322,7 +322,7 @@ operator * :: (a: Matrix($A), b: Vector($B)) -> Vector($C) #modify {
 }
 
 operator * :: (a: Vector($A), b: Matrix($B)) -> Vector($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 }{
     #if CHECKS {
         assert(a.dim == b.rows, "Dimensions mismatch: a.dim = %, b.rows = %", a.dim, b.rows);
@@ -339,8 +339,8 @@ operator * :: (a: Vector($A), b: Matrix($B)) -> Vector($C) #modify {
 }
 
 operator * :: (a: Matrix($A), b: $B) -> Matrix($C) #modify {
-    if !is_scalar(B) { C = null; return; }
-    C = dominant_type(A, B);
+    if !is_number(B) { C = null; return; }
+    C = upcast(A, B);
 } #symmetric {
 
     res := mat(C, a.rows, a.cols);
@@ -354,7 +354,7 @@ operator * :: (a: Matrix($A), b: $B) -> Matrix($C) #modify {
 
 mul :: (a: *Matrix($A), b: $B) {
     #if CHECKS {
-        assert(is_minor_type(A, B));
+        assert(is_minor_number(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] *= b;
@@ -367,20 +367,20 @@ mul :: (a: *Matrix($A), b: $B) {
 
 
 operator / :: inline (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 } { 
     return inverse(b) * a;
 }
 
 operator / :: (a: Vector($A), b: Matrix($B)) -> Matrix($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 } { 
     return inverse(b) * a;
 }
 
 operator / :: inline (a: Matrix($A), b: $B) -> Matrix($C) #modify {
-    if !is_scalar(B) { C = null; return; }
-    C = dominant_type(A, B);
+    if !is_number(B) { C = null; return; }
+    C = upcast(A, B);
 } { 
     res := mat(C, a.rows, a.cols);
     for 0..a.data.count-1 {
@@ -393,7 +393,7 @@ operator / :: inline (a: Matrix($A), b: $B) -> Matrix($C) #modify {
 
 div :: (a: *Matrix($A), b: Complex64) {
     #if CHECKS {
-        assert(is_minor_type(A, B));
+        assert(is_minor_number(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] /= b;
@@ -401,7 +401,7 @@ div :: (a: *Matrix($A), b: Complex64) {
 }
 div :: (a: *Matrix($A), b: float64) {
     #if CHECKS {
-        assert(is_minor_type(A, B));
+        assert(is_minor_number(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] /= b;
@@ -415,7 +415,7 @@ div :: (a: *Matrix($A), b: float64) {
 
 
 operator + :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 }{
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
@@ -435,7 +435,7 @@ operator + :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
 add :: (a: *Matrix($A), b:Matrix($B)) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-        assert(is_minor_type(A, B));
+        assert(is_minor_number(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] += b.data[it];
@@ -450,7 +450,7 @@ add :: (a: *Matrix($A), b:Matrix($B)) {
 
 
 operator - :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 }{
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
@@ -468,7 +468,7 @@ operator - :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
 sub :: (a: *Matrix($A), b:Matrix($B)) {
     #if CHECKS {
         assert(a.rows == b.rows && a.cols == b.cols, "Matrices have different dimensions: a: %x%, b: %x%", a.rows, a.cols, b.rows, b.cols);
-        assert(is_minor_type(A, B));
+        assert(is_minor_number(A, B));
     }
     for 0..a.data.count-1 {
         a.data[it] -= b.data[it];
@@ -517,7 +517,7 @@ neg :: (a: Matrix($T)) {
 // C = C + A*B
 saxpy :: (c: *Matrix($C), a: Matrix($A), b: Matrix($B)) {
     #if CHECKS {
-        assert(is_minor_type(C, A) && is_minor_type(C, B));
+        assert(is_minor_number(C, A) && is_minor_number(C, B));
         assert(c.rows == a.rows);
         assert(c.cols == b.cols);
         assert(a.cols == b.rows);
@@ -693,7 +693,7 @@ dagger :: conjugate_transpose;
 
 // https://www.wikiwand.com/en/Tensor_product
 tensor :: (a: Matrix($A), b: Matrix($B)) -> Matrix($C) #modify {
-    C = dominant_type(A, B);
+    C = upcast(A, B);
 } {
     res := mat(C, a.rows * b.rows, a.cols * b.cols);
     for r: 0..res.rows-1 {
