@@ -12,8 +12,7 @@ Feel free to add functionality and performance upgrades.
 
 ## Current thoughts
 
-- I just refactored the code to use generic types, e.g. `Matrix($T)`. I hope this works out well.
-- next steps are to use the newly introduced flags for matrices.
+- I just refactored the code to use generic types, e.g. `Matrix($T, $N, $M)`. The next step is to introduce a matrix-interface and make all the algorithms fully generic. `Prototype-Mk-I.jai` shows how to do it.
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
 
 There are more thoughts written down in [the document outlining some of my thoughts](https://github.com/shiMusa/MathExtensions/blob/flags-and-other-matrix-types/Thoughts.md).
