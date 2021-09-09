@@ -481,12 +481,16 @@ operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,N,M).T {
 
 
 
-add :: (a: *Matrix($A, $N, $M), b:Matrix($B, N, M)) {
+add :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        assert(is_minor_number(A, B));
+        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
+        #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
-    for 0..a.data.count-1 {
-        a.data[it] += b.data[it];
+
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(a, i, j, get(<<a, i, j) + get(b, i, j));
+        }
     }
 }
 
@@ -497,24 +501,33 @@ add :: (a: *Matrix($A, $N, $M), b:Matrix($B, N, M)) {
 
 
 
-operator - :: (a: Matrix($A, $N, $M), b: Matrix($B, N, M)) -> Matrix(UpCast(A,B).T, N, M) {
-    res : Matrix(UpCast(A,B).T, N, M) = ---;
-    res.flags = .NONE;
+operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,N,M).T {
+    #if CHECKS {
+        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
+    }
+    
+    res : MatrixHelper(A,B,N,M).T = ---;
 
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] - b.data[it];
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(*res, i, j, get(a, i, j) - get(b, i, j));
+        }
     }
     return res;
 }
 
 
 
-sub :: (a: *Matrix($A, $N, $M), b:Matrix($B, N, M)) {
+sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        #assert(is_minor_number(A, B));
+        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
+        #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
-    for 0..a.data.count-1 {
-        a.data[it] -= b.data[it];
+
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(a, i, j, get(<<a, i, j) - get(b, i, j));
+        }
     }
 }
 
@@ -522,22 +535,28 @@ sub :: (a: *Matrix($A, $N, $M), b:Matrix($B, N, M)) {
 
 
 
-operator - :: (a: Matrix($A, $N, $M)) -> Matrix(A, N, M) {
-    res : Matrix(A, N, M) = ---;
-    res.flags = a.flags;
+operator - :: (a: $A/MatrixType) -> A {
+    res : A = ---;
 
-    for 0..a.data.count-1 {
-        res.data[it] = -a.data[it];
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(*res, i, j, -get(a, i, j));
+        }
     }
+
     return res;
 }
 
 
 
-
-neg :: (a: Matrix($T, $N, $M)) {
-    for a.data {
-        a.data[it_index] = -it;
+// TODO be careful with e.g. symmetric matrices:
+// if I first set Aij = -Aji and then Aji = -Aij = -(-Aji) = Aji
+// so there's no negation happening at all!
+neg :: (a: *$A/MatrixType) {
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(a, i, j, -get(<<a, i, j));
+        }
     }
 }
 

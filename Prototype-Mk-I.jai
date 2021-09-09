@@ -25,15 +25,43 @@ MatrixTrait :: struct(
     data_type: Type,
     N: int,
     M: int,
+    N_lin: int,
     flags: FLAGS,
     get: (m: matrix_type, int, int) -> data_type,
-    set: (m: *matrix_type, int, int, data_type) -> ()
+    set: (m: *matrix_type, int, int, data_type) -> (),
+    get_lin: (m: matrix_type, int) -> data_type,
+    set_lin: (m: *matrix_type, int, data_type) -> (),
+    from_index: (m: matrix_type, int) -> (int, int),
+    to_index: (m: matrix_type, int, int) -> int
 ){}
+from_index :: inline (m: $M/MatrixTrait, i: int) -> int, int {
+    r, c := m.from_index(m, i);
+    return r, c;
+}
+to_index :: inline (m: $M/MatrixTrait, i: int, j: int) -> int {
+    return m.to_index(m, i,j);
+}
 get :: inline (m: $M/MatrixTrait, i: int, j: int) -> M.data_type {
     return m.get(m, i, j);
 }
 set :: inline (m: *$M/MatrixTrait, i: int, j: int, value: M.data_type) {
     m.set(m, i, j, value);
+}
+get_lin :: inline (m: $M/MatrixTrait, i: int) -> M.data_type {
+    return m.get_lin(m, i);
+}
+set_lin :: inline (m: *$M/MatrixTrait, i: int, value: M.data_type) {
+    m.set_lin(m, i, value);
+}
+for_expansion :: (m: *$M/MatrixTrait, body: Code, flags: For_Flags) #expand {
+    i := 0;
+    while i < m.N_lin {
+        `it_index := i;
+        `it := get_lin(<<m, i);
+        `it_row, `it_column := from_index(<<m, i);
+        #insert body;
+        i += 1;
+    }
 }
 
 
@@ -45,17 +73,36 @@ FullMatrix :: struct(_T: Type, _N: int, _M: int) {
         _T,
         _N,
         _M,
+        _N * _M,
         .NONE,
         full_matrix_get,
-        full_matrix_set
+        full_matrix_set,
+        full_matrix_get_lin,
+        full_matrix_set_lin,
+        full_matrix_from_index,
+        full_matrix_to_index
     ); 
     data: [_N*_M]_T;
 }
 full_matrix_get :: inline (m: FullMatrix($T, $N, $M), i: int, j: int) -> T {
-    return m.data[i*N + j];
+    return m.data[i*M + j];
 }
 full_matrix_set :: inline (m: *FullMatrix($T, $N, $M), i: int, j: int, value: T) {
-    m.data[i*N + j] = value;
+    m.data[i*M + j] = value;
+}
+full_matrix_from_index :: inline (m: FullMatrix($T, $N, $M), i: int) -> int, int {
+    c := i % M;
+    r := (i-c)/M;
+    return r, c;
+}
+full_matrix_to_index :: inline (m: FullMatrix($T, $N, $M), i: int, j: int) -> int {
+    return i*M+j;
+}
+full_matrix_get_lin :: inline (m: FullMatrix($T, $N, $M), i: int) -> T {
+    return m.data[i];
+}
+full_matrix_set_lin :: inline (m: *FullMatrix($T, $N, $M), i: int, value: T) {
+    m.data[i] = value;
 }
 
 
@@ -67,9 +114,14 @@ UpperTriangularQuadMatrix :: struct(_T: Type, _N: int) {
         _T,
         _N,
         _N,
+        _N*(_N+1)/2,
         .UPPER_TRIANGULAR,
         upper_triangular_quad_matrix_get,
-        upper_triangular_quad_matrix_set
+        upper_triangular_quad_matrix_set,
+        upper_triangular_quad_matrix_get_lin,
+        upper_triangular_quad_matrix_set_lin,
+        upper_triangular_quad_matrix_from_index,
+        upper_triangular_quad_matrix_to_index
     ); 
     data: [_N*(_N+1)/2]_T;
 }
@@ -78,6 +130,18 @@ upper_triangular_quad_matrix_get :: inline (m: UpperTriangularQuadMatrix($T, $N)
 }
 upper_triangular_quad_matrix_set :: inline (m: *UpperTriangularQuadMatrix($T, $N), i: int, j: int, value: T) {
     m.data[i] = value; // ! wrong, TODO correct math here
+}
+upper_triangular_quad_matrix_from_index :: (m: UpperTriangularQuadMatrix($T, $N), i: int) -> int, int {
+    return i%N, 0; // ! wrong, TODO correct math here
+}
+upper_triangular_quad_matrix_to_index :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int, j: int) -> int {
+    return i; // ! wrong, TODO correct math here
+}
+upper_triangular_quad_matrix_get_lin :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int) -> T {
+    return m.data[i];
+}
+upper_triangular_quad_matrix_set_lin :: inline (m: *UpperTriangularQuadMatrix($T, $N), i: int, value: T) {
+    m.data[i] = value;
 }
 
 
@@ -121,19 +185,28 @@ create_some_matrix :: (x: $X/MatrixTrait, y: $Y/MatrixTrait) -> _MatrixHelper(X,
 test_matrix :: () {
 
     m : FullMatrix(int, 4, 4);
-    print("%\n", m);
+    print("m = %\n", m);
 
     do_sth_to_matrix(*m);
-    print("%\n", m);
+    print("m = %\n", m);
 
     utm : UpperTriangularQuadMatrix(int, 4);
-    print("%\n", utm);
+    print("utm = %\n", utm);
     do_sth_to_matrix(*utm);
-    print("%\n", utm);
+    print("utm = %\n", utm);
 
 
     res  := create_some_matrix(m, utm);
     res2 := create_some_matrix(utm, utm);
+
+
+    for m {
+        print("m: it_index %, it %, it_row %, it_column %\n", it_index, it, it_row, it_column);
+    }
+
+    for utm {
+        print("utm: it_index %, it %, it_row %, it_column %\n", it_index, it, it_row, it_column);
+    }
 }
 
 

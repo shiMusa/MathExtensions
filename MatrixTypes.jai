@@ -37,17 +37,43 @@ MatrixType :: struct(
     data_type: Type,
     N: int,
     M: int,
-    flags: MATRIX_FLAGS,
+    N_lin: int,
+    flags: FLAGS,
     get: (m: matrix_type, int, int) -> data_type,
-    set: (m: *matrix_type, int, int, data_type) -> ()
+    set: (m: *matrix_type, int, int, data_type) -> (),
+    get_lin: (m: matrix_type, int) -> data_type,
+    set_lin: (m: *matrix_type, int, data_type) -> (),
+    from_index: (m: matrix_type, int) -> (int, int),
+    to_index: (m: matrix_type, int, int) -> int
 ){}
-
+from_index :: inline (m: $M/MatrixType, i: int) -> int, int {
+    r, c := m.from_index(m, i);
+    return r, c;
+}
+to_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
+    return m.to_index(m, i,j);
+}
 get :: inline (m: $M/MatrixType, i: int, j: int) -> M.data_type {
     return m.get(m, i, j);
 }
-
 set :: inline (m: *$M/MatrixType, i: int, j: int, value: M.data_type) {
     m.set(m, i, j, value);
+}
+get_lin :: inline (m: $M/MatrixType, i: int) -> M.data_type {
+    return m.get_lin(m, i);
+}
+set_lin :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
+    m.set_lin(m, i, value);
+}
+for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
+    i := 0;
+    while i < m.N_lin {
+        `it_index := i;
+        `it := get_lin(<<m, i);
+        `it_row, `it_column := from_index(<<m, i);
+        #insert body;
+        i += 1;
+    }
 }
 
 
@@ -68,19 +94,38 @@ DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
         _T,
         _N,
         _M,
+        _N * _M,
         .NONE,
         dense_matrix_get,
-        dense_matrix_set
+        dense_matrix_set,
+        dense_matrix_get_lin,
+        dense_matrix_set_lin,
+        dense_matrix_from_index,
+        dense_matrix_to_index
     ); 
     data: [_N*_M]_T;
 }
 
 #scope_file
 dense_matrix_get :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> T {
-    return m.data[i*N + j];
+    return m.data[i*M + j];
 }
 dense_matrix_set :: inline (m: *DenseMatrix($T, $N, $M), i: int, j: int, value: T) {
-    m.data[i*N + j] = value;
+    m.data[i*M + j] = value;
+}
+dense_matrix_from_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int, int {
+    c := i % M;
+    r := (i-c)/M;
+    return r, c;
+}
+dense_matrix_to_index :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> int {
+    return i*M+j;
+}
+dense_matrix_get_lin :: inline (m: DenseMatrix($T, $N, $M), i: int) -> T {
+    return m.data[i];
+}
+dense_matrix_set_lin :: inline (m: *DenseMatrix($T, $N, $M), i: int, value: T) {
+    m.data[i] = value;
 }
 #scope_export
 
