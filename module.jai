@@ -10,6 +10,7 @@
 
 #load "Types.jai";
 #load "Vector.jai";
+#load "MatrixTypes.jai";
 #load "Matrix.jai";
 #load "Checks.jai";
 #load "LinearAlgebra.jai";

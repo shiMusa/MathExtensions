@@ -17,17 +17,17 @@
 
 */
 
-str :: (m: Matrix($T, $N, $M), indent: string = "    ") -> string {
+str :: (m: $M/MatrixType, indent: string = "    ") -> string {
     builder: String_Builder;
     init_string_builder(*builder);
     append(*builder, "\n");
-    for i: 0..N-1 {
+    for i: 0..M.N-1 {
         append(*builder, indent);
-        for j: 0..M-1 {
+        for j: 0..M.M-1 {
             #if T == Complex64 {
-                print_to_builder(*builder, "%, ", str(m[i][j]) );
+                print_to_builder(*builder, "%, ", str(get(m,i,j)) );
             } else {
-                print_to_builder(*builder, "%, ", m[i][j] );
+                print_to_builder(*builder, "%, ", get(m,i,j) );
             }
         }
         append(*builder, "\n");
@@ -54,65 +54,33 @@ str :: (m: Matrix($T, $N, $M), indent: string = "    ") -> string {
 // Texts in computational science and engineering 18
 // Springer
 // Fig. 3.5 Matrix class derivation tree, page 268
-MATRIX_FLAGS :: enum_flags u32 {
-    NONE                   :: 0;
-    SQUARE                 :: (1 <<  0);
-    SYMMETRIC              :: (1 <<  1) + xx SQUARE;
-    SYMMETRIC_POSITIVE     :: (1 <<  2) + xx SYMMETRIC;
-    UPPER_HESSENBERG       :: (1 <<  3);
-    LOWER_HESSENBERG       :: (1 <<  4); 
-    ORTHOGONAL             :: (1 <<  5);
-    TRAPEZOIDAL            :: (1 <<  6);
-    LOWER_TRAPEZOIDAL      :: (1 <<  7) + xx TRAPEZOIDAL;
-    LOWER_TRIANGULAR       :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
-    UNIT_LOWER_TRAPEZOIDAL :: (1 <<  9) + xx LOWER_TRAPEZOIDAL;
-    UNIT_LOWER_TRIANGULAR  :: (1 << 10) + xx UNIT_LOWER_TRAPEZOIDAL;
-    UPPER_TRAPEZOIDAL      :: (1 << 11) + xx TRAPEZOIDAL;
-    UPPER_TRIANGULAR       :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
-    UNIT_UPPER_TRAPEZOIDAL :: (1 << 13) + xx UPPER_TRAPEZOIDAL;
-    UNIT_UPPER_TRIANGULAR  :: (1 << 14) + xx UNIT_UPPER_TRAPEZOIDAL;    
-    HERMITIAN              :: (1 << 15) + xx SQUARE; // not the same as symmetric for complex matrices
-    DIAGONAL               :: (1 << 16) + xx BAND;
-    BAND                   :: (1 << 17) + xx TRAPEZOIDAL;
-}
+
+// MATRIX_FLAGS :: enum_flags u32 {
+//     NONE                   :: 0;
+//     SQUARE                 :: (1 <<  0);
+//     SYMMETRIC              :: (1 <<  1) + xx SQUARE;
+//     SYMMETRIC_POSITIVE     :: (1 <<  2) + xx SYMMETRIC;
+//     UPPER_HESSENBERG       :: (1 <<  3);
+//     LOWER_HESSENBERG       :: (1 <<  4); 
+//     ORTHOGONAL             :: (1 <<  5);
+//     TRAPEZOIDAL            :: (1 <<  6);
+//     LOWER_TRAPEZOIDAL      :: (1 <<  7) + xx TRAPEZOIDAL;
+//     LOWER_TRIANGULAR       :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
+//     UNIT_LOWER_TRAPEZOIDAL :: (1 <<  9) + xx LOWER_TRAPEZOIDAL;
+//     UNIT_LOWER_TRIANGULAR  :: (1 << 10) + xx UNIT_LOWER_TRAPEZOIDAL;
+//     UPPER_TRAPEZOIDAL      :: (1 << 11) + xx TRAPEZOIDAL;
+//     UPPER_TRIANGULAR       :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
+//     UNIT_UPPER_TRAPEZOIDAL :: (1 << 13) + xx UPPER_TRAPEZOIDAL;
+//     UNIT_UPPER_TRIANGULAR  :: (1 << 14) + xx UNIT_UPPER_TRAPEZOIDAL;    
+//     HERMITIAN              :: (1 << 15) + xx SQUARE; // not the same as symmetric for complex matrices
+//     DIAGONAL               :: (1 << 16) + xx BAND;
+//     BAND                   :: (1 << 17) + xx TRAPEZOIDAL;
+// }
 
 
-is :: inline (m: Matrix($T, $N, $M), flag: MATRIX_FLAGS) -> bool {
+is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
     return (m.flags & flag) > 0;
 }
-
-
-
-
-
-
-/*
- ######  ######## ########  ##     ##  ######  ########
-##    ##    ##    ##     ## ##     ## ##    ##    ##
-##          ##    ##     ## ##     ## ##          ##
- ######     ##    ########  ##     ## ##          ##
-      ##    ##    ##   ##   ##     ## ##          ##
-##    ##    ##    ##    ##  ##     ## ##    ##    ##
- ######     ##    ##     ##  #######   ######     ##
-*/
-
-
-
-Matrix :: struct(T: Type, N: int, M: int) {
-    data: [N*M]T;
-    flags: MATRIX_FLAGS = .NONE;
-}
-
-operator [] :: inline (m: Matrix($T, $N, $M), i: int) -> []T {
-    #if CHECKS {
-        assert(i >= 0, "Row-index negative! i = %", i);
-        assert(i < N, "Row-index out of bounds: % rows", N);
-    }
-
-    return array_view_count(m.data, i * M, M);
-}
-
-
 
 
 
@@ -129,112 +97,124 @@ operator [] :: inline (m: Matrix($T, $N, $M), i: int) -> []T {
 */
 
 
-mat_cast :: ($type: Type, m: Matrix($T, $N, $M)) -> Matrix(type, N, M) #must {
-    res : Matrix(type, N, M) = ---;
-    res.flags = m.flags;
+mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
+    res : MatrixCastHelper(M, type).T = ---;
 
-    for m.data {
-        res.data[it_index] = ncast(type, it);
+    for i: M.N {
+        for j: M.M {
+            set(*res, i, j, ncast(type, get(m, i, j)));
+        }
     }
 
     return res;
 }
 
-copy :: (m: Matrix($T, $N, $M)) -> Matrix(T, N, M) #must {
-    res : Matrix(T, N, M) = ---;
-    res.flags = m.flags;
-    array_copy(m.data, *res.data);
+copy :: (m: $M/MatrixType) -> M #must {
+    res : M = ---;
+    for i: 0..M.N {
+        for j: 0..M.M {
+            set(*res, i, j, get(m, i, j));
+        }
+    }
     return res;
 }
 
-copy :: inline (to: *Matrix($T, $N, $M), from: Matrix(T, N, M)) {
-    array_copy(from.data, *to.data);
-}
-
-
-mat :: ($rows: int, $cols: int, init: $T, $flags: MATRIX_FLAGS = .NONE) -> Matrix(T, rows, cols) #must {
-    m : Matrix(T, rows, cols) = ---;
-    m.flags = flags;
-    for 0..rows*cols-1 {
-        m.data[it] = init;
+copy :: inline (to: *M/MatrixType, from: M) {
+    for i: 0..M.N {
+        for j: 0..M.M {
+            set(to, i, j, get(from, i, j));
+        }
     }
-    return m;
 }
 
-
-
-mat :: ($rows: int, $cols: int, values: ..$T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T, rows, cols) #must {
+mat_init :: (m: *$M/MatrixType, vals: ..$T) {
     #if CHECKS {
-        assert(values.count == rows * cols);
+        assert(vals.count <= M.N * M.M, "too many values (%) for matrix of % entries\n", vals.count, M.N * M.M);
     }
-    m : Matrix(T, rows, cols);
-    m.flags = flags;
-    for values {
-        m.data[it_index] = it;
+    for vals {
+        j := it_index % M.M;
+        i := (it_index - j) / M.M;
+        set(m, i, j, ncast(M.data_type, it));
     }
-    return m;
 }
 
-
-mat :: inline ($dim: int, init: $T, flags: MATRIX_FLAGS = .NONE) -> Matrix(T, dim, dim) #must {
-    return mat(dim, dim, init, flags);
+mat_init_all :: (m: *$M/MatrixType, value: $T) {
+    for i: 0..M.N {
+        for j: 0..M.M {
+            set(m, i, j, ncast(M.data_type, value));
+        }
+    }
 }
 
-
-mat_ones :: inline ($type: Type, $rows: int, $cols: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type, rows, cols) #must {
-    return mat(rows, cols, one(type), flags);
-}
-
-mat_ones :: inline ($type: Type, $dim: int, flags: MATRIX_FLAGS = .NONE) -> Matrix(type, dim, dim) #must {
-    return mat(dim, dim, one(type), flags);
-}
-
-
-
-mat_id :: ($type: Type, $rows: int, $cols: int) -> Matrix(type, rows, cols) #must {
-    m : Matrix(type, rows, cols);
-    m.flags = .DIAGONAL;
-
-    #if rows <= cols {
-        dim :: rows;
+mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = false) {
+    #if init_zeroes {
+        for i: 0..M.N {
+            for j: 0..M.M {
+                if i == j { 
+                    set(m, i, j, one(M.data_type));
+                } else {
+                    set(m, i, j, zero(M.data_type));
+                }
+            }
+        }
     } else {
-        dim :: cols;
+        k := min(M.N, M.M);
+        for i: 0..k {
+            set(m, i, i, one(M.data_type));
+        }
     }
-
-    for 0..dim-1 {
-        m[it][it] = one(type);
-    }
-    return m;
 }
 
-mat_id :: inline ($type: Type, $dim: int) -> Matrix(type, dim, dim) #must {
-    return mat_id(type, dim, dim);
-}
-
-
-
-mat_hadamard_2 :: inline ($type: Type) -> Matrix(type, 2, 2) {
-    // TODO: update flags
-    return mat(2, 2, one(type), one(type), one(type), -one(type), .NONE);
-}
-
-mat_hadamard :: ($type: Type, $nestings: int) -> Matrix(type, 1<<nestings, 1<<nestings) {
+mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = false) {
     #if CHECKS {
-        #assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
+        assert(values.count == min(M.N, M.M), "not enough values (% values) for diagonal (% values)\n", values.count, min(M.N, M.M));
     }
-    #if nestings == 0 {
-        return mat_hadamard_2(type);
+    #if init_zeroes {
+        for i: 0..M.N {
+            for j: 0..M.M {
+                if i == j { 
+                    set(m, i, j, ncast(M.data_type, values[i]));
+                } else {
+                    set(m, i, j, zero(M.data_type));
+                }
+            }
+        }
     } else {
-        return tensor(mat_hadamard_2(type), mat_hadamard(type, nestings-1));
+        for i: 0..#run min(M.N, M.M) {
+            set(m, i, i, ncast(M.data_type, values[i]));
+        }
     }
 }
 
 
-mat_reflector :: (normal: Vector($T, $N)) -> Matrix(T, N, N) #must {
+mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
+    #if CHECKS {
+        #assert(M.N == 2 && M.M == 2);
+    }
+    mat_init(m, 1, 1, 1, -1);
+}
+
+
+// TODO come back to that later!
+// mat_hadamard :: ($type: Type, $nestings: int) -> Matrix(type, 1<<nestings, 1<<nestings) {
+//     #if CHECKS {
+//         #assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
+//     }
+//     #if nestings == 0 {
+//         return mat_hadamard_2(type);
+//     } else {
+//         return tensor(mat_hadamard_2(type), mat_hadamard(type, nestings-1));
+//     }
+// }
+
+
+// TODO Vector(...) -> $V/VectorType
+mat_reflector :: (normal: Vector($T, $N)) -> DenseMatrix(T, N, N) #must {
     tau := ncast(T, 2)/(conjugate(normal)*normal);
 
-    res := mat_id(T, N);
-    sub(res, tau * normal / normal);
+    res : DenseMatrix(T, N, N) = ---;
+    mat_init_unit(*res, true);
+    sub(*res, tau * normal / normal);
     return res;
 }
 
@@ -244,17 +224,26 @@ mat_reflector :: (normal: Vector($T, $N)) -> Matrix(T, N, N) #must {
 
 
 // inclusive first bound, exclusive last bound
-mat_submatrix :: (m: Matrix($T, $N, $M), $row_from: int, $row_to: int, $column_from: int, $column_to: int) -> Matrix(T, row_to-row_from, column_to-column_from) #must {
+mat_submatrix :: (
+    m: $M/MatrixType, 
+    $row_from: int, 
+    $row_to: int, 
+    $column_from: int, 
+    $column_to: int
+) -> MatrixSubmatrixHelper(M, row_to-row_from, column_to-column_from).T #must {
     #if CHECKS {
         #run assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
         #run assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
+        #run assert(row_to < M.N);
+        #run assert(column_to < M.M);
+        #run assert(row_from >= 0);
+        #run assert(column_from >= 0);
     }
-    res : Matrix(T, row_to-row_from, column_to-column_from) = ---;
-    res.flags = .NONE;
+    res : MatrixSubmatrixHelper(M, row_to-row_from, column_to-column_from).T = ---;
 
     for i: 0..row_to-row_from-1 {
         for j: 0..column_to-column_from-1 {
-            res[i][j] = m[i+row_from][j+column_from];
+            set(*res, i, j, get(m, i+row_from, j+column_from));
         }
     }
 
@@ -280,24 +269,24 @@ mat_submatrix :: (m: Matrix($T, $N, $M), $row_from: int, $row_to: int, $column_f
 */
 
 
-row :: (m: Matrix($T, $N, $M), i: int) -> Vector(T, M) #must {
+row :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.M).T #must {
     #if CHECKS {
-        assert(i >= 0 && i < N);
+        assert(i >= 0 && i < M.N);
     }
-    res : Vector(T, M);
-    for 0..M-1 {
-        res.data[it] = m[i][it];
+    res : MatrixVectorHelper(M, M.M).T = ---;
+    for 0..M.M-1 {
+        set(*res, it, get(m,i,it));
     }
     return res;
 }
 
-column :: (m: Matrix($T, $N, $M), i: int) -> Vector(T, N) #must {
+column :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.N).T #must {
     #if CHECKS {
         assert(i >= 0 && i < M);
     }
-    res : Vector(T, N) = ---;
-    for 0..N-1 {
-        res.data[it] = m[it][i];
+    res : MatrixVectorHelper(M, M.N).T = ---;
+    for 0..M.N-1 {
+        set(*res,it, get(m,it,i));
     }
     return res;
 }
@@ -320,15 +309,17 @@ column :: (m: Matrix($T, $N, $M), i: int) -> Vector(T, N) #must {
 
 
 
-operator == :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> bool {
-    #if aN != bN || aM != bM {
+operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
+    #if A.N != B.N || A.M != B.M {
         return false;
     } else {
-        for a.data {
-            if it != b.data[it_index] {
-                return false;
+        // TODO be smart about this, e.g. for sparse matrices
+        for i: 0..A.N {
+            for j: 0..A.M {
+                if get(a, i, j) != get(b, i, j) then return false;
             }
         }
+
         return true;
     }
 }
@@ -346,17 +337,17 @@ operator == :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> bool {
 // Matrix Computations, 4th edition
 // The Johns Hopkins University Press
 // Algorithm 1.1.5 ijk Matrix Multiplication, page 8
-operator * :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix(UpCast(A,B).T, aN, bM) {
+operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.N, B.M).T {
     #if CHECKS {
-        #run assert(aM == bN, "Matrix dimensions don't match: a.cols = %, b.rows = %", aM, bN);
+        #run assert(A.M == B.N, "Matrix dimensions don't match: a.cols = %, b.rows = %", A.M, B.N);
     }
 
-    res : Matrix(UpCast(A,B).T, aN, bM);
-    for j: 0..bM-1 {
-        for k: 0..aM-1 {
-            tmp := b[k][j];
-            for i: 0..aN-1 {
-                res[i][j] += a[i][k] * tmp;
+    res : MatrixMultiplicationHelper(A,B,A.N, B.M).T = ---;
+    for j: 0..B.M-1 {
+        for k: 0..A.M-1 {
+            tmp := get(b,k,j);
+            for i: 0..A.N-1 {
+                set(*res,i,j, get(res,i,j) + get(a,i,k) * tmp);
             }
         }
     }
@@ -364,30 +355,39 @@ operator * :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix(UpCas
     return res;
 }
 
-operator * :: (a: Matrix($A, $aN, $aM), b: Vector($B, $bN)) -> Vector(UpCast(A,B).T, aN) {
+
+#scope_file matrix_vector_multiplication_helper :: ($a: Type, $b: Type, $N: int) -> Type {
+    // TODO other types
+    return DenseVector(UpCast(a.data_type, b.data_type).T, N);
+}
+#scope_export
+MatrixVectorMultiplicationHelper :: struct (A: Type, B: Type, N: int) {
+    T :: #run matrix_vector_multiplication_helper(A,B,N);
+}
+operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplicationHelper(A,B,A.N).T {
     #if CHECKS {
-        #run assert(aM == bN, "Dimensions mismatch: a.cols = %, b.dim = %", aM, bN);
+        #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim = %", A.M, B.N);
     }
 
-    res : Vector(UpCast(A,B).T, aN);
-    for i: 0..aN-1 {
-        for j: 0..aM-1 {
-            res.data[i] += a[i][j] * b[j];
+    res : MatrixVectorMultiplicationHelper(A,B,A.N).T = ---;
+    for i: 0..A.N-1 {
+        for j: 0..A.M-1 {
+            set(*res,i, get(res,i) + get(a,i,j) * get(b,j));
         }
     }
 
     return res;
 }
 
-operator * :: (a: Vector($A, $aN), b: Matrix($B, $bN, $bM)) -> Vector(UpCast(A,B).T, bM) {
+operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplicationHelper(A,B,B.M).T {
     #if CHECKS {
-        #run assert(aN == bN, "Dimensions mismatch: a.dim = %, b.rows = %", aN, bN);
+        #run assert(A.N == B.N, "Dimensions mismatch: a.dim = %, b.rows = %", A.N, B.N);
     }
 
-    res : Vector(UpCast(A,B).T, bM);
-    for j: 0..bN-1 {
-        for i: 0..aN-1 {
-            res.data[j] += a[i] * b[i][j];
+    res : MatrixVectorMultiplicationHelper(A,B,B.M).T = ---;
+    for j: 0..B.N-1 {
+        for i: 0..A.N-1 {
+            set(*res,j, get(res,j) + get(a,i) * get(b,i,j));
         }
     }
 
@@ -395,24 +395,28 @@ operator * :: (a: Vector($A, $aN), b: Matrix($B, $bN, $bM)) -> Vector(UpCast(A,B
 }
 
 
-operator * :: (a: Matrix($A, $N, $M), b: Scalar($B)) -> Matrix(UpCast(A,B).T, N, M) #symmetric {
-    res : Matrix(UpCast(A,B).T, N, M) = ---;
-    res.flags = a.flags;
+operator * :: (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, UpCast(A.data_type, B)).T #symmetric {
+    res : MatrixCastHelper(A, UpCast(A.data_type, B)).T = ---;
 
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] * b.value;
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(*res, i, j, get(a, i, j) * b.value);
+        }
     }
 
     return res;
 }
 
 
-mul :: (a: *Matrix($A, $N, $M), b: Scalar($B)) {
+mul :: (a: *$A/MatrixType, b: Scalar($B)) {
     #if CHECKS {
-        #run assert(is_minor_number(A, B));
+        #run assert(is_minor_number(A.data_type, B));
     }
-    for 0..a.data.count-1 {
-        a.data[it] *= b.value;
+
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(a, i, j, get(<<a, i, j) * b.value);
+        }
     }
 }
 
@@ -421,44 +425,54 @@ mul :: (a: *Matrix($A, $N, $M), b: Scalar($B)) {
 
 
 
-operator / :: inline (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix(UpCast(A,B).T, aM, bM) { 
+operator / :: inline (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.M,B.M).T { 
     return inverse(b) * a;
 }
 
-operator / :: (a: Vector($A, $aN), b: Matrix($B, $bN, $bM)) -> Matrix(UpCast(A,B).T, bM, aN) { 
+operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplicationHelper(B, A, A.N).T { 
     return inverse(b) * a;
 }
 
-operator / :: inline (a: Matrix($A, $N, $M), b: Scalar($B)) -> Matrix(UpCast(A,B).T, N, M) { 
-    res : Matrix(UpCast(A,B).T, N, M) = ---;
-    res.flags = a.flags;
+operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, UpCast(A.data_type, B).T).T { 
+    res : MatrixCastHelper(A, UpCast(A.data_type, B).T).T = ---;
 
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] / b.value;
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(*res, i, j, get(a, i, j)/b.value);
+        }
     }
+
     return res;
 }
 
 
 
-div :: (a: *Matrix($A, $N, $M), b: Scalar($B)) {
+div :: (a: *$A/MatrixType, b: Scalar($B)) {
     #if CHECKS {
-        #assert(is_minor_number(A, B));
+        #assert(is_minor_number(A.data_type, B));
     }
-    for 0..a.data.count-1 {
-        a.data[it] /= b.value;
+
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(a, i, j, get(<<a, i, j) / b.value);
+        }
     }
 }
 
 
 
 
-operator + :: (a: Matrix($A, $N, $M), b: Matrix($B, N, M)) -> Matrix(UpCast(A,B).T, N, M) {
-    res : Matrix(UpCast(A,B).T, N, M) = ---;
-    res.flags = .NONE;
+operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,N,M).T {
+    #if CHECKS {
+        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
+    }
+    
+    res : MatrixHelper(A,B,N,M).T = ---;
 
-    for 0..a.data.count-1 {
-        res.data[it] = a.data[it] + b.data[it];
+    for i: 0..A.N {
+        for j: 0..A.M {
+            set(*res, i, j, get(a, i, j) + get(b, i, j));
+        }
     }
     return res;
 }
