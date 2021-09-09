@@ -38,7 +38,7 @@ MatrixType :: struct(
     N: int,
     M: int,
     N_lin: int,
-    flags: FLAGS,
+    flags: MATRIX_FLAGS,
     get: (m: matrix_type, int, int) -> data_type,
     set: (m: *matrix_type, int, int, data_type) -> (),
     get_lin: (m: matrix_type, int) -> data_type,
@@ -95,7 +95,7 @@ DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
         _N,
         _M,
         _N * _M,
-        .NONE,
+        .DENSE,
         dense_matrix_get,
         dense_matrix_set,
         dense_matrix_get_lin,
@@ -114,9 +114,7 @@ dense_matrix_set :: inline (m: *DenseMatrix($T, $N, $M), i: int, j: int, value: 
     m.data[i*M + j] = value;
 }
 dense_matrix_from_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int, int {
-    c := i % M;
-    r := (i-c)/M;
-    return r, c;
+    return (i- i%M)/M, i%M;
 }
 dense_matrix_to_index :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> int {
     return i*M+j;

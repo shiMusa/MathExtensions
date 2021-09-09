@@ -119,7 +119,7 @@ copy :: (m: $M/MatrixType) -> M #must {
     return res;
 }
 
-copy :: inline (to: *M/MatrixType, from: M) {
+copy :: inline (to: *$M/MatrixType, from: M) {
     for i: 0..M.N {
         for j: 0..M.M {
             set(to, i, j, get(from, i, j));
@@ -148,13 +148,11 @@ mat_init_all :: (m: *$M/MatrixType, value: $T) {
 
 mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = false) {
     #if init_zeroes {
-        for i: 0..M.N {
-            for j: 0..M.M {
-                if i == j { 
-                    set(m, i, j, one(M.data_type));
-                } else {
-                    set(m, i, j, zero(M.data_type));
-                }
+        for m {
+            if it_row == it_column {
+                set_linear(m, it_index, zero(M.data_type));
+            } else {
+                set_linear(m, it_index, one(M.data_type));
             }
         }
     } else {
@@ -395,13 +393,11 @@ operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
 }
 
 
-operator * :: (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, UpCast(A.data_type, B)).T #symmetric {
-    res : MatrixCastHelper(A, UpCast(A.data_type, B)).T = ---;
+operator * :: (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, UpCast(A.data_type, B).T).T #symmetric {
+    res : MatrixCastHelper(A, UpCast(A.data_type, B).T).T = ---;
 
-    for i: 0..A.N {
-        for j: 0..A.M {
-            set(*res, i, j, get(a, i, j) * b.value);
-        }
+    for a {
+        set_linear(*res, it_index, it * b.value);
     }
 
     return res;
@@ -462,12 +458,12 @@ div :: (a: *$A/MatrixType, b: Scalar($B)) {
 
 
 
-operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,N,M).T {
+operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,A.N,A.M).T {
     #if CHECKS {
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
     }
     
-    res : MatrixHelper(A,B,N,M).T = ---;
+    res : MatrixHelper(A,B,A.N,A.M).T = ---;
 
     for i: 0..A.N {
         for j: 0..A.M {
@@ -517,7 +513,7 @@ operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,N,M).T {
 }
 
 
-
+// TODO check for "UpCast" of Matrices
 sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
@@ -538,10 +534,8 @@ sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
 operator - :: (a: $A/MatrixType) -> A {
     res : A = ---;
 
-    for i: 0..A.N {
-        for j: 0..A.M {
-            set(*res, i, j, -get(a, i, j));
-        }
+    for a {
+        set_lin(*res, it_index, -it);
     }
 
     return res;
@@ -553,10 +547,8 @@ operator - :: (a: $A/MatrixType) -> A {
 // if I first set Aij = -Aji and then Aji = -Aij = -(-Aji) = Aji
 // so there's no negation happening at all!
 neg :: (a: *$A/MatrixType) {
-    for i: 0..A.N {
-        for j: 0..A.M {
-            set(a, i, j, -get(<<a, i, j));
-        }
+    for a {
+        set_lin(a, it_index, -it);
     }
 }
 
@@ -579,16 +571,18 @@ neg :: (a: *$A/MatrixType) {
 // Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
 // Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
 // C = C + A*B
-saxpy :: (c: *Matrix($C, $cN, $cM), a: Matrix($A, cN, $aM), b: Matrix($B, aM, cM)) {
+saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        #assert(is_minor_number(C, A) && is_minor_number(C, B));
+        #assert(A.N == C.N);
+        #assert(B.N == A.M && B.M == C.M);
+        #assert(is_minor_number(C.data_type, A.data_type) && is_minor_number(C.data_type, B.data_type));
     }
 
-    for j: 0..cM-1 {
-        for k: 0..aM-1 {
-            tmp := b[k][j];
-            for i: 0..cN-1 {
-                c[i][j] += a[i][k] * tmp;
+    for j: 0..C.M-1 {
+        for k: 0..A.M-1 {
+            tmp := get(b,k,j);
+            for i: 0..C.N-1 {
+                set(c,i,j, get(<<c,i,j) + get(a,i,k) * tmp);
             }
         }
     }
@@ -621,139 +615,159 @@ saxpy :: (c: *Matrix($C, $cN, $cM), a: Matrix($A, cN, $aM), b: Matrix($B, aM, cM
 
 
 // there are faster ways of doing this.
-permute_rows :: (m: Matrix($T, $N, $M), order: ..int) -> Matrix(T, N, M) #must {
+// check for compatible matrix types: e.g. this is not possible with triangular matrices
+permute_rows :: (m: $M/MatrixType, order: ..int) -> M #must {
     #if CHECKS {
+        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
         assert(order.count == N);
     }
 
-    res : Matrix(T, N, M) = ---;
-    res.flags = .NONE;
+    res : M = ---;
 
-    for i: 0..N-1 {
-        for j: 0..M-1 {
-            res[i][j] = m[order[i]][j];
-        }
+    for res {
+        set(*res, it_row, it_column, get(m, order[it_row], it_column));
     }
 
     return res;
 }
 
 // there are faster ways of doing this.
-permute_columns :: (m: Matrix($T, $N, $M), order: ..int) -> Matrix(T, N, M) #must {
+permute_columns :: (m: $M/MatrixType, order: ..int) -> M #must {
     #if CHECKS {
+        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
         assert(order.count == M);
     }
 
-    res : Matrix(T, N, M) = ---;
-    res.flags = .NONE;
+    res : M = ---;
 
-    for i: 0..N-1 {
-        for j: 0..M-1 {
-            res[i][j] = m[i][order[j]];
-        }
+    for res {
+        set(*res, it_row, it_column, get(m, it_row, order[it_column]));
     }
 
     return res;
 }
 
 // there are faster ways of doing this.
-permute :: (m: Matrix($T, $N, $M), row_order: []int, col_order: []int) -> Matrix(T, N, M) #must {
+permute :: (m: $M/MatrixType, row_order: [M.N]int, col_order: [M.M]int) -> M #must {
     #if CHECKS {
-        assert(row_order.count == N);
-        assert(col_order.count == M);
+        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
     }
 
-    res : Matrix(T, N, M) = ---;
-    res.flags = .NONE;
+    res : M = ---;
 
-    for i: 0..N-1 {
-        for j: 0..M-1 {
-            res[i][j] = m[row_order[i]][col_order[j]];
-        }
+    for res {
+        set(*res, it_row, it_column, get(m, row_order[it_row], col_order[it_column]));
     }
 
     return res;
 }
 
 
-swap_columns :: (m: *Matrix($T, $N, $M), i: int, j: int) {
+swap_columns :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
+        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
         assert(i >= 0 && j >= 0);
-        assert(i < M && j < M);
+        assert(i < M.M && j < M.M);
     }
 
     if i == j then return;
 
-    for 0..N-1 {
-        (<<m)[it][i], (<<m)[it][j] = swap((<<m)[it][i], (<<m)[it][j]);
+    for r: 0..M.N {
+        tmp := get(<<m, r, i);
+        set(m, r, i, get(<<m, r, j));
+        set(m, r, j, tmp);
     }
 }
 
-swap_rows :: (m: *Matrix($T, $N, $M), i: int, j: int) {
+swap_rows :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
+        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
         assert(i >= 0 && j >= 0);
-        assert(i < N && j < N);
+        assert(i < M.N && j < M.N);
     }
 
     if i == j then return;
 
-    for 0..M-1 {
-        (<<m)[i][it], (<<m)[j][it] = swap((<<m)[i][it], (<<m)[j][it]);
+    for c: 0..M.M {
+        tmp := get(<<m, i, c);
+        set(m, i, c, get(<<m, j, c));
+        set(m, j, c, tmp);
     }
 }
 
 
 
+#scope_file 
+MatrixTransposeHelper :: struct(A: Type) {
+    T :: #run matrix_transpose_helper(A);
+}
+matrix_transpose_helper :: ($a: Type) -> Type {
+    return DenseMatrix(a.data_type, a.M, a.N);
+}
+#scope_export
 
 
-transpose :: (m: Matrix($T, $N, $M)) -> Matrix(T, M, N) #must {
-    res : Matrix(T, M, N);
-    for r: 0..N-1 {
-        for c: 0..M-1 {
-            res[c][r] = m[r][c];
-        }
+transpose :: (m: $M/MatrixType) -> MatrixTransposeHelper(M).T #must {
+    #if CHECKS {
+        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+    }
+
+    res : MatrixTransposeHelper(M).T = ---;
+
+    for m {
+        set(*res, it_column, it_row, it);
     }
     return res;
 }
 
 // There are better ways to do this!
-transpose :: (m: *Matrix($T, $N, $M)) {
-    <<m = transpose(<<m);
+transpose :: (m: *$M/MatrixType) {
+    #if CHECKS {
+        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+    }
+
+    for i: 0..M.N {
+        for j: i+1..M.M {
+            tmp := get(<<m, i, j);
+            set(m, i, j, get(<<m, j, i));
+            set(m, j, i, tmp);
+        }
+    }
 }
 
 
 
 
 
-conjugate :: (m: Matrix($T, $N, $M)) -> Matrix(T, N, M) #must {
-    #if T != Complex64 {
+conjugate :: (m: $M/MatrixType) -> M #must {
+    #if M.data_type != Complex64 {
         return m;
     } else {
-        res : Matrix(T, N, M);
-        res.flags = m.flags;
+        res : M = ---;
 
-        for m.data {
-            res.data[it_index] = conjugate(it);
+        for m {
+            set_linear(*res, it_index, conjugate(it));
         }
+
         return res;
     }
 }
 
-conjugate :: (m: *Matrix($T, $N, $M)) {
-    #if T != Complex64 {
+conjugate :: inline (m: *$M/MatrixType) {
+    #if M.data_type != Complex64 {
         return;
     } else {
-        for m.data {
-            m.data[it_index] = conjugate(it);
+        for m {
+            set(m, it_index, conjugate(it));
         }
     }
 }
 
 
-conjugate_transpose :: inline (m: Matrix($T, $N, $M)) -> Matrix(T, M, N) #must {
+conjugate_transpose :: inline (m: $M/MatrixType) -> MatrixTransposeHelper(M).T #must {
     return conjugate(transpose(m));
 }
-conjugate_transpose :: inline (m: *Matrix($T, $N, $M)) {
+conjugate_transpose :: inline (m: *$M/MatrixType) {
     transpose(m);
     conjugate(m);
 }
@@ -765,19 +779,18 @@ dagger :: conjugate_transpose;
 
 
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix(UpCast(A,B).T, aN*bN, aM*bM) {
-    res : Matrix(UpCast(A,B).T, aN * bN, aM * bM) = ---;
-    res.flags = .NONE;
+tensor :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A, B, A.N*B.N, A.M*B.M).T {
+    res : MatrixHelper(A, B, A.N*B.N, A.M*B.M).T = ---;
 
     for r: 0..res.M-1 {
-        ar := r/bN;
-        br := r % bN;
+        ar := r/B.N;
+        br := r % B.N;
         
         for c: 0..res.M-1 {
-            ac := c/bM;
-            bc := c % bM;
+            ac := c/B.M;
+            bc := c % B.M;
 
-            res[r][c] = a[ar][ac] * b[br][bc];
+            set(*res, r, c, get(a, ar, ac) * get(b, br, bc));
         }
     }
     return res;
@@ -809,13 +822,13 @@ tensor :: (a: Matrix($A, $aN, $aM), b: Matrix($B, $bN, $bM)) -> Matrix(UpCast(A,
 //     return norm(v, 2.0);
 // }
 
-norm_1 :: (m: Matrix($T, $N, $M)) -> float64 {
+norm_1 :: (m: $M/MatrixType) -> float64 {
     res : float64 = 0.0;
 
-    for j: 0..M {
+    for j: 0..M.M {
         sum : float64 = 0.0;
-        for i: 0..N {
-            sum += abs(m[i][j]);
+        for i: 0..M.N {
+            sum += abs(get(m,i,j));
         }
         res = ifx res < sum then sum else res;
     }
@@ -823,13 +836,13 @@ norm_1 :: (m: Matrix($T, $N, $M)) -> float64 {
     return res;
 }
 
-norm_inf :: (m: Matrix($T, $N, $M)) -> float64 {
+norm_inf :: (m: $M/MatrixType) -> float64 {
     res : float64 = 0.0;
 
-    for i: 0..N {
+    for i: 0..M.N {
         sum : float64 = 0.0;
-        for j: 0..M {
-            sum += abs(m[i][j]);
+        for j: 0..M.M {
+            sum += abs(get(m,i,j));
         }
         res = ifx res < sum then sum else res;
     }
@@ -837,11 +850,15 @@ norm_inf :: (m: Matrix($T, $N, $M)) -> float64 {
     return res;
 }
 
-norm_frobenius :: (m: Matrix($T, $N, $M)) -> float64 {
+norm_frobenius :: (m: $M/MatrixType) -> float64 {
     sum : float64 = 0.0;
-    for m.data {
-        sum += abs(it);
+
+    for i: 0..M.N {
+        for j: 0..M.M {
+            sum += abs(get(m, i, j));
+        }
     }
+
     return sum;
 }
 
@@ -864,56 +881,62 @@ norm_frobenius :: (m: Matrix($T, $N, $M)) -> float64 {
 #scope_module
 
 test_matrix :: () {
-    print("\n\nMatrix(T) -------------------------------\n\n");
+    print("\n\nDenseMatrix(T) -------------------------------\n\n");
     {
-        m : Matrix(float64, 3, 3);
+        m : DenseMatrix(float64, 3, 3);
         print("%\n", str(m));
     }
     {
         a :: 3;
-        m : Matrix(float64, a, a);
+        m : DenseMatrix(float64, a, a);
         print("%\n", str(m));
     }
 
 
 
     {
-        m := mat(3, 3, 42.0);
+        m : DenseMatrix(float64, 3, 3);
+        mat_init_all(*m, 42.0);
         print("%\n", str(m));
     }
     {
         a :: 3;
-        m := mat(a, a, 42.0);
+        m : DenseMatrix(float64, a, a);
+        mat_init_all(*m, 42.0);
         print("%\n", str(m));
     }
 
 
     {
-        m := mat(3, 3, c64(42.0));
-        m[1][2] = R;
-        assert(m[1][2] == c64(1.0, 0.0));
+        m : DenseMatrix(Complex64, 3, 3);
+        mat_init_all(*m, c64(42.0));
+        set(*m,1,2,R);
+        assert( get(m,1,2) == c64(1.0, 0.0) );
         print("m = \n%\n", str(m));
     }
 
     {
-        m := mat_id(Complex64, 4);
+        m : DenseMatrix(Complex64, 4, 4);
+        mat_init_unit(*m);
         print("m = \n%\n", str(m));
-        assert(m[0][1] == CZERO);
-        assert(m[1][1] == R);
-        assert(m[2][1] == CZERO);
-        assert(m[3][3] == R);
+        assert(get(m,0,1) == CZERO);
+        assert(get(m,1,1) == R);
+        assert(get(m,2,1) == CZERO);
+        assert(get(m,3,3) == R);
     }
 
     {
-        m : Matrix(Complex64, 3, 3);
-        m[0][2] = R;
+        m : DenseMatrix(Complex64, 3, 3);
+        set(*m,0,2,R);
         m = transpose(m);
-        assert(m[2][0] == R);
+        assert(get(m,2,0) == R);
     }
 
     {
-        a := mat_id(float64, 2,2);
-        b := mat_id(float64, 2,2);
+        a : DenseMatrix(float64, 2, 2);
+        b : DenseMatrix(float64, 2, 2);
+        mat_init_unit(*a);
+        mat_init_unit(*b);
         print("a = \n%\n", str(a));
         print("b = \n%\n", str(b));
         add(*a, b);
@@ -926,13 +949,15 @@ test_matrix :: () {
     }
 
     {
-        m := mat(2, 2, R, c64(2.0), c64(3.0), c64(4.0));
+        m : DenseMatrix(Complex64, 2, 2);
+        mat_init(*m, R, c64(2.0), c64(3.0), c64(4.0));
         print("m = \n%\n", str(m));
         m = m * m;
         print("m = \n%\n", str(m));
     }
     {
-        m := mat(2, 2, R, 2.0*R, 3.0*R, 4.0*R);
+        m : DenseMatrix(Complex64, 2, 2);
+        mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
         print("m = \n%\n", str(m));
         m = m * m;
         print("m = \n%\n", str(m));
@@ -945,7 +970,8 @@ test_matrix :: () {
     //     print("m = %\n", m);
     // }
     {
-        m := mat(2, 2, 
+        m : DenseMatrix(Complex64, 2, 2);
+        mat_init(*m, 
             CZERO, -I, 
             I, CZERO
         );
@@ -954,11 +980,13 @@ test_matrix :: () {
 
 
     {
-        m := mat(2, 2, R, I, c64(2.0, -1.0), 2.0 + 3.0*I);
+        m : DenseMatrix(Complex64, 2, 2);
+        mat_init(*m, R, I, c64(2.0, -1.0), 2.0 + 3.0*I);
         print("m = \n%\n", str(m));
         t1 := tensor(m, m);
         print("t1 = \n%\n", str(t1));
-        t2 := mat(4, 4,
+        t2 : DenseMatrix(Complex64, 4, 4);
+        mat_init(*t2,
             R            ,             I,             I,   -R           ,
             2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
             2.0 -       I, 1.0 + 2.0 * I, 2.0 + 3.0 * I, -3.0 +  2.0 * I,
@@ -969,20 +997,25 @@ test_matrix :: () {
     }
 
     {
-        M := mat(3,3,
+        M : DenseMatrix(Complex64, 3, 3);
+        mat_init(*M,
             CZERO, R, 2*R,
             3*R, 4*R, 5*R,
             6*R, 7*R, 8*R
         );
 
         S := mat_submatrix(M, 1, 3, 1, 3);
-        assert(S == mat(2,2, 4*R, 5*R, 7*R, 8*R));
+        
+        res : DenseMatrix(Complex64, 2, 2);
+        mat_init(*m, 4*R, 5*R, 7*R, 8*R);
+        
+        assert(S == res);
     }
 
-    {
-        print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
-        m : Matrix(float64, 4, 4) = ---;
-        m.flags = .UNIT_LOWER_TRIANGULAR;
-        assert( is(m, .TRAPEZOIDAL) );
-    }
+    // {
+    //     print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
+    //     m : DenseMatrix(float64, 4, 4) = ---;
+    //     m.flags = .UNIT_LOWER_TRIANGULAR;
+    //     assert( is(m, .TRAPEZOIDAL) );
+    // }
 }
