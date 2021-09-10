@@ -43,15 +43,15 @@ MatrixType :: struct(
     set: (m: *matrix_type, int, int, data_type) -> (),
     get_lin: (m: matrix_type, int) -> data_type,
     set_lin: (m: *matrix_type, int, data_type) -> (),
-    from_index: (m: matrix_type, int) -> (int, int),
-    to_index: (m: matrix_type, int, int) -> int
+    from_lin_index: (m: matrix_type, int) -> (int, int),
+    to_lin_index: (m: matrix_type, int, int) -> int
 ){}
-from_index :: inline (m: $M/MatrixType, i: int) -> int, int {
-    r, c := m.from_index(m, i);
+from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
+    r, c := m.from_lin_index(m, i);
     return r, c;
 }
-to_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
-    return m.to_index(m, i,j);
+to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
+    return m.to_lin_index(m, i,j);
 }
 get :: inline (m: $M/MatrixType, i: int, j: int) -> M.data_type {
     return m.get(m, i, j);
@@ -70,7 +70,7 @@ for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
     while i < m.N_lin {
         `it_index := i;
         `it := get_lin(<<m, i);
-        `it_row, `it_column := from_index(<<m, i);
+        `it_row, `it_column := from_lin_index(<<m, i);
         #insert body;
         i += 1;
     }
@@ -100,8 +100,8 @@ DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
         dense_matrix_set,
         dense_matrix_get_lin,
         dense_matrix_set_lin,
-        dense_matrix_from_index,
-        dense_matrix_to_index
+        dense_matrix_from_lin_index,
+        dense_matrix_to_lin_index
     ); 
     data: [_N*_M]_T;
 }
@@ -113,10 +113,10 @@ dense_matrix_get :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> T {
 dense_matrix_set :: inline (m: *DenseMatrix($T, $N, $M), i: int, j: int, value: T) {
     m.data[i*M + j] = value;
 }
-dense_matrix_from_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int, int {
+dense_matrix_from_lin_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int, int {
     return (i- i%M)/M, i%M;
 }
-dense_matrix_to_index :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> int {
+dense_matrix_to_lin_index :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> int {
     return i*M+j;
 }
 dense_matrix_get_lin :: inline (m: DenseMatrix($T, $N, $M), i: int) -> T {

@@ -9,43 +9,20 @@
 */
 
 
-str :: (v: Vector($T, $N), indent: string = "    ") -> string {
+str :: (v: $V/VectorType, indent: string = "    ") -> string {
     builder: String_Builder;
     init_string_builder(*builder);
     print_to_builder(*builder, "\n%", indent);
-    for i: 0..N-1 {
+    for i: 0..V.N-1 {
         #if T == Complex64 {
-            print_to_builder(*builder, "%, ", str(v[i]) );
+            print_to_builder(*builder, "%, ", str(get(v,i)) );
         } else {
-            print_to_builder(*builder, "%, ", v[i] );
+            print_to_builder(*builder, "%, ", get(v,i) );
         }
     }
     return builder_to_string(*builder);
 }
 
-
-
-
-/*
- ######  ######## ########  ##     ##  ######  ########
-##    ##    ##    ##     ## ##     ## ##    ##    ##
-##          ##    ##     ## ##     ## ##          ##
- ######     ##    ########  ##     ## ##          ##
-      ##    ##    ##   ##   ##     ## ##          ##
-##    ##    ##    ##    ##  ##     ## ##    ##    ##
- ######     ##    ##     ##  #######   ######     ##
-*/
-
-Vector :: struct (T: Type, N: int) {
-    data: [N]T;
-}
-
-operator [] :: inline (v: Vector($T, $N), i: int) -> T {
-    #if CHECKS {
-        assert(i < N && i >= 0, "index out of dimensions: i = %, dim = %\n", i, N);
-    }
-    return v.data[i];
-}
 
 
 
@@ -60,74 +37,84 @@ operator [] :: inline (v: Vector($T, $N), i: int) -> T {
 */
 
 
-vec :: ($type: Type, values: [$N]$T) -> Vector(type, N) {
-    res : Vector(type, N) = ---;
-    for values {
-        res.data[it_index] = ncast(type, it);
+#scope_file
+VectorCastHelper :: struct(V: Type, t: Type) {
+    T :: vector_cast_helper(V, t);
+}
+vector_cast_helper :: ($V: Type, $t: Type) -> Type {
+    return DenseVector(t, V.N); // TODO other types
+}
+#scope_export
+
+vec_cast :: ($type: Type, v: $V/VectorType) -> VectorCastHelper(V, type).T {
+    res : VectorCastHelper(V, type).T; // initialize all values to zero, important for sparse?
+
+    for v {
+        set_lin(*res, it_lin_index, ncast(type, it));
     }
+
     return res;
 }
 
-vec :: (values: [$N]$T) -> Vector(T, N) {
-    return vec(T, values);
-}
+copy :: (v: $V/VectorType) -> V {
+    res : V = ---;
 
-vec :: inline ($dim: int, values: ..$T) -> Vector(T, dim) {
-    return vec(dim, T, ..values);
-}
-
-vec :: ($dim: int, $type: Type, values: ..$T) -> Vector(type, dim) {
-    assert(dim == values.count, "dimension mismatch: dim(%) != values.count(%)\n", dim, values.count);
-    res : Vector(type, dim);
-    for values {
-        res.data[it_index] = ncast(type, it);
+    for v {
+        set_lin(*res, it_lin_index, it);
     }
+
     return res;
 }
 
-
-copy :: (v: Vector($T, $N)) -> Vector(T, N) {
-    res : Vector(T, N) = ---;
-    res.data = array_copy(v.data);
-    return res;
-}
-
-vec_ones :: ($type: Type, $dim: int) -> Vector(type, dim) {
-    res: Vector(type, dim) = ---;
-    for 0..dim-1 {
-        res.data[it] = one(type);
+copy :: (to: *$V/VectorType, from: V) {
+    for raw(*from) {
+        set_raw(to, it_raw_index, it);
     }
-    return res;
 }
 
-vec_basis :: inline ($type: Type, $dim: int, el: int) -> Vector(type, dim) {
-    res := Vector(type, dim);
-    res.data[el] = one(type);
-    return res;
-}
 
-vec_cast :: ($type: Type, v: Vector($T, $N)) -> Vector(type, N) {
-    res : Vector(type, N) = ---;
-    for 0..N-1 {
-        res.data[it] = ncast(type, v[it]);
-    }
-    return res;
-}
-
-// inclusive left, exclusive right bounds
-vec_subvector :: (v: Vector($T, $N), $from: int, $to: int) -> Vector(T, to-from) {
+vec_init :: inline (v: *$V/VectorType, values: ..$T) {
     #if CHECKS {
-        #assert(to > from);
-        #assert(to <= N);
-        #assert(from >= 0);
-        // #assert(to > from, "bounds not possible: to(%) <= from(%)\n", to, from);
-        // #assert(to < N, "bound not possible: to(%) >= N(%)\n", to, N);
-        // #assert(from >= 0, "bound not possible: from(%) < 0\n", from);
+        #assert(is_minor_number(V.data_type, T));
+        assert(values.count <= V.N, "too many values (%) for vector of % entries\n", values.count, V.N);
     }
-    res : Vector(T, to-from) = ---;
-    for 0..to-from-1 {
-        res.data[it] = v[it + from];
+    for values {
+        set(v, it_index, ncast(V.data_type, it));
     }
+}
+
+vec_init_all :: inline (v: *$V/VectorType, value: $T) {
+    #if CHECKS {
+        #assert(is_minor_number(V.data_type, T));
+    }
+    for raw(v) {
+        set_raw(v, it_raw_index, ncast(V.data_type, value));
+    }
+}
+
+
+
+#scope_file
+VectorSubvectorHeper :: struct(V: Type, N: int) {
+    T :: #run vector_subvector_helper(V, N);
+}
+vector_subvector_helper :: ($V: Type, $N: int) -> Type {
+    return DenseVector(V.data_type, N);
+}
+#scope_export
+// inclusive left, exclusive right bounds
+vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSubvectorHeper(V, to-from).T {
+    #if CHECKS {
+        #run assert(to > from, "bounds not possible: to(%) <= from(%)\n", to, from);
+        #run assert(to < N, "bound not possible: to(%) >= N(%)\n", to, N);
+        #run assert(from >= 0, "bound not possible: from(%) < 0\n", from);
+    }
+    res : VectorSubvectorHeper(V, to-from).T = ---;
+
+    for res {
+        set(*res, it_index, get(v, it_index + from));
+    }
+    
     return res;
 }
 

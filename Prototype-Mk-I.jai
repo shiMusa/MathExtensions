@@ -275,4 +275,8 @@ test_matrix :: () {
 
 main :: () {
     test_matrix();
+
+    for 0..10 {
+        print("%\n", it);
+    }
 }

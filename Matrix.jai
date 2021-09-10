@@ -129,6 +129,7 @@ copy :: inline (to: *$M/MatrixType, from: M) {
 
 mat_init :: (m: *$M/MatrixType, vals: ..$T) {
     #if CHECKS {
+        #assert(is_minor_number(M.data_type, T));
         assert(vals.count <= M.N * M.M, "too many values (%) for matrix of % entries\n", vals.count, M.N * M.M);
     }
     for vals {
