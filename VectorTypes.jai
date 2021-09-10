@@ -32,16 +32,16 @@ VectorType :: struct(
     set: (v: *vector_type, int, data_type) -> (),
     get_raw: (v: vector_type, int) -> data_type,
     set_raw: (v: *vector_type, int, data_type) -> (),
-    from_raw_index: (v: vector_type, int) -> int,
+    from_raw_index: (v: vector_type, int) -> int
 ){}
 get :: inline (v: $V/VectorType, i: int) -> V.data_type {
-    return v.get(m, i);
+    return v.get(v, i);
 }
 set :: inline (v: *$V/VectorType, i: int, value: V.data_type) {
     v.set(v, i, value);
 }
 get_raw :: inline (v: $V/VectorType, i: int) -> V.data_type {
-    return v.get_raw(m, i);
+    return v.get_raw(v, i);
 }
 set_raw :: inline (v: *$V/VectorType, i: int, value: V.data_type) {
     v.set_raw(v, i, value);
@@ -60,8 +60,8 @@ from_raw_index :: inline (v: $V/VectorType, i: int) -> int {
     return v.from_raw_index(v, i);
 }
 raw :: inline (v: *$V/VectorType) -> VectorRawForExpansion(V) {
-    return VectorRawForExpansion(V) {
-        vector = v;
+    return VectorRawForExpansion(V).{
+        vector = v
     };
 }
 #scope_file
@@ -69,7 +69,7 @@ VectorRawForExpansion :: struct(T: Type) {
     vector: *T;
 }
 #scope_export
-for_expansion :: (v: *VectorRawForExpansion($V/VectorType), body: Code, flags: For_Flags) #expand {
+for_expansion :: (v: *VectorRawForExpansion($V), body: Code, flags: For_Flags) #expand {
     i := 0;
     while i < V.N_raw {
         `it_index := from_raw_index(<<v.vector, i);
@@ -94,7 +94,7 @@ DenseVector :: struct(_T: Type, _N: int) {
         DenseVector(_T, _N),
         _T,
         _N,
-        _N
+        _N,
         .DENSE,
         dense_vector_get,
         dense_vector_set,
@@ -129,7 +129,7 @@ dense_vector_set :: inline (v: *DenseVector($T, $N), i: int, value: T) {
 
 
 VectorCastHelper :: struct(V: Type, t: Type) {
-    T :: vector_cast_helper(V, t);
+    T :: #run vector_cast_helper(V, t);
 }
 #scope_file
 vector_cast_helper :: ($V: Type, $t: Type) -> Type {
@@ -149,7 +149,7 @@ vector_size_helper :: ($V: Type, $N: int) -> Type {
 
 
 VectorMatrixHelper :: struct(A: Type, B: Type) {
-    T :: vector_matrix_helper(A,B);
+    T :: #run vector_matrix_helper(A,B);
 }
 #scope_file
 vector_matrix_helper :: ($A: Type, $B: Type) -> Type {
@@ -158,7 +158,7 @@ vector_matrix_helper :: ($A: Type, $B: Type) -> Type {
 #scope_export
 
 VectorVectorHelper :: struct(A: Type, B: Type) {
-    T :: vector_vector_helper(A, B);
+    T :: #run vector_vector_helper(A, B);
 }
 #scope_file
 vector_vector_helper :: ($A: Type, $B: Type) -> Type {

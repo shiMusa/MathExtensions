@@ -80,7 +80,7 @@ is_number :: (A: *Type_Info) -> bool {
 
 
 
-ncast :: inline ($T: Type, num: $N) -> T #modify {
+ncast :: inline ($T: Type, $$num: $N) -> T #modify {
     if !is_number(N) || !is_number(T) { N = null; return; }    
 } {
     #if T == N {

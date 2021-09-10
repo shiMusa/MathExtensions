@@ -1,6 +1,6 @@
 
 #load "Utils.jai";
-// #load "Approx.jai";
+#load "Approx.jai";
 
 #load "Scalar.jai";
 #load "Elementary.jai";
@@ -9,10 +9,11 @@
 #load "Approximations.jai";
 
 #load "Types.jai";
+#load "VectorTypes.jai";
 #load "Vector.jai";
 #load "MatrixTypes.jai";
 #load "Matrix.jai";
-// #load "Checks.jai";
+#load "Checks.jai";
 // #load "LinearAlgebra.jai";
 
 CHECKS :: true;

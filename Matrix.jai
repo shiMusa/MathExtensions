@@ -24,7 +24,7 @@ str :: (m: $M/MatrixType, indent: string = "    ") -> string {
     for i: 0..M.N-1 {
         append(*builder, indent);
         for j: 0..M.M-1 {
-            #if T == Complex64 {
+            #if M.data_type == Complex64 {
                 print_to_builder(*builder, "%, ", str(get(m,i,j)) );
             } else {
                 print_to_builder(*builder, "%, ", get(m,i,j) );
@@ -100,8 +100,8 @@ is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
 mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
     res : MatrixCastHelper(M, type).T = ---;
 
-    for i: M.N {
-        for j: M.M {
+    for i: 0..M.N {
+        for j: 0..M.M {
             set(*res, i, j, ncast(type, get(m, i, j)));
         }
     }
@@ -151,9 +151,9 @@ mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = false) {
     #if init_zeroes {
         for m {
             if it_row == it_column {
-                set_linear(m, it_index, zero(M.data_type));
+                set_lin(m, it_index, zero(M.data_type));
             } else {
-                set_linear(m, it_index, one(M.data_type));
+                set_lin(m, it_index, one(M.data_type));
             }
         }
     } else {
@@ -207,11 +207,10 @@ mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
 // }
 
 
-// TODO Vector(...) -> $V/VectorType
-mat_reflector :: (normal: Vector($T, $N)) -> DenseMatrix(T, N, N) #must {
+mat_reflector :: (normal: $V/VectorType) -> DenseMatrix(V.data_type, V.N, V.N) #must {
     tau := ncast(T, 2)/(conjugate(normal)*normal);
 
-    res : DenseMatrix(T, N, N) = ---;
+    res : DenseMatrix(V.data_type, V.N, V.N) = ---;
     mat_init_unit(*res, true);
     sub(*res, tau * normal / normal);
     return res;
@@ -233,8 +232,8 @@ mat_submatrix :: (
     #if CHECKS {
         #run assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
         #run assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
-        #run assert(row_to < M.N);
-        #run assert(column_to < M.M);
+        #run assert(row_to <= M.N);
+        #run assert(column_to <= M.M);
         #run assert(row_from >= 0);
         #run assert(column_from >= 0);
     }
@@ -394,11 +393,11 @@ operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
 }
 
 
-operator * :: (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, UpCast(A.data_type, B).T).T #symmetric {
-    res : MatrixCastHelper(A, UpCast(A.data_type, B).T).T = ---;
+operator * :: (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B).T #symmetric {
+    res : MatrixCastHelper(A, B).T = ---;
 
     for a {
-        set_linear(*res, it_index, it * b.value);
+        set_lin(*res, it_index, it * b.value);
     }
 
     return res;
@@ -430,8 +429,8 @@ operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
     return inverse(b) * a;
 }
 
-operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, UpCast(A.data_type, B).T).T { 
-    res : MatrixCastHelper(A, UpCast(A.data_type, B).T).T = ---;
+operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B).T { 
+    res : MatrixCastHelper(A, B).T = ---;
 
     for i: 0..A.N {
         for j: 0..A.M {
@@ -459,12 +458,12 @@ div :: (a: *$A/MatrixType, b: Scalar($B)) {
 
 
 
-operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,A.N,A.M).T {
+operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
     #if CHECKS {
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
     }
     
-    res : MatrixHelper(A,B,A.N,A.M).T = ---;
+    res : MatrixMatrixCastHelper(A,B).T = ---;
 
     for i: 0..A.N {
         for j: 0..A.M {
@@ -498,12 +497,12 @@ add :: (a: *$A/MatrixType, b: $B/MatrixType) {
 
 
 
-operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A,B,N,M).T {
+operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
     #if CHECKS {
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
     }
     
-    res : MatrixHelper(A,B,N,M).T = ---;
+    res : MatrixMatrixCastHelper(A,B).T = ---;
 
     for i: 0..A.N {
         for j: 0..A.M {
@@ -747,7 +746,7 @@ conjugate :: (m: $M/MatrixType) -> M #must {
         res : M = ---;
 
         for m {
-            set_linear(*res, it_index, conjugate(it));
+            set_lin(*res, it_index, conjugate(it));
         }
 
         return res;
@@ -1008,7 +1007,7 @@ test_matrix :: () {
         S := mat_submatrix(M, 1, 3, 1, 3);
         
         res : DenseMatrix(Complex64, 2, 2);
-        mat_init(*m, 4*R, 5*R, 7*R, 8*R);
+        mat_init(*res, 4*R, 5*R, 7*R, 8*R);
         
         assert(S == res);
     }

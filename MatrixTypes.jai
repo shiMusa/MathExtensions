@@ -155,7 +155,17 @@ MatrixCastHelper :: struct(A: Type, data_type: Type) {
 #scope_file
 matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
     // TODO other types!
-    return DenseMatrix(b, a.N, a.M);
+    return DenseMatrix(UpCast(a.data_type, b).T, a.N, a.M);
+}
+
+#scope_export
+MatrixMatrixCastHelper :: struct(A: Type, B: Type) {
+    T :: #run matrix_matrix_cast_helper(A,B);
+}
+#scope_file
+matrix_matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
+    // TODO other types!
+    return DenseMatrix(UpCast(a.data_type, b.data_type).T, a.N, a.M);
 }
 
 
@@ -164,7 +174,7 @@ MatrixSubmatrixHelper :: struct(A: Type, N: int, M: int) {
     T :: #run matrix_submatrix_helper(A, N, M);
 }
 #scope_file
-matrix_submatrix_helper :: ($a: Type, N: int, M: int) -> Type {
+matrix_submatrix_helper :: ($a: Type, $N: int, $M: int) -> Type {
     // TODO other types!
     return DenseMatrix(a.data_type, N, M);
 }

@@ -1,10 +1,10 @@
 DELTA :: 1.0e-6;
 
-approx :: inline (a: Vector($T, $N), b: Vector($U, N)) -> bool {
+approx :: inline (a: $A/VectorType, b: $B/VectorType) -> bool {
     return norm_2(a - b) < DELTA;
 }
 
-approx :: inline (a: Matrix($T, $N, $M), b: Matrix($U, N, M)) -> bool {
+approx :: inline (a: $A/MatrixType, b: $B/MatrixType) -> bool {
     return norm_frobenius(a - b) < DELTA;
 }
 

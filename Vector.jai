@@ -329,9 +329,9 @@ reflect :: (vec: $A/VectorType, normal: $B/VectorType) -> VectorVectorHelper(A,B
           ##     ## ##     ## ##           ##
 */
 
-// Matrix Computations, 4th edition
-// The Johns Hopkins University Press
-// Algorithm 1.1.2 Saxpy, page 4
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? Algorithm 1.1.2 Saxpy, page 4
 saxpy :: (a: *$A/VectorType, b: $B/VectorType, factor: Scalar($C)) {
     #if CHECKS {
         #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
@@ -345,10 +345,9 @@ saxpy :: (a: *$A/VectorType, b: $B/VectorType, factor: Scalar($C)) {
 
 
 
-// Matrix Computations, 4th edition
-// The Johns Hopkins University Press
-// Algorithm 1.1.3 Row-Oriented Gaxpy, page 5
-// gaxpy :: (y: *Vector($T, $N), A: Matrix($U, N, M), x: Vector($V, $M)) {
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? Algorithm 1.1.3 Row-Oriented Gaxpy, page 5
 gaxpy :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
     #if CHECKS {
         #run assert(Y.N == M.N, "dimensions do not match (%, %)\n", Y.N, M.N);
@@ -381,50 +380,67 @@ gaxpy :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
    ##    ##     ## ##     ## ##    ##  ######  ##
 */
 
-permute :: (v: $Vector($V, $N), order: ..int) -> Vector(V, N) {
+permute :: (v: $A/VectorType, order: ..int) -> A {
     #if CHECKS {
-        assert(N == order.count);
+        assert(A.N == order.count);
     }
-    res : Vector(V, N) = ---;
-    for 0..N-1 {
-        res.data[it] = v[order[it]];
+    res : A = ---;
+
+    for res {
+        set(*res, it_index, get(v, order[it_index]));
     }
 
     return res;
 }
 
-permute :: (v: *Vector($V, $N), order: ..int) {
+// TODO: check, if this in-place permutation is correct!
+permute :: (v: *$V/VectorType, order: ..int) {
     #if CHECKS {
-        assert(N == order.count);
+        assert(V.N == order.count);
     }
 
-    for 0..N-1 {
-        if order[it] <= it then continue;
+    for v {
+        if order[it_index] <= it_index then continue;
 
-        v.data[it], v.data[order[it]] = swap(v.data[it], v.data[order[it]]);
+        tmp := it;
+        set(v, it_index, get(v, order[it_index]));
+        set(v, order[it_index], tmp);
     }
+
+    // * original code
+    // for 0..N-1 {
+    //     if order[it] <= it then continue;
+
+    //     v.data[it], v.data[order[it]] = swap(v.data[it], v.data[order[it]]);
+    // }
 }
 
-swap :: (v: *Vector($V, $N), i: int, j: int) {
+swap :: (v: *$V/VectorType, i: int, j: int) {
     #if CHECKS {
-        assert(i >= 0 && i < N);
-        assert(j >= 0 && j < N);
+        assert(i >= 0 && i < V.N);
+        assert(j >= 0 && j < V.N);
     }
-    v.data[i], v.data[j] = swap(v.data[i], v.data[j]);
+    tmp := get(v, i);
+    set(v, i, get(v, j));
+    set(v, j, tmp);
 }
 
 
 
-conjugate :: (v: Vector($V, $N)) -> Vector(V, N) {
-    res : Vector(V, N) = ---;
-    for v.data {
-        res.data[it_index] = conjugate(it);
+conjugate :: (v: $V/VectorType) -> V {
+    res : V = ---;
+    for raw(*v) {
+        set_raw(*res, it_raw_index, conjugate(it));
     }
     return res;
 }
-conjugate :: (v: *Vector($V, $N)) {
-    for v.data {
-        v.data[it_index] = conjugate(it);
+conjugate :: (v: *$V/VectorType) {
+    // * no-op for real numbers
+    // TODO might update later when including quaternions, octonions
+    #if V.data_type == Complex64 {
+        for raw(v) {
+            set_raw(v, it_raw_index, conjugate(it));
+        }
     }
 }
 
@@ -441,24 +457,23 @@ conjugate :: (v: *Vector($V, $N)) {
         ##        ######   ######  ##     ## ######## ##     ## ##     ##
 */
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Definition 3.5.2 Norms, page 171
-norm :: (v: Vector($T, $N), $$n: float64) -> float64 {
-
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Definition 3.5.2 Norms, page 171
+norm :: (v: $V/VectorType, $$n: float64) -> float64 {
     #if is_constant(n) {
         #if n == Math.FLOAT64_INFINITY {
-            m := abs(v[0]);
-            for 1..N-1 {
-                tmp := abs(v[it]);
+            m := abs(get(v,0));
+            for 1..V.N-1 {
+                tmp := abs(get(v,it));
                 m = ifx m < tmp then tmp else m;
             }
             return m;
         } else #if n == 1.0 {
             res : float64 = 0.0;
-            for 0..N-1 {
-                res := abs(v[it]);
+            for 0..V.N-1 {
+                res := abs(get(v,it));
             }
             return res;
         } else #if n == 2.0 {
@@ -472,30 +487,35 @@ norm :: (v: Vector($T, $N), $$n: float64) -> float64 {
 }
 
 #scope_file
-_generic_norm :: inline (v: Vector($T, $N), n: float64) -> float64 {
+_generic_norm :: (v: $V/VectorType, n: float64) -> float64 {
     res : float64 = 0.0;
-    for 0..N-1 {
-        res += pow(abs(v[it]), n, float64);
+
+    for v {
+        res += pow(abs(it), n, float64);
     }
+
     return pow(res, 1.0/n, float64);
 }
 #scope_export
 
 
-norm_2 :: inline (v: Vector($T, $N)) -> float64 {
+norm_2 :: inline (v: $V/VectorType) -> float64 {
     return norm(v, 2.0);
 }
 
-norm_1 :: inline (v: Vector($T, $N)) -> float64 {
+norm_1 :: inline (v: $V/VectorType) -> float64 {
     return norm(v, 1.0);
 }
 
-norm_inf :: inline (v: Vector($T, $N)) -> float64 {
+norm_inf :: inline (v: $V/VectorType) -> float64 {
     return norm(v, Math.FLOAT64_INFINITY);
 }
 
 
-angle :: (a: Vector($A, $N), b: Vector($B, N)) -> float64 {
+angle :: (a: $A/VectorType, b: $B/VectorType) -> float64 {
+    #if CHECKS {
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
+    }
     return acos( abs(conjugate(a) * b) / (norm_2(a) * norm_2(b)) );
 }
 
@@ -528,12 +548,13 @@ test_vector :: () {
 
     print("\n\nVector -------------------------------\n\n");
     {
-        v := vec(5, float64, 1.0, 2.0, 3.0, 4.0, 5.0);
-        print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, type_of(v), v.T);
+        v : DenseVector(float64, 5);
+        vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
+        print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, type_of(v), v.data_type);
         a := v + v;
-        print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.T);
+        print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.data_type);
         a = a + v;
-        print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.T);
+        print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.data_type);
     }
 }
 

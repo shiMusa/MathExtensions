@@ -7,24 +7,26 @@
 //     return m.cols == m.rows;
 // }
 
-is_diagonal_unit :: (m: Matrix($T, $N, $M)) -> bool {
+is_diagonal_unit :: (m: $M/MatrixType) -> bool {
     res := true;
-    n :: #run min(N, M);
+    n :: #run min(M.N, M.M);
+    eins := one(M.data_type);
     for 0..n-1 {
-        if m[it][it] != one(T) then return false;
+        if get(m,it,it) != eins then return false;
     }
     return true;
 }
 
 
 // checks if values != 0 are only in the bottom left corner
-is_left_triangular :: (m: Matrix($T, $N, $M)) -> bool {
-    for i: 0..N-1 {
-        for j: i+1..M-1 {
-            #if T == Complex64 || T == float64 || T == float32 {
-                if !approx(m[i][j], zero(T)) then return false;
+is_left_triangular :: (m: $M/MatrixType) -> bool {
+    zro := zero(M.data_type);
+    for i: 0..M.N-1 {
+        for j: i+1..M.M-1 {
+            #if M.data_type == Complex64 || M.data_type == float64 || M.data_type == float32 {
+                if !approx(get(m,i,j), zro) then return false;
             } else {
-                if m[i][j] != zero(T) then return false;
+                if get(m,i,j) != zro then return false;
             }
         }
     }
@@ -32,47 +34,49 @@ is_left_triangular :: (m: Matrix($T, $N, $M)) -> bool {
 }
 
 // checks if values != 0 are only in the top right corner
-is_right_triangular :: (m: Matrix($T, $N, $M)) -> bool {
-    for i: 0..N-1 {
+is_right_triangular :: (m: $M/MatrixType) -> bool {
+    zro := zero(M.data_type);
+    for i: 0..M.N-1 {
         for j: 0..i-1 {
-            #if T == Complex64 || T == float64 || T == float32 {
-                if !approx(m[i][j], zero(T)) then return false;
+            #if M.data_type == Complex64 || M.data_type == float64 || M.data_type == float32 {
+                if !approx(get(m,i,j), zro) then return false;
             } else {
-                if m[i][j] != zero(T) then return false;
+                if get(m,i,j) != zro then return false;
             }
         }
     }
     return true;
 }
 
-is_right_quasi_triangular :: (R: Matrix($T, $N, $M)) -> bool {
-    for i: 0..N-1 {
+is_right_quasi_triangular :: (R: $M/MatrixType) -> bool {
+    zro := zero(M.data_type);
+    for i: 0..M.N-1 {
         for j: 0..i-2 {
             if i>j+1 { 
-                if R[i][j] != zero(T) {
-                    print("non-zero element found: R[%][%] = %\n", i, j, R[i][j]);
+                if get(R,i,j) != zro {
+                    print("non-zero element found: R[%][%] = %\n", i, j, get(R,i,j));
                     return false;
                 }
             }
         }
         if i>=2 {
             // diagonal blocks
-            if R[i][i-1] != zero(T) {
-                if R[i-1][i-2] != zero(T) || R[i+1][i] != zero(T) {
+            if get(R,i,i-1) != zro {
+                if get(R,i-1,i-2) != zro || get(R,i+1,i) != zro {
                     print("diagonal block error at i = %\n", i);
                     return false;
                 }
             }
             // 1x1 diagonal blocks invertible
-            if R[i-1][i] == zero(T) && R[i+1][i] == zero(T) {
-                if R[i][i] == zero(T) {
+            if get(R,i-1,i) == zro && get(R,i+1,i) == zro {
+                if get(R,i,i) == zro {
                     print("1x1 block non-invertible, i = %\n", i);
                     return false;
                 }
             }
             // 2x2 diagonal blocks are invertible
-            if R[i][i-1] != zero(T) {
-                if R[i-1][i-1]*R[i][i] - R[i-1][i]*R[i][i-1] == zero(T) {
+            if get(R,i,i-1) != zro {
+                if get(R,i-1,i-1)*get(R,i,i) - get(R,i-1,i)*get(R,i,i-1) == zro {
                     print("2x2 block non-invertible, i = %\n", i);
                     return false;
                 }
@@ -82,18 +86,18 @@ is_right_quasi_triangular :: (R: Matrix($T, $N, $M)) -> bool {
     return true;
 }
 
-is_unitary :: (U: Matrix($T, $N, $M)) -> bool {
+is_unitary :: (U: $M/MatrixType) -> bool {
     return is_quadratic(U) && is_diagonal_unit(dagger(U)*U);
 }
 
 // more rows than columns
-is_left_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
-    return N >= M && is_left_triangular(m);
+is_left_trapezoidal :: inline (m: $M/MatrixType) -> bool {
+    return M.N >= M.M && is_left_triangular(m);
 }
 
 // more columns than rows
-is_right_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
-    return M >= N && is_right_triangular(m);
+is_right_trapezoidal :: inline (m: $M/MatrixType) -> bool {
+    return M.M >= M.N && is_right_triangular(m);
 }
 
 
@@ -103,27 +107,29 @@ is_right_trapezoidal :: inline (m: Matrix($T, $N, $M)) -> bool {
 test_checks :: () {
     print("\n\nChecks -------------------------------\n\n");
     {
-        m := mat_id(Complex64, 3,3);
+        m : DenseMatrix(Complex64, 3, 3);
+        mat_init_unit(*m);
         assert(is_diagonal_unit(m));
-        m[1][1] = 2.0*R;
+        set(*m,1,1, 2.0*R);
         assert(!is_diagonal_unit(m));
     }
     {
-        m : Matrix(Complex64, 4, 4);
-        m[3][0] = 42.0*R;
+        m : DenseMatrix(Complex64, 4, 4);
+        set(*m,3,0, 42.0*R);
         assert(is_left_triangular(m));
-        m[0][3] = 42.0*R;
+        set(*m,0,3, 42.0*R);
         assert(!is_left_triangular(m));
     }
     {
-        m : Matrix(Complex64, 4, 4);
-        m[0][3] = 42.0*R;
+        m : DenseMatrix(Complex64, 4, 4);
+        set(*m,0,3, 42.0*R);
         assert(is_right_triangular(m));
-        m[3][0] = 42.0*R;
+        set(*m,3,0, 42.0*R);
         assert(!is_right_triangular(m));
     }
     {
-        m := mat(4, 4,
+        m : DenseMatrix(int, 4, 4);
+        mat_init(*m,
             1, 3, 4, 5,
             0, 2, 3, 4,
             0, 1, 2, 3,

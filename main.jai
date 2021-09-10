@@ -15,7 +15,7 @@ main :: () {
     test_approximations();
     
     test_checks();
-    test_linear_algebra();
+    // test_linear_algebra();
 
     test_scalar();
     test_vector();
