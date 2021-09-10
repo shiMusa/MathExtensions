@@ -25,21 +25,24 @@ MatrixTrait :: struct(
     data_type: Type,
     N: int,
     M: int,
-    N_lin: int,
+    N_raw: int,
     flags: FLAGS,
     get: (m: matrix_type, int, int) -> data_type,
     set: (m: *matrix_type, int, int, data_type) -> (),
     get_lin: (m: matrix_type, int) -> data_type,
     set_lin: (m: *matrix_type, int, data_type) -> (),
-    from_index: (m: matrix_type, int) -> (int, int),
-    to_index: (m: matrix_type, int, int) -> int
+    from_lin_index: (m: matrix_type, int) -> (int, int),
+    to_lin_index: (m: matrix_type, int, int) -> int,
+    get_raw: (m: matrix_type, int) -> data_type,
+    set_raw: (m: *matrix_type, int, data_type) -> (),
+    from_raw_index: (m: matrix_type, int) -> int
 ){}
-from_index :: inline (m: $M/MatrixTrait, i: int) -> int, int {
-    r, c := m.from_index(m, i);
+from_lin_index :: inline (m: $M/MatrixTrait, i: int) -> int, int {
+    r, c := m.from_lin_index(m, i);
     return r, c;
 }
-to_index :: inline (m: $M/MatrixTrait, i: int, j: int) -> int {
-    return m.to_index(m, i,j);
+to_lin_index :: inline (m: $M/MatrixTrait, i: int, j: int) -> int {
+    return m.to_lin_index(m, i,j);
 }
 get :: inline (m: $M/MatrixTrait, i: int, j: int) -> M.data_type {
     return m.get(m, i, j);
@@ -55,10 +58,40 @@ set_lin :: inline (m: *$M/MatrixTrait, i: int, value: M.data_type) {
 }
 for_expansion :: (m: *$M/MatrixTrait, body: Code, flags: For_Flags) #expand {
     i := 0;
-    while i < m.N_lin {
+    while i < M.N*M.M {
         `it_index := i;
         `it := get_lin(<<m, i);
-        `it_row, `it_column := from_index(<<m, i);
+        `it_row, `it_column := from_lin_index(<<m, i);
+        #insert body;
+        i += 1;
+    }
+}
+
+from_raw_index :: inline (m: $M/MatrixTrait, i: int) -> int {
+    return m.from_raw_index(m, i);
+}
+get_raw :: inline (m: $M/MatrixTrait, i: int) -> M.data_type {
+    return m.get_raw(m, i);
+}
+set_raw :: inline (m: *$M/MatrixTrait, i: int, value: M.data_type) {
+    m.set_raw(m, i, value);
+}
+raw :: inline (m: *$M/MatrixTrait) -> MatrixRawForExpansion(M) {
+    res : MatrixRawForExpansion(M) = ---;
+    res.matrix = m;
+    return res;
+}
+#scope_file
+MatrixRawForExpansion :: struct(T: Type) {
+    matrix: *T;
+}
+#scope_export
+for_expansion :: (m: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) #expand {
+    i := 0;
+    while i < M.N_raw {
+        `it_index := i;
+        `it := get_raw(<<m.matrix, i);
+        `it_row, `it_column := from_lin_index(<<m.matrix, from_raw_index(<<m.matrix, i));
         #insert body;
         i += 1;
     }
@@ -79,23 +112,27 @@ FullMatrix :: struct(_T: Type, _N: int, _M: int) {
         full_matrix_set,
         full_matrix_get_lin,
         full_matrix_set_lin,
-        full_matrix_from_index,
-        full_matrix_to_index
+        full_matrix_from_lin_index,
+        full_matrix_to_lin_index,
+        full_matrix_get_lin, // raw versions same as normal
+        full_matrix_set_lin, // raw versions same as normal
+        full_matrix_raw
     ); 
     data: [_N*_M]_T;
 }
+#scope_file
 full_matrix_get :: inline (m: FullMatrix($T, $N, $M), i: int, j: int) -> T {
     return m.data[i*M + j];
 }
 full_matrix_set :: inline (m: *FullMatrix($T, $N, $M), i: int, j: int, value: T) {
     m.data[i*M + j] = value;
 }
-full_matrix_from_index :: inline (m: FullMatrix($T, $N, $M), i: int) -> int, int {
+full_matrix_from_lin_index :: inline (m: FullMatrix($T, $N, $M), i: int) -> int, int {
     c := i % M;
     r := (i-c)/M;
     return r, c;
 }
-full_matrix_to_index :: inline (m: FullMatrix($T, $N, $M), i: int, j: int) -> int {
+full_matrix_to_lin_index :: inline (m: FullMatrix($T, $N, $M), i: int, j: int) -> int {
     return i*M+j;
 }
 full_matrix_get_lin :: inline (m: FullMatrix($T, $N, $M), i: int) -> T {
@@ -104,6 +141,11 @@ full_matrix_get_lin :: inline (m: FullMatrix($T, $N, $M), i: int) -> T {
 full_matrix_set_lin :: inline (m: *FullMatrix($T, $N, $M), i: int, value: T) {
     m.data[i] = value;
 }
+full_matrix_raw :: inline (m: FullMatrix($T, $N, $M), i: int) -> int {
+    return i;
+}
+#scope_export
+
 
 
 
@@ -120,8 +162,11 @@ UpperTriangularQuadMatrix :: struct(_T: Type, _N: int) {
         upper_triangular_quad_matrix_set,
         upper_triangular_quad_matrix_get_lin,
         upper_triangular_quad_matrix_set_lin,
-        upper_triangular_quad_matrix_from_index,
-        upper_triangular_quad_matrix_to_index
+        upper_triangular_quad_matrix_from_lin_index,
+        upper_triangular_quad_matrix_to_lin_index,
+        upper_triangular_quad_matrix_get_raw,
+        upper_triangular_quad_matrix_set_raw,
+        upper_triangular_quad_matrix_raw
     ); 
     data: [_N*(_N+1)/2]_T;
 }
@@ -131,20 +176,24 @@ upper_triangular_quad_matrix_get :: inline (m: UpperTriangularQuadMatrix($T, $N)
 upper_triangular_quad_matrix_set :: inline (m: *UpperTriangularQuadMatrix($T, $N), i: int, j: int, value: T) {
     m.data[i] = value; // ! wrong, TODO correct math here
 }
-upper_triangular_quad_matrix_from_index :: (m: UpperTriangularQuadMatrix($T, $N), i: int) -> int, int {
+upper_triangular_quad_matrix_from_lin_index :: (m: UpperTriangularQuadMatrix($T, $N), i: int) -> int, int {
     return i%N, 0; // ! wrong, TODO correct math here
 }
-upper_triangular_quad_matrix_to_index :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int, j: int) -> int {
+upper_triangular_quad_matrix_to_lin_index :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int, j: int) -> int {
     return i; // ! wrong, TODO correct math here
 }
 upper_triangular_quad_matrix_get_lin :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int) -> T {
-    return m.data[i];
+    return m.data[i%N];
 }
 upper_triangular_quad_matrix_set_lin :: inline (m: *UpperTriangularQuadMatrix($T, $N), i: int, value: T) {
-    m.data[i] = value;
+    m.data[i%N] = value;
 }
-
-
+// just for testing
+upper_triangular_quad_matrix_get_raw :: upper_triangular_quad_matrix_get_lin;
+upper_triangular_quad_matrix_set_raw ::upper_triangular_quad_matrix_set_lin;
+upper_triangular_quad_matrix_raw :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int) -> int {
+    return i;
+}
 
 
 do_sth_to_matrix :: (x: *$M/MatrixTrait) {
@@ -203,9 +252,15 @@ test_matrix :: () {
     for m {
         print("m: it_index %, it %, it_row %, it_column %\n", it_index, it, it_row, it_column);
     }
+    for raw(*m) {
+        print("raw m: it_index %, it %, it_row %, it_column %\n", it_index, it, it_row, it_column);
+    }
 
     for utm {
         print("utm: it_index %, it %, it_row %, it_column %\n", it_index, it, it_row, it_column);
+    }
+    for raw(*utm) {
+        print("raw utm: it_index %, it %, it_row %, it_column %\n", it_index, it, it_row, it_column);
     }
 }
 
