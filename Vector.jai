@@ -37,15 +37,6 @@ str :: (v: $V/VectorType, indent: string = "    ") -> string {
 */
 
 
-#scope_file
-VectorCastHelper :: struct(V: Type, t: Type) {
-    T :: vector_cast_helper(V, t);
-}
-vector_cast_helper :: ($V: Type, $t: Type) -> Type {
-    return DenseVector(t, V.N); // TODO other types
-}
-#scope_export
-
 vec_cast :: ($type: Type, v: $V/VectorType) -> VectorCastHelper(V, type).T {
     res : VectorCastHelper(V, type).T; // initialize all values to zero, important for sparse?
 
@@ -94,27 +85,20 @@ vec_init_all :: inline (v: *$V/VectorType, value: $T) {
 
 
 
-#scope_file
-VectorSubvectorHeper :: struct(V: Type, N: int) {
-    T :: #run vector_subvector_helper(V, N);
-}
-vector_subvector_helper :: ($V: Type, $N: int) -> Type {
-    return DenseVector(V.data_type, N);
-}
-#scope_export
+
 // inclusive left, exclusive right bounds
-vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSubvectorHeper(V, to-from).T {
+vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSizeHelper(V, to-from).T {
     #if CHECKS {
         #run assert(to > from, "bounds not possible: to(%) <= from(%)\n", to, from);
         #run assert(to < N, "bound not possible: to(%) >= N(%)\n", to, N);
         #run assert(from >= 0, "bound not possible: from(%) < 0\n", from);
     }
-    res : VectorSubvectorHeper(V, to-from).T = ---;
+    res : VectorSizeHelper(V, to-from).T = ---;
 
     for res {
         set(*res, it_index, get(v, it_index + from));
     }
-    
+
     return res;
 }
 
@@ -131,15 +115,15 @@ vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSubvectorHepe
 
 
 
-operator == :: (a: Vector($A, $N), b: Vector($B, $M)) -> bool {
-    #if N != M {
+operator == :: (a: $V/VectorType, b: $B/VectorType) -> bool {
+    #if V.N != B.N {
         return false;
     } else {
-        for a.data {
-            if it != b[it_index] {
-                return false;
-            }
+
+        for a {
+            if it != get(b, it_index) then return false;
         }
+
         return true;
     }
 }
@@ -147,30 +131,33 @@ operator == :: (a: Vector($A, $N), b: Vector($B, $M)) -> bool {
 
 
 
-operator * :: (a: Vector($A, $N), b: Vector($B, N)) -> UpCast(A,B).T {
-    res := zero(UpCast(A,B).T);
-    for 0..N-1 {
-        res += a[it] * b[it];
-    }
-    return res;
-}
-
-operator * :: (a: Vector($A, $N), b: Scalar($B)) -> UpCast(A,B).T #symmetric {
-    res : Vector(UpCast(A,B).T, N) = ---;
-    for 0..N-1 {
-        res.data[it] = a[it] * b;
-    }
-    return res;
-}
-
-
-
-mul :: inline (a: *Vector($A, $N), b: Scalar($B)) {
+operator * :: (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
     #if CHECKS {
-        #assert(is_minor_number(A,B));
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
-    for 0..N-1 {
-        a.data[it] *= b.value;
+    res := zero(UpCast(A.data_type,B.data_type).T);
+    for a {
+        res += it * get(b, it_index);
+    }
+    return res;
+}
+
+operator * :: (a: $A/VectorType, b: Scalar($B)) -> VectorCastHelper(A,B).T #symmetric {
+    res : VectorCastHelper(A,B).T = ---;
+    for a {
+        set(*res, it_index, it * b.value);
+    }
+    return res;
+}
+
+
+
+mul :: inline (a: *$A/VectorType, b: Scalar($B)) {
+    #if CHECKS {
+        #assert(is_minor_number(A.data_type,B));
+    }
+    for raw(a) {
+        set_raw(a, it_raw_index, it * b.value);
     }
 }
 
@@ -182,93 +169,114 @@ mul :: inline (a: *Vector($A, $N), b: Scalar($B)) {
 
 
 
-operator / :: inline (a: Vector($A, $N), b: Vector($B, $M)) -> Matrix(UpCast(A,B).T, N, M) {
+
+outer_product :: (a: $A/VectorType, b: $B/VectorType) -> VectorMatrixHelper(A,B).T {
+    res : VectorMatrixHelper(A,B).T = ---;
+
+    for res {
+        set(*res, it_row, it_column, get(a, it_row) * get(b, it_column));
+    }
+
+    return res;
+}
+
+operator / :: inline (a: $A/VectorType, b: $B/VectorType) -> VectorMatrixHelper(A,B).T {
     return outer_product(a, b);
 }
 
-operator / :: (a: Vector($A, $N), b: Scalar($B)) -> Vector(UpCast(A,B).T, N) {
-    res : Vector(UpCast(A,B).T, N) = ---;
-    for 0..N-1 {
-        res.data[it] = a[it] / b.value;
+operator / :: (a: $A/VectorType, b: Scalar($B)) -> VectorCastHelper(A,B).T {
+    res : VectorCastHelper(A,B).T = ---;
+
+    for a {
+        set(*res, it_index, it / b.value);
     }
+
     return res;
 }
 
-div :: inline (a: *Vector($A, $N), b: Scalar($B)) {
+div :: inline (a: *$A/VectorType, b: Scalar($B)) {
     #if CHECKS {
         #assert(is_minor_number(A,B));
     }
-    for 0..N-1 {
-        a.data[it] /= b.value;
+
+    for raw(*a) {
+        set_raw(*a, it_raw_index, it / b.value);
     }
 }
 
-outer_product :: (a: Vector($A, $N), b: Vector($B, $M)) -> Matrix(UpCast(A,B).T, N, M) {
-    res : Matrix(UpCast(A,B).T, N, M) = ---;
-    for i: 0..N-1 {
-        for j: 0..M-1 {
-            res[i][j] = a[i] * b[j];
-        }
-    }
-    return res;
-}
 
 
 
 
 
-
-operator + :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
-    res : Vector(UpCast(A,B).T, N) = ---;
-    for 0..N-1 {
-        res.data[it] = a[it] + b[it];
-    }
-    return res;
-}
-
-add :: (a: *Vector($A, $N), b: Vector($B, N)) {
+operator + :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T {
     #if CHECKS {
-        #assert(is_minor_number(A, B));
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
-    for 0..N-1 {
-        a.data[it] += b[it];
+    res : VectorVectorHelper(A,B).T = ---;
+
+    for a {
+        set(*res, it_index, it + get(b, it_index));
     }
-}
 
-
-
-
-operator - :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
-    res : Vector(UpCast(A,B).T, N) = ---;
-    for 0..N-1 {
-        res.data[it] = a[it] - b[it];
-    }
     return res;
 }
 
-sub :: (a: *Vector($A, $N), b: Vector($B, N)) {
+add :: (a: *$A/VectorType, b: $B/VectorType) {
     #if CHECKS {
-        #assert(is_minor_number(A, B));
+        #assert(is_minor_number(A.data_type, B.data_type));
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
-    for 0..N-1 {
-        a.data[it] -= b[it];
+
+    for raw(*b) {
+        set(a, it_index, get(<<a, it_index) + it);
     }
 }
 
 
 
 
-operator - :: (a: Vector($A, $N)) -> Vector(A, N) {
-    res : Vector(C, N) = ---;
-    for 0..N-1 {
-        res.data[it] = -a[it];
+operator - :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T {
+    #if CHECKS {
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
+    res : VectorVectorHelper(A,B).T = ---;
+
+    for a {
+        set(*res, it_index, it - get(b, it_index));
+    }
+
     return res;
 }
 
-neg :: (a: *Vector($A, $N)) {
-    for 0..N-1 {
-        a.data[it] = -a.data[it];
+sub :: (a: *$A/VectorType, b: $B/VectorType) {
+    #if CHECKS {
+        #assert(is_minor_number(A.data_type, B.data_type));
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
+    }
+
+    for raw(*b) {
+        set(a, it_index, get(<<a, it_index) - it);
+    }
+}
+
+
+
+
+operator - :: (a: $A/VectorType) -> A {
+    res : A = ---;
+
+    for raw(*a) {
+        set_raw(*res, it_raw_index, -it);
+    }
+
+    return res;
+}
+
+neg :: (a: *$A/VectorType) {
+
+    for raw(a) {
+        set_raw(a, it_raw_index, -it);
     }
 }
 
@@ -280,17 +288,23 @@ neg :: (a: *Vector($A, $N)) {
 
 
 
-cross :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
-    #assert(N == 3);
-    res : Vector(UpCast(A,B).T, N) = ---;
-    res.data[0] = a[1]*b[2] - a[2]*b[1];
-    res.data[1] = a[2]*b[0] - a[0]*b[2];
-    res.data[2] = a[0]*b[1] - a[1]*b[0];
+cross :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T {
+    #if CHECKS {
+        #run assert(A.N == 3, "vector not of same dimension 3 (%)\n", A.N);
+        #run assert(B.N == 3, "vector not of same dimension 3 (%)\n", B.N);
+    }
+    res : VectorVectorHelper(A,B).T = ---;
+    set(*res, 0, get(a,1)*get(b,2) - get(a,2)*get(b,1));
+    set(*res, 1, get(a,2)*get(b,0) - get(a,0)*get(b,2));
+    set(*res, 2, get(a,0)*get(b,1) - get(a,1)*get(b,0));
     return res;
 }
 
 
-reflect :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
+reflect :: (vec: $A/VectorType, normal: $B/VectorType) -> VectorVectorHelper(A,B).T {
+    #if CHECKS {
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
+    }
     tau := 2.0 / (conjugate(normal) * normal);
     alpha := tau * conjugate(normal) * vec;
     return vec - normal * alpha;
@@ -318,13 +332,14 @@ reflect :: (a: Vector($A, $N), b: Vector($B, N)) -> Vector(UpCast(A,B).T, N) {
 // Matrix Computations, 4th edition
 // The Johns Hopkins University Press
 // Algorithm 1.1.2 Saxpy, page 4
-saxpy :: (a: *Vector($A, $N), b: Vector($B, N), factor: $C) {
+saxpy :: (a: *$A/VectorType, b: $B/VectorType, factor: Scalar($C)) {
     #if CHECKS {
-        #assert(is_minor_number(A, B) && is_minor_number(A, C));
+        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
+        #assert(is_minor_number(A.data_type, B) && is_minor_number(A.data_type, C));
     }
 
-    for 0..N-1 {
-        a.data[it] += factor * b.data[it];
+    for a {
+        set(a, it_index, it + factor.value * get(b, it_index));
     }
 }
 
@@ -333,15 +348,16 @@ saxpy :: (a: *Vector($A, $N), b: Vector($B, N), factor: $C) {
 // Matrix Computations, 4th edition
 // The Johns Hopkins University Press
 // Algorithm 1.1.3 Row-Oriented Gaxpy, page 5
-gaxpy :: (y: *Vector($T, $N), A: Matrix($U, N, M), x: Vector($V, $M)) {
+// gaxpy :: (y: *Vector($T, $N), A: Matrix($U, N, M), x: Vector($V, $M)) {
+gaxpy :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
     #if CHECKS {
-        #assert(is_minor_number(T, U) && is_minor_number(T, V));
+        #run assert(Y.N == M.N, "dimensions do not match (%, %)\n", Y.N, M.N);
+        #run assert(X.N == M.M, "dimensions do not match (%, %)\n", X.N, M.M);
+        #assert(is_minor_number(Y.data_type, M.data_type) && is_minor_number(Y.data_type, X.data_type));
     }
 
-    for i: 0..N {
-        for j: 0..M {
-            y.data[i] += A[i][j] * x.data[j];
-        }
+    for A {
+        set(y, it_row, get(<<y, it_row) + it * get(x, it_column));
     }
 }
 
@@ -365,7 +381,7 @@ gaxpy :: (y: *Vector($T, $N), A: Matrix($U, N, M), x: Vector($V, $M)) {
    ##    ##     ## ##     ## ##    ##  ######  ##
 */
 
-permute :: (v: Vector($V, $N), order: ..int) -> Vector(V, N) {
+permute :: (v: $Vector($V, $N), order: ..int) -> Vector(V, N) {
     #if CHECKS {
         assert(N == order.count);
     }

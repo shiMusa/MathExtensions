@@ -117,3 +117,51 @@ dense_vector_set :: inline (v: *DenseVector($T, $N), i: int, value: T) {
     v.data[i] = value;
 }
 #scope_export
+
+
+// ##     ## ######## ##       ########  ######## ########   ######
+// ##     ## ##       ##       ##     ## ##       ##     ## ##    ##
+// ##     ## ##       ##       ##     ## ##       ##     ## ##
+// ######### ######   ##       ########  ######   ########   ######
+// ##     ## ##       ##       ##        ##       ##   ##         ##
+// ##     ## ##       ##       ##        ##       ##    ##  ##    ##
+// ##     ## ######## ######## ##        ######## ##     ##  ######
+
+
+VectorCastHelper :: struct(V: Type, t: Type) {
+    T :: vector_cast_helper(V, t);
+}
+#scope_file
+vector_cast_helper :: ($V: Type, $t: Type) -> Type {
+    return DenseVector(UpCast(V.data_type,t).T, V.N); // TODO other types
+}
+#scope_export
+
+
+VectorSizeHelper :: struct(V: Type, N: int) {
+    T :: #run vector_size_helper(V, N);
+}
+#scope_file
+vector_size_helper :: ($V: Type, $N: int) -> Type {
+    return DenseVector(V.data_type, N);
+}
+#scope_export
+
+
+VectorMatrixHelper :: struct(A: Type, B: Type) {
+    T :: vector_matrix_helper(A,B);
+}
+#scope_file
+vector_matrix_helper :: ($A: Type, $B: Type) -> Type {
+    return DenseMatrix(UpCast(A.data_type, B.data_type), A.N, B.N);
+}
+#scope_export
+
+VectorVectorHelper :: struct(A: Type, B: Type) {
+    T :: vector_vector_helper(A, B);
+}
+#scope_file
+vector_vector_helper :: ($A: Type, $B: Type) -> Type {
+    return DenseVector(UpCast(A.data_type, B.data_type).T, A.N); // TODO other types
+}
+#scope_export
