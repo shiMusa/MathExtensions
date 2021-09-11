@@ -100,8 +100,8 @@ is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
 mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
     res : MatrixCastHelper(M, type).T = ---;
 
-    for i: 0..M.N {
-        for j: 0..M.M {
+    for i: 0..M.N-1 {
+        for j: 0..M.M-1 {
             set(*res, i, j, ncast(type, get(m, i, j)));
         }
     }
@@ -111,8 +111,8 @@ mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must
 
 copy :: (m: $M/MatrixType) -> M #must {
     res : M = ---;
-    for i: 0..M.N {
-        for j: 0..M.M {
+    for i: 0..M.N-1 {
+        for j: 0..M.M-1 {
             set(*res, i, j, get(m, i, j));
         }
     }
@@ -120,8 +120,8 @@ copy :: (m: $M/MatrixType) -> M #must {
 }
 
 copy :: inline (to: *$M/MatrixType, from: M) {
-    for i: 0..M.N {
-        for j: 0..M.M {
+    for i: 0..M.N-1 {
+        for j: 0..M.M-1 {
             set(to, i, j, get(from, i, j));
         }
     }
@@ -140,8 +140,8 @@ mat_init :: (m: *$M/MatrixType, vals: ..$T) {
 }
 
 mat_init_all :: (m: *$M/MatrixType, value: $T) {
-    for i: 0..M.N {
-        for j: 0..M.M {
+    for i: 0..M.N-1 {
+        for j: 0..M.M-1 {
             set(m, i, j, ncast(M.data_type, value));
         }
     }
@@ -157,8 +157,7 @@ mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = false) {
             }
         }
     } else {
-        k := min(M.N, M.M);
-        for i: 0..k {
+        for i: 0..min(M.N, M.M)-1 {
             set(m, i, i, one(M.data_type));
         }
     }
@@ -169,8 +168,8 @@ mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = false) {
         assert(values.count == min(M.N, M.M), "not enough values (% values) for diagonal (% values)\n", values.count, min(M.N, M.M));
     }
     #if init_zeroes {
-        for i: 0..M.N {
-            for j: 0..M.M {
+        for i: 0..M.N-1 {
+            for j: 0..M.M-1 {
                 if i == j { 
                     set(m, i, j, ncast(M.data_type, values[i]));
                 } else {
@@ -179,7 +178,7 @@ mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = false) {
             }
         }
     } else {
-        for i: 0..#run min(M.N, M.M) {
+        for i: 0..min(M.N, M.M)-1 {
             set(m, i, i, ncast(M.data_type, values[i]));
         }
     }

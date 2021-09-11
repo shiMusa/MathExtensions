@@ -5,11 +5,11 @@
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.4.1 2x2 Linear System Solve, page 153
-// solves the system A x = b with 2x2 matrix A
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.4.1 2x2 Linear System Solve, page 153
+// ? solves the system A x = b with 2x2 matrix A
 sl2 :: solve_linear_2x2;
 solve_linear_2x2 :: (A: Matrix($T, $N, N), b: Vector($B, N)) -> Vector(UpCast(T,B).T, N) {
     #run assert(N == 2, "dimension mismatch: 2 != N = %\n", N);
@@ -29,12 +29,12 @@ solve_linear_2x2 :: (A: Matrix($T, $N, N), b: Vector($B, N)) -> Vector(UpCast(T,
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.4.2 Forward Linear Recurrence, page 155
-// solve the system Lx = b where L is a unit left-triangluar matrix
-// that means, all diagonals are 1 and all L_ij = 0 for j > i.
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.4.2 Forward Linear Recurrence, page 155
+// ? solve the system Lx = b where L is a unit left-triangluar matrix
+// ? that means, all diagonals are 1 and all L_ij = 0 for j > i.
 sllta :: solve_linear_left_triangular;
 solve_linear_left_triangular :: (L: Matrix($T, $N, N), b: Vector($V, N)) -> Vector(UpCast(T,V).T, N) {
     #if CHECKS {
@@ -57,12 +57,12 @@ solve_linear_left_triangular :: (L: Matrix($T, $N, N), b: Vector($V, N)) -> Vect
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.4.4 Backward Linear Recurrence, page 158
-// solve the system Rx = b where R is a right-triangluar matrix
-// that means all R_ij = 0 for j < i.
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.4.4 Backward Linear Recurrence, page 158
+// ? solve the system Rx = b where R is a right-triangluar matrix
+// ? that means all R_ij = 0 for j < i.
 slrta :: solve_linear_right_triangular;
 solve_linear_right_triangular :: (R: Matrix($T, $N, N), b: Vector($V, N)) -> Vector(UpCast(T,V).T, N) {
     #if CHECKS {
@@ -89,11 +89,11 @@ solve_linear_right_triangular :: (R: Matrix($T, $N, N), b: Vector($V, N)) -> Vec
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
-// solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
+// ? solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
 slrqta :: solve_linear_right_quasi_triangular;
 solve_linear_right_quasi_triangular :: (R: Matrix($T, $N, N), b: Vector($V, N)) -> Vector(UpCast(T,V).T, N) {
     #if CHECKS {
@@ -143,10 +143,10 @@ solve_linear_right_quasi_triangular :: (R: Matrix($T, $N, N), b: Vector($V, N)) 
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.4.8 Orthogonal Projection, page 167
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.4.8 Orthogonal Projection, page 167
 solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop :: solve_linear_orthogonal_projection;
 solve_linear_orthogonal_projection :: (Q: Matrix($T, $N, $M), b: Vector($V, N)) -> Vector(UpCast(T,V).T, M) {
@@ -162,11 +162,11 @@ solve_linear_orthogonal_projection :: (Q: Matrix($T, $N, $M), b: Vector($V, N)) 
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.4.9 Successive Orthogonal Projection, page 168
-// not sure if this algo is useful. seems to be slower than the previous one.
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.4.9 Successive Orthogonal Projection, page 168
+// ? not sure if this algo is useful. seems to be slower than the previous one.
 slsop :: solve_linear_successive_orthogonal_projection;
 solve_linear_successive_orthogonal_projection :: (Q: Matrix($T, $N, $M), b: Vector($V, M)) -> Vector(UpCast(T,V).T, M) {
     #if CHECKS {
@@ -187,10 +187,10 @@ solve_linear_successive_orthogonal_projection :: (Q: Matrix($T, $N, $M), b: Vect
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// 3.4.5.1 Left Trapezoidal, page 159
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? 3.4.5.1 Left Trapezoidal, page 159
 slltz :: solve_linear_left_trapezoidal;
 solve_linear_left_trapezoidal :: (L: Matrix($T, $N, $M), b: Vector($V, N)) -> Vector(UpCast(T,V).T, M) {
     #if CHECKS {
@@ -233,11 +233,11 @@ solve_linear_left_trapezoidal :: (l: Matrix($T, $N, $M), m: Matrix($U, N, $K)) -
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// 3.4.5.2 Right Trapezoidal, page 160
-// There are degrees of freedom left. These are set to 0 here.
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? 3.4.5.2 Right Trapezoidal, page 160
+// ? There are degrees of freedom left. These are set to 0 here.
 slrtz :: solve_linear_right_trapezoidal;
 solve_linear_right_trapezoidal :: (R: Matrix($T, $N, $M), b: Vector($V, N)) -> Vector(UpCast(T,V).T, M) {
     #if CHECKS {
@@ -275,10 +275,10 @@ solve_linear_right_trapezoidal :: (r: Matrix($T, $N, $M), m: Matrix($V, N, $K)) 
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
 decompose_LR :: (m: Matrix($T, $N, $M)) -> L: Matrix(T, N, M) #must, R: Matrix(T, N, M) #must {
 
     L := mat_id(T, N, M);
@@ -304,10 +304,10 @@ decompose_LR :: (m: Matrix($T, $N, $M)) -> L: Matrix(T, N, M) #must, R: Matrix(T
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
 gaussian_factorization_no_pivot :: (m: Matrix($T, $N, $M)) -> Matrix(T, N, M) #must {
     A := copy(m);
 
@@ -329,19 +329,16 @@ gaussian_factorization_no_pivot :: (m: Matrix($T, $N, $M)) -> Matrix(T, N, M) #m
 
 
 
-// // Scientific Computing, Vol I: Linear and nonlinear equations
-// // Texts in computational science and engineering 18
-// // Springer
-// // Algorithm 3.7.2 Solve Linear System via Gaussian Factorization - No Pivoting, page 199
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.7.2 Solve Linear System via Gaussian Factorization - No Pivoting, page 199
 slgf_np :: solve_linear_gaussian_factorization_no_pivot;
 solve_LRnp :: solve_linear_gaussian_factorization_no_pivot;
 solve_LUnp :: solve_linear_gaussian_factorization_no_pivot;
 solve_linear_gaussian_factorization_no_pivot :: (A: Matrix($T, $N, $M), b: Vector($V, N)) -> Vector(UpCast(T,V).T, M) {
     M := gaussian_factorization_no_pivot(A);
     L, R := decompose_LR(M);
-
-    // print("R = %\n", str(R));
-
     y := solve_linear_left_trapezoidal(L, b);
     return solve_linear_right_trapezoidal(R, y);
 }
@@ -353,10 +350,10 @@ solve_linear_gaussian_factorization_no_pivot :: (A: Matrix($T, $N, $M), b: Vecto
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
 gaussian_factorization_full_pivot :: (m: Matrix($T, $N, $M))
  -> Matrix(T, N, M) #must, 
     rows: [N]int #must, 
@@ -429,10 +426,10 @@ gaussian_factorization_full_pivot :: (m: Matrix($T, $N, $M))
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.7.4 Solve Linear System via Gaussian Factorization with Full Pivoting, page 206
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.7.4 Solve Linear System via Gaussian Factorization with Full Pivoting, page 206
 slgf_fp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LRfp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LUfp :: solve_linear_gaussian_factorization_full_pivot;
@@ -454,10 +451,10 @@ solve_linear_gaussian_factorization_full_pivot :: (A: Matrix($T, $N, $M), b: Vec
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
 gaussian_factorization_row_pivot :: (m: Matrix($T, $N, $M)) -> Matrix(T, N, M) #must, rows: [N]int, permutations: int {
     A := copy(m);
 
@@ -505,10 +502,10 @@ gaussian_factorization_row_pivot :: (m: Matrix($T, $N, $M)) -> Matrix(T, N, M) #
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.7.7 Solve Linear System via Gaussian Factorization with Partial Pivoting, page 215
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.7.7 Solve Linear System via Gaussian Factorization with Partial Pivoting, page 215
 slgf_rp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LRrp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LUrp :: solve_linear_gaussian_factorization_row_pivot;
@@ -525,10 +522,10 @@ solve_linear_gaussian_factorization_row_pivot :: (A: Matrix($T, $N, $M), b: Vect
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 3.10.1 Matrix Inverse, page 261
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 3.10.1 Matrix Inverse, page 261
 inverse :: (A: Matrix($T, $N, N)) -> Matrix(T, N, N) {
     M, rows := gaussian_factorization_row_pivot(A);
     L, R := decompose_LR(M);
@@ -543,12 +540,12 @@ inverse :: (A: Matrix($T, $N, N)) -> Matrix(T, N, N) {
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// 3.11 Determinants, page 263
-//
-// it is not recommended to calculate the dterminant of large matrices
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? 3.11 Determinants, page 263
+// ?
+// ? it is not recommended to calculate the dterminant of large matrices
 det :: determinant;
 determinant :: (A: Matrix($T, $N, N)) -> T {
 
@@ -601,7 +598,7 @@ determinant :: (A: Matrix($T, $N, N)) -> T {
 
 
 
-////////////////////////////////////////////////////////////////////////////////////////
+//* //////////////////////////////////////////////////////////////////////////////////////
 /*
       ######## ########  ######  ########  ######
            ##    ##       ##    ##    ##    ##    ##
@@ -611,7 +608,7 @@ determinant :: (A: Matrix($T, $N, N)) -> T {
            ##    ##       ##    ##    ##    ##    ##
            ##    ########  ######     ##     ######
 */
-////////////////////////////////////////////////////////////////////////////////////////
+//* //////////////////////////////////////////////////////////////////////////////////////
 
 
 
