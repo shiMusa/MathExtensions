@@ -128,6 +128,15 @@ dense_vector_set :: inline (v: *DenseVector($T, $N), i: int, value: T) {
 // ##     ## ######## ######## ##        ######## ##     ##  ######
 
 
+VectorHelper :: struct(A: Type, B: Type, N: int) {
+    T :: #run vector_helper(A,B,N);
+}
+#scope_file
+vector_helper :: ($A: Type, $B: Type, $N: int) -> Type {
+    return DenseVector(UpCast(A.data_type,B.data_type).T, N);
+}
+#scope_export
+
 VectorCastHelper :: struct(V: Type, t: Type) {
     T :: #run vector_cast_helper(V, t);
 }

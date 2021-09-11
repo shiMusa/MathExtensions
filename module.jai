@@ -14,7 +14,7 @@
 #load "MatrixTypes.jai";
 #load "Matrix.jai";
 #load "Checks.jai";
-// #load "LinearAlgebra.jai";
+#load "LinearAlgebra.jai";
 
 CHECKS :: true;
 
