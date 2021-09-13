@@ -12,7 +12,6 @@ Feel free to add functionality and performance upgrades.
 
 ## Current thoughts
 
-- I just refactored the code to use generic types, e.g. `Matrix($T, $N, $M)`. The next step is to introduce a matrix-interface and make all the algorithms fully generic. `Prototype-Mk-I.jai` shows how to do it.
 - Add `Quaternion64` (maybe even `Octonion64`)
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
 
@@ -20,7 +19,7 @@ There are more thoughts written down in [the document outlining some of my thoug
 
 ## Currently Implemented
 
-Complex and reals numbers, vectors, matrices interoperate automatically (in most cases).
+Complex and reals scalars, vectors, matrices interoperate automatically (in most cases).
 Many functions specialize during compile-time on the real or complex variant (e.g. all the elementary functions).
 
 - Utils
@@ -50,7 +49,9 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - `polynom(x, ..a)` = a[0] x^n + a[1] x^{n-1} + ... + a[n] x^0, with a,x ∈ ℝ,ℂ
     - `synthetic_division`
     - `repeated_synthetic_division`
-- vector: `Vector($Type, $Dim)`; real or complex vector with
+- vector: `VectorType`; real or complex vector with
+    
+    `VectorType` is a generic interface/trate that is implemented by any concrete vector struct, e.g. `DenseVector($Type, $Dimensions)`.
     - `str`; for pretty printing
     - operators `[]`, `==`, `+`, `-`, `*`, `/`
     - in-place functions add, sub, neg, mul, div
@@ -63,9 +64,11 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - `angle`
     - `permute`
     - `swap`
-- matrix: `Matrix($Type, $Rows, $Cols)`; real or complex
-    - `str`; for pretty printing
-    - operators [], `[][]`, `==`, `+`, `-`, `*`, `/`
+- matrix: `MatrixType` ; real or complex
+    
+    `MatrixType` is a generic interface/trate that is implemented by any concrete matrix struct, e.g. `DenseMatrix($Type, $Columns, $Rows)`.
+    - `pstr`, `str` for pretty printing
+    - operators `[]`, `[][]`, `==`, `+`, `-`, `*`, `/`
     - `row`, `column`
     - in-place functions `add`, `sub`, `neg`, `mul`, `div`
     - multiple initialization functions (1, ones, hadamard, varargs, etc.)
@@ -99,20 +102,9 @@ Many functions specialize during compile-time on the real or complex variant (e.
 
 ### Future Tasks
 
-- general
-    - due to the constant work and improvment, many functions could be optimized using e.g. in-place functions instead of allocating data.
 - linear algebra
     - LAPACK Scaling for Gaussian factorization (Algorithm 3.9.1 [1])
     - Iterative Improvement for Gaussian factorization (Algorithm 3.9.2 [1])
-
-
-## Structure
-
-Let's keep it as simple as possible:
-
-- Operator overloading where it makes sense (linear algebra, complex numbers, quaternions, etc.), simple function calls otherwise.
-- No special type-aliases if not stricly necessary
-- A file for each major topic.
 
 ## Important
 
