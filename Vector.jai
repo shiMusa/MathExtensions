@@ -9,10 +9,21 @@
 */
 
 
-str :: (v: $V/VectorType, indent: string = "    ") -> string {
+pstr :: inline (v: $V/VectorType) -> string {
+    return str(v, pshift + 4, "|");
+}
+
+str :: (v: $V/VectorType, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
     builder: String_Builder;
     init_string_builder(*builder);
-    print_to_builder(*builder, "\n%", indent);
+    print_to_builder(*builder, "\n");
+    for 0..indent-1 {
+        if it % indent_every == 0 {
+            append(*builder, indent_character);
+        } else {
+            append(*builder, " ");
+        }
+    }
     for i: 0..V.N-1 {
         #if V.data_type == Complex64 {
             print_to_builder(*builder, "%, ", str(get(v,i)) );
@@ -22,7 +33,6 @@ str :: (v: $V/VectorType, indent: string = "    ") -> string {
     }
     return builder_to_string(*builder);
 }
-
 
 
 

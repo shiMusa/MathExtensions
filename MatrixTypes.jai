@@ -67,7 +67,7 @@ set_lin :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
 }
 for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
     i := 0;
-    while i < m.N_lin {
+    while i < M.N_lin {
         `it_index := i;
         `it := get_lin(<<m, i);
         `it_row, `it_column := from_lin_index(<<m, i);

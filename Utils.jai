@@ -208,22 +208,35 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 pshift := 0;
-println_shift :: inline (levels: int) {
+p_indent_every := 4;
+p_indent_character := "|";
+println_shift :: (levels: int) {
     pshift += 4 * levels;
 }
 
+println_push :: (heading: string = "", args: ..Any) #expand {
+    println(heading, ..args);
+    println_shift(1);
+    `defer println_shift(-1);
+}
 
-println :: inline (msg: string, args: ..Any) {
-    for 0..pshift {
-        print(" ");
+println :: (msg: string = "", args: ..Any) {
+    for 0..pshift-1 {
+        if it % p_indent_every == 0 {
+            print(p_indent_character);
+        } else
+            print(" ");
     }
     print(msg, ..args);
     print("\n");
 }
 
-println :: inline (arg: Any) {
-    for 0..pshift {
-        print(" ");
+println :: (arg: Any) {
+    for 0..pshift-1 {
+        if it % p_indent_every == 0 {
+            print(p_indent_character);
+        } else
+            print(" ");
     }
     print("%\n", arg);
 }

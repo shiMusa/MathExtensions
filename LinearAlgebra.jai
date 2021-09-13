@@ -20,11 +20,10 @@ solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N
     sigma := scl(max(abs(get(a,0,0)), abs(get(a,0,1)), abs(get(a,1,0)), abs(get(a,1,1))));
 
     mu := a / sigma;
-    det := scl(ncast(U, get(mu,0,0) * get(mu,1,1) - get(mu,0,1) * get(mu,1,0)));
+    det := scl(get(mu,0,0) * get(mu,1,1) - get(mu,0,1) * get(mu,1,0));
     g := b / sigma;
 
-    mat := dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0));
-    return  mat * g / det;
+    return  dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0)) / det * g;
 }
 
 
@@ -657,21 +656,18 @@ test_linear_algebra :: () {
     print("\n\nLinear Algebra -------------------------------\n\n");
 
     {
-        println("test 1");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 1");
 
         A := dmat(2,2, R, R, 2.0 - I, I);
-        println("mat_init: %", str(A));
+        println("mat_init: %", pstr(A));
 
         b := dvec(2, I, c64(2.0, 4.0));
-        println("vec_init: %", str(b));
+        println("vec_init: %", pstr(b));
 
-        println("solve_linear_2x2");
         res := solve_linear_2x2(A, b);
-        println("    result: %", str(res));
+        println("result: %", pstr(res));
 
-        sol := dvec(2, 
+        sol := dvec(2,  // ? this is the correct answer
             -0.25 + 1.75*I,
             0.25 - 0.75*I
         );
@@ -679,9 +675,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println("test 2");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 2");
 
         L : DenseMatrix(Complex64, 3, 3) = ---;
         mat_init(*L,
@@ -692,14 +686,12 @@ test_linear_algebra :: () {
         b : DenseVector(Complex64, 3) = ---;
         vec_init(*b, 3.0*R, -I, R-2.0*I);
         res := solve_linear_left_triangular(L, b);
-        println("% = % ?", str(L * res), str(b, ""));
+        println("% = % ?", pstr(L * res), pstr(b));
         assert(L * res == b);
     }
 
     {
-        println("test 3");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 3");
 
         M := dmat(3,3,
             2.0*R, I, R-2.0*I,
@@ -708,18 +700,16 @@ test_linear_algebra :: () {
         );
         b := dvec(3, 3.0*R, -I, R-2.0*I);
         res := solve_linear_right_triangular(M, b);
-        println("res %", res);
+        println("res %", pstr(res));
 
         test := norm_2(M * res - b);
-        println("%", M * res - b); 
-        println("%", test); 
+        println("%", pstr(M * res - b));
+        println("test = %", test); 
         assert(test < 1.0e-8, "res = %, M * res = % =? b = %", res, M*res, b);
     }
 
     {
-        println("test 4");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 4");
 
         m : DenseMatrix(int, 4, 4) = ---;
         mat_init(*m,
@@ -734,19 +724,18 @@ test_linear_algebra :: () {
         vec_init(*b, 2,3,4,5);
         cb := vec_cast(Complex64, b);
 
-        println("cm %, cb %", str(cm), str(cb));
+        println("cm %", pstr(cm));
+        println("cb %", pstr(cb));
 
         res := solve_linear_right_quasi_triangular(cm,cb);
-        println("res = %", str(res));
+        println("res = %", pstr(res));
 
         test := norm_2(cm * res - cb);
         assert(test < 1.0e-8);
     }
 
     {
-        println("test 5");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 5");
 
         M : DenseMatrix(Complex64, 3, 2) = ---;
         mat_init(*M, 
@@ -758,14 +747,12 @@ test_linear_algebra :: () {
         vec_init(*b, R, 2.0*R, -4.0*R);
 
         res := solve_linear_left_trapezoidal(M, b);
-        println("sllt: %", str(res));
+        println("sllt: %", pstr(res));
         assert( approx(M*res, b) );
     }
 
     {
-        println("test 6");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 6");
 
         M : DenseMatrix(Complex64, 2, 3) = ---;
         mat_init(*M, 
@@ -776,13 +763,11 @@ test_linear_algebra :: () {
         vec_init(*b,4*R, 6*R);
 
         res := solve_linear_right_trapezoidal(M, b);
-        println("slrt: %", str(res));
+        println("slrt: %", pstr(res));
         assert( approx(M*res, b) );
     }
     {
-        println("test 7");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 7");
 
         M   : DenseMatrix(Complex64, 2, 2) = ---;
         res : DenseMatrix(Complex64, 2, 2) = ---;
@@ -795,14 +780,13 @@ test_linear_algebra :: () {
             -1*R, 4*R
         );
         A := gaussian_factorization_no_pivot(M);
-        println("gaussian factorization: % -> %", str(M), str(A));
+        println("gaussian factorization: % ->", pstr(M));
+        println("%", pstr(A));
         assert( A == res , "%\n != %\n!", str(A), str(res));
     }
 
     {
-        println("test 8");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 8");
 
         M := dmat(2,2,
             R, I,
@@ -811,14 +795,12 @@ test_linear_algebra :: () {
         b := dvec(2, 4*R, 6*I);
 
         res := solve_LRnp(M, b);
-        println("solve linear system via Gaussian factorization (no pivoting): %", str(res));
+        println("solve linear system via Gaussian factorization (no pivoting): %", pstr(res));
         assert(res == dvec(2, 2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
     }
 
     {
-        println("test 9");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 9");
 
         M : DenseMatrix(Complex64, 3, 3) = ---;
         mat_init(*M,
@@ -826,17 +808,14 @@ test_linear_algebra :: () {
             2*R, CZERO, 4*R,
             3*R, -5*R, 3*R
         );
-        println("M %", M);
+        println("M %", pstr(M));
 
         A, rows, cols := gaussian_factorization_full_pivot(M);
-        println("A = %", A);
-        println("A = %", str(A));
+        println("A = %", pstr(A));
     }
 
     {
-        println("test 10");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 10");
 
         M : DenseMatrix(Complex64, 3, 3) = ---;
         mat_init(*M,
@@ -848,13 +827,12 @@ test_linear_algebra :: () {
         A, rows, cols := gaussian_factorization_full_pivot(M);
         L, R := decompose_LR(A);
 
-        println("L = %\nR = %", str(L), str(R));
+        println("L = %", pstr(L));
+        println("R = %", pstr(R));
     }
 
     {
-        println("test 11");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 11");
 
         M : DenseMatrix(Complex64, 2, 2) = ---;
         mat_init(*M,
@@ -865,16 +843,14 @@ test_linear_algebra :: () {
         vec_init(*b, 4*R, 6*I);
 
         res := solve_LRfp(M, b);
-        println("solve linear system via Gaussian factorization (full pivoting): %", str(res));
+        println("solve linear system via Gaussian factorization (full pivoting): %", pstr(res));
         sol : DenseVector(Complex64, 2) = ---;
         vec_init(*sol, 2.5-4.5*I, 4.5-1.5*I);
         assert(approx(res, sol), "\nCould not solve linear system via Gaussain factorization!");
     }
 
     {
-        println("test 12");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 12");
 
         M := dmat(2,2,
             R, I,
@@ -883,14 +859,12 @@ test_linear_algebra :: () {
         b := dvec(2,   4*R, 6*I);
 
         res := solve_LRrp(M, b);
-        println("solve linear system via Gaussian factorization (row pivoting): %", str(res));
+        println("solve linear system via Gaussian factorization (row pivoting): %", pstr(res));
         assert(approx(res, dvec(2, 2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
 
     {
-        println("test 13");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 13");
 
         L := dmat(3,3,
             R, CZERO, CZERO,
@@ -900,7 +874,7 @@ test_linear_algebra :: () {
         one : DenseMatrix(Complex64, 3, 3);
         mat_init_unit(*one);
         res := solve_linear_left_trapezoidal(L,one);
-        println("K = %", str(res));
+        println("K = %", pstr(res));
         assert(approx(res, dmat(3,3,
             R, CZERO, CZERO,
             -I, R, CZERO, 
@@ -909,9 +883,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println("test 14");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 14");
 
         M := dmat(3,3,
             2*R, I, -2*R,
@@ -921,7 +893,7 @@ test_linear_algebra :: () {
         one : DenseMatrix(Complex64, 3, 3);
         mat_init_unit(*one);
         res := solve_linear_right_trapezoidal(M,one);
-        println("K = %", str(res));
+        println("K = %", pstr(res));
         assert(approx(res, dmat(3,3,
             0.5*R, 0.5*R, 0.5-0.5*I,
             CZERO, I, CZERO,
@@ -930,9 +902,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println("test 15");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 15");
 
         M := dmat(3, 3,
             2*R, I, -2*R,
@@ -940,7 +910,7 @@ test_linear_algebra :: () {
             R, CZERO, R+I
         );
         iM := inverse(M);
-        println("iM = %", str(iM));
+        println("iM = %", pstr(iM));
         assert(approx(iM, dmat(3,3,
             c64(0.25, 0.25), c64(0.25, 0.25), c64(0.5, -0.5),
             -0.5*R, -0.5*R+I, R,
@@ -949,9 +919,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println("test 16");
-        println_shift(1);
-        defer println_shift(-1);
+        println_push("test 16");
 
         M := dmat(3, 3,
             2*R, I, -2*R,

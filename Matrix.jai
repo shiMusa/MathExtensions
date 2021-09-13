@@ -17,12 +17,22 @@
 
 */
 
-str :: (m: $M/MatrixType, indent: string = "    ") -> string {
+pstr :: inline (m: $V/MatrixType) -> string {
+    return str(m, pshift + 4, "|");
+}
+
+str :: (m: $M/MatrixType, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
     builder: String_Builder;
     init_string_builder(*builder);
     append(*builder, "\n");
     for i: 0..M.N-1 {
-        append(*builder, indent);
+        for 0..indent-1 {
+            if it % indent_every == 0 {
+                append(*builder, indent_character);
+            } else {
+                append(*builder, " ");
+            }
+        }
         for j: 0..M.M-1 {
             #if M.data_type == Complex64 {
                 print_to_builder(*builder, "%, ", str(get(m,i,j)) );
@@ -30,7 +40,8 @@ str :: (m: $M/MatrixType, indent: string = "    ") -> string {
                 print_to_builder(*builder, "%, ", get(m,i,j) );
             }
         }
-        append(*builder, "\n");
+        if i != M.N-1 then
+            append(*builder, "\n");
     }
     return builder_to_string(*builder);
 }
@@ -343,7 +354,7 @@ operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper
         #run assert(A.M == B.N, "Matrix dimensions don't match: a.cols = %, b.rows = %", A.M, B.N);
     }
 
-    res : MatrixMultiplicationHelper(A,B,A.N, B.M).T = ---;
+    res : MatrixMultiplicationHelper(A,B,A.N, B.M).T;
     for j: 0..B.M-1 {
         for k: 0..A.M-1 {
             tmp := get(b,k,j);
@@ -366,14 +377,12 @@ matrix_vector_multiplication_helper :: ($a: Type, $b: Type, $N: int) -> Type {
 MatrixVectorMultiplicationHelper :: struct (A: Type, B: Type, N: int) {
     T :: #run matrix_vector_multiplication_helper(A,B,N);
 }
-// ! there is some copiler bug. The type resolution seems to be broken in -x64 and LLVM somehow
-// ! recursive type definition might be the issue
 operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplicationHelper(A,B,A.N).T {
     #if CHECKS {
         #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim = %", A.M, B.N);
     }
 
-    res : MatrixVectorMultiplicationHelper(A,B,A.N).T = ---;
+    res : MatrixVectorMultiplicationHelper(A,B,A.N).T; // ! need to initialize values to 0!!!!
 
     for a {
         set(*res, it_row, get(res, it_row) + it * get(b, it_column));
@@ -387,7 +396,7 @@ operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
         #run assert(A.N == B.N, "Dimensions mismatch: a.dim = %, b.rows = %", A.N, B.N);
     }
 
-    res : MatrixVectorMultiplicationHelper(A,B,B.M).T = ---;
+    res : MatrixVectorMultiplicationHelper(A,B,B.M).T;
     for j: 0..B.N-1 {
         for i: 0..A.N-1 {
             set(*res,j, get(res,j) + get(a,i) * get(b,i,j));
