@@ -18,14 +18,17 @@
 */
 
 pstr :: inline (m: $V/MatrixType) -> string {
-    return str(m, pshift + 4, "|");
+    return str(m, p_offset, p_shift + 4, "|");
 }
 
-str :: (m: $M/MatrixType, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
+str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
     builder: String_Builder;
     init_string_builder(*builder);
     append(*builder, "\n");
     for i: 0..M.N-1 {
+        for 0..offset-1 {
+            append(*builder, " ");
+        }
         for 0..indent-1 {
             if it % indent_every == 0 {
                 append(*builder, indent_character);

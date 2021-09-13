@@ -10,13 +10,18 @@
 
 
 pstr :: inline (v: $V/VectorType) -> string {
-    return str(v, pshift + 4, "|");
+    return str(v, p_offset, p_shift + 4, "|");
 }
 
-str :: (v: $V/VectorType, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
+str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
     builder: String_Builder;
     init_string_builder(*builder);
     print_to_builder(*builder, "\n");
+
+    for 0..offset-1 {
+        append(*builder, " ");
+    }
+
     for 0..indent-1 {
         if it % indent_every == 0 {
             append(*builder, indent_character);
