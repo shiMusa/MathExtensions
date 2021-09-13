@@ -14,10 +14,12 @@ main :: () {
     test_polynomials();
     test_approximations();
     
+    test_checks();
+    test_linear_algebra();
+
     test_scalar();
     test_vector();
     test_matrix();
-
-    test_checks();
-    test_linear_algebra();
 }
+
+#run main();

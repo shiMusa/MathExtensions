@@ -60,9 +60,9 @@ from_raw_index :: inline (v: $V/VectorType, i: int) -> int {
     return v.from_raw_index(v, i);
 }
 raw :: inline (v: *$V/VectorType) -> VectorRawForExpansion(V) {
-    return VectorRawForExpansion(V).{
-        vector = v
-    };
+    res : VectorRawForExpansion(V) = ---;
+    res.vector = v;
+    return res;
 }
 #scope_file
 VectorRawForExpansion :: struct(T: Type) {
@@ -106,6 +106,27 @@ DenseVector :: struct(_T: Type, _N: int) {
     data: [_N]_T;
 }
 
+dvec :: inline($N: int, values: ..$T) -> DenseVector(T,N) {
+    #if CHECKS {
+        assert(values.count <= N);
+    }
+    res : DenseVector(T,N);
+    vec_init(*res, ..values);
+    return res;
+}
+
+dvec :: ($T: Type, $N: int, values: ..$U) -> DenseVector(T,N) {
+    #if CHECKS {
+        #run assert(is_minor_number(T, U));
+        assert(values.count <= N);
+    }
+    res : DenseVector(T,N);
+    for values {
+        set(*res, it_index, ncast(T, it));
+    }
+    return res;
+}
+
 #scope_file
 dense_vector_raw_index :: inline (v: DenseVector($T, $N), i: int) -> int {
     return i;
@@ -133,7 +154,7 @@ VectorHelper :: struct(A: Type, B: Type, N: int) {
 }
 #scope_file
 vector_helper :: ($A: Type, $B: Type, $N: int) -> Type {
-    return DenseVector(UpCast(A.data_type,B.data_type).T, N);
+    return DenseVector(UpCast(A.data_type, B.data_type).T, N);
 }
 #scope_export
 

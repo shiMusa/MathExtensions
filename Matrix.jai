@@ -129,12 +129,16 @@ copy :: inline (to: *$M/MatrixType, from: M) {
 
 mat_init :: (m: *$M/MatrixType, vals: ..$T) {
     #if CHECKS {
-        #assert(is_minor_number(M.data_type, T));
+        #run assert(is_minor_number(M.data_type, T));
         assert(vals.count <= M.N * M.M, "too many values (%) for matrix of % entries\n", vals.count, M.N * M.M);
     }
+    // println("mat_init");
+    // println("    vals: %", vals);
+
     for vals {
         j := it_index % M.M;
         i := (it_index - j) / M.M;
+        // println("    original %, cast %", it, ncast(M.data_type, it));
         set(m, i, j, ncast(M.data_type, it));
     }
 }
@@ -187,7 +191,7 @@ mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = false) {
 
 mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
     #if CHECKS {
-        #assert(M.N == 2 && M.M == 2);
+        #run assert(M.N == 2 && M.M == 2);
     }
     mat_init(m, 1, 1, 1, -1);
 }
@@ -196,7 +200,7 @@ mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
 // TODO come back to that later!
 // mat_hadamard :: ($type: Type, $nestings: int) -> Matrix(type, 1<<nestings, 1<<nestings) {
 //     #if CHECKS {
-//         #assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
+//         #run assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
 //     }
 //     #if nestings == 0 {
 //         return mat_hadamard_2(type);
@@ -279,7 +283,7 @@ row :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.M).T #must {
 
 column :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.N).T #must {
     #if CHECKS {
-        assert(i >= 0 && i < M);
+        assert(i >= 0 && i < M.M);
     }
     res : MatrixVectorHelper(M, M.N).T = ---;
     for 0..M.N-1 {
@@ -311,8 +315,8 @@ operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
         return false;
     } else {
         // TODO be smart about this, e.g. for sparse matrices
-        for i: 0..A.N {
-            for j: 0..A.M {
+        for i: 0..A.N-1 {
+            for j: 0..A.M-1 {
                 if get(a, i, j) != get(b, i, j) then return false;
             }
         }
@@ -353,7 +357,8 @@ operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper
 }
 
 
-#scope_file matrix_vector_multiplication_helper :: ($a: Type, $b: Type, $N: int) -> Type {
+#scope_file 
+matrix_vector_multiplication_helper :: ($a: Type, $b: Type, $N: int) -> Type {
     // TODO other types
     return DenseVector(UpCast(a.data_type, b.data_type).T, N);
 }
@@ -361,16 +366,17 @@ operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper
 MatrixVectorMultiplicationHelper :: struct (A: Type, B: Type, N: int) {
     T :: #run matrix_vector_multiplication_helper(A,B,N);
 }
+// ! there is some copiler bug. The type resolution seems to be broken in -x64 and LLVM somehow
+// ! recursive type definition might be the issue
 operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplicationHelper(A,B,A.N).T {
     #if CHECKS {
         #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim = %", A.M, B.N);
     }
 
     res : MatrixVectorMultiplicationHelper(A,B,A.N).T = ---;
-    for i: 0..A.N-1 {
-        for j: 0..A.M-1 {
-            set(*res,i, get(res,i) + get(a,i,j) * get(b,j));
-        }
+
+    for a {
+        set(*res, it_row, get(res, it_row) + it * get(b, it_column));
     }
 
     return res;
@@ -408,8 +414,8 @@ mul :: (a: *$A/MatrixType, b: Scalar($B)) {
         #run assert(is_minor_number(A.data_type, B));
     }
 
-    for i: 0..A.N {
-        for j: 0..A.M {
+    for i: 0..A.N-1 {
+        for j: 0..A.M-1 {
             set(a, i, j, get(<<a, i, j) * b.value);
         }
     }
@@ -431,10 +437,8 @@ operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
 operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B).T { 
     res : MatrixCastHelper(A, B).T = ---;
 
-    for i: 0..A.N {
-        for j: 0..A.M {
-            set(*res, i, j, get(a, i, j)/b.value);
-        }
+    for a {
+        set(*res, it_row, it_column, it / b.value);
     }
 
     return res;
@@ -444,11 +448,11 @@ operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B)
 
 div :: (a: *$A/MatrixType, b: Scalar($B)) {
     #if CHECKS {
-        #assert(is_minor_number(A.data_type, B));
+        #run assert(is_minor_number(A.data_type, B));
     }
 
-    for i: 0..A.N {
-        for j: 0..A.M {
+    for i: 0..A.N-1 {
+        for j: 0..A.M-1 {
             set(a, i, j, get(<<a, i, j) / b.value);
         }
     }
@@ -464,8 +468,8 @@ operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
     
     res : MatrixMatrixCastHelper(A,B).T = ---;
 
-    for i: 0..A.N {
-        for j: 0..A.M {
+    for i: 0..A.N-1 {
+        for j: 0..A.M-1 {
             set(*res, i, j, get(a, i, j) + get(b, i, j));
         }
     }
@@ -482,8 +486,8 @@ add :: (a: *$A/MatrixType, b: $B/MatrixType) {
         #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
 
-    for i: 0..A.N {
-        for j: 0..A.M {
+    for i: 0..A.N-1 {
+        for j: 0..A.M-1 {
             set(a, i, j, get(<<a, i, j) + get(b, i, j));
         }
     }
@@ -503,8 +507,8 @@ operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
     
     res : MatrixMatrixCastHelper(A,B).T = ---;
 
-    for i: 0..A.N {
-        for j: 0..A.M {
+    for i: 0..A.N-1 {
+        for j: 0..A.M-1 {
             set(*res, i, j, get(a, i, j) - get(b, i, j));
         }
     }
@@ -519,8 +523,8 @@ sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
         #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
 
-    for i: 0..A.N {
-        for j: 0..A.M {
+    for i: 0..A.N-1 {
+        for j: 0..A.M-1 {
             set(a, i, j, get(<<a, i, j) - get(b, i, j));
         }
     }
@@ -572,9 +576,9 @@ neg :: (a: *$A/MatrixType) {
 // C = C + A*B
 saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        #assert(A.N == C.N);
-        #assert(B.N == A.M && B.M == C.M);
-        #assert(is_minor_number(C.data_type, A.data_type) && is_minor_number(C.data_type, B.data_type));
+        #run assert(A.N == C.N);
+        #run assert(B.N == A.M && B.M == C.M);
+        #run assert(is_minor_number(C.data_type, A.data_type) && is_minor_number(C.data_type, B.data_type));
     }
 
     for j: 0..C.M-1 {
@@ -617,7 +621,7 @@ saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
 // check for compatible matrix types: e.g. this is not possible with triangular matrices
 permute_rows :: (m: $M/MatrixType, order: ..int) -> M #must {
     #if CHECKS {
-        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
         assert(order.count == N);
     }
 
@@ -633,8 +637,8 @@ permute_rows :: (m: $M/MatrixType, order: ..int) -> M #must {
 // there are faster ways of doing this.
 permute_columns :: (m: $M/MatrixType, order: ..int) -> M #must {
     #if CHECKS {
-        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
-        assert(order.count == M);
+        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
+        assert(order.count == M.M);
     }
 
     res : M = ---;
@@ -649,7 +653,7 @@ permute_columns :: (m: $M/MatrixType, order: ..int) -> M #must {
 // there are faster ways of doing this.
 permute :: (m: $M/MatrixType, row_order: [M.N]int, col_order: [M.M]int) -> M #must {
     #if CHECKS {
-        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
     }
 
     res : M = ---;
@@ -664,14 +668,14 @@ permute :: (m: $M/MatrixType, row_order: [M.N]int, col_order: [M.M]int) -> M #mu
 
 swap_columns :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
-        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
         assert(i >= 0 && j >= 0);
         assert(i < M.M && j < M.M);
     }
 
     if i == j then return;
 
-    for r: 0..M.N {
+    for r: 0..M.N-1 {
         tmp := get(<<m, r, i);
         set(m, r, i, get(<<m, r, j));
         set(m, r, j, tmp);
@@ -680,14 +684,14 @@ swap_columns :: (m: *$M/MatrixType, i: int, j: int) {
 
 swap_rows :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
-        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense) : %\n", M.flags);
         assert(i >= 0 && j >= 0);
         assert(i < M.N && j < M.N);
     }
 
     if i == j then return;
 
-    for c: 0..M.M {
+    for c: 0..M.M-1 {
         tmp := get(<<m, i, c);
         set(m, i, c, get(<<m, j, c));
         set(m, j, c, tmp);
@@ -722,11 +726,11 @@ transpose :: (m: $M/MatrixType) -> MatrixTransposeHelper(M).T #must {
 // There are better ways to do this!
 transpose :: (m: *$M/MatrixType) {
     #if CHECKS {
-        #assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
     }
 
-    for i: 0..M.N {
-        for j: i+1..M.M {
+    for i: 0..M.N-1 {
+        for j: i+1..M.M-1 {
             tmp := get(<<m, i, j);
             set(m, i, j, get(<<m, j, i));
             set(m, j, i, tmp);
@@ -824,9 +828,9 @@ tensor :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A, B, A.N*B.N, A.
 norm_1 :: (m: $M/MatrixType) -> float64 {
     res : float64 = 0.0;
 
-    for j: 0..M.M {
+    for j: 0..M.M-1 {
         sum : float64 = 0.0;
-        for i: 0..M.N {
+        for i: 0..M.N-1 {
             sum += abs(get(m,i,j));
         }
         res = ifx res < sum then sum else res;
@@ -838,9 +842,9 @@ norm_1 :: (m: $M/MatrixType) -> float64 {
 norm_inf :: (m: $M/MatrixType) -> float64 {
     res : float64 = 0.0;
 
-    for i: 0..M.N {
+    for i: 0..M.N-1 {
         sum : float64 = 0.0;
-        for j: 0..M.M {
+        for j: 0..M.M-1 {
             sum += abs(get(m,i,j));
         }
         res = ifx res < sum then sum else res;
@@ -852,8 +856,8 @@ norm_inf :: (m: $M/MatrixType) -> float64 {
 norm_frobenius :: (m: $M/MatrixType) -> float64 {
     sum : float64 = 0.0;
 
-    for i: 0..M.N {
-        for j: 0..M.M {
+    for i: 0..M.N-1 {
+        for j: 0..M.M-1 {
             sum += abs(get(m, i, j));
         }
     }

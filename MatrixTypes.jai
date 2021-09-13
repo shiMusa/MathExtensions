@@ -106,6 +106,30 @@ DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
     data: [_N*_M]_T;
 }
 
+dmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> DenseMatrix(T,N,M) {
+    #if CHECKS {
+        #run assert(is_minor_number(T, U));
+        assert(values.count <= N*M);
+    }
+    res : DenseMatrix(T, N, M);
+    for values {
+        set_lin(*res, it_index, ncast(T,it));
+    }
+    return res;
+}
+
+dmat :: inline ($N: int, $M: int, values: ..$T) -> DenseMatrix(T,N,M) {
+    #if CHECKS {
+        assert(values.count <= N*M);
+    }
+    res : DenseMatrix(T,N,M);
+    // println("dmat:");
+    // println("    res %", res);
+    // println("    values %", values);
+    mat_init(*res, ..values);
+    return res;
+}
+
 #scope_file
 dense_matrix_get :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> T {
     return m.data[i*M + j];

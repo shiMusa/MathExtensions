@@ -168,10 +168,9 @@ upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
     return type_info(float64);
 }
 
-upcast :: (A: Type, B: Type) -> Type {
-    assert(is_number(A) && is_number(B));
-
-    if A == Complex64 || B == Complex64 {
+upcast :: inline ($A: Type, $B: Type) -> Type {
+    #assert(is_number(A) && is_number(B));
+    #if A == Complex64 || B == Complex64 {
         return Complex64;
     } 
     return float64;
@@ -182,7 +181,7 @@ UpCast :: struct(A: Type, B: Type) {
     T :: #run upcast(A, B);
 }
 
-
+// TODO other number tupes, float vs int etc.
 is_minor_number :: inline ($base: Type, $b: Type) -> bool {
     #if base == Complex64 {
         return true;

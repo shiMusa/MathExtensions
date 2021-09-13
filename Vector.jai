@@ -14,7 +14,7 @@ str :: (v: $V/VectorType, indent: string = "    ") -> string {
     init_string_builder(*builder);
     print_to_builder(*builder, "\n%", indent);
     for i: 0..V.N-1 {
-        #if T == Complex64 {
+        #if V.data_type == Complex64 {
             print_to_builder(*builder, "%, ", str(get(v,i)) );
         } else {
             print_to_builder(*builder, "%, ", get(v,i) );
@@ -40,8 +40,8 @@ str :: (v: $V/VectorType, indent: string = "    ") -> string {
 vec_cast :: ($type: Type, v: $V/VectorType) -> VectorCastHelper(V, type).T {
     res : VectorCastHelper(V, type).T; // initialize all values to zero, important for sparse?
 
-    for v {
-        set_lin(*res, it_lin_index, ncast(type, it));
+    for raw(*v) {
+        set_raw(*res, it_raw_index, ncast(type, it));
     }
 
     return res;
@@ -90,7 +90,7 @@ vec_init_all :: inline (v: *$V/VectorType, value: $T) {
 vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSizeHelper(V, to-from).T {
     #if CHECKS {
         #run assert(to > from, "bounds not possible: to(%) <= from(%)\n", to, from);
-        #run assert(to < N, "bound not possible: to(%) >= N(%)\n", to, N);
+        #run assert(to <= V.N, "bound not possible: to(%) >= N(%)\n", to, V.N);
         #run assert(from >= 0, "bound not possible: from(%) < 0\n", from);
     }
     res : VectorSizeHelper(V, to-from).T = ---;
@@ -548,13 +548,17 @@ test_vector :: () {
 
     print("\n\nVector -------------------------------\n\n");
     {
+        T :: DenseVector(float64, 5);
+        // #run print("T = %\n", T);
         v : DenseVector(float64, 5);
+        print("v = %\n", v);
         vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
-        print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, type_of(v), v.data_type);
+        print("v = %\n", v);
+        // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
         a := v + v;
-        print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.data_type);
+        println("a = %", a);
         a = a + v;
-        print("%, type_of(a) = %, Vector(T) = Vector(%)\n", a, type_of(a), a.data_type);
+        println("a = %", a);
     }
 }
 
