@@ -56,37 +56,37 @@ MatrixType :: struct(
     from_raw_index: (m: matrix_type, int) -> int
 ){}
 get :: inline (m: $M/MatrixType, i: int, j: int) -> M.data_type {
-    return m.get(m, i, j);
+    return M.get(m, i, j);
 }
 set :: inline (m: *$M/MatrixType, i: int, j: int, value: M.data_type) {
-    m.set(m, i, j, value);
+    M.set(m, i, j, value);
 }
 
 get_lin :: inline (m: $M/MatrixType, i: int) -> M.data_type {
-    return m.get_lin(m, i);
+    return M.get_lin(m, i);
 }
 set_lin :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
-    m.set_lin(m, i, value);
+    M.set_lin(m, i, value);
 }
 from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
-    r, c := m.from_lin_index(m, i);
+    r, c := M.from_lin_index(m, i);
     return r, c;
 }
 to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
-    return m.to_lin_index(m, i,j);
+    return M.to_lin_index(m, i,j);
 }
 
 n_raw :: inline (m: $M/MatrixType) -> int {
-    return m.n_raw(m);
+    return M.n_raw(m);
 }
 get_raw :: inline (m: $M/MatrixType, i: int) -> M.data_type {
-    return m.get_raw(m, i);
+    return M.get_raw(m, i);
 }
 set_raw :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
-    m.set_raw(m, i, value);
+    M.set_raw(m, i, value);
 }
 from_raw_index :: inline (m: $M/MatrixType, i: int) -> int {
-    return m.from_raw_index(m, i);
+    return M.from_raw_index(m, i);
 }
 
 

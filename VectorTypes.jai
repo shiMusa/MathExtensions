@@ -39,24 +39,24 @@ VectorType :: struct(
 
 
 get :: inline (v: $V/VectorType, i: int) -> V.data_type {
-    return v.get(v, i);
+    return V.get(v, i);
 }
 set :: inline (v: *$V/VectorType, i: int, value: V.data_type) {
-    v.set(v, i, value);
+    V.set(v, i, value);
 }
 
 
 n_raw :: inline (v: $V/VectorType) -> int {
-    return v.n_raw(v);
+    return V.n_raw(v);
 }
 get_raw :: inline (v: $V/VectorType, i: int) -> V.data_type {
-    return v.get_raw(v, i);
+    return V.get_raw(v, i);
 }
 set_raw :: inline (v: *$V/VectorType, i: int, value: V.data_type) {
-    v.set_raw(v, i, value);
+    V.set_raw(v, i, value);
 }
 from_raw_index :: inline (v: $V/VectorType, i: int) -> int {
-    return v.from_raw_index(v, i);
+    return V.from_raw_index(v, i);
 }
 
 
