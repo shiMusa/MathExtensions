@@ -25,18 +25,24 @@ MatrixTrait :: struct(
     data_type: Type,
     N: int,
     M: int,
-    N_raw: int,
     flags: FLAGS,
+
     get: (m: matrix_type, int, int) -> data_type,
     set: (m: *matrix_type, int, int, data_type) -> (),
+    
     get_lin: (m: matrix_type, int) -> data_type,
     set_lin: (m: *matrix_type, int, data_type) -> (),
     from_lin_index: (m: matrix_type, int) -> (int, int),
     to_lin_index: (m: matrix_type, int, int) -> int,
+
+    n_raw: (m: matrix_type) -> int,
     get_raw: (m: matrix_type, int) -> data_type,
     set_raw: (m: *matrix_type, int, data_type) -> (),
     from_raw_index: (m: matrix_type, int) -> int
 ){}
+n_raw :: inline (m: $M/MatrixTrait) -> int {
+    return m.n_raw(m);
+}
 from_lin_index :: inline (m: $M/MatrixTrait, i: int) -> int, int {
     r, c := m.from_lin_index(m, i);
     return r, c;
@@ -86,12 +92,13 @@ MatrixRawForExpansion :: struct(T: Type) {
     matrix: *T;
 }
 #scope_export
-for_expansion :: (m: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) #expand {
+for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) #expand {
+    m := <<me.matrix;
     i := 0;
-    while i < M.N_raw {
+    while i < n_raw(m) {
         `it_index := i;
-        `it := get_raw(<<m.matrix, i);
-        `it_row, `it_column := from_lin_index(<<m.matrix, from_raw_index(<<m.matrix, i));
+        `it := get_raw(m, i);
+        `it_row, `it_column := from_lin_index(m, from_raw_index(m, i));
         #insert body;
         i += 1;
     }
@@ -106,14 +113,17 @@ FullMatrix :: struct(_T: Type, _N: int, _M: int) {
         _T,
         _N,
         _M,
-        _N * _M,
         .NONE,
+
         full_matrix_get,
         full_matrix_set,
+        
         full_matrix_get_lin,
         full_matrix_set_lin,
         full_matrix_from_lin_index,
         full_matrix_to_lin_index,
+
+        full_matrix_n_raw,
         full_matrix_get_lin, // raw versions same as normal
         full_matrix_set_lin, // raw versions same as normal
         full_matrix_raw
@@ -121,6 +131,9 @@ FullMatrix :: struct(_T: Type, _N: int, _M: int) {
     data: [_N*_M]_T;
 }
 #scope_file
+full_matrix_n_raw :: inline (m: FullMatrix($T, $N, $M)) -> int {
+    return N * M;
+}
 full_matrix_get :: inline (m: FullMatrix($T, $N, $M), i: int, j: int) -> T {
     return m.data[i*M + j];
 }
@@ -156,19 +169,28 @@ UpperTriangularQuadMatrix :: struct(_T: Type, _N: int) {
         _T,
         _N,
         _N,
-        _N*(_N+1)/2,
         .UPPER_TRIANGULAR,
+
+        // _N*(_N+1)/2,
         upper_triangular_quad_matrix_get,
         upper_triangular_quad_matrix_set,
+        
         upper_triangular_quad_matrix_get_lin,
         upper_triangular_quad_matrix_set_lin,
         upper_triangular_quad_matrix_from_lin_index,
         upper_triangular_quad_matrix_to_lin_index,
+        
+        upper_triangular_quad_matrix_n_raw,
         upper_triangular_quad_matrix_get_raw,
         upper_triangular_quad_matrix_set_raw,
         upper_triangular_quad_matrix_raw
     ); 
     data: [_N*(_N+1)/2]_T;
+}
+
+#scope_file
+upper_triangular_quad_matrix_n_raw :: inline (m: UpperTriangularQuadMatrix($T, $N)) -> int {
+    return N*(N+1)/2;
 }
 upper_triangular_quad_matrix_get :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int, j: int) -> T {
     return m.data[i]; // ! wrong, TODO correct math here
@@ -194,6 +216,7 @@ upper_triangular_quad_matrix_set_raw ::upper_triangular_quad_matrix_set_lin;
 upper_triangular_quad_matrix_raw :: inline (m: UpperTriangularQuadMatrix($T, $N), i: int) -> int {
     return i;
 }
+#scope_export
 
 
 do_sth_to_matrix :: (x: *$M/MatrixTrait) {
