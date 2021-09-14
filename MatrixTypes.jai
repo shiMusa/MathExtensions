@@ -37,15 +37,37 @@ MatrixType :: struct(
     data_type: Type,
     N: int,
     M: int,
-    N_lin: int,
     flags: MATRIX_FLAGS,
+
+    // * (row,column) access
     get: (m: matrix_type, int, int) -> data_type,
     set: (m: *matrix_type, int, int, data_type) -> (),
+    
+    // * linear access to all elements of the matrix
     get_lin: (m: matrix_type, int) -> data_type,
     set_lin: (m: *matrix_type, int, data_type) -> (),
     from_lin_index: (m: matrix_type, int) -> (int, int),
-    to_lin_index: (m: matrix_type, int, int) -> int
+    to_lin_index: (m: matrix_type, int, int) -> int,
+
+    // * raw data access
+    n_raw : (m: matrix_type) -> int,
+    get_raw : (m: matrix_type, int) -> data_type,
+    set_raw: (m: *matrix_type, int, data_type) -> (),
+    from_raw_index: (m: matrix_type, int) -> int
 ){}
+get :: inline (m: $M/MatrixType, i: int, j: int) -> M.data_type {
+    return m.get(m, i, j);
+}
+set :: inline (m: *$M/MatrixType, i: int, j: int, value: M.data_type) {
+    m.set(m, i, j, value);
+}
+
+get_lin :: inline (m: $M/MatrixType, i: int) -> M.data_type {
+    return m.get_lin(m, i);
+}
+set_lin :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
+    m.set_lin(m, i, value);
+}
 from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
     r, c := m.from_lin_index(m, i);
     return r, c;
@@ -53,21 +75,35 @@ from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
 to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
     return m.to_lin_index(m, i,j);
 }
-get :: inline (m: $M/MatrixType, i: int, j: int) -> M.data_type {
-    return m.get(m, i, j);
+
+n_raw :: inline (m: $M/MatrixType) -> int {
+    return m.n_raw(m);
 }
-set :: inline (m: *$M/MatrixType, i: int, j: int, value: M.data_type) {
-    m.set(m, i, j, value);
+get_raw :: inline (m: $M/MatrixType, i: int) -> M.data_type {
+    return m.get_raw(m, i);
 }
-get_lin :: inline (m: $M/MatrixType, i: int) -> M.data_type {
-    return m.get_lin(m, i);
+set_raw :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
+    m.set_raw(m, i, value);
 }
-set_lin :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
-    m.set_lin(m, i, value);
+from_raw_index :: inline (m: $M/MatrixType, i: int) -> int {
+    return m.from_raw_index(m, i);
 }
+
+
+
+// ########  #######  ########          ######## ##     ## ########  ##    ##
+// ##       ##     ## ##     ##         ##        ##   ##  ##     ## ###   ##
+// ##       ##     ## ##     ##         ##         ## ##   ##     ## ####  ##
+// ######   ##     ## ########  ####### ######      ###    ########  ## ## ##
+// ##       ##     ## ##   ##           ##         ## ##   ##        ##  ####
+// ##       ##     ## ##    ##          ##        ##   ##  ##        ##   ###
+// ##        #######  ##     ##         ######## ##     ## ##        ##    ##
+
+
+// * standard for expansion of all elements of the matrix
 for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
     i := 0;
-    while i < M.N_lin {
+    while i < M.N * M.M {
         `it_index := i;
         `it := get_lin(<<m, i);
         `it_row, `it_column := from_lin_index(<<m, i);
@@ -76,6 +112,31 @@ for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
     }
 }
 
+
+
+raw :: inline (m: *$M/MatrixType) -> MatrixRawForExpansion(M) {
+    res : MatrixRawForExpansion(M) = ---;
+    res.matrix = m;
+    return res;
+}
+#scope_file
+MatrixRawForExpansion :: struct(T: Type) {
+    matrix: *T;
+}
+#scope_export
+
+// * for expansion for only the really existing data
+for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) #expand {
+    m := <<me.matrix;
+    i := 0;
+    while i < n_raw(m) {
+        `it_index := i;
+        `it := get_raw(m, i);
+        `it_row, `it_column := from_lin_index(m, from_raw_index(m, i));
+        #insert body;
+        i += 1;
+    }
+}
 
 
 
@@ -94,14 +155,20 @@ DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
         _T,
         _N,
         _M,
-        _N * _M,
         .DENSE,
+
         dense_matrix_get,
         dense_matrix_set,
+        
         dense_matrix_get_lin,
         dense_matrix_set_lin,
         dense_matrix_from_lin_index,
-        dense_matrix_to_lin_index
+        dense_matrix_to_lin_index,
+
+        dense_matrix_n_raw,
+        dense_matrix_get_lin,
+        dense_matrix_set_lin,
+        dense_matrix_from_raw_index
     ); 
     data: [_N*_M]_T;
 }
@@ -137,6 +204,8 @@ dense_matrix_get :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> T {
 dense_matrix_set :: inline (m: *DenseMatrix($T, $N, $M), i: int, j: int, value: T) {
     m.data[i*M + j] = value;
 }
+
+
 dense_matrix_from_lin_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int, int {
     return (i- i%M)/M, i%M;
 }
@@ -148,6 +217,13 @@ dense_matrix_get_lin :: inline (m: DenseMatrix($T, $N, $M), i: int) -> T {
 }
 dense_matrix_set_lin :: inline (m: *DenseMatrix($T, $N, $M), i: int, value: T) {
     m.data[i] = value;
+}
+
+dense_matrix_n_raw :: inline (m: DenseMatrix($T, $N, $M)) -> int {
+    return N*M;
+}
+dense_matrix_from_raw_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int {
+    return i;
 }
 #scope_export
 

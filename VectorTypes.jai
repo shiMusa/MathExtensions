@@ -26,19 +26,28 @@ VectorType :: struct(
     vector_type: Type, 
     data_type: Type,
     N: int,
-    N_raw: int,
     flags: VECTOR_FLAGS,
+
     get: (v: vector_type, int) -> data_type,
     set: (v: *vector_type, int, data_type) -> (),
+
+    n_raw: (v: vector_type) -> int,
     get_raw: (v: vector_type, int) -> data_type,
     set_raw: (v: *vector_type, int, data_type) -> (),
     from_raw_index: (v: vector_type, int) -> int
 ){}
+
+
 get :: inline (v: $V/VectorType, i: int) -> V.data_type {
     return v.get(v, i);
 }
 set :: inline (v: *$V/VectorType, i: int, value: V.data_type) {
     v.set(v, i, value);
+}
+
+
+n_raw :: inline (v: $V/VectorType) -> int {
+    return v.n_raw(v);
 }
 get_raw :: inline (v: $V/VectorType, i: int) -> V.data_type {
     return v.get_raw(v, i);
@@ -46,6 +55,21 @@ get_raw :: inline (v: $V/VectorType, i: int) -> V.data_type {
 set_raw :: inline (v: *$V/VectorType, i: int, value: V.data_type) {
     v.set_raw(v, i, value);
 }
+from_raw_index :: inline (v: $V/VectorType, i: int) -> int {
+    return v.from_raw_index(v, i);
+}
+
+
+// ########  #######  ########          ######## ##     ## ########  ##    ##
+// ##       ##     ## ##     ##         ##        ##   ##  ##     ## ###   ##
+// ##       ##     ## ##     ##         ##         ## ##   ##     ## ####  ##
+// ######   ##     ## ########  ####### ######      ###    ########  ## ## ##
+// ##       ##     ## ##   ##           ##         ## ##   ##        ##  ####
+// ##       ##     ## ##    ##          ##        ##   ##  ##        ##   ###
+// ##        #######  ##     ##         ######## ##     ## ##        ##    ##
+
+
+// * linear for expansion over all elements
 for_expansion :: (v: *$V/VectorType, body: Code, flags: For_Flags) #expand {
     i := 0;
     while i < V.N {
@@ -56,9 +80,7 @@ for_expansion :: (v: *$V/VectorType, body: Code, flags: For_Flags) #expand {
     }
 }
 
-from_raw_index :: inline (v: $V/VectorType, i: int) -> int {
-    return v.from_raw_index(v, i);
-}
+
 raw :: inline (v: *$V/VectorType) -> VectorRawForExpansion(V) {
     res : VectorRawForExpansion(V) = ---;
     res.vector = v;
@@ -69,11 +91,13 @@ VectorRawForExpansion :: struct(T: Type) {
     vector: *T;
 }
 #scope_export
-for_expansion :: (v: *VectorRawForExpansion($V), body: Code, flags: For_Flags) #expand {
+// * for expansion only over the really existing data
+for_expansion :: (ve: *VectorRawForExpansion($V), body: Code, flags: For_Flags) #expand {
+    v := <<ve.vector;
     i := 0;
-    while i < V.N_raw {
-        `it_index := from_raw_index(<<v.vector, i);
-        `it := get_raw(<<v.vector, i);
+    while i < n_raw(v) {
+        `it_index := from_raw_index(v, i);
+        `it := get_raw(v, i);
         `it_raw_index := i;
         #insert body;
         i += 1;
@@ -94,10 +118,12 @@ DenseVector :: struct(_T: Type, _N: int) {
         DenseVector(_T, _N),
         _T,
         _N,
-        _N,
         .DENSE,
+
         dense_vector_get,
         dense_vector_set,
+
+        dense_vector_n_raw,
         dense_vector_get, // same as above for dense vectors
         dense_vector_set, // same as above for dense vectors
         dense_vector_raw_index
@@ -128,6 +154,9 @@ dvec :: ($T: Type, $N: int, values: ..$U) -> DenseVector(T,N) {
 }
 
 #scope_file
+dense_vector_n_raw :: inline (v: DenseVector($T, $N)) -> int {
+    return N;
+}
 dense_vector_raw_index :: inline (v: DenseVector($T, $N), i: int) -> int {
     return i;
 }

@@ -111,7 +111,6 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> V
     U :: UpCast(A.data_type, B.data_type).T;
     res : VectorVectorHelper(B,A).T = ---;
 
-    println("solve_linear_right_quasi_triangular");
 
     i := B.N-1; // start with last row and wrap from bottom to up
     while i >= 0 {
@@ -141,9 +140,7 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> V
                 get(b,i-1) - sum1,
                 get(b,i) - sum2
             );
-            println("    a %, c %", a, c);
             tmp := solve_linear_2x2(a, c);
-            println("    tmp %", tmp);
             set(*res, i-1, get(tmp,0));
             set(*res, i,   get(tmp,1));
             i -= 2;
