@@ -924,7 +924,7 @@ test_linear_algebra :: () {
             R, CZERO, R+I
         );
         d := determinant(M);
-        println("det(M) = %", d);
+        println("det(M) = %", str(d));
         assert(d == -4*I);
     }
 }
