@@ -208,21 +208,17 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
-// print_options := struct .{
-//     offset := 0;
-//     shift := 0;
-//     indent_every := 4;
-//     indent_character := "│";
-// };
+PrintOptions :: struct {
+    offset := 0;
+    shift := 0;
+    indent_every := 4;
+    indent_character := "│";
+};
+print_options : PrintOptions;
 
-p_offset := 0;
-p_shift := 0;
-p_indent_every := 4;
-p_indent_character := "│";
 print_indent :: (levels: int) {
-    p_shift += 4 * levels;
+    print_options.shift += 4 * levels;
 }
-
 
 println_push :: (heading: string = "", args: ..Any) #expand {
     println(heading, ..args);
@@ -233,13 +229,13 @@ println_push :: (heading: string = "", args: ..Any) #expand {
 
 println :: (msg: string = "", args: ..Any) {
 
-    for 0..p_offset-1 {
+    for 0..print_options.offset-1 {
         print(" ");
     }
 
-    for 0..p_shift-1 {
-        if it % p_indent_every == 0 {
-            print(p_indent_character);
+    for 0..print_options.shift-1 {
+        if it % print_options.indent_every == 0 {
+            print(print_options.indent_character);
         } else
             print(" ");
     }
@@ -249,13 +245,13 @@ println :: (msg: string = "", args: ..Any) {
 
 println :: (arg: Any) {
     
-    for 0..p_offset-1 {
+    for 0..print_options.offset-1 {
         print(" ");
     }
 
-    for 0..p_shift-1 {
-        if it % p_indent_every == 0 {
-            print(p_indent_character);
+    for 0..print_options.shift-1 {
+        if it % print_options.indent_every == 0 {
+            print(print_options.indent_character);
         } else
             print(" ");
     }

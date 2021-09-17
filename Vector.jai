@@ -10,11 +10,13 @@
 
 
 pstr :: inline (v: $V/VectorType) -> string {
-    return str(v, p_offset, p_shift + 4, "│");
+    return str(v, print_options.offset, print_options.shift + 4, "│");
 }
 
 str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
     builder: String_Builder;
+    defer free_buffers(*builder);
+
     init_string_builder(*builder);
     print_to_builder(*builder, "\n");
 
@@ -573,14 +575,14 @@ test_vector :: () {
         T :: DenseVector(float64, 5);
         // #run print("T = %\n", T);
         v : DenseVector(float64, 5);
-        print("v = %\n", v);
+        print("v = %\n", pstr(v));
         vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
-        print("v = %\n", v);
+        print("v = %\n", pstr(v));
         // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
         a := v + v;
-        println("a = %", a);
+        println("a = %", pstr(v));
         a = a + v;
-        println("a = %", a);
+        println("a = %", pstr(v));
     }
 }
 

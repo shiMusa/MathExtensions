@@ -18,7 +18,7 @@
 */
 
 pstr :: inline (m: $V/MatrixType) -> string {
-    return str(m, p_offset, p_shift + 4, "│");
+    return str(m, print_options.offset, print_options.shift + 4, "│");
 }
 
 str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
@@ -37,6 +37,8 @@ str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: st
     }
     
     builder: String_Builder;
+    defer free_buffers(*builder);
+
     init_string_builder(*builder);
 
     append(*builder, "\n");
@@ -909,12 +911,12 @@ test_matrix :: () {
     print("\n\nDenseMatrix(T) -------------------------------\n\n");
     {
         m : DenseMatrix(float64, 3, 3);
-        print("%\n", str(m));
+        print("%\n", pstr(m));
     }
     {
         a :: 3;
         m : DenseMatrix(float64, a, a);
-        print("%\n", str(m));
+        print("%\n", pstr(m));
     }
 
 
@@ -922,13 +924,13 @@ test_matrix :: () {
     {
         m : DenseMatrix(float64, 3, 3);
         mat_init_all(*m, 42.0);
-        print("%\n", str(m));
+        print("%\n", pstr(m));
     }
     {
         a :: 3;
         m : DenseMatrix(float64, a, a);
         mat_init_all(*m, 42.0);
-        print("%\n", str(m));
+        print("%\n", pstr(m));
     }
 
 
@@ -937,13 +939,13 @@ test_matrix :: () {
         mat_init_all(*m, c64(42.0));
         set(*m,1,2,R);
         assert( get(m,1,2) == c64(1.0, 0.0) );
-        print("m = \n%\n", str(m));
+        println("m = %", pstr(m));
     }
 
     {
         m : DenseMatrix(Complex64, 4, 4);
         mat_init_unit(*m);
-        print("m = \n%\n", str(m));
+        println("m = %", pstr(m));
         assert(get(m,0,1) == CZERO);
         assert(get(m,1,1) == R);
         assert(get(m,2,1) == CZERO);
@@ -962,11 +964,11 @@ test_matrix :: () {
         b : DenseMatrix(float64, 2, 2);
         mat_init_unit(*a);
         mat_init_unit(*b);
-        print("a = \n%\n", str(a));
-        print("b = \n%\n", str(b));
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
         add(*a, b);
-        print("a = \n%\n", str(a));
-        print("2 b = \n%\n", scl(2.0) * b);
+        println("a = %", pstr(a));
+        println("2 b = %", pstr(scl(2.0) * b));
         assert(a == scl(2.0) * b);
 
         a = a + b;
@@ -976,16 +978,16 @@ test_matrix :: () {
     {
         m : DenseMatrix(Complex64, 2, 2);
         mat_init(*m, R, c64(2.0), c64(3.0), c64(4.0));
-        print("m = \n%\n", str(m));
+        println("m = %", pstr(m));
         m = m * m;
-        print("m = \n%\n", str(m));
+        println("m = %", pstr(m));
     }
     {
         m : DenseMatrix(Complex64, 2, 2);
         mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
-        print("m = \n%\n", str(m));
+        println("m = %", pstr(m));
         m = m * m;
-        print("m = \n%\n", str(m));
+        println("m = %", pstr(m));
     }
     // {
     //     m := mat(1, 3, 1.0, 2.0, 3.0);
@@ -1007,9 +1009,9 @@ test_matrix :: () {
     {
         m : DenseMatrix(Complex64, 2, 2);
         mat_init(*m, R, I, c64(2.0, -1.0), 2.0 + 3.0*I);
-        print("m = \n%\n", str(m));
+        println("m = %", pstr(m));
         t1 := tensor(m, m);
-        print("t1 = \n%\n", str(t1));
+        println("t1 = %", pstr(t1));
         t2 : DenseMatrix(Complex64, 4, 4);
         mat_init(*t2,
             R            ,             I,             I,   -R           ,
@@ -1017,7 +1019,7 @@ test_matrix :: () {
             2.0 -       I, 1.0 + 2.0 * I, 2.0 + 3.0 * I, -3.0 +  2.0 * I,
             3.0 - 4.0 * I, 7.0 + 4.0 * I, 7.0 + 4.0 * I, -5.0 + 12.0 * I
         );
-        print("t2 = \n%\n", str(t2));
+        println("t2 = %", pstr(t2));
         assert(t1 == t2);
     }
 

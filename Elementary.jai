@@ -434,7 +434,7 @@ test_elementary :: () {
         assert( pow(2.0, 2.0, float64) == 4);
         assert( approx(pow(I, 2.0, Complex64), -R) );
 
-        print("%\n", pow(2.0, R+I, Complex64));
+        print("%\n", str(pow(2.0, R+I, Complex64)));
         assert( approx(pow(2.0, R + I, Complex64), c64(1.538477803, 1.277922553)) );
 
         assert( approx(
