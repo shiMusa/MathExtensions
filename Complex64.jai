@@ -12,9 +12,9 @@ C64_NAN :: Complex64.{Math.FLOAT64_NAN, Math.FLOAT64_NAN};
 
 str :: (z: Complex64) -> string {
     if z.imag >= 0 {
-        return sprint("% + % I", z.real, z.imag);
+        return sprint("% + %i", z.real, z.imag);
     } else {
-        return sprint("% - % I", z.real, -z.imag);
+        return sprint("% - %i", z.real, -z.imag);
     }
 }
 
