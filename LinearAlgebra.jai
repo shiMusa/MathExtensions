@@ -777,8 +777,8 @@ test_linear_algebra :: () {
             -1*R, 4*R
         );
         A := gaussian_factorization_no_pivot(M);
-        println("gaussian factorization: % ->", pstr(M));
-        println("%", pstr(A));
+        println("gaussian factorization: %", pstr(M));
+        println("-> %", pstr(A));
         assert( A == res , "%\n != %\n!", str(A), str(res));
     }
 

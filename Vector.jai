@@ -34,14 +34,16 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
     }
 
     shift();
-    for i: 0..V.N-1 {
-        #if V.data_type == Complex64 {
-            print_to_builder(*builder, "%, ", str(get(v,i)) );
-        } else {
-            print_to_builder(*builder, "%, ", get(v,i) );
+
+    append(*builder, "(");
+    for v {
+        append(*builder, str(it));
+        if it_index != v.N-1 {
+            append(*builder, ", ");
         }
     }
-    append(*builder, "\n");
+    append(*builder, ")\n");
+
     shift(-4);
     append(*builder, "└╴");
 

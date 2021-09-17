@@ -38,21 +38,55 @@ str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: st
     
     builder: String_Builder;
     defer free_buffers(*builder);
-
     init_string_builder(*builder);
 
     append(*builder, "\n");
 
+    column_width : [M.M]int; // * initialize all to 0
+    for m {
+        column_width[it_column] = max(
+            column_width[it_column], 
+            str(it).count
+        );
+    }
+
+    matrix_width := 0;
+    for column_width {
+        matrix_width += it + 2;
+    }
+    matrix_width -= 2;
+
+
     for i: 0..M.N-1 {
         shift();
+
+        if i == 0 {
+            append(*builder, "⎛ ");
+        } else if i == M.N-1 {
+            append(*builder, "⎝ ");
+        } else {
+            append(*builder, "⎜ ");
+        }
+
         for j: 0..M.M-1 {
-            #if M.data_type == Complex64 {
-                print_to_builder(*builder, "%, ", str(get(m,i,j)) );
-            } else {
-                print_to_builder(*builder, "%, ", get(m,i,j) );
+            padding := column_width[j] - str(get(m,i,j)).count;
+            for 0..padding-1 {
+                append(*builder, " ");
+            }
+            append(*builder, str(get(m,i,j)) );
+            if j != M.M-1 {
+                append(*builder, ", ");
             }
         }
-        // if i != M.N-1 then
+
+        if i == 0 {
+            append(*builder, " ⎞");
+        } else if i == M.N-1 {
+            append(*builder, " ⎠");
+        } else {
+            append(*builder, " ⎟");
+        }
+
         append(*builder, "\n");
     }
 

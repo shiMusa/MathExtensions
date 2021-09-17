@@ -208,6 +208,23 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
+
+
+
+
+
+
+str :: inline (val: $T) -> string #modify {
+    if !is_number(T) { T = null; return; }
+} {
+    return sprint("%", val);
+}
+
+
+
+
+
+
 PrintOptions :: struct {
     offset := 0;
     shift := 0;
