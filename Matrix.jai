@@ -18,24 +18,31 @@
 */
 
 pstr :: inline (m: $V/MatrixType) -> string {
-    return str(m, p_offset, p_shift + 4, "|");
+    return str(m, p_offset, p_shift + 4, "│");
 }
 
 str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
-    builder: String_Builder;
-    init_string_builder(*builder);
-    append(*builder, "\n");
-    for i: 0..M.N-1 {
+    
+    shift :: (additional_indent: int = 0) #expand {
         for 0..offset-1 {
             append(*builder, " ");
         }
-        for 0..indent-1 {
+        for 0..indent-1+additional_indent {
             if it % indent_every == 0 {
                 append(*builder, indent_character);
             } else {
                 append(*builder, " ");
             }
         }
+    }
+    
+    builder: String_Builder;
+    init_string_builder(*builder);
+
+    append(*builder, "\n");
+
+    for i: 0..M.N-1 {
+        shift();
         for j: 0..M.M-1 {
             #if M.data_type == Complex64 {
                 print_to_builder(*builder, "%, ", str(get(m,i,j)) );
@@ -43,9 +50,12 @@ str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: st
                 print_to_builder(*builder, "%, ", get(m,i,j) );
             }
         }
-        if i != M.N-1 then
-            append(*builder, "\n");
+        // if i != M.N-1 then
+        append(*builder, "\n");
     }
+
+    shift(-4);
+    append(*builder, "└╴");
     return builder_to_string(*builder);
 }
 

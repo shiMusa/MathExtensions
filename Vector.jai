@@ -10,7 +10,7 @@
 
 
 pstr :: inline (v: $V/VectorType) -> string {
-    return str(v, p_offset, p_shift + 4, "|");
+    return str(v, p_offset, p_shift + 4, "│");
 }
 
 str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
@@ -18,17 +18,20 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
     init_string_builder(*builder);
     print_to_builder(*builder, "\n");
 
-    for 0..offset-1 {
-        append(*builder, " ");
-    }
-
-    for 0..indent-1 {
-        if it % indent_every == 0 {
-            append(*builder, indent_character);
-        } else {
+    shift :: (additional_indent: int = 0) #expand {
+        for 0..offset-1 {
             append(*builder, " ");
         }
+        for 0..indent-1+additional_indent {
+            if it % indent_every == 0 {
+                append(*builder, indent_character);
+            } else {
+                append(*builder, " ");
+            }
+        }
     }
+
+    shift();
     for i: 0..V.N-1 {
         #if V.data_type == Complex64 {
             print_to_builder(*builder, "%, ", str(get(v,i)) );
@@ -36,6 +39,10 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
             print_to_builder(*builder, "%, ", get(v,i) );
         }
     }
+    append(*builder, "\n");
+    shift(-4);
+    append(*builder, "└╴");
+
     return builder_to_string(*builder);
 }
 

@@ -207,18 +207,28 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 
+
+// print_options := struct .{
+//     offset := 0;
+//     shift := 0;
+//     indent_every := 4;
+//     indent_character := "│";
+// };
+
 p_offset := 0;
 p_shift := 0;
 p_indent_every := 4;
-p_indent_character := "|";
-println_shift :: (levels: int) {
+p_indent_character := "│";
+print_indent :: (levels: int) {
     p_shift += 4 * levels;
 }
 
+
 println_push :: (heading: string = "", args: ..Any) #expand {
     println(heading, ..args);
-    println_shift(1);
-    `defer println_shift(-1);
+    print_indent(1);
+    `defer println("└╴");
+    `defer print_indent(-1);
 }
 
 println :: (msg: string = "", args: ..Any) {
