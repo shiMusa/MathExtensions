@@ -130,7 +130,8 @@ for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) 
     m := <<me.matrix;
     i := 0;
     while i < n_raw(m) {
-        `it_index := i;
+        `it_raw_index := i;
+        `it_index := from_raw_index(m, i);
         `it := get_raw(m, i);
         `it_row, `it_column := from_lin_index(m, from_raw_index(m, i));
         #insert body;

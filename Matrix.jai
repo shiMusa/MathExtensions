@@ -126,10 +126,8 @@ is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
 mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
     res : MatrixCastHelper(M, type).T = ---;
 
-    for i: 0..M.N-1 {
-        for j: 0..M.M-1 {
-            set(*res, i, j, ncast(type, get(m, i, j)));
-        }
+    for raw(*m) {
+        set_raw(*res, it_raw_index, ncast(type, it));
     }
 
     return res;
@@ -137,19 +135,17 @@ mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must
 
 copy :: (m: $M/MatrixType) -> M #must {
     res : M = ---;
-    for i: 0..M.N-1 {
-        for j: 0..M.M-1 {
-            set(*res, i, j, get(m, i, j));
-        }
+
+    for raw(*m) {
+        set_raw(*res, it_raw_index, it);
     }
+
     return res;
 }
 
 copy :: inline (to: *$M/MatrixType, from: M) {
-    for i: 0..M.N-1 {
-        for j: 0..M.M-1 {
-            set(to, i, j, get(from, i, j));
-        }
+    for from {
+        set_lin(to, it_index, it);
     }
 }
 
@@ -170,10 +166,8 @@ mat_init :: (m: *$M/MatrixType, vals: ..$T) {
 }
 
 mat_init_all :: (m: *$M/MatrixType, value: $T) {
-    for i: 0..M.N-1 {
-        for j: 0..M.M-1 {
-            set(m, i, j, ncast(M.data_type, value));
-        }
+    for m {
+        set_lin(m, it_index, ncast(M.data_type, value));
     }
 }
 
@@ -198,13 +192,11 @@ mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = false) {
         assert(values.count == min(M.N, M.M), "not enough values (% values) for diagonal (% values)\n", values.count, min(M.N, M.M));
     }
     #if init_zeroes {
-        for i: 0..M.N-1 {
-            for j: 0..M.M-1 {
-                if i == j { 
-                    set(m, i, j, ncast(M.data_type, values[i]));
-                } else {
-                    set(m, i, j, zero(M.data_type));
-                }
+        for m {
+            if it_column == it_row {
+                set_lin(m, it_index, ncast(M.data_type, values[it_row]));
+            } else {
+                set_lin(m, it_index, zero(M.data_type));
             }
         }
     } else {
@@ -341,12 +333,9 @@ operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
         return false;
     } else {
         // TODO be smart about this, e.g. for sparse matrices
-        for i: 0..A.N-1 {
-            for j: 0..A.M-1 {
-                if get(a, i, j) != get(b, i, j) then return false;
-            }
+        for a {
+            if get_lin(b, it_index) != it then return false;
         }
-
         return true;
     }
 }
@@ -438,10 +427,8 @@ mul :: (a: *$A/MatrixType, b: Scalar($B)) {
         #run assert(is_minor_number(A.data_type, B));
     }
 
-    for i: 0..A.N-1 {
-        for j: 0..A.M-1 {
-            set(a, i, j, get(<<a, i, j) * b.value);
-        }
+    for raw(a) {
+        set_raw(a, it_raw_index, it * b.value);
     }
 }
 
@@ -462,7 +449,7 @@ operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B)
     res : MatrixCastHelper(A, B).T = ---;
 
     for a {
-        set(*res, it_row, it_column, it / b.value);
+        set_lin(*res, it_index, it / b.value);
     }
 
     return res;
@@ -475,10 +462,8 @@ div :: (a: *$A/MatrixType, b: Scalar($B)) {
         #run assert(is_minor_number(A.data_type, B));
     }
 
-    for i: 0..A.N-1 {
-        for j: 0..A.M-1 {
-            set(a, i, j, get(<<a, i, j) / b.value);
-        }
+    for raw(a) {
+        set_raw(a, it_raw_index, it / b.value);
     }
 }
 
@@ -492,11 +477,10 @@ operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
     
     res : MatrixMatrixCastHelper(A,B).T = ---;
 
-    for i: 0..A.N-1 {
-        for j: 0..A.M-1 {
-            set(*res, i, j, get(a, i, j) + get(b, i, j));
-        }
+    for a {
+        set_lin(*res, it_index, it + get_lin(b, it_index));
     }
+
     return res;
 }
 
@@ -510,10 +494,8 @@ add :: (a: *$A/MatrixType, b: $B/MatrixType) {
         #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
 
-    for i: 0..A.N-1 {
-        for j: 0..A.M-1 {
-            set(a, i, j, get(<<a, i, j) + get(b, i, j));
-        }
+    for a {
+        set_lin(a, it_index, it + get_lin(b, it_index));
     }
 }
 
@@ -531,11 +513,10 @@ operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
     
     res : MatrixMatrixCastHelper(A,B).T = ---;
 
-    for i: 0..A.N-1 {
-        for j: 0..A.M-1 {
-            set(*res, i, j, get(a, i, j) - get(b, i, j));
-        }
+    for a {
+        set_lin(*res, it_index, it - get_lin(b, it_index));
     }
+
     return res;
 }
 
@@ -547,10 +528,8 @@ sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
         #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
 
-    for i: 0..A.N-1 {
-        for j: 0..A.M-1 {
-            set(a, i, j, get(<<a, i, j) - get(b, i, j));
-        }
+    for a {
+        set_lin(a, it_index, it - get_lin(b, it_index));
     }
 }
 
@@ -880,10 +859,8 @@ norm_inf :: (m: $M/MatrixType) -> float64 {
 norm_frobenius :: (m: $M/MatrixType) -> float64 {
     sum : float64 = 0.0;
 
-    for i: 0..M.N-1 {
-        for j: 0..M.M-1 {
-            sum += abs(get(m, i, j));
-        }
+    for m {
+        sum += abs(it);
     }
 
     return sum;
