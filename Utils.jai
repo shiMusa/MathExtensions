@@ -56,41 +56,121 @@ pool :: (code: Code) #expand {
 // }
 
 
-is_number :: inline (T: Type) -> bool {
-    return T == Complex64
-        || T == float64
-        || T == float32
-        || T == float
-        || T == int
-        || T == s64
-        || T == s32
-        || T == s16
-        || T == u64
-        || T == u32
-        || T == u16
-        || T == u8
-        ;
-}
-is_number :: (A: *Type_Info) -> bool {
-    return A == type_info(Complex64) || A.type == .FLOAT || A.type == .INTEGER || A.type == .BOOL;
+
+
+
+NUMBER_TYPES :: Type.[
+    float64, float32, s64, s32, s16, s8, u64, u32, u16, u8, bool
+];
+
+
+
+is_intrinsic_number :: ($T: Type) -> bool {
+    for NUMBER_TYPES {
+        if T == it then return true;
+    }
+    return false;
 }
 
+is_intrinsic_number :: (n: *Type_Info) -> bool {
+    return n.type == .FLOAT
+        || n.type == .INTEGER
+        || n.type == .BOOL;
+}
+
+
+is_complex_number :: ($T: Type) -> bool {
+
+    #insert -> string {
+        builder: String_Builder;
+
+        for NUMBER_TYPES {
+            print_to_builder(*builder,
+                "if T == Complex(%) then return true;\n",
+                it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+
+    return false;
+}
+
+is_complex_number :: (n: *Type_Info) -> bool {
+    if n.type != .STRUCT then return false;
+    s := cast(*Type_Info_Struct)n;
+
+    if s.name == "Complex" then return true;
+
+    return false;
+}
+
+
+
+is_number :: inline ($T: Type) -> bool {
+    return is_intrinsic_number(T) || is_complex_number(T);
+}
+
+is_number :: inline (n: *Type_Info) -> bool {
+    return is_intrinsic_number(n) || is_complex_number(n);
+}
 
 
 
 
+// ? assuming we already know it's a Complex(T) number
+get_complex_inner_type :: ($T: Type) -> Type {
+    #insert -> string {
+        builder: String_Builder;
 
-ncast :: inline ($T: Type, $$num: $N) -> T #modify {
-    if !is_number(N) || !is_number(T) { N = null; return; }    
-} {
+        for NUMBER_TYPES {
+            print_to_builder(*builder,
+                "if T == Complex(%) then return %;\n",
+                it, it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+    return Any;
+}
+
+get_complex_inner_type :: (T: *Type_Info) -> *Type_Info {
+    s := cast(*Type_Info_Struct)T;
+    return s.members[0].type;
+}
+
+
+get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info {
+    #insert -> string {
+        builder: String_Builder;
+
+        for NUMBER_TYPES {
+            print_to_builder(*builder,
+                "if cast(*Type_Info)type_info(%) == T then return type_info(Complex(%));\n",
+                it, it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+    return null;
+}
+
+
+
+// * I don't need to use #modify since this is only used in terms of numbers anyways
+ncast :: inline ($T: Type, num: $N) -> T {
     #if T == N {
         return num;
-    } else #if T == Complex64 {
-        return c64(cast(float64)num);
-    } else #if N != Complex64 {
+    } else #if type_info(T).name == "Complex" {
+        // ! cast to inner type T of Complex($T)
+        return cpx(cast(float64)num);
+    } else #if type_info(N).name != "Complex" {
         return cast,no_check(T) num;
     } else {
-        assert(N != Complex64, "cannot cast complex to real number!");
+        assert(type_info(N).name != "Complex", "cannot cast complex to real number!");
         return zero(T);
     }
 }
@@ -144,36 +224,30 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 
 
 
-
-// Super :: struct (T1: Type, T2: Type) {
-//     T :: #run super_type(T1, T2);
-// }
-
-
-
-// This works only for Complex64 and float64 for now.
-upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
-    if A == type_info(Complex64) || B == type_info(Complex64) {
-        return type_info(Complex64);
-    } else if A == type_info(float64) || B == type_info(float64) {
-        return type_info(float64);
-    } else if A == type_info(float32) || B == type_info(float32) {
-        return type_info(float32);
-    } else if A == type_info(s64) || B == type_info(s64) {
-        return type_info(s64);
-    } else if A == type_info(s32) || B == type_info(s32) {
-        return type_info(s32);
-    }
-    // TODO rest
-    return type_info(float64);
-}
-
 upcast :: inline ($A: Type, $B: Type) -> Type {
-    #assert(is_number(A) && is_number(B));
-    #if A == Complex64 || B == Complex64 {
-        return Complex64;
-    } 
-    return float64;
+    is_A_complex :: #run is_complex_number(A);
+    is_B_complex :: #run is_complex_number(B);
+
+    #if is_A_complex && is_B_complex {
+        a :: #run get_complex_inner_type(A);
+        b :: #run get_complex_inner_type(B);
+        T :: #run upcast(a, b);
+        return Complex(T);
+    } else #if is_A_complex {
+        a :: #run get_complex_inner_type(A);
+        T :: #run upcast(a, B);
+        return Complex(T);
+    } else #if is_B_complex {
+        b :: #run get_complex_inner_type(B);
+        T :: #run upcast(A,b);
+        return Complex(T);
+    } else {
+        // ? the types in NUMBER_TYPES are sorted in order from mathematical superset to subset, e.g. ℂ > ℝ > ℤ > ℕ 
+        for NUMBER_TYPES {
+            if A == it || B == it then return it;
+        }
+        return Any;
+    }
 }
 
 
@@ -181,17 +255,15 @@ UpCast :: struct(A: Type, B: Type) {
     T :: #run upcast(A, B);
 }
 
-// TODO other number tupes, float vs int etc.
-is_minor_number :: inline ($base: Type, $b: Type) -> bool {
-    #if base == Complex64 {
-        return true;
-    } else {
-        #if b == Complex64 {
-            return false;
-        } else {
-            return true;
-        }
+
+is_minor_number :: inline ($major: Type, $minor: Type) -> bool {
+    i_major := -1;
+    i_minor := -1;
+    for NUMBER_TYPES {
+        if it == major then i_major = it_index;
+        if it == minor then i_minor = it_index;
     }
+    return i_major >= i_minor;
 }
 
 
@@ -215,7 +287,7 @@ next_power_of_two :: inline (x : int) -> int {
 
 
 str :: inline (val: $T) -> string #modify {
-    if !is_number(T) { T = null; return; }
+    if !is_intrinsic_number(T) { T = null; return; }
 } {
     return sprint("%", val);
 }
@@ -280,14 +352,14 @@ println :: (arg: Any) {
 
 test_utils :: () {
     print("\n\nUtils -------------------------------\n\n");
-    assert(sign(2.0) == 1.0);
-    assert(sign(-2.0) == -1.0);
-    assert(sign(-2) == -1);
+    // assert(sign(2.0) == 1.0);
+    // assert(sign(-2.0) == -1.0);
+    // assert(sign(-2) == -1);
 
-    assert(binomial(42, 42) == 1);
-    assert(binomial(42, 0) == 1);
-    assert(binomial(5, 3) == 10);
-    assert(binomial(11, 6) == 462);
+    // assert(binomial(42, 42) == 1);
+    // assert(binomial(42, 0) == 1);
+    // assert(binomial(5, 3) == 10);
+    // assert(binomial(11, 6) == 462);
     // print("%\n", binomial(67, 30));
 
     {
