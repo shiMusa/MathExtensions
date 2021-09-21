@@ -33,17 +33,23 @@ Not sure how to do that atm in Jai...
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 2.3.1.4, page 50
-approx_inverse :: (val: float64, guess: float64, rtol: float64, $show_steps: bool = false) -> float64 {
-    x : float64 = guess + rtol + rtol;
-    xnew : float64 = guess;
+approx_inverse :: (val: $T, guess: T, rtol: T, $show_steps: bool = false) -> T #modify {
+    if T.type != .FLOAT {T = null; return;}    
+} {
+    x : T = guess + rtol + rtol;
+    xnew : T = guess;
     i := 0;
+
+    #if show_steps {
+        println_push("approx_inverse (rtol)");
+    }
 
     while Math.abs(xnew - x) > rtol {
         x = xnew;
         xnew = x * (2.0 - val * x);
         #if show_steps {
             i += 1;
-            print("%: x = %, rel err = %\n", i, x, Math.abs(xnew - x));
+            println("%: x = %, rel err = %", i, x, Math.abs(xnew - x));
         }
     }
 
@@ -54,12 +60,19 @@ approx_inverse :: (val: float64, guess: float64, rtol: float64, $show_steps: boo
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 2.3.1.4, page 50
-approx_inverse :: (val: float64, guess: float64, iterations: int, $show_steps: bool = false) -> float64 {
-    x : float64 = guess;
+approx_inverse :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
+    if T.type != .FLOAT {T = null; return;}    
+} {
+    x : T = guess;
+
+    #if show_steps {
+        println_push("approx_inverse (iterations)");
+    }
+
     for 1..iterations {
         x = x * (2.0 - val * x);
         #if show_steps {
-            print("%: x = %\n", it, x);
+            println("%: x = %", it, x);
         }
     }
 
@@ -74,12 +87,19 @@ approx_inverse :: (val: float64, guess: float64, iterations: int, $show_steps: b
 // Springer
 // Algorithm 2.3.1.5, page 51
 // TODO: bit shift exponent (divid by 2) for initial guess
-approx_sqrt :: (val: float64, guess: float64, iterations: int, $show_steps: bool = false) -> float64 {
-    x : float64 = guess;
+approx_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
+    if T.type != .FLOAT {T = null; return;}    
+} {
+    x : T = guess;
+
+    #if show_steps {
+        println_push("approx_sqrt");
+    }
+
     for 1..iterations {
         x = 0.5 * (x + val/x);
         #if show_steps {
-            print("%: x = %\n", it, x);
+            println("%: x = %", it, x);
         }
     }
 
@@ -116,12 +136,19 @@ approx_sqrt :: (val: float64, guess: float64, iterations: int, $show_steps: bool
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 2.3.1.6, page 51
-approx_inv_sqrt :: (val: float64, guess: float64, iterations: int, $show_steps: bool = false) -> float64 {
-    x : float64 = guess;
+approx_inv_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
+    if T.type != .FLOAT {T = null; return;}    
+} {
+    x : T = guess;
+
+    #if show_steps {
+        println_push("approx_inv_sqrt");
+    }
+
     for 1..iterations {
         x = 0.5 * x * (3.0 - val * x * x);
         #if show_steps {
-            print("%: x = %\n", it, x);
+            println("%: x = %", it, x);
         }
     }
 
@@ -133,13 +160,14 @@ approx_inv_sqrt :: (val: float64, guess: float64, iterations: int, $show_steps: 
 
 
 test_approximations :: () {
-    print("\n\nApproximations -----------------------------\n\n");
-    print("% = %\n", 1.0/42.0, approx_inverse(42, 0.01, 10));
-    print("% = %\n", 1.0/42.0, approx_inverse(42, 0.01, 1.0e-12, true));
-    print("err = %\n", Math.abs(approx_inverse(42, 0.01, 1.0e-12) - 1.0/42.0));
+    println_push("Approximations", color = C_FG_WHITE);
+
+    println("% = %", 1.0/42.0, approx_inverse(42.0, 0.01, 10));
+    println("% = %", 1.0/42.0, approx_inverse(42.0, 0.01, 1.0e-12, true));
+    println("err = %", Math.abs(approx_inverse(42.0, 0.01, 1.0e-12) - 1.0/42.0));
 
 
-    print("% = %\n", Math.sqrt(42.0), approx_sqrt(42, 6.0, 3, true));
-    // print("% = %\n", Math.sqrt(42.0), approx_sqrt(42, 3, true));
-    print("% = %\n", 1.0/Math.sqrt(42.0), approx_inv_sqrt(42, 0.1, 3, true));
+    println("% = %", Math.sqrt(42.0), approx_sqrt(42.0, 6.0, 3, true));
+    // println("% = %\n", Math.sqrt(42.0), approx_sqrt(42, 3, true));
+    println("% = %", 1.0/Math.sqrt(42.0), approx_inv_sqrt(42.0, 0.1, 3, true));
 }

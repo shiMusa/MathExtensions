@@ -56,7 +56,13 @@ pool :: (code: Code) #expand {
 // }
 
 
-
+// ######## ##    ## ########  ########  ######
+//    ##     ##  ##  ##     ## ##       ##    ##
+//    ##      ####   ##     ## ##       ##
+//    ##       ##    ########  ######    ######
+//    ##       ##    ##        ##             ##
+//    ##       ##    ##        ##       ##    ##
+//    ##       ##    ##        ########  ######
 
 
 NUMBER_TYPES :: Type.[
@@ -160,6 +166,15 @@ get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info 
 
 
 
+// ##    ##  ######     ###     ######  ########
+// ###   ## ##    ##   ## ##   ##    ##    ##
+// ####  ## ##        ##   ##  ##          ##
+// ## ## ## ##       ##     ##  ######     ##
+// ##  #### ##       #########       ##    ##
+// ##   ### ##    ## ##     ## ##    ##    ##
+// ##    ##  ######  ##     ##  ######     ##
+
+
 // * I don't need to use #modify since this is only used in terms of numbers anyways
 ncast :: inline ($T: Type, num: $N) -> T {
     #if T == N {
@@ -181,6 +196,18 @@ zero :: inline ($T: Type) -> T {
 
 one :: inline ($T: Type) -> T {
     return ncast(T, 1);
+}
+
+nan :: inline ($T: Type) -> T {
+    #if T == float64 {
+        return Math.FLOAT64_NAN;
+    } else #if T == float32 {
+        return Math.FLOAT32_NAN;
+    } else #if #run is_complex_number(T) {
+        X :: #run get_complex_inner_type(T);
+        n :: #run nan(X);
+        return #run Complex(X).{n,n};
+    } else return null;
 }
 
 
@@ -293,6 +320,15 @@ str :: inline (val: $T) -> string #modify {
 }
 
 
+
+
+// ########  ########  #### ##    ## ########
+// ##     ## ##     ##  ##  ###   ##    ##
+// ##     ## ##     ##  ##  ####  ##    ##
+// ########  ########   ##  ## ## ##    ##
+// ##        ##   ##    ##  ##  ####    ##
+// ##        ##    ##   ##  ##   ###    ##
+// ##        ##     ## #### ##    ##    ##
 
 
 

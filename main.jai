@@ -12,8 +12,8 @@ main :: () {
 
     test_elementary();
 
-    // test_polynomials();
-    // test_approximations();
+    test_polynomials();
+    test_approximations();
     
     // test_scalar();
     // test_vector();
