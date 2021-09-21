@@ -499,14 +499,14 @@ rasch :: inline (x: $T) -> T #modify {
 
 
 test_elementary :: () {
-    println_push("Elementary");
+    println_push("Elementary", color = C_FG_WHITE);
 
     aa :: (a: $T, b: T) {
         assert(approx(a,b), "% != %", a, b);
     }
 
     {
-        println_push("pow");
+        println_push("pow", color = C_FG_GREEN);
         assert( pow(2.0, 2.0, float64) == 4);
         assert( approx(pow(I, 2.0, Complex(float64)), -R) );
 
@@ -520,7 +520,7 @@ test_elementary :: () {
     }
 
     {
-        println_push("trigonometric functions");
+        println_push("trigonometric functions", color = C_FG_GREEN);
 
         println("sin");
         aa( sin(2.0), 0.9092974268 );

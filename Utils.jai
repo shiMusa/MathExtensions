@@ -309,14 +309,34 @@ print_indent :: (levels: int) {
     print_options.shift += 4 * levels;
 }
 
-println_push :: (heading: string = "", args: ..Any) #expand {
-    println(heading, ..args);
+
+C_FG_RESET   :: "\e[0m";
+C_FG_BLACK   :: "\e[30m";
+C_FG_RED     :: "\e[31m";
+C_FG_GREEN   :: "\e[32m";
+C_FG_YELLOW  :: "\e[33m";
+C_FG_BLUE    :: "\e[34m";
+C_FG_MAGENTA :: "\e[35m";
+C_FG_CYAN    :: "\e[36m";
+C_FG_WHITE   :: "\e[37m";
+
+
+fg_color :: inline (txt: string, color: string) -> string {
+    return sprint("%1%2%3", color, txt, C_FG_RESET);
+}
+
+
+println_push :: (text: string = "", args: ..Any, color: string = C_FG_RESET) #expand {
+    c_text := ifx color != C_FG_RESET then sprint("%1%2%3", color, text, C_FG_RESET) else text;
+    println(c_text, ..args);
     print_indent(1);
     `defer println("└╴");
     `defer print_indent(-1);
 }
 
-println :: (msg: string = "", args: ..Any) {
+println :: (text: string = "", args: ..Any, color: string = C_FG_RESET) {
+
+    c_text := ifx color != C_FG_RESET then sprint("%1%2%3", color, text, C_FG_RESET) else text;
 
     for 0..print_options.offset-1 {
         print(" ");
@@ -328,11 +348,13 @@ println :: (msg: string = "", args: ..Any) {
         } else
             print(" ");
     }
-    print(msg, ..args);
+    print(c_text, ..args);
     print("\n");
 }
 
-println :: (arg: Any) {
+println :: (arg: Any, color: string = C_FG_RESET) {
+    text := sprint("%", arg);
+    c_text := ifx color != C_FG_RESET then sprint("%1%2%3", color, text, C_FG_RESET) else text;
     
     for 0..print_options.offset-1 {
         print(" ");
@@ -344,24 +366,24 @@ println :: (arg: Any) {
         } else
             print(" ");
     }
-    print("%\n", arg);
+    print("%\n", c_text);
 }
 
 
 
 
 test_utils :: () {
-    println_push("Utils");
+    println_push("Utils", color = C_FG_WHITE);
 
     {
-        println("test 1 : assert sign");
+        println("test 1 : assert sign", color = C_FG_GREEN);
         assert(sign(2.0) == 1.0);
         assert(sign(-2.0) == -1.0);
         assert(sign(-2) == -1);
     }
 
     {
-        println_push("test 2 : assert binomial");
+        println_push("test 2 : assert binomial", color = C_FG_GREEN);
         println("assert 1");
         assert(binomial(42, 42) == 1);
         println("assert 2");
@@ -375,7 +397,7 @@ test_utils :: () {
     }
 
     {
-        println_push("test 3 : array_view_range");
+        println_push("test 3 : array_view_range", color = C_FG_GREEN);
         a := float64.[0,1,2,3,4,5,6];
         v := array_view_range(a, 2, 4);
         println("%", a);

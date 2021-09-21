@@ -123,7 +123,7 @@ operator == :: (a: Complex($T), b: $U) -> bool #modify {
 
 
 test_complex_generic :: () {
-    println_push("Complex(T)");
+    println_push("Complex(T)", color = C_FG_WHITE);
 
     a := cpx(1.0, 0.0);
     b := cpx(0.0, 1.0);
@@ -145,7 +145,7 @@ test_complex_generic :: () {
 
 
     {
-        println_push("arg");
+        println_push("arg", color = C_FG_GREEN);
         println(
             "%, %, %, %, %, %, %, %",
             arg(Complex(float64).{ 1.0,  0.0}) / Math.PI * 180.0,
