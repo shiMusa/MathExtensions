@@ -71,6 +71,18 @@ NUMBER_TYPES :: Type.[
 
 
 
+
+is_float_number :: inline ($T: Type) -> bool {
+    if is_complex_number(T) {
+        X :: #run get_complex_inner_type(T);
+        return is_float_number(X);
+    }
+    if T == float64 || T == float32 return true;
+    return false;
+}
+
+
+
 is_intrinsic_number :: ($T: Type) -> bool {
     for NUMBER_TYPES {
         if T == it then return true;
@@ -181,7 +193,11 @@ ncast :: inline ($T: Type, num: $N) -> T {
         return num;
     } else #if #run is_complex_number(T) {
         X :: #run get_complex_inner_type(T);
-        return cpx(cast(X)num);
+        #if #run is_complex_number(N) {
+            return cpx(cast(X)num.real, cast(X)num.imag);
+        } else {
+            return cpx(cast(X)num, zero(X));
+        }
     } else #if #run !is_complex_number(N) {
         return cast,no_check(T) num;
     } else {
@@ -260,7 +276,7 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
     if !is_number(A) || !is_number(B) then return null;
 
-    println_push("upcast (%, %)", A.type, B.type, color = C_FG_WHITE);
+    // println_push("upcast (%, %)", A.type, B.type, color = .FG_WHITE);
 
     if is_complex_number(A) && is_complex_number(B) {
         a := get_complex_inner_type(A);
@@ -397,33 +413,57 @@ print_indent :: (levels: int) {
 }
 
 
-C_FG_RESET   :: "\e[0m";
-C_FG_BLACK   :: "\e[30m";
-C_FG_RED     :: "\e[31m";
-C_FG_GREEN   :: "\e[32m";
-C_FG_YELLOW  :: "\e[33m";
-C_FG_BLUE    :: "\e[34m";
-C_FG_MAGENTA :: "\e[35m";
-C_FG_CYAN    :: "\e[36m";
-C_FG_WHITE   :: "\e[37m";
 
 
-fg_color :: inline (txt: string, color: string) -> string {
-    return sprint("%1%2%3", color, txt, C_FG_RESET);
+
+
+COLOR :: enum {
+    FG_RESET;
+    FG_BLACK;
+    FG_RED;
+    FG_GREEN;
+    FG_YELLOW;
+    FG_BLUE;
+    FG_MAGENTA;
+    FG_CYAN;
+    FG_WHITE;
+}
+
+ansi_color :: (c: COLOR = .FG_RESET) -> string {
+    if c == {
+        case .FG_RESET  ; return "\e[0m";
+        case .FG_BLACK  ; return "\e[30m";
+        case .FG_RED    ; return "\e[31m";
+        case .FG_GREEN  ; return "\e[32m";
+        case .FG_YELLOW ; return "\e[33m";
+        case .FG_BLUE   ; return "\e[34m";
+        case .FG_MAGENTA; return "\e[35m";
+        case .FG_CYAN   ; return "\e[36m";
+        case .FG_WHITE  ; return "\e[37m";
+    }
+    return ansi_color();
 }
 
 
-println_push :: (text: string = "", args: ..Any, color: string = C_FG_RESET) #expand {
-    c_text := ifx color != C_FG_RESET then sprint("%1%2%3", color, text, C_FG_RESET) else text;
+
+
+
+fg_color :: inline (txt: string, color: COLOR = .FG_RESET) -> string {
+    return sprint("%1%2%3", ansi_color(color), txt, ansi_color());
+}
+
+
+println_push :: (text: string = "", args: ..Any, color: COLOR = .FG_RESET) #expand {
+    c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
     println(c_text, ..args);
     print_indent(1);
     `defer println("└╴");
     `defer print_indent(-1);
 }
 
-println :: (text: string = "", args: ..Any, color: string = C_FG_RESET) {
+println :: (text: string = "", args: ..Any, color: COLOR = .FG_RESET) {
 
-    c_text := ifx color != C_FG_RESET then sprint("%1%2%3", color, text, C_FG_RESET) else text;
+    c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
 
     for 0..print_options.offset-1 {
         print(" ");
@@ -435,13 +475,14 @@ println :: (text: string = "", args: ..Any, color: string = C_FG_RESET) {
         } else
             print(" ");
     }
+
     print(c_text, ..args);
     print("\n");
 }
 
-println :: (arg: Any, color: string = C_FG_RESET) {
+println :: (arg: Any, color: COLOR = .FG_RESET) {
     text := sprint("%", arg);
-    c_text := ifx color != C_FG_RESET then sprint("%1%2%3", color, text, C_FG_RESET) else text;
+    c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
     
     for 0..print_options.offset-1 {
         print(" ");
@@ -460,17 +501,17 @@ println :: (arg: Any, color: string = C_FG_RESET) {
 
 
 test_utils :: () {
-    println_push("Utils", color = C_FG_WHITE);
+    println_push("Utils", color = .FG_WHITE);
 
     {
-        println("test 1 : assert sign", color = C_FG_GREEN);
+        println("test 1 : assert sign", color = .FG_GREEN);
         assert(sign(2.0) == 1.0);
         assert(sign(-2.0) == -1.0);
         assert(sign(-2) == -1);
     }
 
     {
-        println_push("test 2 : assert binomial", color = C_FG_GREEN);
+        println_push("test 2 : assert binomial", color = .FG_GREEN);
         println("assert 1");
         assert(binomial(42, 42) == 1);
         println("assert 2");
@@ -484,7 +525,7 @@ test_utils :: () {
     }
 
     {
-        println_push("test 3 : array_view_range", color = C_FG_GREEN);
+        println_push("test 3 : array_view_range", color = .FG_GREEN);
         a := float64.[0,1,2,3,4,5,6];
         v := array_view_range(a, 2, 4);
         println("%", a);

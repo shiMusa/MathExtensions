@@ -97,7 +97,7 @@ operator == :: inline(a: Scalar($A), b: $B) -> bool #modify {
 #scope_module
 test_scalar :: () {
 
-    println_push("Scalar", color = C_FG_WHITE);
+    println_push("Scalar", color = .FG_WHITE);
     {
         s := scl(2.0);
         r := s * 42.0;

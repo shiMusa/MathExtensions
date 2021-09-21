@@ -176,7 +176,7 @@ repeated_synthetic_division :: (r: $T, a: ..T) -> ([]T, []T) #modify {
 
 
 test_polynomials :: () {
-    println_push("Polynomials", color = C_FG_WHITE);
+    println_push("Polynomials", color = .FG_WHITE);
 
     r1 : float64;
     r2 : float64;
@@ -188,7 +188,7 @@ test_polynomials :: () {
     r1, r2 = solve_quadratic_real(1.0, 2.0,-3.0); println("%, %", r1, r2); assert(r1 == -3);       assert(r2 == 1); 
 
     {
-        println_push("Difficult quadratic problems (check manually)", color = C_FG_GREEN);
+        println_push("Difficult quadratic problems (check manually)", color = .FG_GREEN);
         r1, r2 = solve_quadratic_real(1.0e160, -2.0e160, 1.0e160);  println("%, %", r1, r2); // result: 1, 1
         r1, r2 = solve_quadratic_real(1.0e-20, -1.0, 1.0);          println("%, %", r1, r2); // result: 10^20, 1
         r1, r2 = solve_quadratic_real(1.0, -1.0, 1.0e-20);          println("%, %", r1, r2); // result: 1, 10^-20
@@ -198,7 +198,7 @@ test_polynomials :: () {
     }
 
     {
-        println_push("Polynom evaluation", color = C_FG_GREEN);
+        println_push("Polynom evaluation", color = .FG_GREEN);
 
         // print("%\n", polynom(2.0, 3.0, -1.0, 2.0));
         assert(polynom(2.0, 2.0, -1.0, 3.0) == 9.0);

@@ -572,14 +572,14 @@ angle :: (a: $A/VectorType, b: $B/VectorType) -> float64 {
 #scope_module
 test_vector :: () {
 
-    print("\n\nVector -------------------------------\n\n");
+    println_push("Vector", color = .FG_WHITE);
     {
         T :: DenseVector(float64, 5);
         // #run print("T = %\n", T);
         v : DenseVector(float64, 5);
-        print("v = %\n", pstr(v));
+        println("v = %", pstr(v));
         vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
-        print("v = %\n", pstr(v));
+        println("v = %", pstr(v));
         // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
         a := v + v;
         println("a = %", pstr(v));

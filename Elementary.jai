@@ -74,7 +74,7 @@ conjugate :: inline (n: $T) -> T #modify {
     if !is_number(T) { T = null; return; }    
 } {
     #if #run is_complex_number(T) {
-        cpx(n.real, -n.imag);
+        return cpx(n.real, -n.imag);
     } else {
         return n;
     }
@@ -499,14 +499,14 @@ rasch :: inline (x: $T) -> T #modify {
 
 
 test_elementary :: () {
-    println_push("Elementary", color = C_FG_WHITE);
+    println_push("Elementary", color = .FG_WHITE);
 
     aa :: (a: $T, b: T) {
         assert(approx(a,b), "% != %", a, b);
     }
 
     {
-        println_push("pow", color = C_FG_GREEN);
+        println_push("pow", color = .FG_GREEN);
         assert( pow(2.0, 2.0, float64) == 4);
         assert( approx(pow(I, 2.0, Complex(float64)), -R) );
 
@@ -520,7 +520,7 @@ test_elementary :: () {
     }
 
     {
-        println_push("trigonometric functions", color = C_FG_GREEN);
+        println_push("trigonometric functions", color = .FG_GREEN);
 
         println("sin");
         aa( sin(2.0), 0.9092974268 );

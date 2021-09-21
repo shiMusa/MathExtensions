@@ -9,6 +9,11 @@ C64_NAN :: Complex(float64).{Math.FLOAT64_NAN, Math.FLOAT64_NAN};
 
 
 
+c64 :: Complex(float64);
+c32 :: Complex(float32);
+
+
+
 
 str :: (z: Complex($T)) -> string {
     if z.imag >= 0 {
@@ -122,8 +127,8 @@ operator == :: (a: Complex($T), b: $U) -> bool #modify {
 
 
 
-test_complex_generic :: () {
-    println_push("Complex(T)", color = C_FG_WHITE);
+test_complex :: () {
+    println_push("Complex(T)", color = .FG_WHITE);
 
     a := cpx(1.0, 0.0);
     b := cpx(0.0, 1.0);
@@ -145,7 +150,7 @@ test_complex_generic :: () {
 
 
     {
-        println_push("arg", color = C_FG_GREEN);
+        println_push("arg", color = .FG_GREEN);
         println(
             "%, %, %, %, %, %, %, %",
             arg(Complex(float64).{ 1.0,  0.0}) / Math.PI * 180.0,

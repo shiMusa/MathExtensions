@@ -650,15 +650,15 @@ determinant :: (a: $A/MatrixType) -> A.data_type {
 
 
 test_linear_algebra :: () {
-    print("\n\nLinear Algebra -------------------------------\n\n");
+    println_push("Linear Algebra", color = .FG_WHITE);
 
     {
-        println_push("test 1");
+        println_push("test 1", color = .FG_GREEN);
 
         A := dmat(2,2, R, R, 2.0 - I, I);
         println("mat_init: %", pstr(A));
 
-        b := dvec(2, I, c64(2.0, 4.0));
+        b := dvec(2, I, 2*R+4*I);
         println("vec_init: %", pstr(b));
 
         res := solve_linear_2x2(A, b);
@@ -672,15 +672,15 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 2");
+        println_push("test 2", color = .FG_GREEN);
 
-        L : DenseMatrix(Complex64, 3, 3) = ---;
+        L : DenseMatrix(c64, 3, 3) = ---;
         mat_init(*L,
             R, CZERO, CZERO,
             3.0*R, R, CZERO,
             I, R+I, R
         );
-        b : DenseVector(Complex64, 3) = ---;
+        b : DenseVector(c64, 3) = ---;
         vec_init(*b, 3.0*R, -I, R-2.0*I);
         res := solve_linear_left_triangular(L, b);
         println("% = % ?", pstr(L * res), pstr(b));
@@ -688,7 +688,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 3");
+        println_push("test 3", color = .FG_GREEN);
 
         M := dmat(3,3,
             2.0*R, I, R-2.0*I,
@@ -706,7 +706,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 4");
+        println_push("test 4", color = .FG_GREEN);
 
         m : DenseMatrix(int, 4, 4) = ---;
         mat_init(*m,
@@ -715,11 +715,11 @@ test_linear_algebra :: () {
             0, 1, 2, 3,
             0, 0, 0, 2
         );
-        cm := mat_cast(Complex64, m);
+        cm := mat_cast(c64, m);
         
         b : DenseVector(float64, 4) = ---;
         vec_init(*b, 2,3,4,5);
-        cb := vec_cast(Complex64, b);
+        cb := vec_cast(c64, b);
 
         println("cm %", pstr(cm));
         println("cb %", pstr(cb));
@@ -732,15 +732,15 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 5");
+        println_push("test 5", color = .FG_GREEN);
 
-        M : DenseMatrix(Complex64, 3, 2) = ---;
+        M : DenseMatrix(c64, 3, 2) = ---;
         mat_init(*M, 
             R, CZERO, 
             -R, R, 
             -R, -R
         );
-        b : DenseVector(Complex64, 3) = ---;
+        b : DenseVector(c64, 3) = ---;
         vec_init(*b, R, 2.0*R, -4.0*R);
 
         res := solve_linear_left_trapezoidal(M, b);
@@ -749,14 +749,14 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 6");
+        println_push("test 6", color = .FG_GREEN);
 
-        M : DenseMatrix(Complex64, 2, 3) = ---;
+        M : DenseMatrix(c64, 2, 3) = ---;
         mat_init(*M, 
             R, R, CZERO, 
             CZERO, R, CZERO 
         );
-        b : DenseVector(Complex64, 2) = ---;
+        b : DenseVector(c64, 2) = ---;
         vec_init(*b,4*R, 6*R);
 
         res := solve_linear_right_trapezoidal(M, b);
@@ -764,10 +764,10 @@ test_linear_algebra :: () {
         assert( approx(M*res, b) );
     }
     {
-        println_push("test 7");
+        println_push("test 7", color = .FG_GREEN);
 
-        M   : DenseMatrix(Complex64, 2, 2) = ---;
-        res : DenseMatrix(Complex64, 2, 2) = ---;
+        M   : DenseMatrix(c64, 2, 2) = ---;
+        res : DenseMatrix(c64, 2, 2) = ---;
         mat_init(*M,
             2*R, 3*R,
             -2*R, R
@@ -783,7 +783,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 8");
+        println_push("test 8", color = .FG_GREEN);
 
         M := dmat(2,2,
             R, I,
@@ -797,9 +797,9 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 9");
+        println_push("test 9", color = .FG_GREEN);
 
-        M : DenseMatrix(Complex64, 3, 3) = ---;
+        M : DenseMatrix(c64, 3, 3) = ---;
         mat_init(*M,
             CZERO, 4*R, -3*R,
             2*R, CZERO, 4*R,
@@ -812,9 +812,9 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 10");
+        println_push("test 10", color = .FG_GREEN);
 
-        M : DenseMatrix(Complex64, 3, 3) = ---;
+        M : DenseMatrix(c64, 3, 3) = ---;
         mat_init(*M,
             CZERO, 4*R, -3*R,
             2*R, CZERO, 4*R,
@@ -829,25 +829,25 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 11");
+        println_push("test 11", color = .FG_GREEN);
 
-        M : DenseMatrix(Complex64, 2, 2) = ---;
+        M : DenseMatrix(c64, 2, 2) = ---;
         mat_init(*M,
             R, I,
             -3*R, 2.0 - I
         );
-        b : DenseVector(Complex64, 2) = ---;
+        b : DenseVector(c64, 2) = ---;
         vec_init(*b, 4*R, 6*I);
 
         res := solve_LRfp(M, b);
         println("solve linear system via Gaussian factorization (full pivoting): %", pstr(res));
-        sol : DenseVector(Complex64, 2) = ---;
+        sol : DenseVector(c64, 2) = ---;
         vec_init(*sol, 2.5-4.5*I, 4.5-1.5*I);
         assert(approx(res, sol), "\nCould not solve linear system via Gaussain factorization!");
     }
 
     {
-        println_push("test 12");
+        println_push("test 12", color = .FG_GREEN);
 
         M := dmat(2,2,
             R, I,
@@ -861,14 +861,14 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 13");
+        println_push("test 13", color = .FG_GREEN);
 
         L := dmat(3,3,
             R, CZERO, CZERO,
             I, R, CZERO,
             2*R, 3+I, R
         );
-        one : DenseMatrix(Complex64, 3, 3);
+        one : DenseMatrix(c64, 3, 3);
         mat_init_unit(*one);
         res := solve_linear_left_trapezoidal(L,one);
         println("K = %", pstr(res));
@@ -880,14 +880,14 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 14");
+        println_push("test 14", color = .FG_GREEN);
 
         M := dmat(3,3,
             2*R, I, -2*R,
             CZERO, -I, CZERO,
             CZERO, CZERO, 1+I
         );
-        one : DenseMatrix(Complex64, 3, 3);
+        one : DenseMatrix(c64, 3, 3);
         mat_init_unit(*one);
         res := solve_linear_right_trapezoidal(M,one);
         println("K = %", pstr(res));
@@ -899,7 +899,7 @@ test_linear_algebra :: () {
     }
 
     {
-        println_push("test 15");
+        println_push("test 15", color = .FG_GREEN);
 
         M := dmat(3, 3,
             2*R, I, -2*R,
@@ -909,14 +909,14 @@ test_linear_algebra :: () {
         iM := inverse(M);
         println("iM = %", pstr(iM));
         assert(approx(iM, dmat(3,3,
-            c64(0.25, 0.25), c64(0.25, 0.25), c64(0.5, -0.5),
+            0.25*R + 0.25*I, 0.25*R+0.25*I, 0.5*R-0.5*I,
             -0.5*R, -0.5*R+I, R,
             -0.25*R, -0.25*R, 0.5*R
         )));
     }
 
     {
-        println_push("test 16");
+        println_push("test 16", color = .FG_GREEN);
 
         M := dmat(3, 3,
             2*R, I, -2*R,

@@ -160,7 +160,7 @@ approx_inv_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = fals
 
 
 test_approximations :: () {
-    println_push("Approximations", color = C_FG_WHITE);
+    println_push("Approximations", color = .FG_WHITE);
 
     println("% = %", 1.0/42.0, approx_inverse(42.0, 0.01, 10));
     println("% = %", 1.0/42.0, approx_inverse(42.0, 0.01, 1.0e-12, true));

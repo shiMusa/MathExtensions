@@ -23,7 +23,7 @@ is_left_triangular :: (m: $M/MatrixType) -> bool {
     zro := zero(M.data_type);
     for i: 0..M.N-1 {
         for j: i+1..M.M-1 {
-            #if M.data_type == Complex64 || M.data_type == float64 || M.data_type == float32 {
+            #if #run is_float_number(M.data_type) {
                 if !approx(get(m,i,j), zro) then return false;
             } else {
                 if get(m,i,j) != zro then return false;
@@ -38,7 +38,7 @@ is_right_triangular :: (m: $M/MatrixType) -> bool {
     zro := zero(M.data_type);
     for i: 0..M.N-1 {
         for j: 0..i-1 {
-            #if M.data_type == Complex64 || M.data_type == float64 || M.data_type == float32 {
+            #if #run is_float_number(M.data_type) {
                 if !approx(get(m,i,j), zro) then return false;
             } else {
                 if get(m,i,j) != zro then return false;
@@ -54,7 +54,7 @@ is_right_quasi_triangular :: (R: $M/MatrixType) -> bool {
         for j: 0..i-2 {
             if i>j+1 { 
                 if get(R,i,j) != zro {
-                    print("non-zero element found: R[%][%] = %\n", i, j, get(R,i,j));
+                    println("non-zero element found: R[%][%] = %", i, j, get(R,i,j));
                     return false;
                 }
             }
@@ -63,21 +63,21 @@ is_right_quasi_triangular :: (R: $M/MatrixType) -> bool {
             // diagonal blocks
             if get(R,i,i-1) != zro {
                 if get(R,i-1,i-2) != zro || get(R,i+1,i) != zro {
-                    print("diagonal block error at i = %\n", i);
+                    println("diagonal block error at i = %", i);
                     return false;
                 }
             }
             // 1x1 diagonal blocks invertible
             if get(R,i-1,i) == zro && get(R,i+1,i) == zro {
                 if get(R,i,i) == zro {
-                    print("1x1 block non-invertible, i = %\n", i);
+                    println("1x1 block non-invertible, i = %", i);
                     return false;
                 }
             }
             // 2x2 diagonal blocks are invertible
             if get(R,i,i-1) != zro {
                 if get(R,i-1,i-1)*get(R,i,i) - get(R,i-1,i)*get(R,i,i-1) == zro {
-                    print("2x2 block non-invertible, i = %\n", i);
+                    println("2x2 block non-invertible, i = %", i);
                     return false;
                 }
             }
@@ -105,23 +105,23 @@ is_right_trapezoidal :: inline (m: $M/MatrixType) -> bool {
 
 
 test_checks :: () {
-    print("\n\nChecks -------------------------------\n\n");
+    println_push("Checks", color = .FG_WHITE);
     {
-        m : DenseMatrix(Complex64, 3, 3);
+        m : DenseMatrix(c64, 3, 3);
         mat_init_unit(*m);
         assert(is_diagonal_unit(m));
         set(*m,1,1, 2.0*R);
         assert(!is_diagonal_unit(m));
     }
     {
-        m : DenseMatrix(Complex64, 4, 4);
+        m : DenseMatrix(c64, 4, 4);
         set(*m,3,0, 42.0*R);
         assert(is_left_triangular(m));
         set(*m,0,3, 42.0*R);
         assert(!is_left_triangular(m));
     }
     {
-        m : DenseMatrix(Complex64, 4, 4);
+        m : DenseMatrix(c64, 4, 4);
         set(*m,0,3, 42.0*R);
         assert(is_right_triangular(m));
         set(*m,3,0, 42.0*R);
@@ -135,7 +135,7 @@ test_checks :: () {
             0, 1, 2, 3,
             0, 0, 0, 2
         );
-        cm := mat_cast(Complex64, m);
+        cm := mat_cast(c64, m);
 
         assert(is_right_quasi_triangular(m));
         m = transpose(m);

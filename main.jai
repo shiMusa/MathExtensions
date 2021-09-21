@@ -4,11 +4,10 @@
 
 
 main :: () {
-    print("\n\ntesting some math extensions\n\n");
+    println("\nRunning tests ///////////////////////////////////////////////////\n", color = .FG_RED);
 
     test_utils();
-    // test_complex();
-    test_complex_generic();
+    test_complex();
 
     test_elementary();
 
@@ -19,6 +18,6 @@ main :: () {
     test_vector();
     test_matrix();
 
-    // test_checks();
-    // test_linear_algebra();
+    test_checks();
+    test_linear_algebra();
 }

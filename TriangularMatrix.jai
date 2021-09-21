@@ -816,9 +816,9 @@ test_matrix :: () {
 
 
     {
-        m := mat(3, 3, c64(42.0));
+        m := mat(3, 3, cpx(42.0));
         m[1][2] = R;
-        assert(m[1][2] == c64(1.0, 0.0));
+        assert(m[1][2] == cpx(1.0, 0.0));
         print("m = \n%\n", str(m));
     }
 
@@ -853,7 +853,7 @@ test_matrix :: () {
     }
 
     {
-        m := mat(2, 2, R, c64(2.0), c64(3.0), c64(4.0));
+        m := mat(2, 2, R, cpx(2.0), cpx(3.0), cpx(4.0));
         print("m = \n%\n", str(m));
         m = m * m;
         print("m = \n%\n", str(m));
@@ -881,7 +881,7 @@ test_matrix :: () {
 
 
     {
-        m := mat(2, 2, R, I, c64(2.0, -1.0), 2.0 + 3.0*I);
+        m := mat(2, 2, R, I, cpx(2.0, -1.0), 2.0 + 3.0*I);
         print("m = \n%\n", str(m));
         t1 := tensor(m, m);
         print("t1 = \n%\n", str(t1));
