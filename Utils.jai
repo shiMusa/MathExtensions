@@ -248,7 +248,57 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 }
 
 
+// ##     ## ########   ######     ###     ######  ########
+// ##     ## ##     ## ##    ##   ## ##   ##    ##    ##
+// ##     ## ##     ## ##        ##   ##  ##          ##
+// ##     ## ########  ##       ##     ##  ######     ##
+// ##     ## ##        ##       #########       ##    ##
+// ##     ## ##        ##    ## ##     ## ##    ##    ##
+//  #######  ##         ######  ##     ##  ######     ##
 
+
+upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
+    if !is_number(A) || !is_number(B) then return null;
+
+    println_push("upcast (%, %)", A.type, B.type, color = C_FG_WHITE);
+
+    if is_complex_number(A) && is_complex_number(B) {
+        a := get_complex_inner_type(A);
+        b := get_complex_inner_type(B);
+        c := upcast(a,b);
+        println("c = %", c.type);
+        return get_complex_type_info_from_intrinsic_type_info(c);
+    }
+
+    if is_complex_number(A) {
+        a := get_complex_inner_type(A);
+        c := upcast(a,B);
+        println("c = %", c.type);
+        return get_complex_type_info_from_intrinsic_type_info(c);
+    }
+
+    if is_complex_number(B) {
+        b := get_complex_inner_type(B);
+        c := upcast(A,b);
+        println("c = %", c.type);
+        return get_complex_type_info_from_intrinsic_type_info(c);
+    }
+
+    #insert -> string {
+        builder : String_Builder;
+
+        for NUMBER_TYPES {
+            print_to_builder(*builder,
+                "if A == type_info(%) || B == type_info(%) then return type_info(%);",
+                it, it, it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+
+    return null;
+}
 
 
 upcast :: inline ($A: Type, $B: Type) -> Type {
@@ -283,6 +333,7 @@ UpCast :: struct(A: Type, B: Type) {
 }
 
 
+
 is_minor_number :: inline ($major: Type, $minor: Type) -> bool {
     i_major := -1;
     i_minor := -1;
@@ -290,7 +341,7 @@ is_minor_number :: inline ($major: Type, $minor: Type) -> bool {
         if it == major then i_major = it_index;
         if it == minor then i_minor = it_index;
     }
-    return i_major >= i_minor;
+    return i_major <= i_minor; // * higher-order types come first!
 }
 
 

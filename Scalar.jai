@@ -44,6 +44,7 @@ operator * :: inline(a: Scalar($A), b: Scalar($B)) -> Scalar($C) #modify { C = u
 operator * :: inline(a: Scalar($A), b: $B) -> Scalar($C) #modify {
     if !is_number(B) { C = null; return; }
     C = upcast(A,B);
+    // print("operator * (Scalar(%), %) -> %\n", A.type, B.type, C);
 } #symmetric {
     return scl(a.value * b);
 }
@@ -96,7 +97,7 @@ operator == :: inline(a: Scalar($A), b: $B) -> bool #modify {
 #scope_module
 test_scalar :: () {
 
-    print("\n\nScalar -------------------------------\n\n");
+    println_push("Scalar", color = C_FG_WHITE);
     {
         s := scl(2.0);
         r := s * 42.0;

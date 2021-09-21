@@ -8,12 +8,12 @@
 #load "Polynomials.jai";
 #load "Approximations.jai";
 
-// #load "Types.jai";
-// #load "Scalar.jai";
-// #load "VectorTypes.jai";
-// #load "Vector.jai";
-// #load "MatrixTypes.jai";
-// #load "Matrix.jai";
+#load "Types.jai";
+#load "Scalar.jai";
+#load "VectorTypes.jai";
+#load "Vector.jai";
+#load "MatrixTypes.jai";
+#load "Matrix.jai";
 // #load "Checks.jai";
 // #load "LinearAlgebra.jai";
 
