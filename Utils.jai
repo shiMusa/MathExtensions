@@ -164,10 +164,10 @@ get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info 
 ncast :: inline ($T: Type, num: $N) -> T {
     #if T == N {
         return num;
-    } else #if type_info(T).name == "Complex" {
-        // ! cast to inner type T of Complex($T)
-        return cpx(cast(float64)num);
-    } else #if type_info(N).name != "Complex" {
+    } else #if #run is_complex_number(T) {
+        X :: #run get_complex_inner_type(T);
+        return cpx(cast(X)num);
+    } else #if #run !is_complex_number(N) {
         return cast,no_check(T) num;
     } else {
         assert(type_info(N).name != "Complex", "cannot cast complex to real number!");

@@ -10,8 +10,8 @@ sign :: inline (x: $T) -> T {
 }
 
 
-factorial :: (n: $T) -> T {
-    res := 1;
+factorial :: (n: int, $T: Type) -> T {
+    res := one(T);
     for 2..n res *= it;
     return res;
 }
