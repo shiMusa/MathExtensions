@@ -499,17 +499,18 @@ rasch :: inline (x: $T) -> T #modify {
 
 
 test_elementary :: () {
-    print("\n\nElementary -------------------------------\n\n");
+    println_push("Elementary");
 
     aa :: (a: $T, b: T) {
         assert(approx(a,b), "% != %", a, b);
     }
 
     {
+        println_push("pow");
         assert( pow(2.0, 2.0, float64) == 4);
         assert( approx(pow(I, 2.0, Complex(float64)), -R) );
 
-        print("%\n", str(pow(2.0, R+I, Complex(float64))));
+        println("%", str(pow(2.0, R+I, Complex(float64))));
         assert( approx(pow(2.0, R + I, Complex(float64)), cpx(1.538477803, 1.277922553)) );
 
         assert( approx(
@@ -519,29 +520,43 @@ test_elementary :: () {
     }
 
     {
+        println_push("trigonometric functions");
+
+        println("sin");
         aa( sin(2.0), 0.9092974268 );
         aa( sin(I)  ,  1.175201194 * I);
+        println("cos");
         aa( cos(2.0), -0.4161468365);
         aa( cos(I)  , 1.543080635 * R);
+        println("tan");
         aa( tan(2.0), -2.185039863);
         aa( tan(I)  , 0.7615941560 * I);
+        println("cot");
         aa( cot(2.0), -0.4576575544);
         aa( cot(I)  , -1.313035285 * I);
+        println("sec");
         aa( sec(2.0), -2.402997962);
         aa( sec(I)  , 0.6480542737 * R);
+        println("csc");
         aa( csc(2.0), 1.099750170);
         aa( csc(I)  , -0.8509181282 * I );
 
+        println("asin");
         aa( asin(2.0*R), cpx(1.570796327, -1.316957897) );
         aa( asin(I)  , 0.8813735869 * I);
+        println("acos");
         aa( acos(2.0*R), 1.316957897 * I);
         aa( acos(I)  , cpx(1.570796327, -0.8813735869));
+        println("atan");
         aa( atan(2.0), 1.107148718);
         aa( atan(2.0*I)  , cpx(1.570796327, 0.5493061443));
+        println("acot");
         aa( acot(2.0), 0.4636476090);
         aa( acot(2.0*I)  , -0.5493061443 * I);
+        println("asec");
         aa( asec(2.0), 1.047197551);
         aa( asec(I)  , cpx(1.570796327, 0.8813735869));
+        println("acsc");
         aa( acsc(2.0), 0.5235987758);
         aa( acsc(I)  , -0.8813735869 * I );
 

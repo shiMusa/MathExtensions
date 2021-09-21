@@ -10,7 +10,7 @@ main :: () {
     // test_complex();
     test_complex_generic();
 
-    // test_elementary();
+    test_elementary();
 
     // test_polynomials();
     // test_approximations();

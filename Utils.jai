@@ -351,22 +351,35 @@ println :: (arg: Any) {
 
 
 test_utils :: () {
-    print("\n\nUtils -------------------------------\n\n");
-    // assert(sign(2.0) == 1.0);
-    // assert(sign(-2.0) == -1.0);
-    // assert(sign(-2) == -1);
-
-    // assert(binomial(42, 42) == 1);
-    // assert(binomial(42, 0) == 1);
-    // assert(binomial(5, 3) == 10);
-    // assert(binomial(11, 6) == 462);
-    // print("%\n", binomial(67, 30));
+    println_push("Utils");
 
     {
+        println("test 1 : assert sign");
+        assert(sign(2.0) == 1.0);
+        assert(sign(-2.0) == -1.0);
+        assert(sign(-2) == -1);
+    }
+
+    {
+        println_push("test 2 : assert binomial");
+        println("assert 1");
+        assert(binomial(42, 42) == 1);
+        println("assert 2");
+        assert(binomial(42, 0) == 1);
+        println("assert 3");
+        assert(binomial(5, 3) == 10);
+        println("assert 4");
+        assert(binomial(11, 6) == 462);
+        // println("print result");
+        // print("%\n", binomial(67, 30));
+    }
+
+    {
+        println_push("test 3 : array_view_range");
         a := float64.[0,1,2,3,4,5,6];
         v := array_view_range(a, 2, 4);
-        print("%\n", a);
-        print("%\n", v);
+        println("%", a);
+        println("%", v);
     }
 
     // {

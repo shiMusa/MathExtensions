@@ -123,7 +123,7 @@ operator == :: (a: Complex($T), b: $U) -> bool #modify {
 
 
 test_complex_generic :: () {
-    print("\n\nComplex($T) -------------------------------\n\n");
+    println_push("Complex(T)");
 
     a := cpx(1.0, 0.0);
     b := cpx(0.0, 1.0);
@@ -137,27 +137,30 @@ test_complex_generic :: () {
     assert(2.0*a+b == Complex(float64).{2.0, 1.0});
     assert(2.0*a-3*b == Complex(float64).{2.0, -3.0});
     assert(a != b);
-    // assert(abs_sq(a) == 1.0);
-    // assert(abs_sq(b) == 1.0);
+    assert(abs_sq(a) == 1.0);
+    assert(abs_sq(b) == 1.0);
 
     // print("%\n", abs(Complex(float64).{1.0, 1.0}));
     // print("%\n", Math.sqrt(2.0));
 
-    // print(
-    //     "%, %, %, %, %, %, %, %\n",
-    //     arg(Complex(float64).{ 1.0,  0.0}) / Math.PI * 180.0,
-    //     arg(Complex(float64).{ 1.0,  1.0}) / Math.PI * 180.0,
-    //     arg(Complex(float64).{ 0.0,  1.0}) / Math.PI * 180.0,
-    //     arg(Complex(float64).{-1.0,  1.0}) / Math.PI * 180.0,
-    //     arg(Complex(float64).{-1.0,  0.0}) / Math.PI * 180.0,
-    //     arg(Complex(float64).{-1.0, -1.0}) / Math.PI * 180.0,
-    //     arg(Complex(float64).{ 0.0, -1.0}) / Math.PI * 180.0,
-    //     arg(Complex(float64).{ 1.0, -1.0}) / Math.PI * 180.0,
-    // );
 
+    {
+        println_push("arg");
+        println(
+            "%, %, %, %, %, %, %, %",
+            arg(Complex(float64).{ 1.0,  0.0}) / Math.PI * 180.0,
+            arg(Complex(float64).{ 1.0,  1.0}) / Math.PI * 180.0,
+            arg(Complex(float64).{ 0.0,  1.0}) / Math.PI * 180.0,
+            arg(Complex(float64).{-1.0,  1.0}) / Math.PI * 180.0,
+            arg(Complex(float64).{-1.0,  0.0}) / Math.PI * 180.0,
+            arg(Complex(float64).{-1.0, -1.0}) / Math.PI * 180.0,
+            arg(Complex(float64).{ 0.0, -1.0}) / Math.PI * 180.0,
+            arg(Complex(float64).{ 1.0, -1.0}) / Math.PI * 180.0,
+        );
+    }
 
-    print("%\n", str(2.0*R));
+    println("%", str(2.0*R));
 
-    print("% == %\n", str(3.0-4.0*I), str(Complex(float64).{3.0, -4.0}));
+    println("% == %", str(3.0-4.0*I), str(Complex(float64).{3.0, -4.0}));
     assert(3.0 - 4.0 * I == Complex(float64).{3.0, -4.0});
 }
