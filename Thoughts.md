@@ -7,40 +7,13 @@ We can draw a lot of inspiration from the [blaze C++ library](https://bitbucket.
 
 ## Generalization
 
-Currently, there is `Matrix(T)` and `Vector(T)`. Both are _dense_ representations of data, meaning every entry has a place in memory.
+Planned specializations are:
 
-Work in Progress is `TriangularMatrix(T)` that only stores the relevant data.
-
-To enable these specializations, algorithms in general should require `$T/Matrix` and just use a common set of basic mathematical operations, such as `get(...)`, `set(...)`, `operator +/-/*//` etc.
-
-Specialized functions can be overloaded to explicitly require e.g. `TriangluarMatrix(T)` for improved performance.
-
-Other planned specializations are:
-
-- `BandMatrix(T)`
-- `NeighbourMatrix(T)`; name not final; similar to `BandMatrix` but with periodic boundary conditions
-- `SparseMatrix(T)`, `SparseVector(T)`
+- `TriangularMatrix`
+- `BandMatrix`
+- `NeighbourMatrix`; name not final; similar to `BandMatrix` but with periodic boundary conditions
+- `SparseMatrix`, `SparseVector`
 - and more to come...
-
-
-#### On generic functions 
-_2021.08.31_
-
-The only three ways of writing a generic function are
-
-- `foo :: (x: $T)` for any type `T`
-- `foo :: (x: $T/Matrix)` for any `T` that has the same fields as `Matrix`
-- `foo :: (x: $Matrix(T))` for a generic matrix with type `T`
-
-The first solution might collide with other functions meant to be applied to e.g. vectors instead of matrices. So the functions should be named uniquely, such as
-```Jai
-matrix_foo :: (m: $M)
-vector_foo :: (v: $V)
-```
-
-That means, we have to **tell** the user to comply with a certain standard, meaning we have to manually explain the interface of the types we're using (e.g. above `$M`, `$T`, etc).
-
-
 
 
 ### Hybrid Matrices
@@ -51,6 +24,8 @@ It's not clear yet how to do that. On first thought, we might do sth like
 HybridMatrix :: struct(a: A/Matrix, b: B/Matrix) {...}
 ```
 but need also to make sure that `HybridMatrix` fits `T/Matrix` for all the other algorithms;
+
+Actually, I'm not sure, if this makes sense at all...
 
 
 
