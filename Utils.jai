@@ -87,7 +87,7 @@ is_complex_number :: ($T: Type) -> bool {
 
         for NUMBER_TYPES {
             print_to_builder(*builder,
-                "if T == Complex(%) then return true;\n",
+                "#if T == Complex(%) then return true;\n",
                 it
             );
         }
@@ -127,7 +127,7 @@ get_complex_inner_type :: ($T: Type) -> Type {
 
         for NUMBER_TYPES {
             print_to_builder(*builder,
-                "if T == Complex(%) then return %;\n",
+                "#if T == Complex(%) then return %;\n",
                 it, it
             );
         }
@@ -288,7 +288,7 @@ upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
 
         for NUMBER_TYPES {
             print_to_builder(*builder,
-                "if A == type_info(%) || B == type_info(%) then return type_info(%);",
+                "if A == type_info(%) || B == type_info(%) then return type_info(%);\n",
                 it, it, it
             );
         }
