@@ -2,6 +2,22 @@
 
 
 
+pool :: (code: Code) #expand {
+    _pool: Pool.Pool;
+    Pool.set_allocators(*_pool);
+    
+    {
+        push_allocator(Pool.pool_allocator, *_pool);
+        #insert code;
+    }
+
+    print("The calculation pool contains % bytes.\n", _pool.memblock_size - _pool.bytes_left);
+    print("Releasing the pool now.\n");
+    Pool.release(*_pool);
+}
+
+
+
 // ######## ##    ## ########  ########  ######
 //    ##     ##  ##  ##     ## ##       ##    ##
 //    ##      ####   ##     ## ##       ##

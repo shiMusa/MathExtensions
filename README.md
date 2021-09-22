@@ -12,7 +12,8 @@ Feel free to add functionality and performance upgrades.
 
 ## Current thoughts
 
-- Add `Quaternion64` (maybe even `Octonion64`)
+- Current work focuses on making everything as generic as possible to enable different types of matrices/vector, heap/stack allocated, various number types.
+- Add `Quaternion($T)` (maybe even `Octonion($T)`)
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
 
 There are more thoughts written down in [the document outlining some of my thoughts](https://github.com/shiMusa/MathExtensions/blob/flags-and-other-matrix-types/Thoughts.md).
@@ -23,8 +24,8 @@ Complex and reals scalars, vectors, matrices interoperate automatically (in most
 Many functions specialize during compile-time on the real or complex variant (e.g. all the elementary functions).
 
 - Utils
-    - `calculation(Code)`; will create and release a Pool of memory for all the allocations in the Code block.
-- Complex numbers `+`, `-`, `*`, `/`,
+    - `pool(#code)`; will create and release a Pool of memory for all the allocations in the Code block.
+- `Complex($T)` numbers `+`, `-`, `*`, `/`,
     - `str`; for pretty printing
 - Elementary (`z` ∈ ℂ)
     - `sign(r)`
@@ -50,7 +51,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - `synthetic_division`
     - `repeated_synthetic_division`
 - vector: `VectorType`; real or complex vector with
-    
+
     `VectorType` is a generic interface/trate that is implemented by any concrete vector struct, e.g. `DenseVector($Type, $Dimensions)`.
     - `str`; for pretty printing
     - operators `[]`, `==`, `+`, `-`, `*`, `/`
@@ -65,7 +66,7 @@ Many functions specialize during compile-time on the real or complex variant (e.
     - `permute`
     - `swap`
 - matrix: `MatrixType` ; real or complex
-    
+
     `MatrixType` is a generic interface/trate that is implemented by any concrete matrix struct, e.g. `DenseMatrix($Type, $Columns, $Rows)`.
     - `pstr`, `str` for pretty printing
     - operators `[]`, `[][]`, `==`, `+`, `-`, `*`, `/`
