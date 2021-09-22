@@ -158,7 +158,7 @@ is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
 
 
 mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
-    res : MatrixCastHelper(M, type).T = ---;
+    res := make(MatrixCastHelper(M, type).T, false);
 
     for raw(*m) {
         set_raw(*res, it_raw_index, ncast(type, it));
@@ -168,7 +168,7 @@ mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must
 }
 
 copy :: (m: $M/MatrixType) -> M #must {
-    res : M = ---;
+    res := make(M, false);
 
     for raw(*m) {
         set_raw(*res, it_raw_index, it);
@@ -265,7 +265,7 @@ mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
 mat_reflector :: (normal: $V/VectorType) -> DenseMatrix(V.data_type, V.N, V.N) #must {
     tau := ncast(T, 2)/(conjugate(normal)*normal);
 
-    res : DenseMatrix(V.data_type, V.N, V.N) = ---;
+    res := make(DenseMatrix(V.data_type, V.N, V.N), false);
     mat_init_unit(*res, true);
     sub(*res, tau * normal / normal);
     return res;
@@ -292,7 +292,7 @@ mat_submatrix :: (
         #run assert(row_from >= 0);
         #run assert(column_from >= 0);
     }
-    res : MatrixSubmatrixHelper(M, row_to-row_from, column_to-column_from).T = ---;
+    res := make(MatrixSubmatrixHelper(M, row_to-row_from, column_to-column_from).T, false);
 
     for i: 0..row_to-row_from-1 {
         for j: 0..column_to-column_from-1 {
@@ -392,7 +392,7 @@ operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper
         #run assert(A.M == B.N, "Matrix dimensions don't match: a.cols = %, b.rows = %", A.M, B.N);
     }
 
-    res : MatrixMultiplicationHelper(A,B,A.N, B.M).T;
+    res := make(MatrixMultiplicationHelper(A,B,A.N, B.M).T);
     for j: 0..B.M-1 {
         for k: 0..A.M-1 {
             tmp := get(b,k,j);
@@ -406,15 +406,7 @@ operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper
 }
 
 
-#scope_file 
-matrix_vector_multiplication_helper :: ($a: Type, $b: Type, $N: int) -> Type {
-    // TODO other types
-    return DenseVector(UpCast(a.data_type, b.data_type).T, N);
-}
-#scope_export
-MatrixVectorMultiplicationHelper :: struct (A: Type, B: Type, N: int) {
-    T :: #run matrix_vector_multiplication_helper(A,B,N);
-}
+
 operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplicationHelper(A,B,A.N).T {
     #if CHECKS {
         #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim = %", A.M, B.N);
@@ -434,7 +426,7 @@ operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
         #run assert(A.N == B.N, "Dimensions mismatch: a.dim = %, b.rows = %", A.N, B.N);
     }
 
-    res : MatrixVectorMultiplicationHelper(A,B,B.M).T;
+    res := MatrixVectorMultiplicationHelper(A,B,B.M).T;
     for j: 0..B.N-1 {
         for i: 0..A.N-1 {
             set(*res,j, get(res,j) + get(a,i) * get(b,i,j));
@@ -446,7 +438,7 @@ operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
 
 
 operator * :: (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B).T #symmetric {
-    res : MatrixCastHelper(A, B).T = ---;
+    res := make(MatrixCastHelper(A, B).T, false);
 
     for a {
         set_lin(*res, it_index, it * b.value);
@@ -480,7 +472,7 @@ operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
 }
 
 operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B).T { 
-    res : MatrixCastHelper(A, B).T = ---;
+    res := make(MatrixCastHelper(A, B).T, false);
 
     for a {
         set_lin(*res, it_index, it / b.value);
@@ -509,7 +501,7 @@ operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
     }
     
-    res : MatrixMatrixCastHelper(A,B).T = ---;
+    res := make(MatrixMatrixCastHelper(A,B).T, false);
 
     for a {
         set_lin(*res, it_index, it + get_lin(b, it_index));
@@ -545,7 +537,7 @@ operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
     }
     
-    res : MatrixMatrixCastHelper(A,B).T = ---;
+    res := make(MatrixMatrixCastHelper(A,B).T, false);
 
     for a {
         set_lin(*res, it_index, it - get_lin(b, it_index));
@@ -658,11 +650,11 @@ saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
 // check for compatible matrix types: e.g. this is not possible with triangular matrices
 permute_rows :: (m: $M/MatrixType, order: ..int) -> M #must {
     #if CHECKS {
-        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
+        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
         assert(order.count == N);
     }
 
-    res : M = ---;
+    res := make(M, false);
 
     for res {
         set(*res, it_row, it_column, get(m, order[it_row], it_column));
@@ -674,11 +666,11 @@ permute_rows :: (m: $M/MatrixType, order: ..int) -> M #must {
 // there are faster ways of doing this.
 permute_columns :: (m: $M/MatrixType, order: ..int) -> M #must {
     #if CHECKS {
-        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
+        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
         assert(order.count == M.M);
     }
 
-    res : M = ---;
+    res := make(M, false);
 
     for res {
         set(*res, it_row, it_column, get(m, it_row, order[it_column]));
@@ -690,10 +682,10 @@ permute_columns :: (m: $M/MatrixType, order: ..int) -> M #must {
 // there are faster ways of doing this.
 permute :: (m: $M/MatrixType, row_order: [M.N]int, col_order: [M.M]int) -> M #must {
     #if CHECKS {
-        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
+        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
     }
 
-    res : M = ---;
+    res := make(M, false);
 
     for res {
         set(*res, it_row, it_column, get(m, row_order[it_row], col_order[it_column]));
@@ -705,7 +697,7 @@ permute :: (m: $M/MatrixType, row_order: [M.N]int, col_order: [M.M]int) -> M #mu
 
 swap_columns :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
-        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)\n");
+        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
         assert(i >= 0 && j >= 0);
         assert(i < M.M && j < M.M);
     }
@@ -721,7 +713,7 @@ swap_columns :: (m: *$M/MatrixType, i: int, j: int) {
 
 swap_rows :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
-        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense) : %\n", M.flags);
+        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense) : %\n", M.flags);
         assert(i >= 0 && j >= 0);
         assert(i < M.N && j < M.N);
     }
@@ -736,34 +728,27 @@ swap_rows :: (m: *$M/MatrixType, i: int, j: int) {
 }
 
 
-
-#scope_file 
-MatrixTransposeHelper :: struct(A: Type) {
-    T :: #run matrix_transpose_helper(A);
-}
-matrix_transpose_helper :: ($a: Type) -> Type {
-    return DenseMatrix(a.data_type, a.M, a.N);
-}
-#scope_export
-
-
 transpose :: (m: $M/MatrixType) -> MatrixTransposeHelper(M).T #must {
     #if CHECKS {
-        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)");
     }
 
-    res : MatrixTransposeHelper(M).T = ---;
+    // println_push("transpose", color = .FG_BLUE);
+
+    res := make(MatrixTransposeHelper(M).T);
 
     for m {
         set(*res, it_column, it_row, it);
     }
+
+    // println("res = %", pstr(m));
     return res;
 }
 
 // There are better ways to do this!
 transpose :: (m: *$M/MatrixType) {
     #if CHECKS {
-        #run assert(M.flags == .DENSE, "not a compatible matrix type (not dense)");
+        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)");
     }
 
     for i: 0..M.N-1 {
@@ -783,7 +768,7 @@ conjugate :: (m: $M/MatrixType) -> M #must {
     #if #run !is_complex_number(M.data_type) {
         return m;
     } else {
-        res : M = ---;
+        res := make(M, false);
 
         for m {
             set_lin(*res, it_index, conjugate(it));
@@ -820,7 +805,7 @@ dagger :: conjugate_transpose;
 
 // https://www.wikiwand.com/en/Tensor_product
 tensor :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A, B, A.N*B.N, A.M*B.M).T {
-    res : MatrixHelper(A, B, A.N*B.N, A.M*B.M).T = ---;
+    res := make(MatrixHelper(A, B, A.N*B.N, A.M*B.M).T, false);
 
     for r: 0..res.M-1 {
         ar := r/B.N;
@@ -919,141 +904,302 @@ norm_frobenius :: (m: $M/MatrixType) -> float64 {
 #scope_module
 
 test_matrix :: () {
-    println_push("DenseMatrix(T)", color = .FG_WHITE);
-    {
-        m : DenseMatrix(float64, 3, 3);
-        println("%", pstr(m));
-    }
-    {
-        a :: 3;
-        m : DenseMatrix(float64, a, a);
-        println("%", pstr(m));
-    }
 
-
+    println_push("Matrix", color = .FG_WHITE);
 
     {
-        m : DenseMatrix(float64, 3, 3);
-        mat_init_all(*m, 42.0);
-        println("%", pstr(m));
+        println_push("DenseMatrix", color = .FG_GREEN);
+        {
+            m := make(DenseMatrix(float64, 3, 3));
+            println("%", pstr(m));
+        }
+        {
+            a :: 3;
+            m := make(DenseMatrix(float64, a, a));
+            println("%", pstr(m));
+        }
+
+
+
+        {
+            m := make(DenseMatrix(float64, 3, 3));
+            mat_init_all(*m, 42.0);
+            println("%", pstr(m));
+        }
+        {
+            a :: 3;
+            m := make(DenseMatrix(float64, a, a));
+            mat_init_all(*m, 42.0);
+            println("%", pstr(m));
+        }
+
+
+        {
+            m := make(DenseMatrix(C64, 3, 3));
+            mat_init_all(*m, cpx(42.0));
+            set(*m,1,2,R);
+            assert( get(m,1,2) == cpx(1.0, 0.0) );
+            println("m = %", pstr(m));
+        }
+
+        {
+            m := make(DenseMatrix(C64, 4, 4));
+            mat_init_unit(*m);
+            println("m = %", pstr(m));
+            assert(get(m,0,1) == CZERO);
+            assert(get(m,1,1) == R);
+            assert(get(m,2,1) == CZERO);
+            assert(get(m,3,3) == R);
+        }
+
+        {
+            m := make(DenseMatrix(C64, 3, 3));
+            set(*m,0,2,R);
+            m = transpose(m);
+            assert(get(m,2,0) == R);
+        }
+
+        {
+            a := make(DenseMatrix(float64, 2, 2));
+            b := make(DenseMatrix(float64, 2, 2));
+            mat_init_unit(*a);
+            mat_init_unit(*b);
+            println("a = %", pstr(a));
+            println("b = %", pstr(b));
+            add(*a, b);
+            println("a = %", pstr(a));
+            println("2 b = %", pstr(scl(2.0) * b));
+            assert(a == scl(2.0) * b);
+
+            a = a + b;
+            assert(a == scl(3.0) * b);
+        }
+
+        {
+            m := make(DenseMatrix(C64, 2, 2));
+            mat_init(*m, R, 2*R, 3*R, 4*R);
+            println("m = %", pstr(m));
+            m = m * m;
+            println("m = %", pstr(m));
+        }
+        {
+            m := make(DenseMatrix(C64, 2, 2));
+            mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
+            println("m = %", pstr(m));
+            m = m * m;
+            println("m = %", pstr(m));
+        }
+        // {
+        //     m := mat(1, 3, 1.0, 2.0, 3.0);
+        //     print("m = %\n", m);
+        //     mt := transpose(m);
+        //     m = m * mt;
+        //     print("m = %\n", m);
+        // }
+        {
+            m := make(DenseMatrix(C64, 2, 2));
+            mat_init(*m, 
+                CZERO, -I, 
+                I, CZERO
+            );
+            assert( dagger(m) == m );
+        }
+
+
+        {
+            m := make(DenseMatrix(C64, 2, 2));
+            mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
+            println("m = %", pstr(m));
+            t1 := tensor(m, m);
+            println("t1 = %", pstr(t1));
+            t2 := make(DenseMatrix(C64, 4, 4));
+            mat_init(*t2,
+                R            ,             I,             I,   -R           ,
+                2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
+                2.0 -       I, 1.0 + 2.0 * I, 2.0 + 3.0 * I, -3.0 +  2.0 * I,
+                3.0 - 4.0 * I, 7.0 + 4.0 * I, 7.0 + 4.0 * I, -5.0 + 12.0 * I
+            );
+            println("t2 = %", pstr(t2));
+            assert(t1 == t2);
+        }
+
+        {
+            M := make(DenseMatrix(C64, 3, 3));
+            mat_init(*M,
+                CZERO, R, 2*R,
+                3*R, 4*R, 5*R,
+                6*R, 7*R, 8*R
+            );
+
+            S := mat_submatrix(M, 1, 3, 1, 3);
+            
+            res := make(DenseMatrix(C64, 2, 2));
+            mat_init(*res, 4*R, 5*R, 7*R, 8*R);
+            
+            assert(S == res);
+        }
+
+        // {
+        //     print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
+        //     m := make(DenseMatrix(float64, 4, 4)) = ---;
+        //     m.flags = .UNIT_LOWER_TRIANGULAR;
+        //     assert( is(m, .TRAPEZOIDAL) );
+        // }
     }
+
+
+
     {
-        a :: 3;
-        m : DenseMatrix(float64, a, a);
-        mat_init_all(*m, 42.0);
-        println("%", pstr(m));
+        println_push("DenseHeapMatrix", color = .FG_GREEN);
+        {
+            println_push("test 1", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(float64, 3, 3));
+            defer free(m);
+            println("%", pstr(m));
+        }
+        {
+            println_push("test 2", color = .FG_YELLOW);
+            a :: 3;
+            m := make(DenseHeapMatrix(float64, a, a));
+            defer free(m);
+            println("%", pstr(m));
+        }
+
+
+
+        {
+            println_push("test 3", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(float64, 3, 3));
+            defer free(m);
+            mat_init_all(*m, 42.0);
+            println("%", pstr(m));
+        }
+        {
+            println_push("test 4", color = .FG_YELLOW);
+            a :: 3;
+            m := make(DenseHeapMatrix(float64, a, a));
+            defer free(m);
+            mat_init_all(*m, 42.0);
+            println("%", pstr(m));
+        }
+
+
+        {
+            println_push("test 5", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(C64, 3, 3));
+            defer free(m);
+            mat_init_all(*m, cpx(42.0));
+            set(*m,1,2,R);
+            assert( get(m,1,2) == cpx(1.0, 0.0) );
+            println("m = %", pstr(m));
+        }
+
+        {
+            println_push("test 6", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(C64, 4, 4));
+            defer free(m);
+            mat_init_unit(*m);
+            println("m = %", pstr(m));
+            assert(get(m,0,1) == CZERO);
+            assert(get(m,1,1) == R);
+            assert(get(m,2,1) == CZERO);
+            assert(get(m,3,3) == R);
+        }
+
+        {
+            println_push("test 7", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(C64, 3, 3));
+            defer free(m);
+            set(*m,0,2,R);
+            println("transposing: ");
+            m = transpose(m);
+            assert(get(m,2,0) == R);
+        }
+
+        {
+            println_push("test 8", color = .FG_YELLOW);
+            a := make(DenseHeapMatrix(float64, 2, 2));
+            defer free(a);
+            b := make(DenseHeapMatrix(float64, 2, 2));
+            defer free(b);
+            mat_init_unit(*a);
+            mat_init_unit(*b);
+            println("a = %", pstr(a));
+            println("b = %", pstr(b));
+            add(*a, b);
+            println("a = %", pstr(a));
+            println("2 b = %", pstr(scl(2.0) * b));
+            assert(a == scl(2.0) * b);
+
+            a = a + b;
+            assert(a == scl(3.0) * b);
+        }
+
+        {
+            println_push("test 9", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(C64, 2, 2));
+            defer free(m);
+            mat_init(*m, R, 2*R, 3*R, 4*R);
+            println("m = %", pstr(m));
+            m = m * m;
+            println("m = %", pstr(m));
+        }
+        {
+            println_push("test 10", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(C64, 2, 2));
+            defer free(m);
+            mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
+            println("m = %", pstr(m));
+            m = m * m;
+            println("m = %", pstr(m));
+        }
+        {
+            println_push("test 11", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(C64, 2, 2));
+            defer free(m);
+            mat_init(*m, 
+                CZERO, -I, 
+                I, CZERO
+            );
+            assert( dagger(m) == m );
+        }
+
+
+        {
+            println_push("test 12", color = .FG_YELLOW);
+            m := make(DenseHeapMatrix(C64, 2, 2));
+            defer free(m);
+            mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
+            println("m = %", pstr(m));
+            t1 := tensor(m, m);
+            println("t1 = %", pstr(t1));
+            t2 := make(DenseHeapMatrix(C64, 4, 4));
+            mat_init(*t2,
+                R            ,             I,             I,   -R           ,
+                2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
+                2.0 -       I, 1.0 + 2.0 * I, 2.0 + 3.0 * I, -3.0 +  2.0 * I,
+                3.0 - 4.0 * I, 7.0 + 4.0 * I, 7.0 + 4.0 * I, -5.0 + 12.0 * I
+            );
+            println("t2 = %", pstr(t2));
+            assert(t1 == t2);
+        }
+
+        {
+            println_push("test 13", color = .FG_YELLOW);
+            M := make(DenseHeapMatrix(C64, 3, 3));
+            defer free(M);
+            mat_init(*M,
+                CZERO, R, 2*R,
+                3*R, 4*R, 5*R,
+                6*R, 7*R, 8*R
+            );
+
+            S := mat_submatrix(M, 1, 3, 1, 3);
+            
+            res := make(DenseHeapMatrix(C64, 2, 2));
+            mat_init(*res, 4*R, 5*R, 7*R, 8*R);
+            
+            assert(S == res);
+        }
     }
-
-
-    {
-        m : DenseMatrix(C64, 3, 3);
-        mat_init_all(*m, cpx(42.0));
-        set(*m,1,2,R);
-        assert( get(m,1,2) == cpx(1.0, 0.0) );
-        println("m = %", pstr(m));
-    }
-
-    {
-        m : DenseMatrix(C64, 4, 4);
-        mat_init_unit(*m);
-        println("m = %", pstr(m));
-        assert(get(m,0,1) == CZERO);
-        assert(get(m,1,1) == R);
-        assert(get(m,2,1) == CZERO);
-        assert(get(m,3,3) == R);
-    }
-
-    {
-        m : DenseMatrix(C64, 3, 3);
-        set(*m,0,2,R);
-        m = transpose(m);
-        assert(get(m,2,0) == R);
-    }
-
-    {
-        a : DenseMatrix(float64, 2, 2);
-        b : DenseMatrix(float64, 2, 2);
-        mat_init_unit(*a);
-        mat_init_unit(*b);
-        println("a = %", pstr(a));
-        println("b = %", pstr(b));
-        add(*a, b);
-        println("a = %", pstr(a));
-        println("2 b = %", pstr(scl(2.0) * b));
-        assert(a == scl(2.0) * b);
-
-        a = a + b;
-        assert(a == scl(3.0) * b);
-    }
-
-    {
-        m : DenseMatrix(C64, 2, 2);
-        mat_init(*m, R, 2*R, 3*R, 4*R);
-        println("m = %", pstr(m));
-        m = m * m;
-        println("m = %", pstr(m));
-    }
-    {
-        m : DenseMatrix(C64, 2, 2);
-        mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
-        println("m = %", pstr(m));
-        m = m * m;
-        println("m = %", pstr(m));
-    }
-    // {
-    //     m := mat(1, 3, 1.0, 2.0, 3.0);
-    //     print("m = %\n", m);
-    //     mt := transpose(m);
-    //     m = m * mt;
-    //     print("m = %\n", m);
-    // }
-    {
-        m : DenseMatrix(C64, 2, 2);
-        mat_init(*m, 
-            CZERO, -I, 
-            I, CZERO
-        );
-        assert( dagger(m) == m );
-    }
-
-
-    {
-        m : DenseMatrix(C64, 2, 2);
-        mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
-        println("m = %", pstr(m));
-        t1 := tensor(m, m);
-        println("t1 = %", pstr(t1));
-        t2 : DenseMatrix(C64, 4, 4);
-        mat_init(*t2,
-            R            ,             I,             I,   -R           ,
-            2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
-            2.0 -       I, 1.0 + 2.0 * I, 2.0 + 3.0 * I, -3.0 +  2.0 * I,
-            3.0 - 4.0 * I, 7.0 + 4.0 * I, 7.0 + 4.0 * I, -5.0 + 12.0 * I
-        );
-        println("t2 = %", pstr(t2));
-        assert(t1 == t2);
-    }
-
-    {
-        M : DenseMatrix(C64, 3, 3);
-        mat_init(*M,
-            CZERO, R, 2*R,
-            3*R, 4*R, 5*R,
-            6*R, 7*R, 8*R
-        );
-
-        S := mat_submatrix(M, 1, 3, 1, 3);
-        
-        res : DenseMatrix(C64, 2, 2);
-        mat_init(*res, 4*R, 5*R, 7*R, 8*R);
-        
-        assert(S == res);
-    }
-
-    // {
-    //     print("%\n", MATRIX_FLAGS.UNIT_LOWER_TRIANGULAR);
-    //     m : DenseMatrix(float64, 4, 4) = ---;
-    //     m.flags = .UNIT_LOWER_TRIANGULAR;
-    //     assert( is(m, .TRAPEZOIDAL) );
-    // }
 }
