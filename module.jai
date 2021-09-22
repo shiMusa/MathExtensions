@@ -7,7 +7,6 @@
 #load "Polynomials.jai";
 #load "Approximations.jai";
 
-#load "Types.jai";
 #load "Scalar.jai";
 #load "VectorTypes.jai";
 #load "Vector.jai";
