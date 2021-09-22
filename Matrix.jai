@@ -437,24 +437,28 @@ operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
 }
 
 
-operator * :: (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B).T #symmetric {
+operator * :: (a: $A/MatrixType, b: $B) -> MatrixCastHelper(A, B).T #modify {
+    if !is_number(B) {B = null; return;}    
+} #symmetric {
     res := make(MatrixCastHelper(A, B).T, false);
 
     for a {
-        set_lin(*res, it_index, it * b.value);
+        set_lin(*res, it_index, it * b);
     }
 
     return res;
 }
 
 
-mul :: (a: *$A/MatrixType, b: Scalar($B)) {
+mul :: (a: *$A/MatrixType, b: $B) #modify {
+    if !is_number(B) {B = null; return;}    
+} {
     #if CHECKS {
         #run assert(is_minor_number(A.data_type, B));
     }
 
     for raw(a) {
-        set_raw(a, it_raw_index, it * b.value);
+        set_raw(a, it_raw_index, it * b);
     }
 }
 
@@ -471,11 +475,13 @@ operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
     return inverse(b) * a;
 }
 
-operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B).T { 
+operator / :: inline (a: $A/MatrixType, b: $B) -> MatrixCastHelper(A, B).T #modify {
+    if !is_number(B) {B = null; return;}
+} { 
     res := make(MatrixCastHelper(A, B).T, false);
 
     for a {
-        set_lin(*res, it_index, it / b.value);
+        set_lin(*res, it_index, it / b);
     }
 
     return res;
@@ -483,13 +489,15 @@ operator / :: inline (a: $A/MatrixType, b: Scalar($B)) -> MatrixCastHelper(A, B)
 
 
 
-div :: (a: *$A/MatrixType, b: Scalar($B)) {
+div :: (a: *$A/MatrixType, b: $B) #modify {
+    if !is_number(B) {B = null; return;}    
+} {
     #if CHECKS {
         #run assert(is_minor_number(A.data_type, B));
     }
 
     for raw(a) {
-        set_raw(a, it_raw_index, it / b.value);
+        set_raw(a, it_raw_index, it / b);
     }
 }
 
@@ -968,11 +976,11 @@ test_matrix :: () {
             println("b = %", pstr(b));
             add(*a, b);
             println("a = %", pstr(a));
-            println("2 b = %", pstr(scl(2.0) * b));
-            assert(a == scl(2.0) * b);
+            println("2 b = %", pstr(2.0 * b));
+            assert(a == 2.0 * b);
 
             a = a + b;
-            assert(a == scl(3.0) * b);
+            assert(a == 3.0 * b);
         }
 
         {
@@ -1128,11 +1136,11 @@ test_matrix :: () {
             println("b = %", pstr(b));
             add(*a, b);
             println("a = %", pstr(a));
-            println("2 b = %", pstr(scl(2.0) * b));
-            assert(a == scl(2.0) * b);
+            println("2 b = %", pstr(2.0 * b));
+            assert(a == 2.0 * b);
 
             a = a + b;
-            assert(a == scl(3.0) * b);
+            assert(a == 3.0 * b);
         }
 
         {

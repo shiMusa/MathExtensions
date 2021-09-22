@@ -14,7 +14,6 @@ main :: () {
     test_polynomials();
     test_approximations();
     
-    test_scalar();
     test_vector();
     test_matrix();
 

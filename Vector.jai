@@ -168,22 +168,26 @@ operator * :: (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_
     return res;
 }
 
-operator * :: (a: $A/VectorType, b: Scalar($B)) -> VectorCastHelper(A,B).T #symmetric {
+operator * :: (a: $A/VectorType, b: $B) -> VectorCastHelper(A,B).T #modify {
+    if !is_number(B) {B = null; return;}    
+} #symmetric {
     res := make(VectorCastHelper(A,B).T, false);
     for a {
-        set(*res, it_index, it * b.value);
+        set(*res, it_index, it * b);
     }
     return res;
 }
 
 
 
-mul :: inline (a: *$A/VectorType, b: Scalar($B)) {
+mul :: inline (a: *$A/VectorType, b: $B) #modify {
+    if !is_number(B) {B = null; return;}    
+} {
     #if CHECKS {
         #assert(is_minor_number(A.data_type,B));
     }
     for raw(a) {
-        set_raw(a, it_raw_index, it * b.value);
+        set_raw(a, it_raw_index, it * b);
     }
 }
 
@@ -210,23 +214,27 @@ operator / :: inline (a: $A/VectorType, b: $B/VectorType) -> VectorMatrixHelper(
     return outer_product(a, b);
 }
 
-operator / :: (a: $A/VectorType, b: Scalar($B)) -> VectorCastHelper(A,B).T {
+operator / :: (a: $A/VectorType, b: $B) -> VectorCastHelper(A,B).T #modify {
+    if !is_number(B) {B = null; return;}    
+} {
     res := make(VectorCastHelper(A,B).T, false);
 
     for a {
-        set(*res, it_index, it / b.value);
+        set(*res, it_index, it / b);
     }
 
     return res;
 }
 
-div :: inline (a: *$A/VectorType, b: Scalar($B)) {
+div :: inline (a: *$A/VectorType, b: $B) #modify {
+    if !is_number(B) {B = null; return;}    
+} {
     #if CHECKS {
         #assert(is_minor_number(A,B));
     }
 
     for raw(*a) {
-        set_raw(*a, it_raw_index, it / b.value);
+        set_raw(*a, it_raw_index, it / b);
     }
 }
 
@@ -357,7 +365,9 @@ reflect :: (vec: $A/VectorType, normal: $B/VectorType) -> VectorVectorHelper(A,B
 // ? Matrix Computations, 4th edition
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.2 Saxpy, page 4
-saxpy :: (a: *$A/VectorType, b: $B/VectorType, factor: Scalar($C)) {
+saxpy :: (a: *$A/VectorType, b: $B/VectorType, factor: $C) #modify {
+    if !is_number(C) {C = null; return;}    
+} {
     #if CHECKS {
         #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
         #assert(is_minor_number(A.data_type, B) && is_minor_number(A.data_type, C));

@@ -17,10 +17,10 @@ solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N
     #run assert(B.N == 2, "dimension mismatch: 2 != B.N = %\n", B.N);
     U :: UpCast(A.data_type, B.data_type).T;
 
-    sigma := scl(max(abs(get(a,0,0)), abs(get(a,0,1)), abs(get(a,1,0)), abs(get(a,1,1))));
+    sigma := max(abs(get(a,0,0)), abs(get(a,0,1)), abs(get(a,1,0)), abs(get(a,1,1)));
 
     mu := a / sigma;
-    det := scl(get(mu,0,0) * get(mu,1,1) - get(mu,0,1) * get(mu,1,0));
+    det := get(mu,0,0) * get(mu,1,1) - get(mu,0,1) * get(mu,1,0);
     g := b / sigma;
 
     return  dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0)) / det * g;
