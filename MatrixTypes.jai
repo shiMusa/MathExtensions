@@ -61,11 +61,6 @@ MatrixType :: struct(
 ){}
 
 
-make :: inline ($T: Type, $initialize_values: bool = true) -> T {
-    res : T = ---;
-    init(*res, initialize_values);
-    return res;
-}
 init :: inline (m: *$M/MatrixType, $initialize_values: bool = true) {
     M.init(m, initialize_values);
 }

@@ -326,7 +326,7 @@ row :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.M).T #must {
     #if CHECKS {
         assert(i >= 0 && i < M.N);
     }
-    res : MatrixVectorHelper(M, M.M).T = ---;
+    res := make(MatrixVectorHelper(M, M.M).T, false);
     for 0..M.M-1 {
         set(*res, it, get(m,i,it));
     }
@@ -337,7 +337,7 @@ column :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.N).T #must {
     #if CHECKS {
         assert(i >= 0 && i < M.M);
     }
-    res : MatrixVectorHelper(M, M.N).T = ---;
+    res := make(MatrixVectorHelper(M, M.N).T, false);
     for 0..M.N-1 {
         set(*res,it, get(m,it,i));
     }
@@ -412,7 +412,7 @@ operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplication
         #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim = %", A.M, B.N);
     }
 
-    res : MatrixVectorMultiplicationHelper(A,B,A.N).T; // ! need to initialize values to 0!!!!
+    res := make(MatrixVectorMultiplicationHelper(A,B,A.N).T); // ! need to initialize values to 0!!!!
 
     for a {
         set(*res, it_row, get(res, it_row) + it * get(b, it_column));
@@ -564,7 +564,7 @@ sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
 
 
 operator - :: (a: $A/MatrixType) -> A {
-    res : A = ---;
+    res := make(A, false);
 
     for a {
         set_lin(*res, it_index, -it);

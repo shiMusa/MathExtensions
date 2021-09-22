@@ -10,6 +10,16 @@
 //    ##       ##    ##        ##       ##    ##
 //    ##       ##    ##        ########  ######
 
+
+// ? this is used for matrices and vectors!
+make :: inline ($T: Type, $initialize_values: bool = true) -> T {
+    res : T = ---;
+    init(*res, initialize_values);
+    return res;
+}
+
+
+
 f64 :: inline (x: $T) -> float64 #modify {
     if !is_intrinsic_number(T) {T = null; return;}
 } {

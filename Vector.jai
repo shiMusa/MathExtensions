@@ -64,7 +64,7 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
 
 
 vec_cast :: ($type: Type, v: $V/VectorType) -> VectorCastHelper(V, type).T {
-    res : VectorCastHelper(V, type).T; // initialize all values to zero, important for sparse?
+    res := make(VectorCastHelper(V, type).T); // initialize all values to zero, important for sparse?
 
     for raw(*v) {
         set_raw(*res, it_raw_index, ncast(type, it));
@@ -74,7 +74,7 @@ vec_cast :: ($type: Type, v: $V/VectorType) -> VectorCastHelper(V, type).T {
 }
 
 copy :: (v: $V/VectorType) -> V {
-    res : V = ---;
+    res := make(V, false);
 
     for v {
         set_lin(*res, it_lin_index, it);
@@ -119,7 +119,7 @@ vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSizeHelper(V,
         #run assert(to <= V.N, "bound not possible: to(%) >= N(%)\n", to, V.N);
         #run assert(from >= 0, "bound not possible: from(%) < 0\n", from);
     }
-    res : VectorSizeHelper(V, to-from).T = ---;
+    res := make(VectorSizeHelper(V, to-from).T, false);
 
     for res {
         set(*res, it_index, get(v, it_index + from));
@@ -169,7 +169,7 @@ operator * :: (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_
 }
 
 operator * :: (a: $A/VectorType, b: Scalar($B)) -> VectorCastHelper(A,B).T #symmetric {
-    res : VectorCastHelper(A,B).T = ---;
+    res := make(VectorCastHelper(A,B).T, false);
     for a {
         set(*res, it_index, it * b.value);
     }
@@ -197,7 +197,7 @@ mul :: inline (a: *$A/VectorType, b: Scalar($B)) {
 
 
 outer_product :: (a: $A/VectorType, b: $B/VectorType) -> VectorMatrixHelper(A,B).T {
-    res : VectorMatrixHelper(A,B).T = ---;
+    res := make(VectorMatrixHelper(A,B).T, false);
 
     for res {
         set(*res, it_row, it_column, get(a, it_row) * get(b, it_column));
@@ -211,7 +211,7 @@ operator / :: inline (a: $A/VectorType, b: $B/VectorType) -> VectorMatrixHelper(
 }
 
 operator / :: (a: $A/VectorType, b: Scalar($B)) -> VectorCastHelper(A,B).T {
-    res : VectorCastHelper(A,B).T = ---;
+    res := make(VectorCastHelper(A,B).T, false);
 
     for a {
         set(*res, it_index, it / b.value);
@@ -239,7 +239,7 @@ operator + :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T 
     #if CHECKS {
         #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
-    res : VectorVectorHelper(A,B).T = ---;
+    res := make(VectorVectorHelper(A,B).T, false);
 
     for a {
         set(*res, it_index, it + get(b, it_index));
@@ -266,7 +266,7 @@ operator - :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T 
     #if CHECKS {
         #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
-    res : VectorVectorHelper(A,B).T = ---;
+    res := make(VectorVectorHelper(A,B).T, false);
 
     for a {
         set(*res, it_index, it - get(b, it_index));
@@ -290,7 +290,7 @@ sub :: (a: *$A/VectorType, b: $B/VectorType) {
 
 
 operator - :: (a: $A/VectorType) -> A {
-    res : A = ---;
+    res := make(A, false);
 
     for raw(*a) {
         set_raw(*res, it_raw_index, -it);
@@ -300,7 +300,6 @@ operator - :: (a: $A/VectorType) -> A {
 }
 
 neg :: (a: *$A/VectorType) {
-
     for raw(a) {
         set_raw(a, it_raw_index, -it);
     }
@@ -319,7 +318,7 @@ cross :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T {
         #run assert(A.N == 3, "vector not of same dimension 3 (%)\n", A.N);
         #run assert(B.N == 3, "vector not of same dimension 3 (%)\n", B.N);
     }
-    res : VectorVectorHelper(A,B).T = ---;
+    res := make(VectorVectorHelper(A,B).T, false);
     set(*res, 0, get(a,1)*get(b,2) - get(a,2)*get(b,1));
     set(*res, 1, get(a,2)*get(b,0) - get(a,0)*get(b,2));
     set(*res, 2, get(a,0)*get(b,1) - get(a,1)*get(b,0));
@@ -410,7 +409,7 @@ permute :: (v: $A/VectorType, order: ..int) -> A {
     #if CHECKS {
         assert(A.N == order.count);
     }
-    res : A = ---;
+    res := make(A, false);
 
     for res {
         set(*res, it_index, get(v, order[it_index]));
@@ -454,7 +453,7 @@ swap :: (v: *$V/VectorType, i: int, j: int) {
 
 
 conjugate :: (v: $V/VectorType) -> V {
-    res : V = ---;
+    res := make(V, false);
     for raw(*v) {
         set_raw(*res, it_raw_index, conjugate(it));
     }
@@ -573,18 +572,36 @@ angle :: (a: $A/VectorType, b: $B/VectorType) -> float64 {
 test_vector :: () {
 
     println_push("Vector", color = .FG_WHITE);
+
     {
-        T :: DenseVector(float64, 5);
-        // #run print("T = %\n", T);
-        v : DenseVector(float64, 5);
-        println("v = %", pstr(v));
-        vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
-        println("v = %", pstr(v));
-        // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
-        a := v + v;
-        println("a = %", pstr(v));
-        a = a + v;
-        println("a = %", pstr(v));
+        println_push("DenseVector", color = .FG_GREEN);    
+        {
+            v := make(DenseVector(float64, 5));
+            println("v = %", pstr(v));
+            vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
+            println("v = %", pstr(v));
+            // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
+            a := v + v;
+            println("a = %", pstr(v));
+            a = a + v;
+            println("a = %", pstr(v));
+        }
+    }
+
+    {
+        println_push("DenseHeapVector", color = .FG_GREEN);    
+        {
+            v := make(DenseHeapVector(float64, 5));
+            defer free(v);
+            println("v = %", pstr(v));
+            vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
+            println("v = %", pstr(v));
+            // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
+            a := v + v;
+            println("a = %", pstr(v));
+            a = a + v;
+            println("a = %", pstr(v));
+        }
     }
 }
 
