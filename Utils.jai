@@ -2,60 +2,6 @@
 
 
 
-
-
-pool :: (code: Code) #expand {
-    _pool: Pool.Pool;
-    Pool.set_allocators(*_pool);
-    
-    {
-        push_allocator(Pool.pool_allocator, *_pool);
-        #insert code;
-    }
-
-    print("The calculation pool contains % bytes.\n", _pool.memblock_size - _pool.bytes_left);
-    print("Releasing the pool now.\n");
-    Pool.release(*_pool);
-}
-
-
-
-
-
-
-
-// is_a_matrix :: inline (T: Type) -> bool {
-//     return T == Matrix(Complex64)
-//         || T == Matrix(float64)
-//         || T == Matrix(float32)
-//         || T == Matrix(float)
-//         || T == Matrix(int)
-//         || T == Matrix(s64)
-//         || T == Matrix(s32)
-//         || T == Matrix(s16)
-//         || T == Matrix(u64)
-//         || T == Matrix(u32)
-//         || T == Matrix(u16)
-//         || T == Matrix(u8)
-//         ;
-// }
-// is_a_vector :: inline (T: Type) -> bool {
-//     return T == Vector(Complex64)
-//         || T == Vector(float64)
-//         || T == Vector(float32)
-//         || T == Vector(float)
-//         || T == Vector(int)
-//         || T == Vector(s64)
-//         || T == Vector(s32)
-//         || T == Vector(s16)
-//         || T == Vector(u64)
-//         || T == Vector(u32)
-//         || T == Vector(u16)
-//         || T == Vector(u8)
-//         ;
-// }
-
-
 // ######## ##    ## ########  ########  ######
 //    ##     ##  ##  ##     ## ##       ##    ##
 //    ##      ####   ##     ## ##       ##
@@ -64,11 +10,22 @@ pool :: (code: Code) #expand {
 //    ##       ##    ##        ##       ##    ##
 //    ##       ##    ##        ########  ######
 
+f64 :: inline (x: $T) -> float64 #modify {
+    if !is_intrinsic_number(T) {T = null; return;}
+} {
+    return ncast(float64, x);
+}
+f32 :: inline (x: $T) -> float64 #modify {
+    if !is_intrinsic_number(T) {T = null; return;}
+} {
+    return ncast(float32, x);
+}
+
+#scope_module
 
 NUMBER_TYPES :: Type.[
     float64, float32, s64, s32, s16, s8, u64, u32, u16, u8, bool
 ];
-
 
 
 
@@ -176,7 +133,7 @@ get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info 
     return null;
 }
 
-
+#scope_export
 
 // ##    ##  ######     ###     ######  ########
 // ###   ## ##    ##   ## ##   ##    ##    ##
@@ -360,6 +317,7 @@ is_minor_number :: inline ($major: Type, $minor: Type) -> bool {
     return i_major <= i_minor; // * higher-order types come first!
 }
 
+#scope_export
 
 
 
@@ -398,6 +356,7 @@ str :: inline (val: $T) -> string #modify {
 // ##        ##     ## #### ##    ##    ##
 
 
+#scope_module
 
 
 PrintOptions :: struct {

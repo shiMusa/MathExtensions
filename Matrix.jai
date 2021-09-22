@@ -946,7 +946,7 @@ test_matrix :: () {
 
 
     {
-        m : DenseMatrix(c64, 3, 3);
+        m : DenseMatrix(C64, 3, 3);
         mat_init_all(*m, cpx(42.0));
         set(*m,1,2,R);
         assert( get(m,1,2) == cpx(1.0, 0.0) );
@@ -954,7 +954,7 @@ test_matrix :: () {
     }
 
     {
-        m : DenseMatrix(c64, 4, 4);
+        m : DenseMatrix(C64, 4, 4);
         mat_init_unit(*m);
         println("m = %", pstr(m));
         assert(get(m,0,1) == CZERO);
@@ -964,7 +964,7 @@ test_matrix :: () {
     }
 
     {
-        m : DenseMatrix(c64, 3, 3);
+        m : DenseMatrix(C64, 3, 3);
         set(*m,0,2,R);
         m = transpose(m);
         assert(get(m,2,0) == R);
@@ -987,14 +987,14 @@ test_matrix :: () {
     }
 
     {
-        m : DenseMatrix(c32, 2, 2);
+        m : DenseMatrix(C64, 2, 2);
         mat_init(*m, R, 2*R, 3*R, 4*R);
         println("m = %", pstr(m));
         m = m * m;
         println("m = %", pstr(m));
     }
     {
-        m : DenseMatrix(c32, 2, 2);
+        m : DenseMatrix(C64, 2, 2);
         mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
         println("m = %", pstr(m));
         m = m * m;
@@ -1008,7 +1008,7 @@ test_matrix :: () {
     //     print("m = %\n", m);
     // }
     {
-        m : DenseMatrix(c64, 2, 2);
+        m : DenseMatrix(C64, 2, 2);
         mat_init(*m, 
             CZERO, -I, 
             I, CZERO
@@ -1018,12 +1018,12 @@ test_matrix :: () {
 
 
     {
-        m : DenseMatrix(c64, 2, 2);
+        m : DenseMatrix(C64, 2, 2);
         mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
         println("m = %", pstr(m));
         t1 := tensor(m, m);
         println("t1 = %", pstr(t1));
-        t2 : DenseMatrix(c64, 4, 4);
+        t2 : DenseMatrix(C64, 4, 4);
         mat_init(*t2,
             R            ,             I,             I,   -R           ,
             2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
@@ -1035,7 +1035,7 @@ test_matrix :: () {
     }
 
     {
-        M : DenseMatrix(c64, 3, 3);
+        M : DenseMatrix(C64, 3, 3);
         mat_init(*M,
             CZERO, R, 2*R,
             3*R, 4*R, 5*R,
@@ -1044,7 +1044,7 @@ test_matrix :: () {
 
         S := mat_submatrix(M, 1, 3, 1, 3);
         
-        res : DenseMatrix(c64, 2, 2);
+        res : DenseMatrix(C64, 2, 2);
         mat_init(*res, 4*R, 5*R, 7*R, 8*R);
         
         assert(S == res);

@@ -107,21 +107,21 @@ is_right_trapezoidal :: inline (m: $M/MatrixType) -> bool {
 test_checks :: () {
     println_push("Checks", color = .FG_WHITE);
     {
-        m : DenseMatrix(c64, 3, 3);
+        m : DenseMatrix(C64, 3, 3);
         mat_init_unit(*m);
         assert(is_diagonal_unit(m));
         set(*m,1,1, 2.0*R);
         assert(!is_diagonal_unit(m));
     }
     {
-        m : DenseMatrix(c64, 4, 4);
+        m : DenseMatrix(C64, 4, 4);
         set(*m,3,0, 42.0*R);
         assert(is_left_triangular(m));
         set(*m,0,3, 42.0*R);
         assert(!is_left_triangular(m));
     }
     {
-        m : DenseMatrix(c64, 4, 4);
+        m : DenseMatrix(C64, 4, 4);
         set(*m,0,3, 42.0*R);
         assert(is_right_triangular(m));
         set(*m,3,0, 42.0*R);
@@ -135,7 +135,7 @@ test_checks :: () {
             0, 1, 2, 3,
             0, 0, 0, 2
         );
-        cm := mat_cast(c64, m);
+        cm := mat_cast(C64, m);
 
         assert(is_right_quasi_triangular(m));
         m = transpose(m);

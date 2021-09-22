@@ -9,8 +9,8 @@ C64_NAN :: Complex(float64).{Math.FLOAT64_NAN, Math.FLOAT64_NAN};
 
 
 
-c64 :: Complex(float64);
-c32 :: Complex(float32);
+C64 :: Complex(float64);
+C32 :: Complex(float32);
 
 
 
@@ -31,10 +31,20 @@ Complex :: struct (T: Type) {
     imag: T;
 }
 
-// Complex64 :: Complex(float64);
-// Complex32 :: Complex(float32);
 
-cpx :: inline ($$re: $T = 0.0, $$im: T = 0.0) -> Complex(T) {
+c64 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C64 #modify {
+    if !is_intrinsic_number(T) || !is_intrinsic_number(U) {T = null; U = null; return;}    
+} {
+    return cpx(ncast(float64, re), ncast(float64, im));
+}
+
+c32 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C64 #modify {
+    if !is_intrinsic_number(T) || !is_intrinsic_number(U) {T = null; U = null; return;}    
+} {
+    return cpx(ncast(float32, re), ncast(float32, im));
+}
+
+cpx :: ($$re: $T = 0.0, $$im: T = 0.0) -> Complex(T) {
     #if is_constant(re) && is_constant(im) {
         return Complex(T).{re, im};
     } else {
@@ -130,10 +140,10 @@ operator == :: (a: Complex($T), b: $U) -> bool #modify {
 test_complex :: () {
     println_push("Complex(T)", color = .FG_WHITE);
 
-    a := cpx(1.0, 0.0);
-    b := cpx(0.0, 1.0);
+    a := c64(1.0, 0.0);
+    b := c64(0.0, 1.0);
 
-    assert( cpx(0.0, 0.0) == cpx(-0.0, -0.0) );
+    assert( c64(0.0, 0.0) == c64(-0.0, -0.0) );
 
 
     assert(b * b == -1.0 * R);

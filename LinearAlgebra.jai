@@ -674,13 +674,13 @@ test_linear_algebra :: () {
     {
         println_push("test 2", color = .FG_GREEN);
 
-        L : DenseMatrix(c64, 3, 3) = ---;
+        L : DenseMatrix(C64, 3, 3) = ---;
         mat_init(*L,
             R, CZERO, CZERO,
             3.0*R, R, CZERO,
             I, R+I, R
         );
-        b : DenseVector(c64, 3) = ---;
+        b : DenseVector(C64, 3) = ---;
         vec_init(*b, 3.0*R, -I, R-2.0*I);
         res := solve_linear_left_triangular(L, b);
         println("% = % ?", pstr(L * res), pstr(b));
@@ -715,11 +715,11 @@ test_linear_algebra :: () {
             0, 1, 2, 3,
             0, 0, 0, 2
         );
-        cm := mat_cast(c64, m);
+        cm := mat_cast(C64, m);
         
         b : DenseVector(float64, 4) = ---;
         vec_init(*b, 2,3,4,5);
-        cb := vec_cast(c64, b);
+        cb := vec_cast(C64, b);
 
         println("cm %", pstr(cm));
         println("cb %", pstr(cb));
@@ -734,13 +734,13 @@ test_linear_algebra :: () {
     {
         println_push("test 5", color = .FG_GREEN);
 
-        M : DenseMatrix(c64, 3, 2) = ---;
+        M : DenseMatrix(C64, 3, 2) = ---;
         mat_init(*M, 
             R, CZERO, 
             -R, R, 
             -R, -R
         );
-        b : DenseVector(c64, 3) = ---;
+        b : DenseVector(C64, 3) = ---;
         vec_init(*b, R, 2.0*R, -4.0*R);
 
         res := solve_linear_left_trapezoidal(M, b);
@@ -751,12 +751,12 @@ test_linear_algebra :: () {
     {
         println_push("test 6", color = .FG_GREEN);
 
-        M : DenseMatrix(c64, 2, 3) = ---;
+        M : DenseMatrix(C64, 2, 3) = ---;
         mat_init(*M, 
             R, R, CZERO, 
             CZERO, R, CZERO 
         );
-        b : DenseVector(c64, 2) = ---;
+        b : DenseVector(C64, 2) = ---;
         vec_init(*b,4*R, 6*R);
 
         res := solve_linear_right_trapezoidal(M, b);
@@ -766,8 +766,8 @@ test_linear_algebra :: () {
     {
         println_push("test 7", color = .FG_GREEN);
 
-        M   : DenseMatrix(c64, 2, 2) = ---;
-        res : DenseMatrix(c64, 2, 2) = ---;
+        M   : DenseMatrix(C64, 2, 2) = ---;
+        res : DenseMatrix(C64, 2, 2) = ---;
         mat_init(*M,
             2*R, 3*R,
             -2*R, R
@@ -799,7 +799,7 @@ test_linear_algebra :: () {
     {
         println_push("test 9", color = .FG_GREEN);
 
-        M : DenseMatrix(c64, 3, 3) = ---;
+        M : DenseMatrix(C64, 3, 3) = ---;
         mat_init(*M,
             CZERO, 4*R, -3*R,
             2*R, CZERO, 4*R,
@@ -814,7 +814,7 @@ test_linear_algebra :: () {
     {
         println_push("test 10", color = .FG_GREEN);
 
-        M : DenseMatrix(c64, 3, 3) = ---;
+        M : DenseMatrix(C64, 3, 3) = ---;
         mat_init(*M,
             CZERO, 4*R, -3*R,
             2*R, CZERO, 4*R,
@@ -831,17 +831,17 @@ test_linear_algebra :: () {
     {
         println_push("test 11", color = .FG_GREEN);
 
-        M : DenseMatrix(c64, 2, 2) = ---;
+        M : DenseMatrix(C64, 2, 2) = ---;
         mat_init(*M,
             R, I,
             -3*R, 2.0 - I
         );
-        b : DenseVector(c64, 2) = ---;
+        b : DenseVector(C64, 2) = ---;
         vec_init(*b, 4*R, 6*I);
 
         res := solve_LRfp(M, b);
         println("solve linear system via Gaussian factorization (full pivoting): %", pstr(res));
-        sol : DenseVector(c64, 2) = ---;
+        sol : DenseVector(C64, 2) = ---;
         vec_init(*sol, 2.5-4.5*I, 4.5-1.5*I);
         assert(approx(res, sol), "\nCould not solve linear system via Gaussain factorization!");
     }
@@ -868,7 +868,7 @@ test_linear_algebra :: () {
             I, R, CZERO,
             2*R, 3+I, R
         );
-        one : DenseMatrix(c64, 3, 3);
+        one : DenseMatrix(C64, 3, 3);
         mat_init_unit(*one);
         res := solve_linear_left_trapezoidal(L,one);
         println("K = %", pstr(res));
@@ -887,7 +887,7 @@ test_linear_algebra :: () {
             CZERO, -I, CZERO,
             CZERO, CZERO, 1+I
         );
-        one : DenseMatrix(c64, 3, 3);
+        one : DenseMatrix(C64, 3, 3);
         mat_init_unit(*one);
         res := solve_linear_right_trapezoidal(M,one);
         println("K = %", pstr(res));
