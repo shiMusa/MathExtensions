@@ -14,7 +14,28 @@
 #load "Checks.jai";
 #load "LinearAlgebra.jai";
 
-CHECKS :: true;
+
+
+#module_parameters(CHECKS := true);
+
+
+run_all_tests :: () {
+    println("\nRunning tests ///////////////////////////////////////////////////\n", color = .FG_RED);
+
+    test_utils();
+    test_complex();
+
+    test_elementary();
+
+    test_polynomials();
+    test_approximations();
+    
+    test_vector();
+    test_matrix();
+
+    test_checks();
+    test_linear_algebra();
+}
 
 
 #scope_module

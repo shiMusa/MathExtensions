@@ -381,9 +381,7 @@ str :: inline (val: $T) -> string #modify {
 // ##        ##    ##   ##  ##   ###    ##
 // ##        ##     ## #### ##    ##    ##
 
-
 #scope_module
-
 
 PrintOptions :: struct {
     offset := 0;
@@ -481,7 +479,6 @@ println :: (arg: Any, color: COLOR = .FG_RESET) {
     }
     print("%\n", c_text);
 }
-
 
 
 
