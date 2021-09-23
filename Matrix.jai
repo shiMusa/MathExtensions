@@ -185,7 +185,7 @@ copy :: inline (to: *$M/MatrixType, from: M) {
 
 mat_init :: (m: *$M/MatrixType, vals: ..$T) {
     #if CHECKS {
-        #run assert(is_minor_number(M.data_type, T));
+        #run assert(is_minor_number_type(M.data_type, T));
         assert(vals.count <= M.N * M.M, "too many values (%) for matrix of % entries\n", vals.count, M.N * M.M);
     }
     // println("mat_init");
@@ -454,7 +454,7 @@ mul :: (a: *$A/MatrixType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
     #if CHECKS {
-        #run assert(is_minor_number(A.data_type, B));
+        #run assert(is_minor_number_type(A.data_type, B));
     }
 
     for raw(a) {
@@ -493,7 +493,7 @@ div :: (a: *$A/MatrixType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
     #if CHECKS {
-        #run assert(is_minor_number(A.data_type, B));
+        #run assert(is_minor_number_type(A.data_type, B));
     }
 
     for raw(a) {
@@ -525,7 +525,7 @@ operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
 add :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
-        #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
+        #run assert(is_minor_number_type(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
 
     for a {
@@ -559,7 +559,7 @@ operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B
 sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
-        #run assert(is_minor_number(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
+        #run assert(is_minor_number_type(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
 
     for a {
@@ -615,7 +615,7 @@ saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #run assert(A.N == C.N);
         #run assert(B.N == A.M && B.M == C.M);
-        #run assert(is_minor_number(C.data_type, A.data_type) && is_minor_number(C.data_type, B.data_type));
+        #run assert(is_minor_number_type(C.data_type, A.data_type) && is_minor_number_type(C.data_type, B.data_type));
     }
 
     for j: 0..C.M-1 {

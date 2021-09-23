@@ -92,7 +92,7 @@ copy :: (to: *$V/VectorType, from: V) {
 
 vec_init :: inline (v: *$V/VectorType, values: ..$T) {
     #if CHECKS {
-        #assert(is_minor_number(V.data_type, T));
+        #assert(is_minor_number_type(V.data_type, T));
         assert(values.count <= V.N, "too many values (%) for vector of % entries\n", values.count, V.N);
     }
     for values {
@@ -102,7 +102,7 @@ vec_init :: inline (v: *$V/VectorType, values: ..$T) {
 
 vec_init_all :: inline (v: *$V/VectorType, value: $T) {
     #if CHECKS {
-        #assert(is_minor_number(V.data_type, T));
+        #assert(is_minor_number_type(V.data_type, T));
     }
     for raw(v) {
         set_raw(v, it_raw_index, ncast(V.data_type, value));
@@ -184,7 +184,7 @@ mul :: inline (a: *$A/VectorType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
     #if CHECKS {
-        #assert(is_minor_number(A.data_type,B));
+        #assert(is_minor_number_type(A.data_type,B));
     }
     for raw(a) {
         set_raw(a, it_raw_index, it * b);
@@ -230,7 +230,7 @@ div :: inline (a: *$A/VectorType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
     #if CHECKS {
-        #assert(is_minor_number(A,B));
+        #assert(is_minor_number_type(A,B));
     }
 
     for raw(*a) {
@@ -258,7 +258,7 @@ operator + :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T 
 
 add :: (a: *$A/VectorType, b: $B/VectorType) {
     #if CHECKS {
-        #assert(is_minor_number(A.data_type, B.data_type));
+        #assert(is_minor_number_type(A.data_type, B.data_type));
         #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
 
@@ -285,7 +285,7 @@ operator - :: (a: $A/VectorType, b: $B/VectorType) -> VectorVectorHelper(A,B).T 
 
 sub :: (a: *$A/VectorType, b: $B/VectorType) {
     #if CHECKS {
-        #assert(is_minor_number(A.data_type, B.data_type));
+        #assert(is_minor_number_type(A.data_type, B.data_type));
         #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
     }
 
@@ -370,7 +370,7 @@ saxpy :: (a: *$A/VectorType, b: $B/VectorType, factor: $C) #modify {
 } {
     #if CHECKS {
         #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
-        #assert(is_minor_number(A.data_type, B) && is_minor_number(A.data_type, C));
+        #assert(is_minor_number_type(A.data_type, B) && is_minor_number_type(A.data_type, C));
     }
 
     for a {
@@ -387,7 +387,7 @@ gaxpy :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
     #if CHECKS {
         #run assert(Y.N == M.N, "dimensions do not match (%, %)\n", Y.N, M.N);
         #run assert(X.N == M.M, "dimensions do not match (%, %)\n", X.N, M.M);
-        #assert(is_minor_number(Y.data_type, M.data_type) && is_minor_number(Y.data_type, X.data_type));
+        #assert(is_minor_number_type(Y.data_type, M.data_type) && is_minor_number_type(Y.data_type, X.data_type));
     }
 
     for A {

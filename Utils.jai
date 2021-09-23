@@ -16,6 +16,19 @@ pool :: (code: Code) #expand {
     Pool.release(*_pool);
 }
 
+// Copied over from Hash_Table.jai
+next_power_of_two :: inline (x : int) -> int {
+    assert(x != 0);
+    p := 1;
+    while x > p p += p;
+    return p;
+}
+
+str :: inline (val: $T) -> string #modify {
+    if !is_intrinsic_number(T) { T = null; return; }
+} {
+    return sprint("%", val);
+}
 
 
 // ######## ##    ## ########  ########  ######
@@ -47,9 +60,13 @@ f32 :: inline (x: $T) -> float64 #modify {
     return ncast(float32, x);
 }
 
+
+
+
+
 #scope_module
 
-NUMBER_TYPES :: Type.[
+INTRINSIC_NUMBER_TYPES :: Type.[
     float64, float32, s64, s32, s16, s8, u64, u32, u16, u8, bool
 ];
 
@@ -60,6 +77,10 @@ is_float_number :: inline ($T: Type) -> bool {
         X :: #run get_complex_inner_type(T);
         return is_float_number(X);
     }
+    if is_quaternion_number(T) {
+        X :: #run get_quaternion_inner_type(T);
+        return is_float_number(X);
+    }
     if T == float64 || T == float32 return true;
     return false;
 }
@@ -67,7 +88,7 @@ is_float_number :: inline ($T: Type) -> bool {
 
 
 is_intrinsic_number :: ($T: Type) -> bool {
-    for NUMBER_TYPES {
+    for INTRINSIC_NUMBER_TYPES {
         if T == it then return true;
     }
     return false;
@@ -85,7 +106,7 @@ is_complex_number :: ($T: Type) -> bool {
     #insert -> string {
         builder: String_Builder;
 
-        for NUMBER_TYPES {
+        for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
                 "#if T == Complex(%) then return true;\n",
                 it
@@ -108,13 +129,40 @@ is_complex_number :: (n: *Type_Info) -> bool {
 }
 
 
+is_quaternion_number :: ($T: Type) -> bool {
+
+    #insert -> string {
+        builder: String_Builder;
+
+        for INTRINSIC_NUMBER_TYPES {
+            print_to_builder(*builder,
+                "#if T == Quaternion(%) then return true;\n",
+                it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+
+    return false;
+}
+
+is_quaternion_number :: (n: *Type_Info) -> bool {
+    if n.type != .STRUCT then return false;
+    s := cast(*Type_Info_Struct)n;
+
+    if s.name == "Quaternion" then return true;
+
+    return false;
+}
+
 
 is_number :: inline ($T: Type) -> bool {
-    return is_intrinsic_number(T) || is_complex_number(T);
+    return is_intrinsic_number(T) || is_complex_number(T) || is_quaternion_number(T);
 }
 
 is_number :: inline (n: *Type_Info) -> bool {
-    return is_intrinsic_number(n) || is_complex_number(n);
+    return is_intrinsic_number(n) || is_complex_number(n) || is_quaternion_number(n);
 }
 
 
@@ -125,7 +173,7 @@ get_complex_inner_type :: ($T: Type) -> Type {
     #insert -> string {
         builder: String_Builder;
 
-        for NUMBER_TYPES {
+        for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
                 "#if T == Complex(%) then return %;\n",
                 it, it
@@ -147,7 +195,7 @@ get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info 
     #insert -> string {
         builder: String_Builder;
 
-        for NUMBER_TYPES {
+        for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
                 "if cast(*Type_Info)type_info(%) == T then return type_info(Complex(%));\n",
                 it, it
@@ -159,7 +207,56 @@ get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info 
     return null;
 }
 
-#scope_export
+
+
+
+
+
+// ? assuming we already know it's a Complex(T) number
+get_quaternion_inner_type :: ($T: Type) -> Type {
+    #insert -> string {
+        builder: String_Builder;
+
+        for INTRINSIC_NUMBER_TYPES {
+            print_to_builder(*builder,
+                "#if T == Quaternion(%) then return %;\n",
+                it, it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+    return Any;
+}
+
+get_quaternion_inner_type :: (T: *Type_Info) -> *Type_Info {
+    s := cast(*Type_Info_Struct)T;
+    return s.members[0].type;
+}
+
+
+get_quaternion_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info {
+    #insert -> string {
+        builder: String_Builder;
+
+        for INTRINSIC_NUMBER_TYPES {
+            print_to_builder(*builder,
+                "if cast(*Type_Info)type_info(%) == T then return type_info(Quaternion(%));\n",
+                it, it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+    return null;
+}
+
+
+
+
+
+
+
 
 // ##    ##  ######     ###     ######  ########
 // ###   ## ##    ##   ## ##   ##    ##    ##
@@ -170,22 +267,48 @@ get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info 
 // ##    ##  ######  ##     ##  ######     ##
 
 
-// * I don't need to use #modify since this is only used in terms of numbers anyways
+// * I don't need to use #modify since this is only used in terms of numbers anyways!?
+#scope_export
 ncast :: inline ($T: Type, num: $N) -> T {
     #if T == N {
+
         return num;
-    } else #if #run is_complex_number(T) {
-        X :: #run get_complex_inner_type(T);
-        #if #run is_complex_number(N) {
-            return cpx(cast(X)num.real, cast(X)num.imag);
+
+    } else #if #run is_quaternion_number(T) {
+        
+        X :: #run get_quaternion_inner_type(T);
+
+        #if #run is_quaternion_number(N) {
+            return qtn(cast(X)num.r, cast(X)num.i, cast(X)num.j, cast(X)num.k);
+        } else #if #run is_complex_number(N) {
+            return qtn(cast(X)num.real, cast(X)num.imag, 0, 0);
         } else {
-            return cpx(cast(X)num, zero(X));
+            return qtn(cast(X)num, 0, 0, 0);
         }
-    } else #if #run !is_complex_number(N) {
-        return cast,no_check(T) num;
-    } else {
-        assert(type_info(N).name != "Complex", "cannot cast complex to real number!");
-        return zero(T);
+
+    } else #if #run is_complex_number(T) {
+        
+        #if #run is_quaternion_number(N) {
+            assert(false, "cannot ncast % -> %", N, T);
+        } else {
+
+            X :: #run get_complex_inner_type(T);
+            #if #run is_complex_number(N) {
+                return cpx(cast(X)num.real, cast(X)num.imag);
+            } else {
+                return cpx(cast(X)num, zero(X));
+            }
+        }
+
+    } else { // real numbers
+
+        #if #run is_quaternion_number(N) || is_complex_number(N) {
+            assert(false, "cannot ncast % -> %", N, T);
+        } else {
+
+            return cast(T)num;
+
+        }
     }
 }
 
@@ -206,45 +329,16 @@ nan :: inline ($T: Type) -> T {
         X :: #run get_complex_inner_type(T);
         n :: #run nan(X);
         return #run Complex(X).{n,n};
+    } else #if #run is_quaternion_number(T) {
+        X :: #run get_quaternion_inner_type(T);
+        n :: #run nan(X);
+        return #run Quaternion(X).{n,n,n,n};
     } else return null;
 }
 
 
 
 
-
-#scope_module
-
-
-array_copy :: (from: [$N]$T, to: *[N]T) {
-    for 0..N-1 {
-        (<<to)[it] = from[it];
-    }
-}
-
-
-array_view_range :: inline (arr: []$T, from: s64, to: s64) -> []T {
-    #if CHECKS {
-        assert(to < arr.count, "Index out of bounds: to = %, arr.count = %" , to, arr.count); 
-        assert(from < to, "Negative range: from = %, to = %", from, to);
-    }
-    res := arr;
-    res.data += from;
-    res.count = (to - from);
-    return res;
-}
-
-array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
-    #if CHECKS {
-        assert(from + count <= arr.count, "Index out of bounds: from+count = %, arr.count = %", from+count, arr.count);
-        assert(count > 0, "Negative/zero range: count = %", count);
-    }
-
-    res := arr;
-    res.data += from;
-    res.count = count;
-    return res;
-}
 
 
 // ##     ## ########   ######     ###     ######  ########
@@ -256,10 +350,31 @@ array_view_count :: inline (arr: []$T, from: s64, count: s64) -> []T {
 //  #######  ##         ######  ##     ##  ######     ##
 
 
+#scope_module
 upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
     if !is_number(A) || !is_number(B) then return null;
 
-    // println_push("upcast (%, %)", A.type, B.type, color = .FG_WHITE);
+    if is_quaternion_number(A) && is_quaternion_number(B) {
+        a := get_quaternion_inner_type(A);
+        b := get_quaternion_inner_type(B);
+        c := upcast(a,b);
+        println("c = %", c.type);
+        return get_quaternion_type_info_from_intrinsic_type_info(c);
+    }
+
+    if is_quaternion_number(A) {
+        a := get_quaternion_inner_type(A);
+        c := upcast(a,B);
+        println("c = %", c.type);
+        return get_quaternion_type_info_from_intrinsic_type_info(c);
+    }
+
+    if is_quaternion_number(B) {
+        b := get_quaternion_inner_type(B);
+        c := upcast(A,b);
+        println("c = %", c.type);
+        return get_quaternion_type_info_from_intrinsic_type_info(c);
+    }
 
     if is_complex_number(A) && is_complex_number(B) {
         a := get_complex_inner_type(A);
@@ -286,7 +401,7 @@ upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
     #insert -> string {
         builder : String_Builder;
 
-        for NUMBER_TYPES {
+        for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
                 "if A == type_info(%) || B == type_info(%) then return type_info(%);\n",
                 it, it, it
@@ -301,10 +416,26 @@ upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
 
 
 upcast :: inline ($A: Type, $B: Type) -> Type {
-    is_A_complex :: #run is_complex_number(A);
-    is_B_complex :: #run is_complex_number(B);
+    is_A_quaternion :: #run is_quaternion_number(A);
+    is_B_quaternion :: #run is_quaternion_number(B);
+    is_A_complex    :: #run is_complex_number(A);
+    is_B_complex    :: #run is_complex_number(B);
 
-    #if is_A_complex && is_B_complex {
+    #if is_A_quaternion && is_B_quaternion {
+        a :: #run get_quaternion_inner_type(A);
+        b :: #run get_quaternion_inner_type(B);
+        T :: #run upcast(a, b);
+        return Quaternion(T);
+    } else #if is_A_quaternion {
+        a :: #run get_quaternion_inner_type(A);
+        T :: #run upcast(a, B);
+        return Quaternion(T);
+    } else #if is_B_quaternion {
+        b :: #run get_quaternion_inner_type(B);
+        T :: #run upcast(A,b);
+        return Quaternion(T);
+
+    } else #if is_A_complex && is_B_complex {
         a :: #run get_complex_inner_type(A);
         b :: #run get_complex_inner_type(B);
         T :: #run upcast(a, b);
@@ -317,12 +448,13 @@ upcast :: inline ($A: Type, $B: Type) -> Type {
         b :: #run get_complex_inner_type(B);
         T :: #run upcast(A,b);
         return Complex(T);
+
     } else {
-        // ? the types in NUMBER_TYPES are sorted in order from mathematical superset to subset, e.g. ℂ > ℝ > ℤ > ℕ 
-        for NUMBER_TYPES {
+        // ? the types in INTRINSIC_NUMBER_TYPES are sorted in order from mathematical superset to subset, e.g. ℂ > ℝ > ℤ > ℕ 
+        for INTRINSIC_NUMBER_TYPES {
             if A == it || B == it then return it;
         }
-        return Any;
+        assert(false, "cannot upcast % -> %", A, B);
     }
 }
 
@@ -333,42 +465,11 @@ UpCast :: struct(A: Type, B: Type) {
 
 
 
-is_minor_number :: inline ($major: Type, $minor: Type) -> bool {
-    i_major := -1;
-    i_minor := -1;
-    for NUMBER_TYPES {
-        if it == major then i_major = it_index;
-        if it == minor then i_minor = it_index;
-    }
-    return i_major <= i_minor; // * higher-order types come first!
-}
-
-#scope_export
-
-
-
-// Copied over from Hash_Table.jai
-next_power_of_two :: inline (x : int) -> int {
-    assert(x != 0);
-    p := 1;
-    while x > p p += p;
-    return p;
+is_minor_number_type :: inline ($major: Type, $minor: Type) -> bool {
+    return upcast(major, minor) == major;
 }
 
 
-
-
-
-
-
-
-
-
-str :: inline (val: $T) -> string #modify {
-    if !is_intrinsic_number(T) { T = null; return; }
-} {
-    return sprint("%", val);
-}
 
 
 
@@ -505,31 +606,4 @@ test_utils :: () {
         // println("print result");
         // print("%\n", binomial(67, 30));
     }
-
-    {
-        println_push("test 3 : array_view_range", color = .FG_GREEN);
-        a := float64.[0,1,2,3,4,5,6];
-        v := array_view_range(a, 2, 4);
-        println("%", a);
-        println("%", v);
-    }
-
-    // {
-    //     assert(Complex64 == super_type(Complex64, u8));
-    //     assert(float64 == super_type(float32, float64));
-    // }
-
-    // {
-    //     a : float64 = ---;
-    //     M : CMatrix64 = ---;
-    //     calculation(#code {
-    //         x := 42.0; // 8 bytes
-    //         a = x;
-
-    //         copy(*M, cmat64_id(4,4)); // 2 * 8 bytes [Complex] * 16 = 256 bytes
-    //     }); // Pool allocated 264 bytes!
-    //     assert(a == 42.0);
-    //     print("M = %\n", M);
-    //     print("%\n", cmat64_id(4,4));
-    // }
 }

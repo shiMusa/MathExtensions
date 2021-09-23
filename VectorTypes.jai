@@ -160,7 +160,7 @@ dvec :: inline($N: int, values: ..$T) -> DenseVector(T,N) {
 
 dvec :: ($T: Type, $N: int, values: ..$U) -> DenseVector(T,N) {
     #if CHECKS {
-        #run assert(is_minor_number(T, U));
+        #run assert(is_minor_number_type(T, U));
         assert(values.count <= N);
     }
     res : DenseVector(T,N);
@@ -240,7 +240,7 @@ dhvec :: inline($N: int, values: ..$T) -> DenseHeapVector(T,N) {
 
 dhvec :: ($T: Type, $N: int, values: ..$U) -> DenseHeapVector(T,N) {
     #if CHECKS {
-        #run assert(is_minor_number(T, U));
+        #run assert(is_minor_number_type(T, U));
         assert(values.count <= N);
     }
     res := make(DenseHeapVector(T,N));

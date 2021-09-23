@@ -204,7 +204,7 @@ DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
 
 dmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> DenseMatrix(T,N,M) {
     #if CHECKS {
-        #run assert(is_minor_number(T, U));
+        #run assert(is_minor_number_type(T, U));
         assert(values.count <= N*M);
     }
     res : DenseMatrix(T, N, M);
@@ -307,7 +307,7 @@ free :: inline (m: $M/DenseHeapMatrix) {
 
 dhmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> DenseHeapMatrix(T,N,M) {
     #if CHECKS {
-        #run assert(is_minor_number(T, U));
+        #run assert(is_minor_number_type(T, U));
         assert(values.count <= N*M);
     }
     res : DenseHeapMatrix(T, N, M);
