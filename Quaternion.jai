@@ -116,7 +116,18 @@ qtn :: ($$r: $T = 0, $$i: T = 0, $$j: T = 0, $$k: T = 0) -> Quaternion(T) {
 }
 
 
-
+qtn_r :: inline ($T: Type) -> Quaternion(T) {
+    return qtn(one(T), 0, 0, 0);
+}
+qtn_i :: inline ($T: Type) -> Quaternion(T) {
+    return qtn(zero(T), 1, 0, 0);
+}
+qtn_j :: inline ($T: Type) -> Quaternion(T) {
+    return qtn(zero(T), 0, 1, 0);
+}
+qtn_k :: inline ($T: Type) -> Quaternion(T) {
+    return qtn(zero(T), 0, 0, 1);
+}
 
 qtn_vec :: inline (q: Quaternion($T)) -> Quaternion(T) {
     return qtn(0, q.i, q.j, q.k);
