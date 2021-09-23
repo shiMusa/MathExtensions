@@ -54,6 +54,14 @@ cpx :: ($$re: $T = 0.0, $$im: T = 0.0) -> Complex(T) {
     }
 }
 
+
+cpx_inv :: inline (z: Complex($T)) -> Complex(T) {
+    z_abs_sq := abs_sq(z);
+    return cpx(z.real / abs_sq, -z.imag / abs_sq);
+}
+
+
+
 operator + :: inline (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
     return cpx(a.real + b.real, a.imag + b.imag);
 }

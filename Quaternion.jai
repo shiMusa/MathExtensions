@@ -118,6 +118,25 @@ qtn :: ($$r: $T = 0, $$i: T = 0, $$j: T = 0, $$k: T = 0) -> Quaternion(T) {
 
 
 
+qtn_vec :: inline (q: Quaternion($T)) -> Quaternion(T) {
+    return qtn(0, q.i, q.j, q.k);
+}
+
+qtn_vec_abs_sq :: inline (q: Quaternion($T)) -> T {
+    return q.i*q.i + q.j*q.j + q.k*q.k;
+}
+
+qtn_vec_abs :: inline (q: Quaternion($T)) -> T {
+    return Math.sqrt(qtn_vec_abs_sq(q));
+}
+
+qtn_inv :: inline (q: Quaternion($T)) -> Quaternion(T) {
+    q_abs := abs(q);
+    return qtn(q.r/q_abs,-q.i/q_abs,-q.j/q_abs,-q.k/q_abs);
+}
+
+
+
 //  #######  ########  ######## ########     ###    ########  #######  ########
 // ##     ## ##     ## ##       ##     ##   ## ##      ##    ##     ## ##     ##
 // ##     ## ##     ## ##       ##     ##  ##   ##     ##    ##     ## ##     ##
@@ -280,19 +299,13 @@ operator * :: inline (a: Quaternion($A), b: Complex($B)) -> Quaternion(UpCast(A,
 
 
 operator / :: (a: Quaternion($A), b: Quaternion($B)) -> Quaternion(UpCast(A,B).T) {
-    b_abs := b.r*b.r + b.i*b.i + b.j*b.j + b.k*b.k;
-    b_inv := qtn(b.r/b_abs,-b.i/b_abs,-b.j/b_abs,-b.k/b_abs);
-    return a * b_inv;
+    return a * qtn_inv(b);
 }
 operator / :: (a: Quaternion($A), b: Complex($B)) -> Quaternion(UpCast(A,B).T) {
-    b_abs : UpCast(A,B).T = b.real*b.real + b.imag*b.imag;
-    b_inv := cpx(b.real/b_abs,-b.imag/b_abs);
-    return a * b_inv;
+    return a * cpx_inv(b);
 }
 operator / :: (a: Complex($A), b: Quaternion($B)) -> Quaternion(UpCast(A,B).T) {
-    b_abs := b.r*b.r + b.i*b.i + b.j*b.j + b.k*b.k;
-    b_inv := qtn(b.r/b_abs,-b.i/b_abs,-b.j/b_abs,-b.k/b_abs);
-    return a * b_inv;
+    return a * qtn_inv(b);
 }
 
 

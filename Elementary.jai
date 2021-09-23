@@ -1,12 +1,9 @@
 // maybe return int?
-sign :: inline (x: $T) -> T {
-    #if #run is_complex_number(T) {
-        if x.real == 0.0 then return R * sign(x.imag);
-        return R * sign(x.real);
-    } else {
-        if x >= 0 then return one(T);
-        return -one(T);
-    }
+sign :: inline (x: $T) -> T #modify {
+    if !is_intrinsic_number(T) {T = null; return;}    
+} {
+    if x >= 0 then return one(T);
+    return -one(T);
 }
 
 
@@ -37,43 +34,101 @@ binomial :: inline (from: $T, choose: T) -> T {
 
 
 
-
+quat_r :: real;
 real :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
     if is_complex_number(T) {
         U = get_complex_inner_type(T);
+    } else if is_quaternion_number(T) {
+        U = get_quaternion_inner_type(T);    
     } else {
         U = T;
     }
 } {
     #if #run is_complex_number(T) {
         return n.real;
+    } else #if #run is_quaternion_number(T) {
+        return n.r;    
     } else {
         return n;
     }
 }
 
+quat_i :: imag;
 imag :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
     if is_complex_number(T) {
         U = get_complex_inner_type(T);
+    } else if is_quaternion_number(T) {
+        U = get_quaternion_inner_type(T);    
     } else {
         U = T;
     }
 } {
     #if #run is_complex_number(T) {
         return n.imag;
+    } else #if #run is_quaternion_number(T) {
+        return n.i;
     } else {
-        return n;
+        return zero(T);
+    }
+}
+
+quat_j :: inline (n: $T) -> $U #modify {
+    if !is_number(T) {U = null; return;}
+    if is_complex_number(T) {
+        U = get_complex_inner_type(T);
+    } else if is_quaternion_number(T) {
+        U = get_quaternion_inner_type(T);    
+    } else {
+        U = T;
+    }
+} {
+    #if #run is_quaternion_number(T) {
+        return n.j;
+    } else {
+        return zero(T);
+    }
+}
+
+quat_k :: inline (n: $T) -> $U #modify {
+    if !is_number(T) {U = null; return;}
+    if is_complex_number(T) {
+        U = get_complex_inner_type(T);
+    } else if is_quaternion_number(T) {
+        U = get_quaternion_inner_type(T);    
+    } else {
+        U = T;
+    }
+} {
+    #if #run is_quaternion_number(T) {
+        return n.j;
+    } else {
+        return zero(T);
     }
 }
 
 
 
+inverse :: inline (n: $T) -> T #modify {
+    if !is_number(T) {T = null; return;}
+} {
+    #if #run is_quaternion_number(n) {
+        return qtn_inv(n);
+    } else #if #run is_complex_number(n) {
+        return cpx_inv(n);
+    } else {
+        return one(T)/n;
+    }
+}
+
+
 conjugate :: inline (n: $T) -> T #modify {
     if !is_number(T) { T = null; return; }    
 } {
-    #if #run is_complex_number(T) {
+    #if #run is_quaternion_number(T) {
+        return qtn(n.r, -n.i, -n.j, -n.k);
+    } else #if #run is_complex_number(T) {
         return cpx(n.real, -n.imag);
     } else {
         return n;
@@ -83,14 +138,18 @@ conjugate :: inline (n: $T) -> T #modify {
 
 // |z|²
 abs_sq :: inline (n: $T) -> $U #modify {
-    if !is_number(T) {T = null; return;}
+    if !is_number(T) {U = null; return;}
     if is_complex_number(T) {
         U = get_complex_inner_type(T);
+    } else if is_quaternion_number(T) {
+        U = get_quaternion_inner_type(T);    
     } else {
         U = T;
-    } 
+    }
 } {
-    #if #run is_complex_number(T) {
+    #if #run is_quaternion_number(T) {
+        return n.r*n.r + n.i*n.i + n.j*n.j + n.k*n.k;
+    } else #if #run is_complex_number(T) {
         return n.real * n.real + n.imag * n.imag;
     } else {
         return n * n;
@@ -98,20 +157,28 @@ abs_sq :: inline (n: $T) -> $U #modify {
 }
 
 abs :: inline (a: $T) -> $U #modify {
-    if !is_number(T) {T = null; return;}
+    if !is_number(T) {U = null; return;}
     if is_complex_number(T) {
         U = get_complex_inner_type(T);
+    } else if is_quaternion_number(T) {
+        U = get_quaternion_inner_type(T);    
     } else {
         U = T;
     }
 } {
-    return Math.sqrt(real(abs_sq(a)));
+    return Math.sqrt(abs_sq(a));
 }
 
 
-// given z = |z| exp(iθ), whis calculates θ.
-arg :: inline (a: $T) -> float64 {
-    #if #run is_complex_number(T) {
+// given n = |n| exp(iθ), whis calculates θ.
+// for quaternions: n = |n| exp(iθ eᵥ), where eᵥ = v/|v| with n = n.r + v
+arg :: inline (a: $T) -> float64 #modify {
+    if !is_number(T) {T = null; return;}    
+} {
+    #if #run is_quaternion_number(T) {
+        // ? https://www.wikiwand.com/en/Quaternion
+        return Math.acos(a.r/abs(a)); // ! branch cuts?
+    } else #if #run is_complex_number(T) {
         // return carg(a);
         return Math.atan2(a.imag, a.real);
     } else 
@@ -122,21 +189,29 @@ arg :: inline (a: $T) -> float64 {
 
 
 // exp(z) where z ∈ ℂ,ℝ
-exp :: inline (z: $T) -> T {
-    #if !#run is_complex_number(T) {
-        return Math.exp(z);
+exp :: inline (n: $T) -> T {
+    #if #run is_quaternion_number(T) {
+        // ? https://www.wikiwand.com/en/Quaternion
+        v := qtn_vec_abs(n);
+        return Math.exp(n.r) * (Math.cos(v) + qtn_vec(n)/v * Math.sin(v));
+    } else #if #run is_complex_number(T) {
+       return Math.exp(n.real) * phase(n.imag);
     } else {
-       return Math.exp(z.real) * phase(z.imag);
+        return Math.exp(n);
     }
 }
 
 
 // log(z) where z ∈ ℂ,ℝ
-log :: inline (z: $T) -> T {
-    #if #run is_complex_number(T) {
-        return cpx(Math.log(abs(z)), Math.atan2(z.imag, z.real));
+log :: inline (n: $T) -> T {
+    #if #run is_quaternion_number(T) {
+        // ? https://www.wikiwand.com/en/Quaternion
+        q := abs(n);
+        return Math.log(q) + qtn_vec(n)/qtn_vec_abs(n) * Math.acos(n.r/q);
+    } else #if #run is_complex_number(T) {
+        return cpx(Math.log(abs(n)), Math.atan2(n.imag, n.real));
     } else {
-        return cast(T)Math.log(cast(float64)z);
+        return cast(T)Math.log(cast(float64)n);
     }
 }
 
@@ -153,8 +228,11 @@ log :: inline (z: $T) -> T {
 // see complex/math.c:
 //     gsl_complex gsl_complex_pow (gsl_complex a, gsl_complex b)
 //
+// ! the `type` thingy is kinda akward...
 pow :: inline (z: $T, power: $U, $type: Type) -> type {
-    #if #run is_complex_number(T) {
+    #if #run is_quaternion_number(T) || is_quaternion_number(U) {
+        return exp(log(z)*power); // yeah, this works... but there might be a better way to do it!
+    } else #if #run is_complex_number(T) {
         #if #run is_complex_number(U) {
             return pow(abs(z), power, UpCast(T,U).T) * phase(arg(z) * power);
         } else 
@@ -171,13 +249,15 @@ pow :: inline (z: $T, power: $U, $type: Type) -> type {
 // in the hopes sqrt is faster than pow
 // need to wait for compiler fix to get rid of `$type: Type`...
 sqrt :: inline(z: $T, $type: Type) -> type {
-    #if !#run is_complex_number(T) {
-        #if #run !is_complex_number(type) {
-            return Math.sqrt(z);
-        } else
-            return sqrt(cpx(z));
-    } else {
+    #if #run is_quaternion_number(T) {
+        return pow(z, 0.5, type);
+    } else #if #run is_complex_number(T) {
         return Math.sqrt(abs(z)) * phase(arg(z) * 0.5);
+    } else {
+        #if #run is_complex_number(type) {
+            return sqrt(cpx(z), type);
+        } else
+            return Math.sqrt(z);
     }
 }
 
