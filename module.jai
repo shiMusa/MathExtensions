@@ -4,6 +4,7 @@
 
 #load "Elementary.jai";
 #load "Complex.jai";
+#load "Quaternion.jai";
 #load "Polynomials.jai";
 #load "Approximations.jai";
 
@@ -24,17 +25,18 @@ run_all_tests :: () {
 
     test_utils();
     test_complex();
+    test_quaternion();
 
-    test_elementary();
+    // test_elementary();
 
-    test_polynomials();
-    test_approximations();
+    // test_polynomials();
+    // test_approximations();
     
-    test_vector();
-    test_matrix();
+    // test_vector();
+    // test_matrix();
 
-    test_checks();
-    test_linear_algebra();
+    // test_checks();
+    // test_linear_algebra();
 }
 
 

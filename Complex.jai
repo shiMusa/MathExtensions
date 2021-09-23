@@ -85,6 +85,9 @@ operator - :: inline (a: Complex($T)) -> Complex(T) {
     return cpx(-a.real, -a.imag);
 }
 
+
+
+
 operator * :: inline (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
     return cpx(
         a.real * b.real - a.imag * b.imag,
@@ -121,12 +124,12 @@ operator / :: inline (v : $U, a: Complex($T)) -> Complex(UpCast(T,U).T) #modify 
     return cpx(v, 0.0)/a;
 }
 
-operator == :: (a: Complex($T), b: Complex($U)) -> bool {
+operator == :: inline (a: Complex($T), b: Complex($U)) -> bool {
     // TODO UpCast here?
     return a.real == b.real && a.imag == b.imag;
 }
 
-operator == :: (a: Complex($T), b: $U) -> bool #modify {
+operator == :: inline (a: Complex($T), b: $U) -> bool #modify {
     if !is_intrinsic_number(U) { U = null; return; }
 } #symmetric {
     return a.real == b && a.imag == 0.0;
@@ -136,9 +139,9 @@ operator == :: (a: Complex($T), b: $U) -> bool #modify {
 
 
 
-
+#scope_module
 test_complex :: () {
-    println_push("Complex(T)", color = .FG_WHITE);
+    println_push("Complex", color = .FG_WHITE);
 
     a := c64(1.0, 0.0);
     b := c64(0.0, 1.0);
