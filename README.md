@@ -13,37 +13,37 @@ Feel free to add functionality and performance upgrades.
 ## Current thoughts
 
 - Current work focuses on making everything as generic as possible to enable different types of matrices/vector, heap/stack allocated, various number types.
-- Add `Quaternion($T)` (maybe even `Octonion($T)`)
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
+(- maybe add `Octonion($T)` etc. later)
 
 There are more thoughts written down in [the document outlining some of my thoughts](https://github.com/shiMusa/MathExtensions/blob/flags-and-other-matrix-types/Thoughts.md).
 
 ## Currently Implemented
 
-Complex and reals scalars, vectors, matrices interoperate automatically (in most cases).
-Many functions specialize during compile-time on the real or complex variant (e.g. all the elementary functions).
+Quaternion, complex and reals scalars, vectors, matrices interoperate automatically (in most cases).
+Many functions specialize during compile-time on the real, complex, or quaternion variant (e.g. all the elementary functions).
 
 - Utils
     - `pool(#code)`; will create and release a Pool of memory for all the allocations in the Code block.
 - `Complex($T)` numbers `+`, `-`, `*`, `/`,
     - `str`; for pretty printing
-- Elementary (`z` ∈ ℂ)
+- Elementary (`n` ∈ ℂ, ℍ)
     - `sign(r)`
-    - `factorial(z)`
+    - `factorial(n)`
     - `binomial(from, choose)`
-    - `conjugate(z)`
-    - `abs_sq(z)`
-    - `abs(z)`
-    - `arg(z)`
-    - `exp(z)`
-    - `log(z)`
-    - `pow(z)`
-    - `sqrt(z)`
-    - `phase(magnitude ∈ ℂ, angle ∈ ℂ)`
-    - `sin`, `cos`, `tan`, `cot`, `sec`, `csc` on ℂ
-    - `asin`, `acos`, `atan`, `acot`, `asec`, `acsc` on ℂ
-    - `sinh`, `cosh`, `tanh`, `coth`, `sech`, `csch` on ℂ
-    - `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` on ℂ
+    - `conjugate(n)`
+    - `abs_sq(n)`
+    - `abs(n)`
+    - `arg(n)`
+    - `exp(n)`
+    - `log(n)`
+    - `pow(n)`
+    - `sqrt(n)`
+    - `phase(magnitude ∈ ℂ, angle ∈ ℂ)` [need to update for quaternion]
+    - `sin`, `cos`, `tan`, `cot`, `sec`, `csc` on ℂ, ℍ
+    - `asin`, `acos`, `atan`, `acot`, `asec`, `acsc` on ℂ, ℍ
+    - `sinh`, `cosh`, `tanh`, `coth`, `sech`, `csch` on ℂ, ℍ
+    - `asinh`, `acosh`, `atanh`, `acoth`, `asech`, `acsch` on ℂ, ℍ
 - polynomials
     - `solve_quadratic` -> ℂ
     - `solve_quadratic_real` -> ℝ
