@@ -10,6 +10,7 @@
 // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
 // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
 
+// ? There's also a Java implementation: https://ece.uwaterloo.ca/~dwharder/Java/
 
 
 
@@ -242,8 +243,15 @@ exp :: inline (n: $T) -> T {
 log :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
         // ? https://www.wikiwand.com/en/Quaternion
+        // ?
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        if qtn_vec_is_zero(n) then return ncast(T, Math.log(abs(n.r)));
+        
         q := abs(n);
-        return Math.log(q) + sign(n) * Math.acos(n.r/q);
+        return ncast(T, Math.log(q) + sign(qtn_vec(n)) * Math.acos(n.r/q));
+
     } else #if #run is_complex_number(T) {
         return cpx(Math.log(abs(n)), Math.atan2(n.imag, n.real));
     } else {
@@ -253,31 +261,38 @@ log :: inline (n: $T) -> T {
 
 
 
-// z^p, where z,p ∈ ℂ,ℝ
-// z,p ∈ ℝ: build in pow(z,p)
-// z ∈ ℂ, p ∈ ℝ: |z|^p exp(i θ p)
-// z ∈ ℝ, p ∈ ℂ: pow(z,Re{p}) * exp(i ln(z) Im{p})
-// z,p ∈ ℂ: |z|^p * exp(iθ p) referring back to above versions of exp and pow(ℝ,ℂ)
-//
-// there might be better algorithms calculating this...
-// but it's basically the same as in the Gnu Scientific Library (GSL)
-// see complex/math.c:
-//     gsl_complex gsl_complex_pow (gsl_complex a, gsl_complex b)
+// ? n^p, where n,p ∈ ℂ,ℝ
+// ? n,p ∈ ℝ: build in pow(n,p)
+// ? n ∈ ℂ, p ∈ ℝ: |n|^p exp(i θ p)
+// ? n ∈ ℝ, p ∈ ℂ: pow(n,Re{p}) * exp(i ln(n) Im{p})
+// ? n,p ∈ ℂ: |n|^p * exp(iθ p) referring back to above versions of exp and pow(ℝ,ℂ)
+// ? 
+// ? there might be better algorithms calculating this...
+// ? but it's basically the same as in the Gnu Scientific Library (GSL)
+// ? see complex/math.c:
+// ?     gsl_complex gsl_complex_pow (gsl_complex a, gsl_complex b)
 //
 // ! the `type` thingy is kinda akward...
-pow :: inline (z: $T, power: $U, $type: Type) -> type {
+// 
+// ? Quaternion power: 
+// ? "Taschenbuch der Mathematik", Bronstein et al, Verlag Harri Deutsch, 7. Auflage 2008
+pow :: inline (n: $T, power: $U, $type: Type) -> type {
     #if #run is_quaternion_number(T) || is_quaternion_number(U) {
-        return exp(log(z)*power); // yeah, this works... but there might be a better way to do it!
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        #if CHECKS { assert(n != zero(T), "cannot take the quaternion power of 0!"); }
+        return exp(log(n)*power);
     } else #if #run is_complex_number(T) {
         #if #run is_complex_number(U) {
-            return pow(abs(z), power, UpCast(T,U).T) * phase(arg(z) * power);
+            return pow(abs(n), power, UpCast(T,U).T) * phase(arg(n) * power);
         } else 
-            return Math.pow(abs(z), power) * phase(arg(z) * power);
+            return Math.pow(abs(n), power) * phase(arg(n) * power);
     } else {
         #if #run is_complex_number(U) {
-            return Math.pow(z, power.real) * phase(Math.log(z) * power.imag);
+            return Math.pow(n, power.real) * phase(Math.log(n) * power.imag);
         } else
-            return Math.pow(z, power);
+            return Math.pow(n, power);
     }
 }
 
@@ -285,16 +300,16 @@ pow :: inline (z: $T, power: $U, $type: Type) -> type {
 // in the hopes sqrt is faster than pow
 // need to wait for compiler fix to get rid of `$type: Type`...
 // ^ I might be able to do that now!
-sqrt :: inline(z: $T, $type: Type) -> type {
+sqrt :: inline(n: $T, $type: Type) -> type {
     #if #run is_quaternion_number(T) {
-        return pow(z, 0.5, type);
+        return pow(n, 0.5, type);
     } else #if #run is_complex_number(T) {
-        return Math.sqrt(abs(z)) * phase(arg(z) * 0.5);
+        return Math.sqrt(abs(n)) * phase(arg(n) * 0.5);
     } else {
         #if #run is_complex_number(type) {
-            return sqrt(cpx(z), type);
+            return sqrt(cpx(n), type);
         } else
-            return Math.sqrt(z);
+            return Math.sqrt(n);
     }
 }
 
@@ -334,16 +349,35 @@ polar :: inline (mag: $T, theta: $U) -> UpCast(T,U).T {
 // trigonometric functions
 sin :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return qtn_i(T) * sinh(-qtn_i(T) * n);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        if qtn_vec_is_zero(n) then return qtn(Math.sin(n.r));
+
+        n_vec := qtn_vec(n);
+        n_vec_sign := sign(n_vec);
+
+        return ncast(T, -0.5 * n_vec_sign * (exp(n*n_vec_sign) - exp(-n*n_vec_sign)));
+
     } else #if #run is_complex_number(T) {
         return cpx( Math.sin(n.real)*rcosh(n.imag), Math.cos(n.real)*rsinh(n.imag));
+
     } else
         return Math.sin(n);
 }
 
 cos :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return cosh(-qtn_i(T) * n);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        if qtn_vec_is_zero(n) then return qtn(Math.cos(n.r));
+
+        n_vec := qtn_vec(n);
+        n_vec_sign := sign(n_vec);
+
+        return ncast(T, 0.5 * (exp(n*n_vec_sign) + exp(-n*n_vec_sign)));
+
     } else #if #run is_complex_number(T) {
         return cpx( Math.cos(n.real)*rcosh(n.imag), -Math.sin(n.real)*rsinh(n.imag) );
     } else
@@ -352,7 +386,10 @@ cos :: inline (n: $T) -> T {
 
 tan :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return qtn_i(T) * tanh(-qtn_i(T) * n);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return sin(n)/cos(n);
     } else #if #run is_complex_number(T) {
         tmp := exp(cpx(0.0, 2.0)*n);
         return -I * (tmp - R)/(tmp + R);
@@ -362,7 +399,10 @@ tan :: inline (n: $T) -> T {
 
 cot :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return -qtn_i(T) * coth(-qtn_i(T) * n);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return cos(n)/sin(n);
     } else #if #run is_complex_number(T) {
         tmp := exp(cpx(0.0, 2.0)*n);
         return I * (tmp + R)/(tmp - R);
@@ -372,7 +412,10 @@ cot :: inline (n: $T) -> T {
 
 sec :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return sech(-qtn_i(T) * n);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return inv(cos(n));
     } else #if #run is_complex_number(T) {
         return sech(-I * n);
     } else {
@@ -382,7 +425,10 @@ sec :: inline (n: $T) -> T {
 
 csc :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return -qtn_i(T) * csch(-qtn_i(T)*n);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return inv(sin(n));
     } else #if #run is_complex_number(T) {
         return -I * csch(-I*n);
     } else {
@@ -397,7 +443,11 @@ csc :: inline (n: $T) -> T {
 // ? inverse trigonometric functions
 asin :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return sign(qtn_vec(n)) * asinh(n * sgn(qtn_vec(n)));
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        nvs := sign(qtn_vec(n));
+        return nvs * asinh(n * nvs);
     } else #if #run is_complex_number(T) {
         return -I * log(I*n + sqrt(R - n*n, T)); // TODO make I and R generic over type
     } else 
@@ -406,7 +456,10 @@ asin :: inline (n: $T) -> T {
 
 acos :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return sgn(qtn_vec(n)) * acosh(n);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return sign(qtn_vec(n)) * acosh(n);
     } else #if #run is_complex_number(T) {
         return cpx(Math.PI * 0.5) + I * log(I*n + sqrt(R - n*n, T)); // TODO make I and R generic over type
     } else 
@@ -415,7 +468,11 @@ acos :: inline (n: $T) -> T {
 
 atan :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return sign(qtn_vec(n)) * atanh(n * sign(qtn_vec(n)));
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        nvs := sign(qtn_vec(n));
+        return nvs * atanh(n * nvs);
     } else #if #run is_complex_number(T) {
         return cpx(0.0, 0.5) * (log(R-I*n) - log(R + I*n)); // TODO make I and R generic over type
     } else 
@@ -424,7 +481,9 @@ atan :: inline (n: $T) -> T {
 
 acot :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return ncast(Math.PI*0.5, T) - atan(n); // ! not sure if this is correct!
+        // ? https://people.eng.unimelb.edu.au/shiltona/anion/
+        return atan(inv(n)); 
+        // return ncast(Math.PI*0.5, T) - atan(n); // ! not sure if this is correct!
     } else #if #run is_complex_number(T) {
         return cpx(0.0, 0.5) * ( log((n - I)/n) - log((n + I)/n) ); // TODO make I and R generic over type
     } else 
@@ -433,7 +492,8 @@ acot :: inline (n: $T) -> T {
 
 asec :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return acos(inv(n)); // ! not sure if this is correct!
+        // ? https://people.eng.unimelb.edu.au/shiltona/anion/
+        return acos(inv(n));
     } else #if #run is_complex_number(T) {
         return cpx(Math.PI * 0.5) + I * log( sqrt(R - R/(n*n), T) + I/n ); // TODO make I and R generic over type
     } else 
@@ -442,7 +502,8 @@ asec :: inline (n: $T) -> T {
 
 acsc :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return asin(inv(n)); // ! not sure if this is correct!
+        // ? https://people.eng.unimelb.edu.au/shiltona/anion/
+        return asin(inv(n));
     } else #if #run is_complex_number(T) {
         return -I * log( sqrt(R - R/(n*n), T) + I/n ); // TODO make I and R generic over type
     } else 
@@ -455,7 +516,10 @@ acsc :: inline (n: $T) -> T {
 // hyperbolic functions
 sinh :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return 0.5 * (exp(n) + exp(-n));
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return ncast(T, 0.5 * (exp(n) + exp(-n)));
     } else #if #run is_complex_number(T) {
         return cpx( rsinh(n.real)*Math.cos(n.imag), rcosh(n.real)*Math.sin(n.imag) );
     } else 
@@ -464,15 +528,22 @@ sinh :: inline (n: $T) -> T {
 
 cosh :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return 0.5 * (exp(n) - exp(-n));
-    } #if #run is_complex_number(T) {
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return ncast(T, 0.5 * (exp(n) - exp(-n)));
+    } else #if #run is_complex_number(T) {
         return cpx( rcosh(n.real)*Math.cos(n.imag), rsinh(n.real)*Math.sin(n.imag) );
-    } else 
+    } else { 
         return rcosh(n);
+    }
 }
 
 tanh :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return sinh(n)/cosh(n);
     } else #if #run is_complex_number(T) {
         tmp := exp(2.0 * n);
@@ -483,6 +554,9 @@ tanh :: inline (n: $T) -> T {
 
 coth :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return cosh(n)/sinh(n);
     } else #if #run is_complex_number(T) {
         tmp := exp(2.0 * n);
@@ -493,7 +567,10 @@ coth :: inline (n: $T) -> T {
 
 sech :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return qtn_inv(cosh(n));
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return inv(cosh(n));
     } else #if #run is_complex_number(T) {
         return 2.0 * exp(n) / (exp(2.0*n) + R);
     } else 
@@ -502,7 +579,10 @@ sech :: inline (n: $T) -> T {
 
 csch :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
-        return qtn_inv(sinh(n));
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return inv(sinh(n));
     } else #if #run is_complex_number(T) {
         return 2.0 * exp(n) / (exp(2.0*n) - R);
     } else 
@@ -516,41 +596,59 @@ csch :: inline (n: $T) -> T {
 // from what I've seen, the same formulas work for quaternions, octonions as well
 asinh :: inline (n: $T) -> T {
     #if #run is_complex_number(T) || is_quaternion_number(T) {
-        return log(n + sqrt(one(T) + n*n, T));
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return log(n + sqrt(n*n + one(T), T));
     } else 
         return rasinh(n);
 }
 
 acosh :: inline (n: $T) -> T {
     #if #run is_complex_number(T) || is_quaternion_number(T) {
-        return log( n + sqrt(n - one(T), T) * sqrt(n + one(T), T) );
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return log( n + sqrt(n*n - 1, T));
     } else 
         return racosh(n);
 }
 
 atanh :: inline (n: $T) -> T {
     #if #run is_complex_number(T) || is_quaternion_number(T) {
-        return ncast(0.5 * ( log(one(T)+n) - log(one(T)-n) ), T);
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        return ncast(T, 0.5 * ( log(one(T)+n) - log(one(T)-n) ));
     } else 
         return ratanh(n);
 }
 
 acoth :: inline (n: $T) -> T {
-    #if #run is_complex_number(T) || is_quaternion_number(T) {
-        return ncast(0.5 * ( log(one(T)+one(T)/n) - log(one(T)-one(T)/n) ), T);
+    #if #run is_quaternion_number(T) {
+        // ? https://people.eng.unimelb.edu.au/shiltona/anion/
+        return atanh(inv(n));
+    } else #if #run is_complex_number(T) {
+        return ncast(T, 0.5 * ( log(one(T)+one(T)/n) - log(one(T)-one(T)/n) ));
     } else 
         return racoth(n);
 }
 
 asech :: inline (n: $T) -> T {
-    #if #run is_complex_number(T) || is_quaternion_number(T) {
+    #if #run is_quaternion_number(T) {
+        // ? https://people.eng.unimelb.edu.au/shiltona/anion/
+        return acosh(inv(n));
+    } else #if #run is_complex_number(T) || is_quaternion_number(T) {
         return log( sqrt(inv(n)-one(T), T) * sqrt(inv(n)+n, T) + inv(n) );
     } else 
         return rasech(n);
 }
 
 acsch :: inline (n: $T) -> T {
-    #if #run is_complex_number(T) || is_quaternion_number(T) {
+    #if #run is_quaternion_number(T) {
+        // ? https://people.eng.unimelb.edu.au/shiltona/anion/
+        return asinh(inv(n));
+    } else #if #run is_complex_number(T) || is_quaternion_number(T) {
         return log( sqrt(one(T)+one(T)/(n*n), T) + inv(n) );
     } else 
         return racsch(n);
@@ -766,16 +864,22 @@ test_elementary :: () {
         println("cot");
         aa( cot(q)  , q64(0.0000000014082781458556475, -0.40406101977627334, 0.10101525494406831, -0.909137294496615));
         println("sec");
-        aa( sec(q)  , q64(-0.00009939530553404795, -0.000005724921209012474, 1.431230302253118, -0.000012881072720278064));
+        aa( sec(q)  , q64(-0.00009939530553404795, -0.000005724921209012474, 0.000001431230302253118, -0.000012881072720278064));
         println("csc");
         aa( csc(q)  , q64(-0.000014168457338822158, 0.0000401617685069994, -0.000010040442126749847, 0.00009036397914074864));
 
         println("asin");
+        aa( asin(q)  , -q64(-0.2929592549548952, 1.2249117226255266, -0.30622793065638154, 2.7560513759074343));
         println("acos");
+        aa( acos(q)  , q64(1.8637555817497917, -1.2249117226255266, 0.30622793065638154, -2.7560513759074343));
         println("atan");
+        aa( atan(q)  , -q64(-1.542524608322488, 0.037460519419390825, -0.009365129854847703, 0.08428616869362934));
         println("acot");
+        aa( acot(q)  , -q64(-0.02827171847240869, -0.037460519419390825, 0.009365129854847703, -0.08428616869362934));
         println("asec");
+        aa( asec(q)  , q64(1.5987180145786841, 0.03734456556349926, -0.009336141390874811, 0.08402527251787331));
         println("acsc");
+        aa( acsc(q)  , -q64(-0.027921687783787664, -0.03734456556349926, 0.009336141390874811, -0.08402527251787331));
 
         // TODO test hyperbolic functions as well...
     }

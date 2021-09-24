@@ -1,0 +1,1 @@
+cls && jai main.jai -x64 -import_dir "./" && main

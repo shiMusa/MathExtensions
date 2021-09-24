@@ -99,19 +99,35 @@ q32 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q6
 }
 
 
-qtn :: ($$r: $T = 0, $$i: T = 0, $$j: T = 0, $$k: T = 0) -> Quaternion(T) {
-    #if is_constant(r)
+qtn :: inline ($$r: $T = 0, $$i: $U = 0, $$j: $V = 0, $$k: $W = 0) -> Quaternion(T) #modify {
+    if !is_intrinsic_number(T)
+    || !is_intrinsic_number(U)
+    || !is_intrinsic_number(V)
+    || !is_intrinsic_number(W) {
+        T = null;
+        U = null;
+        V = null;
+        W = null;
+        return;
+    }
+} {
+    #if is_constant(r) 
      && is_constant(i)
      && is_constant(j)
      && is_constant(k) {
-        return Quaternion(T).{r, i, j, k};
+        return Quaternion(T).{
+            r,
+            #run ncast(T, i),
+            #run ncast(T, j),
+            #run ncast(T, k)
+        };
     } else {
-        q : Quaternion(T) = ---;
-        q.r = r;
-        q.i = i;
-        q.j = j;
-        q.k = k;
-        return q;
+        res : Quaternion(T) = ---;
+        res.r = r;
+        res.i = ncast(T, i);
+        res.j = ncast(T, j);
+        res.k = ncast(T, k);
+        return res;
     }
 }
 
@@ -120,7 +136,7 @@ qtn_r :: inline ($T: Type) -> Quaternion(T) {
     return qtn(one(T), 0, 0, 0);
 }
 qtn_i :: inline ($T: Type) -> Quaternion(T) {
-    return qtn(zero(T), 1, 0, 0);
+    return qtn(zero(T), one(T), zero(T), zero(T));
 }
 qtn_j :: inline ($T: Type) -> Quaternion(T) {
     return qtn(zero(T), 0, 1, 0);
@@ -129,8 +145,12 @@ qtn_k :: inline ($T: Type) -> Quaternion(T) {
     return qtn(zero(T), 0, 0, 1);
 }
 
+qtn_vec_is_zero :: inline (q: Quaternion($T)) -> bool {
+    return q.i == zero(T) && q.j == zero(T) && q.k == zero(T);
+}
+
 qtn_vec :: inline (q: Quaternion($T)) -> Quaternion(T) {
-    return qtn(0, q.i, q.j, q.k);
+    return qtn(zero(T), q.i, q.j, q.k);
 }
 
 qtn_vec_abs_sq :: inline (q: Quaternion($T)) -> T {
@@ -142,8 +162,8 @@ qtn_vec_abs :: inline (q: Quaternion($T)) -> T {
 }
 
 qtn_inv :: inline (q: Quaternion($T)) -> Quaternion(T) {
-    q_abs := abs(q);
-    return qtn(q.r/q_abs,-q.i/q_abs,-q.j/q_abs,-q.k/q_abs);
+    q_abs_sq := abs_sq(q);
+    return qtn(q.r/q_abs_sq,-q.i/q_abs_sq,-q.j/q_abs_sq,-q.k/q_abs_sq);
 }
 
 
@@ -213,10 +233,10 @@ operator + :: inline (a: Quaternion($A), b: $B) -> Quaternion(UpCast(A,B).T) #mo
     if !is_intrinsic_number(B) {B = null; return;}
 } #symmetric {
     return qtn(
-        a.r + b.r,
-        a.i + b.i,
-        a.j + b.j,
-        a.k + b.k
+        a.r + b,
+        a.i,
+        a.j,
+        a.k
     );
 }
 operator - :: inline (a: Quaternion($A), b: $B) -> Quaternion(UpCast(A,B).T) #modify {
