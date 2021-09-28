@@ -34,10 +34,10 @@ str :: (q: Quaternion($T)) -> string {
 }
 
 
-Rq     :: Q64.{1.0, 0.0, 0.0, 0.0};
-Iq     :: Q64.{0.0, 1.0, 0.0, 0.0};
-Jq     :: Q64.{0.0, 0.0, 1.0, 0.0};
-Kq     :: Q64.{0.0, 0.0, 0.0, 1.0};
+qR     :: Q64.{1.0, 0.0, 0.0, 0.0};
+qI     :: Q64.{0.0, 1.0, 0.0, 0.0};
+qJ     :: Q64.{0.0, 0.0, 1.0, 0.0};
+qK     :: Q64.{0.0, 0.0, 0.0, 1.0};
 Q_ZERO :: Q64.{0.0, 0.0, 0.0, 0.0};
 Q_NAN  :: Q64.{
     Math.FLOAT64_NAN,
@@ -151,17 +151,20 @@ qtn :: inline ($$r: $T = 0, $$i: $U = 0, $$j: $V = 0, $$k: $W = 0) -> Quaternion
     }
 }
 
-
 qtn_r :: inline ($T: Type) -> Quaternion(T) {
+    #run assert(is_intrinsic_number(T), "can only use intrinsic numbers to generate quaternion: Quaternion(T), T = % does not work.", T);
     return qtn(one(T), 0, 0, 0);
 }
 qtn_i :: inline ($T: Type) -> Quaternion(T) {
+    #run assert(is_intrinsic_number(T), "can only use intrinsic numbers to generate quaternion: Quaternion(T), T = % does not work.", T);
     return qtn(zero(T), one(T), zero(T), zero(T));
 }
 qtn_j :: inline ($T: Type) -> Quaternion(T) {
+    #run assert(is_intrinsic_number(T), "can only use intrinsic numbers to generate quaternion: Quaternion(T), T = % does not work.", T);
     return qtn(zero(T), 0, 1, 0);
 }
 qtn_k :: inline ($T: Type) -> Quaternion(T) {
+    #run assert(is_intrinsic_number(T), "can only use intrinsic numbers to generate quaternion: Quaternion(T), T = % does not work.", T);
     return qtn(zero(T), 0, 0, 1);
 }
 

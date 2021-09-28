@@ -45,7 +45,7 @@ inv :: inline (n: $T) -> T #modify {
     #if #run is_quaternion_number(T) {
         return qtn_inv(n);
     } else #if #run is_complex_number(T) {
-        return cpx_inv(n);
+        return #run cpx_inv(n);
     } else return 1/n;
 }
 
@@ -129,7 +129,7 @@ inverse :: inline (n: $T) -> T #modify {
     #if #run is_quaternion_number(n) {
         return qtn_inv(n);
     } else #if #run is_complex_number(n) {
-        return cpx_inv(n);
+        return #run cpx_inv(n);
     } else {
         return one(T)/n;
     }
@@ -355,8 +355,11 @@ tan :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return sin(n)/cos(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
         tmp := exp(cpx(0.0, 2.0)*n);
-        return -I * (tmp - R)/(tmp + R);
+        return -i * (tmp - r)/(tmp + r);
     } else 
         return Math.tan(n);
 }
@@ -368,8 +371,11 @@ cot :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return cos(n)/sin(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
         tmp := exp(cpx(0.0, 2.0)*n);
-        return I * (tmp + R)/(tmp - R);
+        return i * (tmp + r)/(tmp - r);
     } else 
         return 1.0/Math.tan(n);
 }
@@ -381,7 +387,9 @@ sec :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(cos(n));
     } else #if #run is_complex_number(T) {
-        return sech(-I * n);
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        return sech(-i * n);
     } else {
         return 1.0/cos(n);
     }
@@ -394,7 +402,9 @@ csc :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(sin(n));
     } else #if #run is_complex_number(T) {
-        return -I * csch(-I*n);
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        return -i * csch(-i*n);
     } else {
         return 1.0/sin(n);        
     }
@@ -413,7 +423,10 @@ asin :: inline (n: $T) -> T {
         nvs := sign(qtn_vec(n));
         return nvs * asinh(n * nvs);
     } else #if #run is_complex_number(T) {
-        return -I * log(I*n + sqrt(R - n*n, T)); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return -i * log(i*n + sqrt(r - n*n, T)); // TODO make I and R generic over type
     } else 
         return Math.asin(n);
 }
@@ -425,7 +438,10 @@ acos :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return sign(qtn_vec(n)) * acosh(n);
     } else #if #run is_complex_number(T) {
-        return cpx(Math.PI * 0.5) + I * log(I*n + sqrt(R - n*n, T)); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return cpx(Math.PI * 0.5) + i * log(i*n + sqrt(r - n*n, T)); // TODO make I and R generic over type
     } else 
         return Math.acos(n);
 }
@@ -438,7 +454,10 @@ atan :: inline (n: $T) -> T {
         nvs := sign(qtn_vec(n));
         return nvs * atanh(n * nvs);
     } else #if #run is_complex_number(T) {
-        return cpx(0.0, 0.5) * (log(R-I*n) - log(R + I*n)); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return cpx(0.0, 0.5) * (log(r-i*n) - log(r + i*n)); // TODO make I and R generic over type
     } else 
         return Math.atan(n);
 }
@@ -449,7 +468,9 @@ acot :: inline (n: $T) -> T {
         return atan(inv(n)); 
         // return ncast(Math.PI*0.5, T) - atan(n); // ! not sure if this is correct!
     } else #if #run is_complex_number(T) {
-        return cpx(0.0, 0.5) * ( log((n - I)/n) - log((n + I)/n) ); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        return cpx(0.0, 0.5) * ( log((n - i)/n) - log((n + i)/n) ); // TODO make I and R generic over type
     } else 
         return Math.PI*0.5 - Math.atan(n);
 }
@@ -459,7 +480,10 @@ asec :: inline (n: $T) -> T {
         // ? https://people.eng.unimelb.edu.au/shiltona/anion/
         return acos(inv(n));
     } else #if #run is_complex_number(T) {
-        return cpx(Math.PI * 0.5) + I * log( sqrt(R - R/(n*n), T) + I/n ); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return cpx(Math.PI * 0.5) + i * log( sqrt(r - r/(n*n), T) + i/n ); // TODO make I and R generic over type
     } else 
         return acos(1.0/n);
 }
@@ -469,7 +493,10 @@ acsc :: inline (n: $T) -> T {
         // ? https://people.eng.unimelb.edu.au/shiltona/anion/
         return asin(inv(n));
     } else #if #run is_complex_number(T) {
-        return -I * log( sqrt(R - R/(n*n), T) + I/n ); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return -i * log( sqrt(r - r/(n*n), T) + i/n ); // TODO make I and R generic over type
     } else 
         return asin(1.0/n);
 }
@@ -510,8 +537,10 @@ tanh :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return sinh(n)/cosh(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
         tmp := exp(2.0 * n);
-        return (tmp - R)/(tmp + R);
+        return (tmp - r)/(tmp + r);
     } else 
         return rtanh(n);
 }
@@ -523,8 +552,10 @@ coth :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return cosh(n)/sinh(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
         tmp := exp(2.0 * n);
-        return (tmp + R)/(tmp - R);
+        return (tmp + r)/(tmp - r);
     } else 
         return rcoth(n);
 }
@@ -536,7 +567,9 @@ sech :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(cosh(n));
     } else #if #run is_complex_number(T) {
-        return 2.0 * exp(n) / (exp(2.0*n) + R);
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
+        return 2.0 * exp(n) / (exp(2.0*n) + r);
     } else 
         return rsech(n);
 }
@@ -548,7 +581,9 @@ csch :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(sinh(n));
     } else #if #run is_complex_number(T) {
-        return 2.0 * exp(n) / (exp(2.0*n) - R);
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
+        return 2.0 * exp(n) / (exp(2.0*n) - r);
     } else 
         return rcsch(n);
 }
