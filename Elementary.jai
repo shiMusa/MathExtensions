@@ -19,11 +19,13 @@
 
 
 
-// maybe return int?
 sign :: inline (x: $T) -> T #modify {
     if !is_number(T) {T = null; return;}    
 } {
     #if #run is_quaternion_number(T) || is_complex_number(T) {
+        // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
+        // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
+        // ? https://pdfs.semanticscholar.org/8ef1/761d8402f56c8a6258257e6b166d4c38a314.pdf
         return x / abs(x);
     } else {
         return ifx x >= 0 then one(T) else -one(T);
@@ -45,17 +47,17 @@ inv :: inline (n: $T) -> T #modify {
     #if #run is_quaternion_number(T) {
         return qtn_inv(n);
     } else #if #run is_complex_number(T) {
-        return cpx_inv(n);
+        return #run cpx_inv(n);
     } else return 1/n;
 }
 
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// 2.3.1.10 Binomial Coefficients, page 55
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? 2.3.1.10 Binomial Coefficients, page 55
 binomial :: inline (from: $T, choose: T) -> T {
     #if CHECKS {
         assert(choose <= from, "Out of range: from = %, choose = %", from, choose);
@@ -129,7 +131,7 @@ inverse :: inline (n: $T) -> T #modify {
     #if #run is_quaternion_number(n) {
         return qtn_inv(n);
     } else #if #run is_complex_number(n) {
-        return cpx_inv(n);
+        return #run cpx_inv(n);
     } else {
         return one(T)/n;
     }
@@ -149,7 +151,7 @@ conjugate :: inline (n: $T) -> T #modify {
 }
 
 
-// |z|²
+// ? |z|²
 abs_sq :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
     U = get_number_inner_type(T);
@@ -171,8 +173,8 @@ abs :: inline (a: $T) -> $U #modify {
 }
 
 
-// given n = |n| exp(iθ), whis calculates θ.
-// for quaternions: n = |n| exp(iθ eᵥ), where eᵥ = v/|v| with n = n.r + v
+// ? given n = |n| exp(iθ), whis calculates θ.
+// ? for quaternions: n = |n| exp(iθ eᵥ), where eᵥ = v/|v| with n = n.r + v
 arg :: inline (a: $T) -> float64 #modify {
     if !is_number(T) {T = null; return;}    
 } {
@@ -189,7 +191,7 @@ arg :: inline (a: $T) -> float64 #modify {
 
 
 
-// exp(z) where z ∈ ℂ,ℝ
+// ? exp(z) where z ∈ ℂ,ℝ
 exp :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
         // ? https://www.wikiwand.com/en/Quaternion
@@ -203,7 +205,7 @@ exp :: inline (n: $T) -> T {
 }
 
 
-// log(z) where z ∈ ℂ,ℝ
+// ? log(z) where z ∈ ℂ,ℝ
 log :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
         // ? https://www.wikiwand.com/en/Quaternion
@@ -235,9 +237,10 @@ log :: inline (n: $T) -> T {
 // ? but it's basically the same as in the Gnu Scientific Library (GSL)
 // ? see complex/math.c:
 // ?     gsl_complex gsl_complex_pow (gsl_complex a, gsl_complex b)
-//
+// ?
 // ! the `type` thingy is kinda akward...
-// 
+// TODO remove `type`
+// ?
 // ? Quaternion power: 
 // ? "Taschenbuch der Mathematik", Bronstein et al, Verlag Harri Deutsch, 7. Auflage 2008
 pow :: inline (n: $T, power: $U, $type: Type) -> type {
@@ -261,9 +264,9 @@ pow :: inline (n: $T, power: $U, $type: Type) -> type {
 }
 
 
-// in the hopes sqrt is faster than pow
-// need to wait for compiler fix to get rid of `$type: Type`...
-// ^ I might be able to do that now!
+// ? in the hopes sqrt is faster than pow
+// ? need to wait for compiler fix to get rid of `$type: Type`...
+// TODO ^ I might be able to do that now!
 sqrt :: inline(n: $T, $type: Type) -> type {
     #if #run is_quaternion_number(T) {
         return pow(n, 0.5, type);
@@ -280,8 +283,8 @@ sqrt :: inline(n: $T, $type: Type) -> type {
 
 
 
-// exp(iθ) where θ ∈ ℂ,ℝ
-// is also implemented for quaternions, where the real part of θ is the angle and the vector part is the direction
+// ? exp(iθ) where θ ∈ ℂ,ℝ
+// ? is also implemented for quaternions, where the real part of θ is the angle and the vector part is the direction
 phase :: inline (theta: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
     if is_non_real_number(T) {
@@ -300,7 +303,7 @@ phase :: inline (theta: $T) -> $U #modify {
 }
 
 
-// mag * exp(iθ) where m,θ ∈ ℂ,ℝ
+// ? mag * exp(iθ) where m,θ ∈ ℂ,ℝ
 // ! not sure if UpCast gives the right return value here...
 polar :: inline (mag: $T, theta: $U) -> UpCast(T,U).T {
     return mag * phase(theta);
@@ -309,8 +312,8 @@ polar :: inline (mag: $T, theta: $U) -> UpCast(T,U).T {
 
 
 
-// https://www.wikiwand.com/en/Trigonometric_functions
-// trigonometric functions
+// ? https://www.wikiwand.com/en/Trigonometric_functions
+// ? trigonometric functions
 sin :: inline (n: $T) -> T {
     #if #run is_quaternion_number(T) {
         // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
@@ -355,8 +358,11 @@ tan :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return sin(n)/cos(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
         tmp := exp(cpx(0.0, 2.0)*n);
-        return -I * (tmp - R)/(tmp + R);
+        return -i * (tmp - r)/(tmp + r);
     } else 
         return Math.tan(n);
 }
@@ -368,8 +374,11 @@ cot :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return cos(n)/sin(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
         tmp := exp(cpx(0.0, 2.0)*n);
-        return I * (tmp + R)/(tmp - R);
+        return i * (tmp + r)/(tmp - r);
     } else 
         return 1.0/Math.tan(n);
 }
@@ -381,7 +390,9 @@ sec :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(cos(n));
     } else #if #run is_complex_number(T) {
-        return sech(-I * n);
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        return sech(-i * n);
     } else {
         return 1.0/cos(n);
     }
@@ -394,7 +405,9 @@ csc :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(sin(n));
     } else #if #run is_complex_number(T) {
-        return -I * csch(-I*n);
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        return -i * csch(-i*n);
     } else {
         return 1.0/sin(n);        
     }
@@ -413,7 +426,10 @@ asin :: inline (n: $T) -> T {
         nvs := sign(qtn_vec(n));
         return nvs * asinh(n * nvs);
     } else #if #run is_complex_number(T) {
-        return -I * log(I*n + sqrt(R - n*n, T)); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return -i * log(i*n + sqrt(r - n*n, T)); // TODO make I and R generic over type
     } else 
         return Math.asin(n);
 }
@@ -425,7 +441,10 @@ acos :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return sign(qtn_vec(n)) * acosh(n);
     } else #if #run is_complex_number(T) {
-        return cpx(Math.PI * 0.5) + I * log(I*n + sqrt(R - n*n, T)); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return cpx(Math.PI * 0.5) + i * log(i*n + sqrt(r - n*n, T)); // TODO make I and R generic over type
     } else 
         return Math.acos(n);
 }
@@ -438,7 +457,10 @@ atan :: inline (n: $T) -> T {
         nvs := sign(qtn_vec(n));
         return nvs * atanh(n * nvs);
     } else #if #run is_complex_number(T) {
-        return cpx(0.0, 0.5) * (log(R-I*n) - log(R + I*n)); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return cpx(0.0, 0.5) * (log(r-i*n) - log(r + i*n)); // TODO make I and R generic over type
     } else 
         return Math.atan(n);
 }
@@ -449,7 +471,9 @@ acot :: inline (n: $T) -> T {
         return atan(inv(n)); 
         // return ncast(Math.PI*0.5, T) - atan(n); // ! not sure if this is correct!
     } else #if #run is_complex_number(T) {
-        return cpx(0.0, 0.5) * ( log((n - I)/n) - log((n + I)/n) ); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        return cpx(0.0, 0.5) * ( log((n - i)/n) - log((n + i)/n) ); // TODO make I and R generic over type
     } else 
         return Math.PI*0.5 - Math.atan(n);
 }
@@ -459,7 +483,10 @@ asec :: inline (n: $T) -> T {
         // ? https://people.eng.unimelb.edu.au/shiltona/anion/
         return acos(inv(n));
     } else #if #run is_complex_number(T) {
-        return cpx(Math.PI * 0.5) + I * log( sqrt(R - R/(n*n), T) + I/n ); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return cpx(Math.PI * 0.5) + i * log( sqrt(r - r/(n*n), T) + i/n ); // TODO make I and R generic over type
     } else 
         return acos(1.0/n);
 }
@@ -469,7 +496,10 @@ acsc :: inline (n: $T) -> T {
         // ? https://people.eng.unimelb.edu.au/shiltona/anion/
         return asin(inv(n));
     } else #if #run is_complex_number(T) {
-        return -I * log( sqrt(R - R/(n*n), T) + I/n ); // TODO make I and R generic over type
+        X :: #run get_number_inner_type(T);
+        i := cpx_i(X);
+        r := cpx_r(X);
+        return -i * log( sqrt(r - r/(n*n), T) + i/n ); // TODO make I and R generic over type
     } else 
         return asin(1.0/n);
 }
@@ -510,8 +540,10 @@ tanh :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return sinh(n)/cosh(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
         tmp := exp(2.0 * n);
-        return (tmp - R)/(tmp + R);
+        return (tmp - r)/(tmp + r);
     } else 
         return rtanh(n);
 }
@@ -523,8 +555,10 @@ coth :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return cosh(n)/sinh(n);
     } else #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
         tmp := exp(2.0 * n);
-        return (tmp + R)/(tmp - R);
+        return (tmp + r)/(tmp - r);
     } else 
         return rcoth(n);
 }
@@ -536,7 +570,9 @@ sech :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(cosh(n));
     } else #if #run is_complex_number(T) {
-        return 2.0 * exp(n) / (exp(2.0*n) + R);
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
+        return 2.0 * exp(n) / (exp(2.0*n) + r);
     } else 
         return rsech(n);
 }
@@ -548,7 +584,9 @@ csch :: inline (n: $T) -> T {
         // ? in CUBO A Mathematical Journal, Vol.14, No 01, (93–110). March 2012
         return inv(sinh(n));
     } else #if #run is_complex_number(T) {
-        return 2.0 * exp(n) / (exp(2.0*n) - R);
+        X :: #run get_number_inner_type(T);
+        r := cpx_r(X);
+        return 2.0 * exp(n) / (exp(2.0*n) - r);
     } else 
         return rcsch(n);
 }
@@ -629,8 +667,8 @@ acsch :: inline (n: $T) -> T {
 
 
 
-// https://www.wikiwand.com/en/Hyperbolic_functions
-// hyperbolic functions
+// ? https://www.wikiwand.com/en/Hyperbolic_functions
+// ? hyperbolic functions
 rsinh :: inline (x: $T) -> T #modify {
     if !is_intrinsic_number(T) {T = null; return;}
 } {
@@ -669,8 +707,8 @@ rcsch :: inline (x: $T) -> T #modify {
     return 2.0 * Math.exp(x) / (Math.exp(2.0*x) - 1.0);
 }
 
-// https://www.wikiwand.com/en/Hyperbolic_functions
-// inverse hyperbolic functions
+// ? https://www.wikiwand.com/en/Hyperbolic_functions
+// ? inverse hyperbolic functions
 rasinh :: inline (x: $T) -> T #modify {
     if !is_intrinsic_number(T) {T = null; return;}
 } {

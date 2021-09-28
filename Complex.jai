@@ -43,6 +43,16 @@ c32 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C64 #modify {
     return cpx(ncast(float32, re), ncast(float32, im));
 }
 
+cpx_r :: inline ($T: Type) -> Complex(T) {
+    #run assert(is_intrinsic_number(T), "can only use intrinsic numbers to generate complex: Complex(T), T = % does not work.", T);
+    return Complex(T).{#run one(T), #run zero(T)};
+}
+
+cpx_i :: inline ($T: Type) -> Complex(T) {
+    #run assert(is_intrinsic_number(T), "can only use intrinsic numbers to generate complex: Complex(T), T = % does not work.", T);
+    return Complex(T).{#run zero(T), #run one(T)};
+}
+
 cpx :: inline ($$re: $T = 0.0, $$im: T = 0.0) -> Complex(T) {
     #if is_constant(re) && is_constant(im) {
         return Complex(T).{re, im};
