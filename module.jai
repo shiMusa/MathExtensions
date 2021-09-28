@@ -1,7 +1,9 @@
+#load "Console.jai";
 
 #load "Utils.jai";
 #load "Approx.jai";
 
+#load "Types.jai";
 #load "Elementary.jai";
 #load "Complex.jai";
 #load "Quaternion.jai";

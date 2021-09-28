@@ -43,7 +43,7 @@ c32 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C64 #modify {
     return cpx(ncast(float32, re), ncast(float32, im));
 }
 
-cpx :: ($$re: $T = 0.0, $$im: T = 0.0) -> Complex(T) {
+cpx :: inline ($$re: $T = 0.0, $$im: T = 0.0) -> Complex(T) {
     #if is_constant(re) && is_constant(im) {
         return Complex(T).{re, im};
     } else {
