@@ -13,7 +13,7 @@ solve_quadratic :: (a: $T, b: T, c: T) -> ($U, U) #modify {
         U = T;
     }
 } {
-    X :: #run get_complex_inner_type(T);
+    X :: #run get_number_inner_type(T);
 
     sigma := max(abs(a), abs(b), abs(c));
     if sigma == 0 {

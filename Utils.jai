@@ -73,16 +73,15 @@ INTRINSIC_NUMBER_TYPES :: Type.[
 
 
 is_float_number :: inline ($T: Type) -> bool {
-    if is_complex_number(T) {
-        X :: #run get_complex_inner_type(T);
+    #if #run is_complex_number(T) {
+        X :: #run get_number_inner_type(T);
         return is_float_number(X);
-    }
-    if is_quaternion_number(T) {
-        X :: #run get_quaternion_inner_type(T);
+    } else #if #run is_quaternion_number(T) {
+        X :: #run get_number_inner_type(T);
         return is_float_number(X);
-    }
-    if T == float64 || T == float32 return true;
-    return false;
+    } else #if T == float64 || T == float32 {
+        return true;
+    } else return false;
 }
 
 
@@ -94,10 +93,19 @@ is_intrinsic_number :: ($T: Type) -> bool {
     return false;
 }
 
-is_intrinsic_number :: (n: *Type_Info) -> bool {
-    return n.type == .FLOAT
-        || n.type == .INTEGER
-        || n.type == .BOOL;
+is_intrinsic_number :: (T: *Type_Info) -> bool {
+    return T.type == .FLOAT
+        || T.type == .INTEGER
+        || T.type == .BOOL;
+}
+
+
+
+is_non_real_number :: inline ($T: Type) -> bool {
+    return is_complex_number(T) || is_quaternion_number(T);
+}
+is_non_real_number :: inline (T: *Type_Info) -> bool {
+    return is_complex_number(T) || is_quaternion_number(T);
 }
 
 
@@ -119,11 +127,11 @@ is_complex_number :: ($T: Type) -> bool {
     return false;
 }
 
-is_complex_number :: (n: *Type_Info) -> bool {
-    if n.type != .STRUCT then return false;
-    s := cast(*Type_Info_Struct)n;
+is_complex_number :: (T: *Type_Info) -> bool {
+    if T.type != .STRUCT then return false;
+    S := cast(*Type_Info_Struct)T;
 
-    if s.name == "Complex" then return true;
+    if S.name == "Complex" then return true;
 
     return false;
 }
@@ -147,11 +155,11 @@ is_quaternion_number :: ($T: Type) -> bool {
     return false;
 }
 
-is_quaternion_number :: (n: *Type_Info) -> bool {
-    if n.type != .STRUCT then return false;
-    s := cast(*Type_Info_Struct)n;
+is_quaternion_number :: (N: *Type_Info) -> bool {
+    if N.type != .STRUCT then return false;
+    S := cast(*Type_Info_Struct)N;
 
-    if s.name == "Quaternion" then return true;
+    if S.name == "Quaternion" then return true;
 
     return false;
 }
@@ -161,10 +169,30 @@ is_number :: inline ($T: Type) -> bool {
     return is_intrinsic_number(T) || is_complex_number(T) || is_quaternion_number(T);
 }
 
-is_number :: inline (n: *Type_Info) -> bool {
-    return is_intrinsic_number(n) || is_complex_number(n) || is_quaternion_number(n);
+is_number :: inline (T: *Type_Info) -> bool {
+    return is_intrinsic_number(T) || is_complex_number(T) || is_quaternion_number(T);
 }
 
+
+
+
+
+
+get_number_inner_type :: ($T: Type) -> Type {
+    #if #run is_complex_number(T) {
+        return #run get_complex_inner_type(T);
+    } else #if #run is_quaternion_number(T) {
+        return #run get_quaternion_inner_type(T);
+    } else {
+        return T;
+    }
+}
+get_number_inner_type :: (T: *Type_Info) -> *Type_Info {
+    if is_intrinsic_number(T) then return T;
+
+    S := cast(*Type_Info_Struct)T;
+    return S.members[0].type;
+}
 
 
 
@@ -183,11 +211,6 @@ get_complex_inner_type :: ($T: Type) -> Type {
         return builder_to_string(*builder);
     }
     return Any;
-}
-
-get_complex_inner_type :: (T: *Type_Info) -> *Type_Info {
-    s := cast(*Type_Info_Struct)T;
-    return s.members[0].type;
 }
 
 
@@ -227,11 +250,6 @@ get_quaternion_inner_type :: ($T: Type) -> Type {
         return builder_to_string(*builder);
     }
     return Any;
-}
-
-get_quaternion_inner_type :: (T: *Type_Info) -> *Type_Info {
-    s := cast(*Type_Info_Struct)T;
-    return s.members[0].type;
 }
 
 
@@ -276,7 +294,7 @@ ncast :: inline ($T: Type, num: $N) -> T {
 
     } else #if #run is_quaternion_number(T) {
         
-        X :: #run get_quaternion_inner_type(T);
+        X :: #run get_number_inner_type(T);
 
         #if #run is_quaternion_number(N) {
             return qtn(cast(X)num.r, cast(X)num.i, cast(X)num.j, cast(X)num.k);
@@ -292,7 +310,7 @@ ncast :: inline ($T: Type, num: $N) -> T {
             assert(false, "cannot ncast % -> %", N, T);
         } else {
 
-            X :: #run get_complex_inner_type(T);
+            X :: #run get_number_inner_type(T);
             #if #run is_complex_number(N) {
                 return cpx(cast(X)num.real, cast(X)num.imag);
             } else {
@@ -326,11 +344,11 @@ nan :: inline ($T: Type) -> T {
     } else #if T == float32 {
         return Math.FLOAT32_NAN;
     } else #if #run is_complex_number(T) {
-        X :: #run get_complex_inner_type(T);
+        X :: #run get_number_inner_type(T);
         n :: #run nan(X);
         return #run Complex(X).{n,n};
     } else #if #run is_quaternion_number(T) {
-        X :: #run get_quaternion_inner_type(T);
+        X :: #run get_number_inner_type(T);
         n :: #run nan(X);
         return #run Quaternion(X).{n,n,n,n};
     } else return null;
@@ -355,44 +373,44 @@ upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
     if !is_number(A) || !is_number(B) then return null;
 
     if is_quaternion_number(A) && is_quaternion_number(B) {
-        a := get_quaternion_inner_type(A);
-        b := get_quaternion_inner_type(B);
+        a := get_number_inner_type(A);
+        b := get_number_inner_type(B);
         c := upcast(a,b);
         println("c = %", c.type);
         return get_quaternion_type_info_from_intrinsic_type_info(c);
     }
 
     if is_quaternion_number(A) {
-        a := get_quaternion_inner_type(A);
+        a := get_number_inner_type(A);
         c := upcast(a,B);
         println("c = %", c.type);
         return get_quaternion_type_info_from_intrinsic_type_info(c);
     }
 
     if is_quaternion_number(B) {
-        b := get_quaternion_inner_type(B);
+        b := get_number_inner_type(B);
         c := upcast(A,b);
         println("c = %", c.type);
         return get_quaternion_type_info_from_intrinsic_type_info(c);
     }
 
     if is_complex_number(A) && is_complex_number(B) {
-        a := get_complex_inner_type(A);
-        b := get_complex_inner_type(B);
+        a := get_number_inner_type(A);
+        b := get_number_inner_type(B);
         c := upcast(a,b);
         println("c = %", c.type);
         return get_complex_type_info_from_intrinsic_type_info(c);
     }
 
     if is_complex_number(A) {
-        a := get_complex_inner_type(A);
+        a := get_number_inner_type(A);
         c := upcast(a,B);
         println("c = %", c.type);
         return get_complex_type_info_from_intrinsic_type_info(c);
     }
 
     if is_complex_number(B) {
-        b := get_complex_inner_type(B);
+        b := get_number_inner_type(B);
         c := upcast(A,b);
         println("c = %", c.type);
         return get_complex_type_info_from_intrinsic_type_info(c);
@@ -422,30 +440,30 @@ upcast :: inline ($A: Type, $B: Type) -> Type {
     is_B_complex    :: #run is_complex_number(B);
 
     #if is_A_quaternion && is_B_quaternion {
-        a :: #run get_quaternion_inner_type(A);
-        b :: #run get_quaternion_inner_type(B);
+        a :: #run get_number_inner_type(A);
+        b :: #run get_number_inner_type(B);
         T :: #run upcast(a, b);
         return Quaternion(T);
     } else #if is_A_quaternion {
-        a :: #run get_quaternion_inner_type(A);
+        a :: #run get_number_inner_type(A);
         T :: #run upcast(a, B);
         return Quaternion(T);
     } else #if is_B_quaternion {
-        b :: #run get_quaternion_inner_type(B);
+        b :: #run get_number_inner_type(B);
         T :: #run upcast(A,b);
         return Quaternion(T);
 
     } else #if is_A_complex && is_B_complex {
-        a :: #run get_complex_inner_type(A);
-        b :: #run get_complex_inner_type(B);
+        a :: #run get_number_inner_type(A);
+        b :: #run get_number_inner_type(B);
         T :: #run upcast(a, b);
         return Complex(T);
     } else #if is_A_complex {
-        a :: #run get_complex_inner_type(A);
+        a :: #run get_number_inner_type(A);
         T :: #run upcast(a, B);
         return Complex(T);
     } else #if is_B_complex {
-        b :: #run get_complex_inner_type(B);
+        b :: #run get_number_inner_type(B);
         T :: #run upcast(A,b);
         return Complex(T);
 

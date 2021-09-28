@@ -1,10 +1,10 @@
 
 
 
-I :: Complex(float64).{0.0, 1.0};
-R :: Complex(float64).{1.0, 0.0};
-CZERO :: Complex(float64).{0.0, 0.0};
-C_NAN :: Complex(float64).{Math.FLOAT64_NAN, Math.FLOAT64_NAN};
+I      :: C64.{0.0, 1.0};
+R      :: C64.{1.0, 0.0};
+C_ZERO :: C64.{0.0, 0.0};
+C_NAN  :: C64.{Math.FLOAT64_NAN, Math.FLOAT64_NAN};
 
 
 

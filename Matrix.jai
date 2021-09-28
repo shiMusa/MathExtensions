@@ -954,9 +954,9 @@ test_matrix :: () {
             m := make(DenseMatrix(C64, 4, 4));
             mat_init_unit(*m);
             println("m = %", pstr(m));
-            assert(get(m,0,1) == CZERO);
+            assert(get(m,0,1) == C_ZERO);
             assert(get(m,1,1) == R);
-            assert(get(m,2,1) == CZERO);
+            assert(get(m,2,1) == C_ZERO);
             assert(get(m,3,3) == R);
         }
 
@@ -1007,8 +1007,8 @@ test_matrix :: () {
         {
             m := make(DenseMatrix(C64, 2, 2));
             mat_init(*m, 
-                CZERO, -I, 
-                I, CZERO
+                C_ZERO, -I, 
+                I, C_ZERO
             );
             assert( dagger(m) == m );
         }
@@ -1034,7 +1034,7 @@ test_matrix :: () {
         {
             M := make(DenseMatrix(C64, 3, 3));
             mat_init(*M,
-                CZERO, R, 2*R,
+                C_ZERO, R, 2*R,
                 3*R, 4*R, 5*R,
                 6*R, 7*R, 8*R
             );
@@ -1108,9 +1108,9 @@ test_matrix :: () {
             defer free(m);
             mat_init_unit(*m);
             println("m = %", pstr(m));
-            assert(get(m,0,1) == CZERO);
+            assert(get(m,0,1) == C_ZERO);
             assert(get(m,1,1) == R);
-            assert(get(m,2,1) == CZERO);
+            assert(get(m,2,1) == C_ZERO);
             assert(get(m,3,3) == R);
         }
 
@@ -1166,8 +1166,8 @@ test_matrix :: () {
             m := make(DenseHeapMatrix(C64, 2, 2));
             defer free(m);
             mat_init(*m, 
-                CZERO, -I, 
-                I, CZERO
+                C_ZERO, -I, 
+                I, C_ZERO
             );
             assert( dagger(m) == m );
         }
@@ -1197,7 +1197,7 @@ test_matrix :: () {
             M := make(DenseHeapMatrix(C64, 3, 3));
             defer free(M);
             mat_init(*M,
-                CZERO, R, 2*R,
+                C_ZERO, R, 2*R,
                 3*R, 4*R, 5*R,
                 6*R, 7*R, 8*R
             );

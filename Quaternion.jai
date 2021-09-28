@@ -34,12 +34,12 @@ str :: (q: Quaternion($T)) -> string {
 }
 
 
-Rq     :: Quaternion(float64).{1.0, 0.0, 0.0, 0.0};
-Iq     :: Quaternion(float64).{0.0, 1.0, 0.0, 0.0};
-Jq     :: Quaternion(float64).{0.0, 0.0, 1.0, 0.0};
-Kq     :: Quaternion(float64).{0.0, 0.0, 0.0, 1.0};
-Q_ZERO :: Quaternion(float64).{0.0, 0.0, 0.0, 0.0};
-Q_NAN  :: Quaternion(float64).{
+Rq     :: Q64.{1.0, 0.0, 0.0, 0.0};
+Iq     :: Q64.{0.0, 1.0, 0.0, 0.0};
+Jq     :: Q64.{0.0, 0.0, 1.0, 0.0};
+Kq     :: Q64.{0.0, 0.0, 0.0, 1.0};
+Q_ZERO :: Q64.{0.0, 0.0, 0.0, 0.0};
+Q_NAN  :: Q64.{
     Math.FLOAT64_NAN,
     Math.FLOAT64_NAN,
     Math.FLOAT64_NAN,
@@ -96,6 +96,26 @@ q32 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q6
         ncast(float64, j),
         ncast(float64, k)
     );
+}
+
+
+
+qtn :: inline ($$r : $T = 0, $$v: $V/VectorType) -> UpCast(T, V.data_type).T #modify {
+    if !is_intrinsic_number(T) {T = null; return;}
+} {
+    #run assert(is_intrinsic_number(V.data_type), "cannot use non-real numbers for this method: V.data_type = %\n", V.data_type);
+    
+    X :: UpCast(T, V.data_type).T;
+    #if is_constant(r) && is_constant(v) {
+        return Quaternion(X).{r, get(v, 0), get(v, 1), get(v, 2)};
+    } else {
+        res : Quaternion(X) = ---;
+        res.r = r;
+        res.i = get(v, 0);
+        res.j = get(v, 1);
+        res.k = get(v, 2);
+        return res;
+    }
 }
 
 
@@ -165,6 +185,39 @@ qtn_inv :: inline (q: Quaternion($T)) -> Quaternion(T) {
     q_abs_sq := abs_sq(q);
     return qtn(q.r/q_abs_sq,-q.i/q_abs_sq,-q.j/q_abs_sq,-q.k/q_abs_sq);
 }
+
+
+
+
+
+
+
+qtn_rot :: inline (angle: $U, axis: $T/VectorType, $normalize: bool = false) -> UpCast(T.data_type, U).T #modify {
+    if !is_intrinsic_number(U) {U = null; return;}    
+} {
+    #run assert(is_intrinsic_number(T.data_type), "this method only works for real numbers, but axis.data_type = %\n", T.data_type);
+    #if normalize {
+        ax := axis/abs_sq(axis);
+        return qtn_rot(angle, ax);
+    } else {
+        return qtn(Math.cos(angle/2), axis*Math.sin(angle/2));
+    }
+}
+
+mat_3_from_qtn :: (q: Quaternion($T)) -> DenseMatrix(T, 3, 3) {
+    res : DenseMatrix(T, 3, 3);
+    s := one(T)/abs_sq(1);
+    
+    mat_init(*res, 
+        1-2*s*(q.j*q.j+q.k*q.k),   2*s*(q.i*q.j-q.k*q.r),   2*s*(q.i*q.k+q.j*q.r),
+          2*s*(q.i*q.j+q.k*q.r), 1-2*s*(q.i*q.i+q.k*q.k),   2*s*(q.j*q.k-q.i*q.r),
+          2*s*(q.i*q.k-q.j*q.r),   2*s*(q.j*q.k+q.i*q.k), 1-2*s*(q.i*q.i+q.j*q.j)
+    );
+
+    return res;
+}
+
+
 
 
 

@@ -74,13 +74,7 @@ binomial :: inline (from: $T, choose: T) -> T {
 quat_r :: real;
 real :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    if is_complex_number(T) {
-        U = get_complex_inner_type(T);
-    } else if is_quaternion_number(T) {
-        U = get_quaternion_inner_type(T);    
-    } else {
-        U = T;
-    }
+    U = get_number_inner_type(T);
 } {
     #if #run is_complex_number(T) {
         return n.real;
@@ -94,13 +88,7 @@ real :: inline (n: $T) -> $U #modify {
 quat_i :: imag;
 imag :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    if is_complex_number(T) {
-        U = get_complex_inner_type(T);
-    } else if is_quaternion_number(T) {
-        U = get_quaternion_inner_type(T);    
-    } else {
-        U = T;
-    }
+    U = get_number_inner_type(T);
 } {
     #if #run is_complex_number(T) {
         return n.imag;
@@ -113,13 +101,7 @@ imag :: inline (n: $T) -> $U #modify {
 
 quat_j :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    if is_complex_number(T) {
-        U = get_complex_inner_type(T);
-    } else if is_quaternion_number(T) {
-        U = get_quaternion_inner_type(T);    
-    } else {
-        U = T;
-    }
+    U = get_number_inner_type(T);
 } {
     #if #run is_quaternion_number(T) {
         return n.j;
@@ -130,13 +112,7 @@ quat_j :: inline (n: $T) -> $U #modify {
 
 quat_k :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    if is_complex_number(T) {
-        U = get_complex_inner_type(T);
-    } else if is_quaternion_number(T) {
-        U = get_quaternion_inner_type(T);    
-    } else {
-        U = T;
-    }
+    U = get_number_inner_type(T);
 } {
     #if #run is_quaternion_number(T) {
         return n.j;
@@ -176,13 +152,7 @@ conjugate :: inline (n: $T) -> T #modify {
 // |z|²
 abs_sq :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    if is_complex_number(T) {
-        U = get_complex_inner_type(T);
-    } else if is_quaternion_number(T) {
-        U = get_quaternion_inner_type(T);    
-    } else {
-        U = T;
-    }
+    U = get_number_inner_type(T);
 } {
     #if #run is_quaternion_number(T) {
         return n.r*n.r + n.i*n.i + n.j*n.j + n.k*n.k;
@@ -195,13 +165,7 @@ abs_sq :: inline (n: $T) -> $U #modify {
 
 abs :: inline (a: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    if is_complex_number(T) {
-        U = get_complex_inner_type(T);
-    } else if is_quaternion_number(T) {
-        U = get_quaternion_inner_type(T);    
-    } else {
-        U = T;
-    }
+    U = get_number_inner_type(T);
 } {
     return Math.sqrt(abs_sq(a));
 }
@@ -320,7 +284,7 @@ sqrt :: inline(n: $T, $type: Type) -> type {
 // is also implemented for quaternions, where the real part of θ is the angle and the vector part is the direction
 phase :: inline (theta: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    if is_quaternion_number(T) || is_complex_number(T) {
+    if is_non_real_number(T) {
         U = T;
     } else { // return complex number by default
         U = get_complex_type_info_from_intrinsic_type_info(T);

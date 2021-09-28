@@ -676,8 +676,8 @@ test_linear_algebra :: () {
 
         L : DenseMatrix(C64, 3, 3) = ---;
         mat_init(*L,
-            R, CZERO, CZERO,
-            3.0*R, R, CZERO,
+            R, C_ZERO, C_ZERO,
+            3.0*R, R, C_ZERO,
             I, R+I, R
         );
         b : DenseVector(C64, 3) = ---;
@@ -692,8 +692,8 @@ test_linear_algebra :: () {
 
         M := dmat(3,3,
             2.0*R, I, R-2.0*I,
-            CZERO, R, 3.0*I,
-            CZERO, CZERO, -3.0*R
+            C_ZERO, R, 3.0*I,
+            C_ZERO, C_ZERO, -3.0*R
         );
         b := dvec(3, 3.0*R, -I, R-2.0*I);
         res := solve_linear_right_triangular(M, b);
@@ -736,7 +736,7 @@ test_linear_algebra :: () {
 
         M : DenseMatrix(C64, 3, 2) = ---;
         mat_init(*M, 
-            R, CZERO, 
+            R, C_ZERO, 
             -R, R, 
             -R, -R
         );
@@ -753,8 +753,8 @@ test_linear_algebra :: () {
 
         M : DenseMatrix(C64, 2, 3) = ---;
         mat_init(*M, 
-            R, R, CZERO, 
-            CZERO, R, CZERO 
+            R, R, C_ZERO, 
+            C_ZERO, R, C_ZERO 
         );
         b : DenseVector(C64, 2) = ---;
         vec_init(*b,4*R, 6*R);
@@ -801,8 +801,8 @@ test_linear_algebra :: () {
 
         M : DenseMatrix(C64, 3, 3) = ---;
         mat_init(*M,
-            CZERO, 4*R, -3*R,
-            2*R, CZERO, 4*R,
+            C_ZERO, 4*R, -3*R,
+            2*R, C_ZERO, 4*R,
             3*R, -5*R, 3*R
         );
         println("M %", pstr(M));
@@ -816,8 +816,8 @@ test_linear_algebra :: () {
 
         M : DenseMatrix(C64, 3, 3) = ---;
         mat_init(*M,
-            CZERO, 4*R, -3*R,
-            2*R, CZERO, 4*R,
+            C_ZERO, 4*R, -3*R,
+            2*R, C_ZERO, 4*R,
             3*R, -5*R, 3*R
         );
 
@@ -864,8 +864,8 @@ test_linear_algebra :: () {
         println_push("test 13", color = .FG_GREEN);
 
         L := dmat(3,3,
-            R, CZERO, CZERO,
-            I, R, CZERO,
+            R, C_ZERO, C_ZERO,
+            I, R, C_ZERO,
             2*R, 3+I, R
         );
         one : DenseMatrix(C64, 3, 3);
@@ -873,8 +873,8 @@ test_linear_algebra :: () {
         res := solve_linear_left_trapezoidal(L,one);
         println("K = %", pstr(res));
         assert(approx(res, dmat(3,3,
-            R, CZERO, CZERO,
-            -I, R, CZERO, 
+            R, C_ZERO, C_ZERO,
+            -I, R, C_ZERO, 
             -3+3*I, -3-I, R
         )));
     }
@@ -884,8 +884,8 @@ test_linear_algebra :: () {
 
         M := dmat(3,3,
             2*R, I, -2*R,
-            CZERO, -I, CZERO,
-            CZERO, CZERO, 1+I
+            C_ZERO, -I, C_ZERO,
+            C_ZERO, C_ZERO, 1+I
         );
         one : DenseMatrix(C64, 3, 3);
         mat_init_unit(*one);
@@ -893,8 +893,8 @@ test_linear_algebra :: () {
         println("K = %", pstr(res));
         assert(approx(res, dmat(3,3,
             0.5*R, 0.5*R, 0.5-0.5*I,
-            CZERO, I, CZERO,
-            CZERO, CZERO, 0.5-0.5*I
+            C_ZERO, I, C_ZERO,
+            C_ZERO, C_ZERO, 0.5-0.5*I
         )));
     }
 
@@ -903,8 +903,8 @@ test_linear_algebra :: () {
 
         M := dmat(3, 3,
             2*R, I, -2*R,
-            CZERO, -I, 2*I,
-            R, CZERO, R+I
+            C_ZERO, -I, 2*I,
+            R, C_ZERO, R+I
         );
         iM := inverse(M);
         println("iM = %", pstr(iM));
@@ -920,8 +920,8 @@ test_linear_algebra :: () {
 
         M := dmat(3, 3,
             2*R, I, -2*R,
-            CZERO, -I, 2*I,
-            R, CZERO, R+I
+            C_ZERO, -I, 2*I,
+            R, C_ZERO, R+I
         );
         d := determinant(M);
         println("det(M) = %", str(d));
