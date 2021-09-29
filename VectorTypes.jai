@@ -130,7 +130,7 @@ for_expansion :: (ve: *VectorRawForExpansion($V), body: Code, flags: For_Flags) 
 
 DenseVector :: struct(_T: Type, _N: int) {
     using _v: VectorType(
-        DenseVector(_T, _N),
+        #this,
         _T,
         _N,
         .DENSE,
@@ -206,7 +206,7 @@ dense_vector_set :: inline (v: *DenseVector($T, $N), i: int, value: T) {
 
 DenseHeapVector :: struct(_T: Type, _N: int) {
     using _v: VectorType(
-        DenseHeapVector(_T, _N),
+        #this,
         _T,
         _N,
         .DENSE,

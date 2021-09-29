@@ -178,7 +178,7 @@ for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) 
 // The only data that actually exists in memory during runtime is "data", the ONELY field of the struct.
 DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
     using _m: MatrixType(
-        DenseMatrix(_T, _N, _M),
+        #this,
         _T,
         _N,
         _M,
@@ -277,7 +277,7 @@ dense_matrix_from_raw_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> in
 
 DenseHeapMatrix :: struct(_T: Type, _N: int, _M: int) {
     using _m: MatrixType(
-        DenseHeapMatrix(_T, _N, _M),
+        #this,
         _T,
         _N,
         _M,
