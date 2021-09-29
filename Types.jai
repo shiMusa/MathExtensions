@@ -17,6 +17,37 @@ INTRINSIC_NUMBER_TYPES :: Type.[
 ];
 
 
+// * I'm not sure, if this is a good idea. Someone might wanna use a completely different number type for whatever reason. So this wouldn't be possible here.
+NUMBER_TYPES :: #insert -> string {
+    builder: String_Builder;
+
+    append(*builder, "Type.[");
+
+    for INTRINSIC_NUMBER_TYPES {
+        print_to_builder(*builder,
+            "Quaternion(%), ",
+            it
+        );
+    }
+    for INTRINSIC_NUMBER_TYPES {
+        print_to_builder(*builder,
+            "Complex(%), ",
+            it
+        );
+    }
+    for INTRINSIC_NUMBER_TYPES {
+        print_to_builder(*builder,
+            "%, ",
+            it
+        );
+    }
+
+    append(*builder, "];");
+
+    return builder_to_string(*builder);
+}
+
+
 
 is_float_number :: inline ($T: Type) -> bool {
     #if #run is_complex_number(T) {

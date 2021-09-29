@@ -42,7 +42,7 @@ str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: st
 
     append(*builder, "\n");
 
-    column_width : [M.M]int; // * initialize all to 0
+    column_width : [cols(m)]int; // * initialize all to 0
     for m {
         column_width[it_column] = max(
             column_width[it_column], 

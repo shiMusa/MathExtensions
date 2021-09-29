@@ -4,13 +4,13 @@
 
 
 
-// ######## ##          ###     ######    ######
-// ##       ##         ## ##   ##    ##  ##    ##
-// ##       ##        ##   ##  ##        ##
-// ######   ##       ##     ## ##   ####  ######
-// ##       ##       ######### ##    ##        ##
-// ##       ##       ##     ## ##    ##  ##    ##
-// ##       ######## ##     ##  ######    ######
+//*    ######## ##          ###     ######    ######
+//*    ##       ##         ## ##   ##    ##  ##    ##
+//*    ##       ##        ##   ##  ##        ##
+//*    ######   ##       ##     ## ##   ####  ######
+//*    ##       ##       ######### ##    ##        ##
+//*    ##       ##       ##     ## ##    ##  ##    ##
+//*    ##       ######## ##     ##  ######    ######
 
 MATRIX_FLAGS :: enum_flags u32 {
     DENSE :: 0;
@@ -25,20 +25,21 @@ MATRIX_FLAGS :: enum_flags u32 {
 
 
 
-// ######## ########     ###    #### ########
-//    ##    ##     ##   ## ##    ##     ##
-//    ##    ##     ##  ##   ##   ##     ##
-//    ##    ########  ##     ##  ##     ##
-//    ##    ##   ##   #########  ##     ##
-//    ##    ##    ##  ##     ##  ##     ##
-//    ##    ##     ## ##     ## ####    ##
+//*    ######## ########     ###    #### ########
+//*       ##    ##     ##   ## ##    ##     ##
+//*       ##    ##     ##  ##   ##   ##     ##
+//*       ##    ########  ##     ##  ##     ##
+//*       ##    ##   ##   #########  ##     ##
+//*       ##    ##    ##  ##     ##  ##     ##
+//*       ##    ##     ## ##     ## ####    ##
 
 MatrixType :: struct(
     matrix_type: Type, 
     data_type: Type,
-    N: int,
-    M: int,
     flags: MATRIX_FLAGS,
+
+    rows: (m: matrix_type) -> int,
+    cols: (m: matrix_type) -> int,
 
     // * initialize; used for heap-allocated matrices
     init: (m: *matrix_type, $b: bool),
@@ -59,6 +60,14 @@ MatrixType :: struct(
     set_raw: (m: *matrix_type, int, data_type) -> (),
     from_raw_index: (m: matrix_type, int) -> int
 ){}
+
+
+rows :: inline (m: $M/MatrixType) -> int {
+    return M.rows(m);
+}
+cols :: inline (m: $M/MatrixType) -> int {
+    return M.cols(m);
+}
 
 
 init :: inline (m: *$M/MatrixType, $initialize_values: bool = true) {
@@ -102,19 +111,19 @@ from_raw_index :: inline (m: $M/MatrixType, i: int) -> int {
 
 
 
-// ########  #######  ########          ######## ##     ## ########  ##    ##
-// ##       ##     ## ##     ##         ##        ##   ##  ##     ## ###   ##
-// ##       ##     ## ##     ##         ##         ## ##   ##     ## ####  ##
-// ######   ##     ## ########  ####### ######      ###    ########  ## ## ##
-// ##       ##     ## ##   ##           ##         ## ##   ##        ##  ####
-// ##       ##     ## ##    ##          ##        ##   ##  ##        ##   ###
-// ##        #######  ##     ##         ######## ##     ## ##        ##    ##
+//*    ########  #######  ########          ######## ##     ## ########  ##    ##
+//*    ##       ##     ## ##     ##         ##        ##   ##  ##     ## ###   ##
+//*    ##       ##     ## ##     ##         ##         ## ##   ##     ## ####  ##
+//*    ######   ##     ## ########  ####### ######      ###    ########  ## ## ##
+//*    ##       ##     ## ##   ##           ##         ## ##   ##        ##  ####
+//*    ##       ##     ## ##    ##          ##        ##   ##  ##        ##   ###
+//*    ##        #######  ##     ##         ######## ##     ## ##        ##    ##
 
 
 // * standard for expansion of all elements of the matrix
 for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
     i := 0;
-    while i < M.N * M.M {
+    while i < rows(m) * cols(m) {
         `it_index := i;
         `it := get_lin(<<m, i);
         `it_row, `it_column := from_lin_index(<<m, i);
@@ -152,37 +161,42 @@ for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) 
 
 
 
-// ##     ##    ###    ########    ######## ##    ## ########  ########  ######
-// ###   ###   ## ##      ##          ##     ##  ##  ##     ## ##       ##    ##
-// #### ####  ##   ##     ##          ##      ####   ##     ## ##       ##
-// ## ### ## ##     ##    ##          ##       ##    ########  ######    ######
-// ##     ## #########    ##          ##       ##    ##        ##             ##
-// ##     ## ##     ##    ##          ##       ##    ##        ##       ##    ##
-// ##     ## ##     ##    ##          ##       ##    ##        ########  ######
+//*    ##     ##    ###    ########    ######## ##    ## ########  ########  ######
+//*    ###   ###   ## ##      ##          ##     ##  ##  ##     ## ##       ##    ##
+//*    #### ####  ##   ##     ##          ##      ####   ##     ## ##       ##
+//*    ## ### ## ##     ##    ##          ##       ##    ########  ######    ######
+//*    ##     ## #########    ##          ##       ##    ##        ##             ##
+//*    ##     ## ##     ##    ##          ##       ##    ##        ##       ##    ##
+//*    ##     ## ##     ##    ##          ##       ##    ##        ########  ######
 
 
 
 
+//*    ########  ######## ##    ##  ######  ########
+//*    ##     ## ##       ###   ## ##    ## ##
+//*    ##     ## ##       ####  ## ##       ##
+//*    ##     ## ######   ## ## ##  ######  ######
+//*    ##     ## ##       ##  ####       ## ##
+//*    ##     ## ##       ##   ### ##    ## ##
+//*    ########  ######## ##    ##  ######  ########
 
-// ########  ######## ##    ##  ######  ########
-// ##     ## ##       ###   ## ##    ## ##
-// ##     ## ##       ####  ## ##       ##
-// ##     ## ######   ## ## ##  ######  ######
-// ##     ## ##       ##  ####       ## ##
-// ##     ## ##       ##   ### ##    ## ##
-// ########  ######## ##    ##  ######  ########
 
+
+
+// is_dense_matrix :: ($T: Type) -> bool {
+// }
 
 
 
 // The only data that actually exists in memory during runtime is "data", the ONELY field of the struct.
-DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
+DenseMatrix :: struct(_T: Type, N: int, M: int) {
     using _m: MatrixType(
-        DenseMatrix(_T, _N, _M),
+        DenseMatrix(_T, N, M),
         _T,
-        _N,
-        _M,
         .DENSE,
+
+        dense_matrix_rows,
+        dense_matrix_cols,
 
         dense_matrix_init,
 
@@ -219,14 +233,18 @@ dmat :: inline ($N: int, $M: int, values: ..$T) -> DenseMatrix(T,N,M) {
         assert(values.count <= N*M);
     }
     res : DenseMatrix(T,N,M);
-    // println("dmat:");
-    // println("    res %", res);
-    // println("    values %", values);
     mat_init(*res, ..values);
     return res;
 }
 
 #scope_file
+dense_matrix_rows :: inline (m: DenseMatrix($T, $N, $M)) -> int {
+    return N;
+}
+dense_matrix_cols :: inline (m: DenseMatrix($T, $N, $M)) -> int {
+    return M;
+}
+
 dense_matrix_init :: (m: *DenseMatrix($T, $N, $M), $initialize_values: bool = true) {
     #if initialize_values {
         for m.data {
@@ -266,22 +284,23 @@ dense_matrix_from_raw_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> in
 #scope_export
 
 
-// ########  ######## ##    ##  ######  ########    ##     ## ########    ###    ########
-// ##     ## ##       ###   ## ##    ## ##          ##     ## ##         ## ##   ##     ##
-// ##     ## ##       ####  ## ##       ##          ##     ## ##        ##   ##  ##     ##
-// ##     ## ######   ## ## ##  ######  ######      ######### ######   ##     ## ########
-// ##     ## ##       ##  ####       ## ##          ##     ## ##       ######### ##
-// ##     ## ##       ##   ### ##    ## ##          ##     ## ##       ##     ## ##
-// ########  ######## ##    ##  ######  ########    ##     ## ######## ##     ## ##
+//*     ########  ######## ##    ##  ######  ########    ##     ## ########    ###    ########
+//*     ##     ## ##       ###   ## ##    ## ##          ##     ## ##         ## ##   ##     ##
+//*     ##     ## ##       ####  ## ##       ##          ##     ## ##        ##   ##  ##     ##
+//*     ##     ## ######   ## ## ##  ######  ######      ######### ######   ##     ## ########
+//*     ##     ## ##       ##  ####       ## ##          ##     ## ##       ######### ##
+//*     ##     ## ##       ##   ### ##    ## ##          ##     ## ##       ##     ## ##
+//*     ########  ######## ##    ##  ######  ########    ##     ## ######## ##     ## ##
 
 
-DenseHeapMatrix :: struct(_T: Type, _N: int, _M: int) {
+DenseHeapMatrix :: struct(_T: Type) {
     using _m: MatrixType(
-        DenseHeapMatrix(_T, _N, _M),
+        DenseHeapMatrix(_T),
         _T,
-        _N,
-        _M,
         .DENSE_HEAP,
+
+        dense_heap_matrix_rows,
+        dense_heap_matrix_cols,
 
         dense_heap_matrix_init,
 
@@ -298,6 +317,8 @@ DenseHeapMatrix :: struct(_T: Type, _N: int, _M: int) {
         dense_heap_matrix_set_lin,
         dense_heap_matrix_from_raw_index
     ); 
+    N: int;
+    M: int;
     data : []_T; // * heap-allocated data!
 }
 
@@ -305,12 +326,14 @@ free :: inline (m: $M/DenseHeapMatrix) {
     array_free(m.data);
 }
 
-dhmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> DenseHeapMatrix(T,N,M) {
+dhmat :: ($T: Type, N: int, M: int, values: ..$U) -> DenseHeapMatrix(T) {
     #if CHECKS {
         #run assert(is_minor_number_type(T, U));
         assert(values.count <= N*M);
     }
-    res : DenseHeapMatrix(T, N, M);
+    res : DenseHeapMatrix(T) = ---;
+    res.N = N;
+    res.M = M;
     res.data = NewArray(N*M, T);
 
     for values {
@@ -319,20 +342,29 @@ dhmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> DenseHeapMatrix(T,N,M) {
     return res;
 }
 
-dhmat :: inline ($N: int, $M: int, values: ..$T) -> DenseHeapMatrix(T,N,M) {
+dhmat :: inline (N: int, M: int, values: ..$T) -> DenseHeapMatrix(T) {
     #if CHECKS {
         assert(values.count <= N*M);
     }
-    res : DenseHeapMatrix(T,N,M);
+    res : DenseHeapMatrix(T) = ---;
     res.data = NewArray(N*M, T);
+    res.N = N;
+    res.M = M;
 
     mat_init(*res, ..values);
     return res;
 }
 
 #scope_file
-dense_heap_matrix_init :: (m: *DenseHeapMatrix($T, $N, $M), $initialize_values: bool = true) {
-    m.data = NewArray(N*M, T, false);
+dense_heap_matrix_rows :: inline (m: DenseHeapMatrix($T)) -> int {
+    return m.N;
+}
+dense_heap_matrix_rows :: inline (m: DenseHeapMatrix($T)) -> int {
+    return m.M;
+}
+
+dense_heap_matrix_init :: (m: *DenseHeapMatrix($T), $initialize_values: bool = true) {
+    m.data = NewArray(m.N*m.M, T, false);
     #if initialize_values {
         for m.data {
             m.data[it_index] = zero(T);
@@ -341,49 +373,61 @@ dense_heap_matrix_init :: (m: *DenseHeapMatrix($T, $N, $M), $initialize_values: 
 }
 
 
-dense_heap_matrix_get :: inline (m: DenseHeapMatrix($T, $N, $M), i: int, j: int) -> T {
-    return m.data[i*M + j];
+dense_heap_matrix_get :: inline (m: DenseHeapMatrix($T), i: int, j: int) -> T {
+    return m.data[i*m.M + j];
 }
-dense_heap_matrix_set :: inline (m: *DenseHeapMatrix($T, $N, $M), i: int, j: int, value: T) {
-    m.data[i*M + j] = value;
+dense_heap_matrix_set :: inline (m: *DenseHeapMatrix($T), i: int, j: int, value: T) {
+    m.data[i*m.M + j] = value;
 }
 
 
-dense_heap_matrix_from_lin_index :: inline (m: DenseHeapMatrix($T, $N, $M), i: int) -> int, int {
-    return (i- i%M)/M, i%M;
+dense_heap_matrix_from_lin_index :: inline (m: DenseHeapMatrix($T), i: int) -> int, int {
+    return (i- i%m.M)/m.M, i%m.M;
 }
-dense_heap_matrix_to_lin_index :: inline (m: DenseHeapMatrix($T, $N, $M), i: int, j: int) -> int {
-    return i*M+j;
+dense_heap_matrix_to_lin_index :: inline (m: DenseHeapMatrix($T), i: int, j: int) -> int {
+    return i*m.M+j;
 }
-dense_heap_matrix_get_lin :: inline (m: DenseHeapMatrix($T, $N, $M), i: int) -> T {
+dense_heap_matrix_get_lin :: inline (m: DenseHeapMatrix($T), i: int) -> T {
     return m.data[i];
 }
-dense_heap_matrix_set_lin :: inline (m: *DenseHeapMatrix($T, $N, $M), i: int, value: T) {
+dense_heap_matrix_set_lin :: inline (m: *DenseHeapMatrix($T), i: int, value: T) {
     m.data[i] = value;
 }
 
-dense_heap_matrix_n_raw :: inline (m: DenseHeapMatrix($T, $N, $M)) -> int {
-    return N*M;
+dense_heap_matrix_n_raw :: inline (m: DenseHeapMatrix($T)) -> int {
+    return m.N*m.M;
 }
-dense_heap_matrix_from_raw_index :: inline (m: DenseHeapMatrix($T, $N, $M), i: int) -> int {
+dense_heap_matrix_from_raw_index :: inline (m: DenseHeapMatrix($T), i: int) -> int {
     return i;
 }
 #scope_export
 
 
-// ##     ## ######## ##       ########  ######## ########
-// ##     ## ##       ##       ##     ## ##       ##     ##
-// ##     ## ##       ##       ##     ## ##       ##     ##
-// ######### ######   ##       ########  ######   ########
-// ##     ## ##       ##       ##        ##       ##   ##
-// ##     ## ##       ##       ##        ##       ##    ##
-// ##     ## ######## ######## ##        ######## ##     ##
+//*    ##     ## ######## ##       ########  ######## ########
+//*    ##     ## ##       ##       ##     ## ##       ##     ##
+//*    ##     ## ##       ##       ##     ## ##       ##     ##
+//*    ######### ######   ##       ########  ######   ########
+//*    ##     ## ##       ##       ##        ##       ##   ##
+//*    ##     ## ##       ##       ##        ##       ##    ##
+//*    ##     ## ######## ######## ##        ######## ##     ##
+
+#scope_export
+MatrixUpCast :: struct(A: Type, B: Type) {
+    T :: #run matrix_upcast(A,B);
+}
+#scope_file
+matrix_upcast :: ($a: Type, $b: Type) -> Type {
+    if is_dense_matrix(a) && is_dense_matrix(b) {
+        return DenseMatrix(a.data_type, a.N, a.M);
+    }
+    return DenseMatrix(a.data_type, a.N, a.M); // * default
+}
+
+
 
 MatrixHelper :: struct(A: Type, B: Type, N: int, M: int) {
     T :: #run matrix_helper(A,B,N,M);
 }
-
-// TODO: maybe be smart about this at some point?
 #scope_file
 matrix_helper :: ($a: Type, $b: Type, $N: int, $M: int) -> Type {
     if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
@@ -399,9 +443,9 @@ MatrixCastHelper :: struct(A: Type, data_type: Type) {
 #scope_file
 matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
     if a.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(UpCast(a.data_type, b).T, a.N, a.M);
+        return DenseHeapMatrix(UpCast(a.data_type, b).T, rows(a), cols(a));
     }
-    return DenseMatrix(UpCast(a.data_type, b).T, a.N, a.M);
+    return DenseMatrix(UpCast(a.data_type, b).T, rows(a), cols(a));
 }
 
 #scope_export
@@ -411,9 +455,9 @@ MatrixMatrixCastHelper :: struct(A: Type, B: Type) {
 #scope_file
 matrix_matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
     if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, a.N, a.M);
+        return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, rows(a), cols(a));
     }
-    return DenseMatrix(UpCast(a.data_type, b.data_type).T, a.N, a.M);
+    return DenseMatrix(UpCast(a.data_type, b.data_type).T, rows(a), cols(a));
 }
 
 
