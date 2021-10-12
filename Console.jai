@@ -60,6 +60,16 @@ fg_color :: inline (txt: string, color: ConsoleColor = .FG_RESET) -> string {
 }
 
 
+println_push :: (color: ConsoleColor = .FG_RESET) #expand {
+    tip := cast(*Type_Info_Procedure)type_info(type_of(#this));
+    text := sprint("% : % @ %", <<tip, type_of(#this), #location(#this));
+    c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
+    println(c_text);
+    print_indent(1);
+    `defer println("└╴");
+    `defer print_indent(-1);
+}
+
 println_push :: (text: string = "", args: ..Any, color: ConsoleColor = .FG_RESET) #expand {
     c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
     println(c_text, ..args);
@@ -102,4 +112,11 @@ println :: (arg: Any, color: ConsoleColor = .FG_RESET) {
             print(" ");
     }
     print("%\n", c_text);
+}
+
+
+
+test_console :: () {
+    println_push("Console", color = .FG_WHITE);
+    println_push(.FG_BLUE);
 }

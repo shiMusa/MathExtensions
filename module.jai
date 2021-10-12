@@ -25,6 +25,8 @@
 run_all_tests :: () {
     println("\nRunning tests ///////////////////////////////////////////////////\n", color = .FG_RED);
 
+    test_console();
+
     test_utils();
     test_complex();
     test_quaternion();
