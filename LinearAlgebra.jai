@@ -12,10 +12,17 @@
 // ? solves the system A x = b with 2x2 matrix A
 sl2 :: solve_linear_2x2;
 solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N).T {
-    #run assert(A.N == 2, "dimension mismatch: 2 != A.N = %\n", A.N);
-    #run assert(A.M == 2, "dimension mismatch: 2 != A.M = %\n", A.M);
-    #run assert(B.N == 2, "dimension mismatch: 2 != B.N = %\n", B.N);
-    U :: UpCast(A.data_type, B.data_type).T;
+    res := make(VectorHelper(A,B,A.N).T); // * initialize with zeros.
+    inline solve_linear_2x2(a,b, *res);
+    return res;
+}
+solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    #if CHECKS {
+        #run assert(A.N == 2, "dimension mismatch: 2 != A.N = %\n", A.N);
+        #run assert(A.M == 2, "dimension mismatch: 2 != A.M = %\n", A.M);
+        #run assert(B.N == 2, "dimension mismatch: 2 != B.N = %\n", B.N);
+        #run assert(C.N == 2, "dimension mismatch: 2 != C.N = %\n", C.N);
+    }
 
     sigma := max(abs(get(a,0,0)), abs(get(a,0,1)), abs(get(a,1,0)), abs(get(a,1,1)));
 
@@ -23,7 +30,9 @@ solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N
     det := get(mu,0,0) * get(mu,1,1) - get(mu,0,1) * get(mu,1,0);
     g := b / sigma;
 
-    return  dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0)) / det * g;
+    m := dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0));
+    div(m, det, *m);
+    mat_mul_vec(m, g, x);
 }
 
 
@@ -39,24 +48,27 @@ solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N
 // ? solve the system Lx = b where L is a unit left-triangluar matrix
 // ? that means, all diagonals are 1 and all L_ij = 0 for j > i.
 sllta :: solve_linear_left_triangular;
-solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType) -> VectorVectorHelper(B,A).T {
+solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType) -> VectorVectorHelper(B,A).T {    
+    res := make(VectorVectorHelper(B,A).T);
+    inline solve_linear_left_triangular(L, b, *res);
+    return res;
+}
+solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         #run assert(A.N == A.M, "L is not quadratic L(%,%)\n", A.N, A.M);
         #run assert(A.N == B.N, "dimensions mismatch L(%,%), b(%)\n", A.N, A.M, B.N);
+        #run assert(A.M == C.N, "dimensions mismatch L(%,%), x(%)\n", A.N, A.M, x.N);
         assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1\n");
         assert(is_left_triangular(L), "L is not left-triangular\n");
     }
-    U :: UpCast(A.data_type, B.data_type).T;
-    res : VectorVectorHelper(B,A).T;
     
     for i: 0..B.N-1 {
-        sum := zero(U);
+        sum := zero(C.data_type);
         for j: 0..i-1 {
-            sum += get(L,i,j) * get(res,j);
+            sum += get(L,i,j) * get(x,j);
         }
-        set(*res,i, get(b,i) - sum);
+        set(x,i, get(b,i) - sum);
     }
-    return res;
 }
 
 
@@ -70,24 +82,27 @@ solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType) -> VectorVe
 // ? that means all R_ij = 0 for j < i.
 slrta :: solve_linear_right_triangular;
 solve_linear_right_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> VectorVectorHelper(B,A).T {
+    res := make(VectorVectorHelper(B,A).T);
+    inline solve_linear_right_triangular(R,b,*res);
+    return res;
+}
+solve_linear_right_triangular :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         #run assert(A.N == A.M, "L is not quadratic L(%,%)\n", A.N, A.M);
         #run assert(A.N == B.N, "dimensions mismatch L(%,%), b(%)\n", A.N, A.M, B.N);
+        #run assert(A.M == C.N, "dimensions mismatch L(%,%), x(%)\n", A.N, A.M, C.N);
         assert(is_right_triangular(R), "R is not right-triangular\n");
     }
-    U :: UpCast(A.data_type, B.data_type).T;
-    res : VectorVectorHelper(B,A).T;
 
     i : int;
     for 0..B.N-1 {
         i = B.N-1 - it;
-        sum := zero(U);
+        sum := zero(x.data_type);
         for j: i+1..B.N-1 {
-            sum += get(R,i,j)*get(res,j);
+            sum += get(R,i,j)*get(x,j);
         }
-        set(*res,i, (get(b,i) - sum)/get(R,i,i));
+        set(x,i, (get(b,i) - sum)/get(R,i,i));
     }
-    return res;
 }
 
 
@@ -103,14 +118,18 @@ solve_linear_right_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> VectorV
 // ? solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
 slrqta :: solve_linear_right_quasi_triangular;
 solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> VectorVectorHelper(B,A).T {
+    res := make(VectorVectorHelper(B,A).T, false);
+    inline solve_linear_right_quasi_triangular(R,b,*res);
+    return res;
+}
+solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         #run assert(A.N == A.M, "L is not quadratic L(%,%)\n", A.N, A.M);
         #run assert(A.N == B.N, "dimensions mismatch L(%,%), b(%)\n", A.N, A.M, B.N);
+        #run assert(A.M == C.N, "dimensions mismatch L(%,%), x(%)\n", A.N, A.M, C.N);
         assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!\n");
     }
-    U :: UpCast(A.data_type, B.data_type).T;
-    res : VectorVectorHelper(B,A).T = ---;
-
+    U :: C.data_type;
 
     i := B.N-1; // start with last row and wrap from bottom to up
     while i >= 0 {
@@ -119,9 +138,9 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> V
         if (i > 0 && get(R,i,i-1) == zero(U)) || i == 0 {
             sum := zero(U);
             for j: i+1..B.N-1 {
-                sum += get(R,i,j) * get(res,j);
+                sum += get(R,i,j) * get(x,j);
             }
-            set(*res,i, (get(b,i) - sum)/get(R,i,i));
+            set(x,i, (get(b,i) - sum)/get(R,i,i));
             i -= 1;
         } else if i > 0 { // so now we have a 2x2 block where get(R,i,i) is the bottom-right element
             a : DenseMatrix(U, 2, 2) = ---;
@@ -132,8 +151,8 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> V
             sum1 := zero(U);
             sum2 := zero(U);
             for j: i+1..B.N-1 {
-                sum1 += get(R,i-1,j) * get(res,j);
-                sum2 += get(R,i,j) * get(res,j);
+                sum1 += get(R,i-1,j) * get(x,j);
+                sum2 += get(R,i,j) * get(x,j);
             }
             c : DenseVector(U, 2) = ---;
             vec_init(*c,
@@ -141,12 +160,11 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> V
                 get(b,i) - sum2
             );
             tmp := solve_linear_2x2(a, c);
-            set(*res, i-1, get(tmp,0));
-            set(*res, i,   get(tmp,1));
+            set(x, i-1, get(tmp,0));
+            set(x, i,   get(tmp,1));
             i -= 2;
         }
     }
-    return res;
 }
 
 
@@ -160,14 +178,20 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> V
 // ? Springer
 // ? Algorithm 3.4.8 Orthogonal Projection, page 167
 solve_linear_unitary :: solve_linear_orthogonal_projection;
-slop :: solve_linear_orthogonal_projection;
+slop                 :: solve_linear_orthogonal_projection;
 solve_linear_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
+    res := make(VectorHelper(A,B,A.M).T);
+    inline solve_linear_orthogonal_projection(Q,b,*res);
+    return res;
+}
+solve_linear_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         #run assert(A.M == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
+        #run assert(A.M == C.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, C.N);
         assert(is_unitary(Q));
     }
 
-    return dagger(Q) * b;
+    mat_mul_vec(dagger(Q), b, x);
 }
 
 
@@ -182,19 +206,23 @@ solve_linear_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType) -> Ve
 // ? not sure if this algo is useful. seems to be slower than the previous one.
 slsop :: solve_linear_successive_orthogonal_projection;
 solve_linear_successive_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
+    res := make(VectorHelper(A,B,A.M).T, false);
+    inline solve_linear_successive_orthogonal_projection(Q,b,*res);
+    return res;
+}
+solve_linear_successive_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         #run assert(A.M == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
+        #run assert(A.M == C.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, C.N);
         assert(is_unitary(Q));
     }
     bb := copy(b);
 
-    res : VectorHelper(A,B,A.M).T = ---;
     for i: 0..A.M-1 {
         q := row(Q, i);
-        set(*res,i, conjugate(q) * bb); // not sure if this is performant...
-        bb = bb - q * get(res,i);
+        set(x,i, conjugate(q) * bb); // not sure if this is performant...
+        bb = bb - q * get(x,i);
     }
-    return res;
 }
 
 

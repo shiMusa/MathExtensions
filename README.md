@@ -14,6 +14,7 @@ Feel free to add functionality and performance upgrades.
 
 - Current work focuses on making everything as generic as possible to enable different types of matrices/vector, heap/stack allocated, various number types.
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
+- I'll probably also use the [BLAS](http://www.netlib.org/blas/) naming convention and functions
 (- maybe add `Octonion($T)` etc. later)
 
 There are more thoughts written down in [the document outlining some of my thoughts](https://github.com/shiMusa/MathExtensions/blob/flags-and-other-matrix-types/Thoughts.md).
