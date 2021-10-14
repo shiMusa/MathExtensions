@@ -48,6 +48,9 @@ init :: inline (v: *$V/VectorType, $initialize_variables: bool = true) {
 get :: inline (v: $V/VectorType, i: int) -> V.data_type {
     return V.get(v, i);
 }
+get :: inline (v: *$V/VectorType, i: int) -> V.data_type {
+    return V.get(<<v, i);
+}
 set :: inline (v: *$V/VectorType, i: int, value: V.data_type) {
     V.set(v, i, value);
 }

@@ -69,6 +69,9 @@ init :: inline (m: *$M/MatrixType, $initialize_values: bool = true) {
 get :: inline (m: $M/MatrixType, i: int, j: int) -> M.data_type {
     return M.get(m, i, j);
 }
+get :: inline (m: *$M/MatrixType, i: int, j: int) -> M.data_type {
+    return M.get(<<m, i, j);
+}
 set :: inline (m: *$M/MatrixType, i: int, j: int, value: M.data_type) {
     M.set(m, i, j, value);
 }

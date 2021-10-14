@@ -10,22 +10,22 @@
 
 
 pstr :: inline (v: $V/VectorType) -> string {
-    return str(v, print_options.offset, print_options.shift + 4, "│");
+    return str(v, print_options.offset, print_options.shift, "│", print_options.indent_charactoer_every);
 }
 
-str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
+str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_character_every: int = 4) -> string {
     builder: String_Builder;
     defer free_buffers(*builder);
 
     init_string_builder(*builder);
-    print_to_builder(*builder, "\n");
+    append(*builder, "\n");
 
-    shift :: (additional_indent: int = 0) #expand {
+    shift :: (ind: int = 0) #expand {
         for 0..offset-1 {
             append(*builder, " ");
         }
-        for 0..indent-1+additional_indent {
-            if it % indent_every == 0 {
+        for 0..ind-1 {
+            if it % indent_character_every == 0 {
                 append(*builder, indent_character);
             } else {
                 append(*builder, " ");
@@ -33,8 +33,7 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
         }
     }
 
-    shift();
-
+    shift(indent+4);
     append(*builder, "(");
     for v {
         append(*builder, str(it));
@@ -44,7 +43,7 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
     }
     append(*builder, ")\n");
 
-    shift(-4);
+    shift(indent);
     append(*builder, "└╴");
 
     return builder_to_string(*builder);
@@ -263,7 +262,7 @@ add :: (a: *$A/VectorType, b: $B/VectorType) {
     }
 
     for raw(*b) {
-        set(a, it_index, get(<<a, it_index) + it);
+        set(a, it_index, get(a, it_index) + it);
     }
 }
 
@@ -290,7 +289,7 @@ sub :: (a: *$A/VectorType, b: $B/VectorType) {
     }
 
     for raw(*b) {
-        set(a, it_index, get(<<a, it_index) - it);
+        set(a, it_index, get(a, it_index) - it);
     }
 }
 
@@ -391,7 +390,7 @@ gaxpy :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
     }
 
     for A {
-        set(y, it_row, get(<<y, it_row) + it * get(x, it_column));
+        set(y, it_row, get(y, it_row) + it * get(x, it_column));
     }
 }
 

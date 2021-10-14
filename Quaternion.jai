@@ -209,7 +209,7 @@ qtn_rot :: inline (angle: $U, axis: $T/VectorType, $normalize: bool = false) -> 
 
 mat_3_from_qtn :: (q: Quaternion($T)) -> DenseMatrix(T, 3, 3) {
     res : DenseMatrix(T, 3, 3);
-    s := one(T)/abs_sq(1);
+    s := one(T)/abs_sq(q); // ! is this correct? Double check!
     
     mat_init(*res, 
         1-2*s*(q.j*q.j+q.k*q.k),   2*s*(q.i*q.j-q.k*q.r),   2*s*(q.i*q.k+q.j*q.r),

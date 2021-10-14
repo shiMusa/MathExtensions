@@ -12,13 +12,13 @@
 PrintOptions :: struct {
     offset := 0;
     shift := 0;
-    indent_every := 4;
+    indent_charactoer_every := 4; // TODO not finished updating the Vector and Matrix pretty printing indentation. Try 3 to see what I mean.
     indent_character := "│";
 };
 print_options : PrintOptions;
 
 print_indent :: (levels: int) {
-    print_options.shift += 4 * levels;
+    print_options.shift += print_options.indent_charactoer_every * levels;
 }
 
 
@@ -87,7 +87,7 @@ println :: (text: string = "", args: ..Any, color: ConsoleColor = .FG_RESET) {
     }
 
     for 0..print_options.shift-1 {
-        if it % print_options.indent_every == 0 {
+        if it % print_options.indent_charactoer_every == 0 {
             print(print_options.indent_character);
         } else
             print(" ");
@@ -106,7 +106,7 @@ println :: (arg: Any, color: ConsoleColor = .FG_RESET) {
     }
 
     for 0..print_options.shift-1 {
-        if it % print_options.indent_every == 0 {
+        if it % print_options.indent_charactoer_every == 0 {
             print(print_options.indent_character);
         } else
             print(" ");

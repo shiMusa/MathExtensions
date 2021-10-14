@@ -18,17 +18,17 @@
 */
 
 pstr :: inline (m: $V/MatrixType) -> string {
-    return str(m, print_options.offset, print_options.shift + 4, "│");
+    return str(m, print_options.offset, print_options.shift, "│", print_options.indent_charactoer_every);
 }
 
-str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_every: int = 4) -> string {
+str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_charactoer_every: int = 4) -> string {
     
-    shift :: (additional_indent: int = 0) #expand {
+    shift :: (ind: int = 0, additional_indent: int = 0) #expand {
         for 0..offset-1 {
             append(*builder, " ");
         }
-        for 0..indent-1+additional_indent {
-            if it % indent_every == 0 {
+        for 0..ind-1+additional_indent {
+            if it % indent_charactoer_every == 0 {
                 append(*builder, indent_character);
             } else {
                 append(*builder, " ");
@@ -58,7 +58,7 @@ str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: st
 
 
     for i: 0..M.N-1 {
-        shift();
+        shift(indent+4);
 
         if i == 0 {
             append(*builder, "⎛ ");
@@ -90,7 +90,7 @@ str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: st
         append(*builder, "\n");
     }
 
-    shift(-4);
+    shift(indent);
     append(*builder, "└╴");
     return builder_to_string(*builder);
 }
@@ -376,76 +376,99 @@ operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// 2.11 Case Study: Matrix-Matrix Multiplication, page 118
-// According to Table 2.12, the best performing loop order is j/k/i with
-// the least number of cache misses.
-//
-// Similar discussion in:
-// Matrix Computations, 4th edition
-// The Johns Hopkins University Press
-// Algorithm 1.1.5 ijk Matrix Multiplication, page 8
-operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.N, B.M).T {
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? 2.11 Case Study: Matrix-Matrix Multiplication, page 118
+// ? According to Table 2.12, the best performing loop order is j/k/i with
+// ? the least number of cache misses.
+// ? 
+// ? Similar discussion in:
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? Algorithm 1.1.5 ijk Matrix Multiplication, page 8
+
+// * Assuming res is initialized to zeroes.
+// * User has to know, what type the result has to be!
+mat_mul_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     #if CHECKS {
         #run assert(A.M == B.N, "Matrix dimensions don't match: a.cols = %, b.rows = %", A.M, B.N);
+        #run assert(A.N == C.N, "Matrix dimensions don't match: a.rows = %, c.rows = %", A.N, C.N);
+        #run assert(B.M == C.M, "Matrix dimensions don't match: b.cols = %, c.cols = %", B.M, C.M);
     }
 
-    res := make(MatrixMultiplicationHelper(A,B,A.N, B.M).T);
     for j: 0..B.M-1 {
         for k: 0..A.M-1 {
             tmp := get(b,k,j);
             for i: 0..A.N-1 {
-                set(*res,i,j, get(res,i,j) + get(a,i,k) * tmp);
+                set(res,i,j, get(res,i,j) + get(a,i,k) * tmp);
             }
         }
     }
+}
 
+operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.N, B.M).T {
+    res := make(MatrixMultiplicationHelper(A,B,A.N, B.M).T);
+    inline mat_mul_mat(a,b,*res);
     return res;
 }
 
-
-
-operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplicationHelper(A,B,A.N).T {
+// * Assuming res is initialized to zeroes.
+// * User has to know, what type the result has to be!
+mat_mul_vec :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim = %", A.M, B.N);
+        #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim   = %", A.M, B.N);
+        #run assert(A.N == C.N, "Dimensions mismatch: a.rows = %, res.dim = %", A.N, C.N);
     }
-
-    res := make(MatrixVectorMultiplicationHelper(A,B,A.N).T); // ! need to initialize values to 0!!!!
 
     for a {
-        set(*res, it_row, get(res, it_row) + it * get(b, it_column));
+        set(res, it_row, get(res, it_row) + it * get(b, it_column));
     }
-
+}
+operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplicationHelper(A,B,A.N).T {
+    res := make(MatrixVectorMultiplicationHelper(A,B,A.N).T);
+    inline mat_mul_vec(a,b,*res);
     return res;
 }
 
-operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplicationHelper(A,B,B.M).T {
+// * Assuming res is initialized to zeroes.
+// * User has to know, what type the result has to be!
+vec_mul_mat :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == B.N, "Dimensions mismatch: a.dim = %, b.rows = %", A.N, B.N);
+        #run assert(A.N == B.N, "Dimensions mismatch: a.dim  = %, b.rows  = %", A.N, B.N);
+        #run assert(B.M == C.N, "Dimensions mismatch: b.cols = %, res.dim = %", B.M, C.N);
     }
 
-    res := MatrixVectorMultiplicationHelper(A,B,B.M).T;
     for j: 0..B.N-1 {
         for i: 0..A.N-1 {
-            set(*res,j, get(res,j) + get(a,i) * get(b,i,j));
+            set(res,j, get(res,j) + get(a,i) * get(b,i,j));
         }
     }
-
+}
+operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplicationHelper(A,B,B.M).T {
+    res := make(MatrixVectorMultiplicationHelper(A,B,B.M).T);
+    inline vec_mul_mat(a,b,*res);
     return res;
 }
 
+// * User has to know, what type the result has to be!
+mul :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
+    if !is_number(B) {B = null; return;}
+} {
+    #if CHECKS {
+        #run assert(A.N == C.N, "Dimensions mismatch: a.rows  = %, res.rows  = %", A.N, C.N);
+        #run assert(A.M == C.M, "Dimensions mismatch: a.cols  = %, res.cols  = %", A.M, C.M);
+    }
 
+    for a {
+        set_lin(res, it_index, it * b);
+    }
+}
 operator * :: (a: $A/MatrixType, b: $B) -> MatrixCastHelper(A, B).T #modify {
     if !is_number(B) {B = null; return;}    
 } #symmetric {
     res := make(MatrixCastHelper(A, B).T, false);
-
-    for a {
-        set_lin(*res, it_index, it * b);
-    }
-
+    inline mul(a,b,*res);
     return res;
 }
 
@@ -466,7 +489,8 @@ mul :: (a: *$A/MatrixType, b: $B) #modify {
 
 
 
-
+// mat_div_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+// }
 operator / :: inline (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.M,B.M).T { 
     return inverse(b) * a;
 }
@@ -475,15 +499,19 @@ operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplication
     return inverse(b) * a;
 }
 
+// * User has to know, what type the result has to be!
+div :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
+    if !is_number(B) { B = null; return; }
+} {
+    for a {
+        set_lin(res, it_index, it / b);
+    }
+}
 operator / :: inline (a: $A/MatrixType, b: $B) -> MatrixCastHelper(A, B).T #modify {
     if !is_number(B) {B = null; return;}
 } { 
     res := make(MatrixCastHelper(A, B).T, false);
-
-    for a {
-        set_lin(*res, it_index, it / b);
-    }
-
+    inline div(a,b,*res);
     return res;
 }
 
@@ -502,19 +530,22 @@ div :: (a: *$A/MatrixType, b: $B) #modify {
 }
 
 
-
-
-operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
+// * User has to know, what type the result has to be!
+mat_add_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     #if CHECKS {
-        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
+        #run assert(A.N == B.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, B.N);
+        #run assert(A.N == C.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, C.N);
+        #run assert(A.M == B.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, B.M);
+        #run assert(A.M == C.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, C.M);
     }
-    
-    res := make(MatrixMatrixCastHelper(A,B).T, false);
 
     for a {
-        set_lin(*res, it_index, it + get_lin(b, it_index));
+        set_lin(res, it_index, it + get_lin(b, it_index));
     }
-
+}
+operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
+    res := make(MatrixMatrixCastHelper(A,B).T, false);
+    inline mat_add_mat(a,b,*res);
     return res;
 }
 
@@ -539,18 +570,22 @@ add :: (a: *$A/MatrixType, b: $B/MatrixType) {
 
 
 
-
-operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
+// * User has to know, what type the result has to be!
+mat_sub_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     #if CHECKS {
-        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
+        #run assert(A.N == B.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, B.N);
+        #run assert(A.N == C.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, C.N);
+        #run assert(A.M == B.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, B.M);
+        #run assert(A.M == C.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, C.M);
     }
-    
-    res := make(MatrixMatrixCastHelper(A,B).T, false);
 
     for a {
-        set_lin(*res, it_index, it - get_lin(b, it_index));
+        set_lin(res, it_index, it - get_lin(b, it_index));
     }
-
+}
+operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
+    res := make(MatrixMatrixCastHelper(A,B).T, false);
+    inline mat_sub_mat(a,b,*res);
     return res;
 }
 
@@ -583,12 +618,10 @@ operator - :: (a: $A/MatrixType) -> A {
 
 
 
-// TODO be careful with e.g. symmetric matrices:
-// if I first set Aij = -Aji and then Aji = -Aij = -(-Aji) = Aji
-// so there's no negation happening at all!
+// ? by iterating through the raw data, there is no double-negation issue!
 neg :: (a: *$A/MatrixType) {
-    for a {
-        set_lin(a, it_index, -it);
+    for raw(a) {
+        set_raw(a, it_raw_index, -it);
     }
 }
 
@@ -606,11 +639,11 @@ neg :: (a: *$A/MatrixType) {
 
 
 
-// Matrix Computations, 4th edition
-// The Johns Hopkins University Press
-// Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
-// Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
-// C = C + A*B
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
+// ? Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
+// ? C = C + A*B
 saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #run assert(A.N == C.N);
@@ -622,7 +655,7 @@ saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
         for k: 0..A.M-1 {
             tmp := get(b,k,j);
             for i: 0..C.N-1 {
-                set(c,i,j, get(<<c,i,j) + get(a,i,k) * tmp);
+                set(c,i,j, get(c,i,j) + get(a,i,k) * tmp);
             }
         }
     }
@@ -713,8 +746,8 @@ swap_columns :: (m: *$M/MatrixType, i: int, j: int) {
     if i == j then return;
 
     for r: 0..M.N-1 {
-        tmp := get(<<m, r, i);
-        set(m, r, i, get(<<m, r, j));
+        tmp := get(m, r, i);
+        set(m, r, i, get(m, r, j));
         set(m, r, j, tmp);
     }
 }
@@ -729,8 +762,8 @@ swap_rows :: (m: *$M/MatrixType, i: int, j: int) {
     if i == j then return;
 
     for c: 0..M.M-1 {
-        tmp := get(<<m, i, c);
-        set(m, i, c, get(<<m, j, c));
+        tmp := get(m, i, c);
+        set(m, i, c, get(m, j, c));
         set(m, j, c, tmp);
     }
 }
@@ -761,8 +794,8 @@ transpose :: (m: *$M/MatrixType) {
 
     for i: 0..M.N-1 {
         for j: i+1..M.M-1 {
-            tmp := get(<<m, i, j);
-            set(m, i, j, get(<<m, j, i));
+            tmp := get(m, i, j);
+            set(m, i, j, get(m, j, i));
             set(m, j, i, tmp);
         }
     }
@@ -773,25 +806,23 @@ transpose :: (m: *$M/MatrixType) {
 
 
 conjugate :: (m: $M/MatrixType) -> M #must {
-    #if #run !is_complex_number(M.data_type) {
-        return m;
+    res := make(M, false);
+    #if #run !is_non_real_number(M.data_type) {
+        copy(*res, m);
     } else {
-        res := make(M, false);
-
-        for m {
-            set_lin(*res, it_index, conjugate(it));
+        for raw(*m) {
+            set_raw(*res, it_raw_index, conjugate(it));
         }
-
-        return res;
     }
+    return res;
 }
 
 conjugate :: inline (m: *$M/MatrixType) {
-    #if #run !is_complex_number(M.data_type) {
+    #if #run !is_non_real_number(M.data_type) {
         return;
     } else {
-        for m {
-            set(m, it_index, conjugate(it));
+        for raw(m) {
+            set_raw(m, it_raw_index, conjugate(it));
         }
     }
 }
@@ -845,10 +876,10 @@ tensor :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A, B, A.N*B.N, A.
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Lemma 3.5.4 Matrix Norms, page 176
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Lemma 3.5.4 Matrix Norms, page 176
 
 // this needs the largest eigenvalue
 // norm_2 :: inline (v: Vector) -> float64 {
