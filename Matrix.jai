@@ -322,6 +322,8 @@ mat_submatrix :: (
 */
 
 
+// TODO non-allocating versions of these functions!
+
 row :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.M).T #must {
     #if CHECKS {
         assert(i >= 0 && i < M.N);

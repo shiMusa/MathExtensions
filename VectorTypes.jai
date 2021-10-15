@@ -123,6 +123,76 @@ for_expansion :: (ve: *VectorRawForExpansion($V), body: Code, flags: For_Flags) 
 //    ###    ########  ######        ##       ##    ##        ########  ######
 
 
+
+// ########  ######## ##    ##  ######  ########    ##     ## #### ######## ##      ##
+// ##     ## ##       ###   ## ##    ## ##          ##     ##  ##  ##       ##  ##  ##
+// ##     ## ##       ####  ## ##       ##          ##     ##  ##  ##       ##  ##  ##
+// ##     ## ######   ## ## ##  ######  ######      ##     ##  ##  ######   ##  ##  ##
+// ##     ## ##       ##  ####       ## ##           ##   ##   ##  ##       ##  ##  ##
+// ##     ## ##       ##   ### ##    ## ##            ## ##    ##  ##       ##  ##  ##
+// ########  ######## ##    ##  ######  ########       ###    #### ########  ###  ###
+
+DenseVectorView :: struct(_T: Type, _N: int) {
+    using _v: VectorType(
+        #this,
+        _T,
+        _N,
+        .DENSE,
+
+        dense_vector_view_init,
+
+        dense_vector_view_get,
+        dense_vector_view_set,
+
+        dense_vector_view_n_raw,
+        dense_vector_view_get, // same as above for dense vectors
+        dense_vector_view_set, // same as above for dense vectors
+        dense_vector_view_raw_index
+    );
+
+    start_index: int = 0;
+    stride: int = 1;
+    vec: *DenseVector;
+}
+
+
+dvecview :: inline(vec: *DenseVector($T,$N), $start_index: int = 0, $num_elements: int = N, $stride: int = 1) -> DenseVectorView(T,num_elements) {
+    #if CHECKS {
+        #run assert(start_index + (num_elements-1) * stride <= N);
+    }
+    res : DenseVectorView(T,num_elements);
+    res.start_index = start_index;
+    res.stride = stride;
+    res.vec = vec;
+    return res;
+}
+
+
+#scope_file
+dense_vector_view_init :: inline (v: *DenseVectorView($T, $N), $initialize_variables: bool = true) {
+    #if initialize_variables {
+        for 0..N-1 {
+            v.data[it] = zero(T);
+        }
+    }
+}
+dense_vector_view_n_raw :: inline (v: DenseVectorView($T, $N)) -> int {
+    return N;
+}
+dense_vector_view_raw_index :: inline (v: DenseVectorView($T, $N), i: int) -> int {
+    return i;
+}
+dense_vector_view_get :: inline (v: DenseVectorView($T, $N), i: int) -> T {
+    return v.vec.data[v.start_index + v.stride * i];
+}
+dense_vector_view_set :: inline (v: *DenseVectorView($T, $N), i: int, value: T) {
+    v.vec.data[v.start_index + v.stride * i] = value;
+}
+#scope_export
+
+
+
+
 // ########  ######## ##    ##  ######  ########
 // ##     ## ##       ###   ## ##    ## ##
 // ##     ## ##       ####  ## ##       ##

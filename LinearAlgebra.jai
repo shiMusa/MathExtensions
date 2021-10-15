@@ -1,8 +1,4 @@
 
-// [^\[\(\s-]*\[([^ ])\]\[([^ ])\]
-
-
-
 
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
@@ -28,10 +24,9 @@ solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
 
     mu := a / sigma;
     det := get(mu,0,0) * get(mu,1,1) - get(mu,0,1) * get(mu,1,0);
-    g := b / sigma;
+    g := b / sigma / det;
 
     m := dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0));
-    div(m, det, *m);
     mat_mul_vec(m, g, x);
 }
 
@@ -154,11 +149,7 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType, x: *
                 sum1 += get(R,i-1,j) * get(x,j);
                 sum2 += get(R,i,j) * get(x,j);
             }
-            c : DenseVector(U, 2) = ---;
-            vec_init(*c,
-                get(b,i-1) - sum1,
-                get(b,i) - sum2
-            );
+            c := dvec(2, get(b,i-1)-sum1, get(b,i)-sum2);
             tmp := solve_linear_2x2(a, c);
             set(x, i-1, get(tmp,0));
             set(x, i,   get(tmp,1));
@@ -181,17 +172,19 @@ solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop                 :: solve_linear_orthogonal_projection;
 solve_linear_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
     res := make(VectorHelper(A,B,A.M).T);
-    inline solve_linear_orthogonal_projection(Q,b,*res);
+    QQ := copy(Q);
+    inline solve_linear_orthogonal_projection(*QQ,b,*res);
     return res;
 }
-solve_linear_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_orthogonal_projection :: (Q: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         #run assert(A.M == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
         #run assert(A.M == C.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, C.N);
         assert(is_unitary(Q));
     }
 
-    mat_mul_vec(dagger(Q), b, x);
+    dagger(Q);
+    mat_mul_vec(<<Q, b, x);
 }
 
 
@@ -207,21 +200,21 @@ solve_linear_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType, x: *$
 slsop :: solve_linear_successive_orthogonal_projection;
 solve_linear_successive_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
     res := make(VectorHelper(A,B,A.M).T, false);
-    inline solve_linear_successive_orthogonal_projection(Q,b,*res);
+    bb := copy(b);
+    inline solve_linear_successive_orthogonal_projection(Q,*bb,*res);
     return res;
 }
-solve_linear_successive_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_successive_orthogonal_projection :: (Q: $A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         #run assert(A.M == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
         #run assert(A.M == C.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, C.N);
         assert(is_unitary(Q));
     }
-    bb := copy(b);
 
     for i: 0..A.M-1 {
         q := row(Q, i);
-        set(x,i, conjugate(q) * bb); // not sure if this is performant...
-        bb = bb - q * get(x,i);
+        set(x,i, conjugate(q) * b); // not sure if this is performant...
+        b = b - q * get(x,i);
     }
 }
 
