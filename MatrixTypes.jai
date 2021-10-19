@@ -374,105 +374,105 @@ dense_heap_matrix_from_raw_index :: inline (m: DenseHeapMatrix($T, $N, $M), i: i
 #scope_export
 
 
-// ##     ## ######## ##       ########  ######## ########
-// ##     ## ##       ##       ##     ## ##       ##     ##
-// ##     ## ##       ##       ##     ## ##       ##     ##
-// ######### ######   ##       ########  ######   ########
-// ##     ## ##       ##       ##        ##       ##   ##
-// ##     ## ##       ##       ##        ##       ##    ##
-// ##     ## ######## ######## ##        ######## ##     ##
+// // ##     ## ######## ##       ########  ######## ########
+// // ##     ## ##       ##       ##     ## ##       ##     ##
+// // ##     ## ##       ##       ##     ## ##       ##     ##
+// // ######### ######   ##       ########  ######   ########
+// // ##     ## ##       ##       ##        ##       ##   ##
+// // ##     ## ##       ##       ##        ##       ##    ##
+// // ##     ## ######## ######## ##        ######## ##     ##
 
-MatrixHelper :: struct(A: Type, B: Type, N: int, M: int) {
-    T :: #run matrix_helper(A,B,N,M);
-}
+// MatrixHelper :: struct(A: Type, B: Type, N: int, M: int) {
+//     T :: #run matrix_helper(A,B,N,M);
+// }
 
-// TODO: maybe be smart about this at some point?
-#scope_file
-matrix_helper :: ($a: Type, $b: Type, $N: int, $M: int) -> Type {
-    if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, N, M);
-    }
-    return DenseMatrix(UpCast(a.data_type, b.data_type).T, N, M);
-}
+// // TODO: maybe be smart about this at some point?
+// #scope_file
+// matrix_helper :: ($a: Type, $b: Type, $N: int, $M: int) -> Type {
+//     if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
+//         return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, N, M);
+//     }
+//     return DenseMatrix(UpCast(a.data_type, b.data_type).T, N, M);
+// }
 
-#scope_export
-MatrixCastHelper :: struct(A: Type, data_type: Type) {
-    T :: #run matrix_cast_helper(A,data_type);
-}
-#scope_file
-matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
-    if a.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(UpCast(a.data_type, b).T, a.N, a.M);
-    }
-    return DenseMatrix(UpCast(a.data_type, b).T, a.N, a.M);
-}
+// #scope_export
+// MatrixCastHelper :: struct(A: Type, data_type: Type) {
+//     T :: #run matrix_cast_helper(A,data_type);
+// }
+// #scope_file
+// matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
+//     if a.flags == .DENSE_HEAP {
+//         return DenseHeapMatrix(UpCast(a.data_type, b).T, a.N, a.M);
+//     }
+//     return DenseMatrix(UpCast(a.data_type, b).T, a.N, a.M);
+// }
 
-#scope_export
-MatrixMatrixCastHelper :: struct(A: Type, B: Type) {
-    T :: #run matrix_matrix_cast_helper(A,B);
-}
-#scope_file
-matrix_matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
-    if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, a.N, a.M);
-    }
-    return DenseMatrix(UpCast(a.data_type, b.data_type).T, a.N, a.M);
-}
-
-
-#scope_export
-MatrixSubmatrixHelper :: struct(A: Type, N: int, M: int) {
-    T :: #run matrix_submatrix_helper(A, N, M);
-}
-#scope_file
-matrix_submatrix_helper :: ($a: Type, $N: int, $M: int) -> Type {
-    if a.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(a.data_type, N, M);
-    }
-    return DenseMatrix(a.data_type, N, M);
-}
+// #scope_export
+// MatrixMatrixCastHelper :: struct(A: Type, B: Type) {
+//     T :: #run matrix_matrix_cast_helper(A,B);
+// }
+// #scope_file
+// matrix_matrix_cast_helper :: ($a: Type, $b: Type) -> Type {
+//     if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
+//         return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, a.N, a.M);
+//     }
+//     return DenseMatrix(UpCast(a.data_type, b.data_type).T, a.N, a.M);
+// }
 
 
-#scope_export 
-MatrixVectorHelper :: struct(A: Type, N: int) {
-    T :: #run matrix_vector_helper(A, N);
-}
-#scope_file
-matrix_vector_helper :: ($a: Type, $N: int) -> Type {
-    // TODO other types!
-    return DenseVector(a.data_type, N);
-}
+// #scope_export
+// MatrixSubmatrixHelper :: struct(A: Type, N: int, M: int) {
+//     T :: #run matrix_submatrix_helper(A, N, M);
+// }
+// #scope_file
+// matrix_submatrix_helper :: ($a: Type, $N: int, $M: int) -> Type {
+//     if a.flags == .DENSE_HEAP {
+//         return DenseHeapMatrix(a.data_type, N, M);
+//     }
+//     return DenseMatrix(a.data_type, N, M);
+// }
 
-#scope_export 
-MatrixMultiplicationHelper :: struct(A: Type, B: Type, N: int, M: int) {
-    T :: #run matrix_multiplication_helper(A,B,N,M);
-}
-#scope_file
-matrix_multiplication_helper :: ($a: Type, $b: Type, $N: int, $M: int) -> Type {
-    if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, N, M);
-    }
-    return DenseMatrix(UpCast(a.data_type, b.data_type).T, N, M);
-}
 
-#scope_export
-MatrixTransposeHelper :: struct(A: Type) {
-    T :: #run matrix_transpose_helper(A);
-}
-#scope_file
-matrix_transpose_helper :: ($a: Type) -> Type {
-    if a.flags == .DENSE_HEAP {
-        return DenseHeapMatrix(a.data_type, a.M, a.N);
-    }
-    return DenseMatrix(a.data_type, a.M, a.N);
-}
+// #scope_export 
+// MatrixVectorHelper :: struct(A: Type, N: int) {
+//     T :: #run matrix_vector_helper(A, N);
+// }
+// #scope_file
+// matrix_vector_helper :: ($a: Type, $N: int) -> Type {
+//     // TODO other types!
+//     return DenseVector(a.data_type, N);
+// }
 
-#scope_file 
-matrix_vector_multiplication_helper :: ($a: Type, $b: Type, $N: int) -> Type {
-    // TODO other types
-    return DenseVector(UpCast(a.data_type, b.data_type).T, N);
-}
-#scope_export
-MatrixVectorMultiplicationHelper :: struct (A: Type, B: Type, N: int) {
-    T :: #run matrix_vector_multiplication_helper(A,B,N);
-}
+// #scope_export 
+// MatrixMultiplicationHelper :: struct(A: Type, B: Type, N: int, M: int) {
+//     T :: #run matrix_multiplication_helper(A,B,N,M);
+// }
+// #scope_file
+// matrix_multiplication_helper :: ($a: Type, $b: Type, $N: int, $M: int) -> Type {
+//     if a.flags == .DENSE_HEAP || b.flags == .DENSE_HEAP {
+//         return DenseHeapMatrix(UpCast(a.data_type, b.data_type).T, N, M);
+//     }
+//     return DenseMatrix(UpCast(a.data_type, b.data_type).T, N, M);
+// }
+
+// #scope_export
+// MatrixTransposeHelper :: struct(A: Type) {
+//     T :: #run matrix_transpose_helper(A);
+// }
+// #scope_file
+// matrix_transpose_helper :: ($a: Type) -> Type {
+//     if a.flags == .DENSE_HEAP {
+//         return DenseHeapMatrix(a.data_type, a.M, a.N);
+//     }
+//     return DenseMatrix(a.data_type, a.M, a.N);
+// }
+
+// #scope_file 
+// matrix_vector_multiplication_helper :: ($a: Type, $b: Type, $N: int) -> Type {
+//     // TODO other types
+//     return DenseVector(UpCast(a.data_type, b.data_type).T, N);
+// }
+// #scope_export
+// MatrixVectorMultiplicationHelper :: struct (A: Type, B: Type, N: int) {
+//     T :: #run matrix_vector_multiplication_helper(A,B,N);
+// }

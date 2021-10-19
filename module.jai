@@ -11,9 +11,12 @@
 #load "Approximations.jai";
 
 #load "VectorTypes.jai";
-#load "Vector.jai";
 #load "MatrixTypes.jai";
+#load "Vector.jai";
 #load "Matrix.jai";
+#load "VectorOperators.jai";
+#load "MatrixOperators.jai";
+
 #load "Checks.jai";
 #load "LinearAlgebra.jai";
 

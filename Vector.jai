@@ -37,7 +37,7 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
     append(*builder, "(");
     for v {
         append(*builder, str(it));
-        if it_index != v.N-1 {
+        if it_index != dim(v)-1 {
             append(*builder, ", ");
         }
     }
@@ -61,30 +61,39 @@ str :: (v: $V/VectorType, offset: int = 0, indent: int = 4, indent_character: st
 #### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
 */
 
-
-vec_cast :: ($type: Type, v: $V/VectorType) -> VectorCastHelper(V, type).T {
-    res := make(VectorCastHelper(V, type).T); // initialize all values to zero, important for sparse?
-
-    for raw(*v) {
-        set_raw(*res, it_raw_index, ncast(type, it));
+// * Assuming `to` is initialized to zeroes.
+// * User has to know, what type the result has to be!
+cast_to :: (from: $V/VectorType, to: *$W/VectorType) {
+    for raw(*from) {
+        set(to, it_index, ncast(W.data_type, it));
     }
-
-    return res;
 }
+
+// vec_cast :: ($type: Type, v: $V/VectorType) -> VectorCastHelper(V, type).T {
+//     res := make(VectorCastHelper(V, type).T); // initialize all values to zero, important for sparse?
+
+//     for raw(*v) {
+//         set_raw(*res, it_raw_index, ncast(type, it));
+//     }
+
+//     return res;
+// }
 
 copy :: (v: $V/VectorType) -> V {
     res := make(V, false);
 
-    for v {
-        set_lin(*res, it_lin_index, it);
+    for raw(*v) {
+        set_raw(*res, it_raw_index, it);
     }
 
     return res;
 }
 
-copy :: (to: *$V/VectorType, from: V) {
+// * Assuming `to` is initialized to zeroes.
+// * User has to know, what type the result has to be!
+copy :: (from: $V, to: *V/VectorType) { // ! switched from and to order!!!!!!!!!!!!!!!!!!!!!!!!!!!
     for raw(*from) {
-        set_raw(to, it_raw_index, it);
+        set(to, it_index, it);
     }
 }
 
@@ -92,7 +101,7 @@ copy :: (to: *$V/VectorType, from: V) {
 vec_init :: inline (v: *$V/VectorType, values: ..$T) {
     #if CHECKS {
         #assert(is_minor_number_type(V.data_type, T));
-        assert(values.count <= V.N, "too many values (%) for vector of % entries\n", values.count, V.N);
+        assert(values.count <= dim(v), "too many values (%) for vector of % entries\n", values.count, dim(v));
     }
     for values {
         set(v, it_index, ncast(V.data_type, it));
@@ -111,21 +120,21 @@ vec_init_all :: inline (v: *$V/VectorType, value: $T) {
 
 
 
-// inclusive left, exclusive right bounds
-vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSizeHelper(V, to-from).T {
-    #if CHECKS {
-        #run assert(to > from, "bounds not possible: to(%) <= from(%)\n", to, from);
-        #run assert(to <= V.N, "bound not possible: to(%) >= N(%)\n", to, V.N);
-        #run assert(from >= 0, "bound not possible: from(%) < 0\n", from);
-    }
-    res := make(VectorSizeHelper(V, to-from).T, false);
+// // inclusive left, exclusive right bounds
+// vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSizeHelper(V, to-from).T {
+//     #if CHECKS {
+//         #run assert(to > from, "bounds not possible: to(%) <= from(%)\n", to, from);
+//         #run assert(to <= V.N, "bound not possible: to(%) >= N(%)\n", to, V.N);
+//         #run assert(from >= 0, "bound not possible: from(%) < 0\n", from);
+//     }
+//     res := make(VectorSizeHelper(V, to-from).T, false);
 
-    for res {
-        set(*res, it_index, get(v, it_index + from));
-    }
+//     for res {
+//         set(*res, it_index, get(v, it_index + from));
+//     }
 
-    return res;
-}
+//     return res;
+// }
 
 
 /*
@@ -140,39 +149,18 @@ vec_subvector :: (v: $V/VectorType, $from: int, $to: int) -> VectorSizeHelper(V,
 
 
 
-operator == :: (a: $V/VectorType, b: $B/VectorType) -> bool {
-    #if V.N != B.N {
-        return false;
-    } else {
-
-        for a {
-            if it != get(b, it_index) then return false;
-        }
-
-        return true;
-    }
-}
 
 
 
 
-operator * :: (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
+
+dot :: (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
     #if CHECKS {
-        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
+        assert(dim(a) == dim(b), "vectors not of same dimensions (%, %)\n", dim(a), dim(b));
     }
     res := zero(UpCast(A.data_type,B.data_type).T);
     for a {
         res += it * get(b, it_index);
-    }
-    return res;
-}
-
-operator * :: (a: $A/VectorType, b: $B) -> VectorCastHelper(A,B).T #modify {
-    if !is_number(B) {B = null; return;}    
-} #symmetric {
-    res := make(VectorCastHelper(A,B).T, false);
-    for a {
-        set(*res, it_index, it * b);
     }
     return res;
 }

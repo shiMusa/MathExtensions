@@ -15,6 +15,7 @@ Feel free to add functionality and performance upgrades.
 - Current work focuses on making everything as generic as possible to enable different types of matrices/vector, heap/stack allocated, various number types.
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
 - Implement _views_ for vectors and matrices which themselves behave like vectors and matrices (they implement `VectorType` and `MatrixType`).
+- When generalizing the `MatrixType` and `VectorType` such that the dimensions are run-time variables (usefull for lots of applications), we cannot use helper types for the return parameters. Therefore, the operators `+ - / *` etc. have to be individually overloaded while the functions `add sub mul div` etc. can be kept general since the result is stored in one of the arguments.
 - I'll probably also use the [BLAS](http://www.netlib.org/blas/) naming convention and functions
 (- maybe add `Octonion($T)` etc. later)
 

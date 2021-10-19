@@ -156,16 +156,23 @@ is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
 #### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
 */
 
-
-mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
-    res := make(MatrixCastHelper(M, type).T, false);
-
-    for raw(*m) {
-        set_raw(*res, it_raw_index, ncast(type, it));
+// * Assuming to is initialized to zeroes.
+// * User has to know, what type the result has to be!
+cast_to :: (from: $F/MatrixType, to: *$T/MatrixType) {
+    for raw(*from) {
+        set(to, it_row, it_column, ncast(T.data_type, it));
     }
-
-    return res;
 }
+
+// mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
+//     res := make(MatrixCastHelper(M, type).T, false);
+
+//     for raw(*m) {
+//         set_raw(*res, it_raw_index, ncast(type, it));
+//     }
+
+//     return res;
+// }
 
 copy :: (m: $M/MatrixType) -> M #must {
     res := make(M, false);
@@ -177,7 +184,7 @@ copy :: (m: $M/MatrixType) -> M #must {
     return res;
 }
 
-copy :: inline (to: *$M/MatrixType, from: M) {
+copy :: inline (from: $M, to: *M/MatrixType) { // ! switched order!!!!!!!!!!!!!!!!!!!!!!!!!!!
     for from {
         set_lin(to, it_index, it);
     }
@@ -200,8 +207,8 @@ mat_init :: (m: *$M/MatrixType, vals: ..$T) {
 }
 
 mat_init_all :: (m: *$M/MatrixType, value: $T) {
-    for m {
-        set_lin(m, it_index, ncast(M.data_type, value));
+    for raw(m) {
+        set_raw(m, it_raw_index, ncast(M.data_type, value));
     }
 }
 
@@ -215,7 +222,7 @@ mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = false) {
             }
         }
     } else {
-        for i: 0..min(M.N, M.M)-1 {
+        for i: 0..min(rows(m), cols(m))-1 {
             set(m, i, i, one(M.data_type));
         }
     }
