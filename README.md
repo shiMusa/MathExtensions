@@ -12,6 +12,15 @@ Feel free to add functionality and performance upgrades.
 
 ## Current thoughts
 
+- I have to rethink the focus of the implementations: 
+  1. remove all operators and all functions that return a concrete type
+  2. remove all automatic casting in the remaining functions
+  3. write default implementations (slow, but they work)
+  4. specialize to optimize later
+  5. generate functions with return parameters maybe with compile-time code generation
+  6. use the latter for operator overloading
+
+
 - Current work focuses on making everything as generic as possible to enable different types of matrices/vector, heap/stack allocated, various number types.
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
 - Implement _views_ for vectors and matrices which themselves behave like vectors and matrices (they implement `VectorType` and `MatrixType`).

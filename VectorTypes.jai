@@ -7,7 +7,7 @@
 // ##       ##       ##     ## ##    ##  ##    ##
 // ##       ######## ##     ##  ######    ######
 
-VECTOR_FLAGS :: enum_flags u32 {
+VECTOR_FLAGS :: enum_flags u8 {
     VIEW  :: 0;
     DENSE :: (1 << 0);
     HEAP  :: (1 << 1);
@@ -30,8 +30,6 @@ VectorType :: struct(
     dim: (v: vector_type) -> int,
     flags: VECTOR_FLAGS,
 
-    init: (v: *vector_type, $b: bool),
-
     get: (v: vector_type, int) -> data_type,
     set: (v: *vector_type, int, data_type) -> (),
 
@@ -40,10 +38,6 @@ VectorType :: struct(
     set_raw: (v: *vector_type, int, data_type) -> (),
     from_raw_index: (v: vector_type, int) -> int
 ){}
-
-init :: inline (v: *$V/VectorType, $initialize_variables: bool = true) {
-    V.init(v, initialize_variables);
-}
 
 dim :: inline (v: *$V/VectorType) -> int {
     return V.dim(<<v);
@@ -173,18 +167,9 @@ vecview :: inline(vec: *$V/VectorType, start_index: int = 0, $num_elements: int,
     return res;
 }
 
-
 #scope_file
 vector_view_dim :: inline (v: VectorView($V, $N)) -> int {
     return N;
-}
-vector_view_init :: inline (v: *VectorView($V, $N), $initialize_variables: bool = true) {
-    #if initialize_variables {
-        z := zero(V.data_type);
-        for 0..N-1 {
-            set(v, it, z);
-        }
-    }
 }
 vector_view_n_raw :: inline (v: VectorView($T, $N)) -> int {
     return N; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
@@ -251,14 +236,6 @@ hvecview :: inline(vec: *$V/VectorType, start_index: int = 0, num_elements: int 
 #scope_file
 heap_vector_view_dim :: inline (v: HeapVectorView) -> int {
     return v.dim;
-}
-heap_vector_view_init :: inline (v: *HeapVectorView, $initialize_variables: bool = true) {
-    #if initialize_variables {
-        z := zero(v.data_type);
-        for 0..dim(v)-1 {
-            set(v, it, z);
-        }
-    }
 }
 heap_vector_view_n_raw :: inline (v: HeapVectorView) -> int {
     return v.dim;
@@ -330,13 +307,6 @@ dvec :: ($T: Type, $N: int, values: ..$U) -> DenseVector(T,N) {
 #scope_file
 dense_vector_dim :: inline (v: DenseVector($T, $N)) -> int {
     return N;
-}
-dense_vector_init :: inline (v: *DenseVector($T, $N), $initialize_variables: bool = true) {
-    #if initialize_variables {
-        for 0..N-1 {
-            v.data[it] = zero(T);
-        }
-    }
 }
 dense_vector_n_raw :: inline (v: DenseVector($T, $N)) -> int {
     return N;
@@ -411,17 +381,18 @@ dhvec :: ($T: Type, N: int, values: ..$U) -> DenseHeapVector(T) {
     return res;
 }
 
-#scope_file
-dense_heap_vector_dim :: inline (v: DenseHeapVector($T)) -> int {
-    return v.dim;
-}
-dense_heap_vector_init :: inline (v: *DenseHeapVector($T), $initialize_variables: bool = true) {
+init :: inline (v: *DenseHeapVector($T), $initialize_variables: bool = true) {
     v.data = NewArray(v.dim, T, false);
     #if initialize_variables {
         for 0..v.dim-1 {
             v.data[it] = zero(T);
         }
     }
+}
+
+#scope_file
+dense_heap_vector_dim :: inline (v: DenseHeapVector($T)) -> int {
+    return v.dim;
 }
 dense_heap_vector_n_raw :: inline (v: DenseHeapVector($T)) -> int {
     return v.dim;
@@ -436,77 +407,3 @@ dense_heap_vector_set :: inline (v: *DenseHeapVector($T), i: int, value: T) {
     v.data[i] = value;
 }
 #scope_export
-
-
-
-
-// // ##     ## ######## ##       ########  ######## ########   ######
-// // ##     ## ##       ##       ##     ## ##       ##     ## ##    ##
-// // ##     ## ##       ##       ##     ## ##       ##     ## ##
-// // ######### ######   ##       ########  ######   ########   ######
-// // ##     ## ##       ##       ##        ##       ##   ##         ##
-// // ##     ## ##       ##       ##        ##       ##    ##  ##    ##
-// // ##     ## ######## ######## ##        ######## ##     ##  ######
-
-
-// VectorHelper :: struct(A: Type, B: Type, N: int) {
-//     T :: #run vector_helper(A,B,N);
-// }
-// #scope_file
-// vector_helper :: ($A: Type, $B: Type, $N: int) -> Type {
-//     if A.flags == .DENSE_HEAP || B.flags == .DENSE_HEAP {
-//         return DenseHeapVector(UpCast(A.data_type, B.data_type).T, N);
-//     }
-//     return DenseVector(UpCast(A.data_type, B.data_type).T, N);
-// }
-// #scope_export
-
-// VectorCastHelper :: struct(V: Type, t: Type) {
-//     T :: #run vector_cast_helper(V, t);
-// }
-// #scope_file
-// vector_cast_helper :: ($V: Type, $t: Type) -> Type {
-//     if V.flags == .DENSE_HEAP {
-//         return DenseHeapVector(UpCast(V.data_type, t).T, V.N);
-//     }
-//     return DenseVector(UpCast(V.data_type,t).T, V.N); // TODO other types
-// }
-// #scope_export
-
-
-// VectorSizeHelper :: struct(V: Type, N: int) {
-//     T :: #run vector_size_helper(V, N);
-// }
-// #scope_file
-// vector_size_helper :: ($V: Type, $N: int) -> Type {
-//     if V.flags == .DENSE_HEAP {
-//         return DenseHeapVector(V.data_type, N);
-//     }
-//     return DenseVector(V.data_type, N);
-// }
-// #scope_export
-
-
-// VectorMatrixHelper :: struct(A: Type, B: Type) {
-//     T :: #run vector_matrix_helper(A,B);
-// }
-// #scope_file
-// vector_matrix_helper :: ($A: Type, $B: Type) -> Type {
-//     if A.flags == .DENSE_HEAP || B.flags == .DENSE_HEAP {
-//         return DenseHeapMatrix(UpCast(A.data_type, B.data_type).T, A.N, B.N);
-//     }
-//     return DenseMatrix(UpCast(A.data_type, B.data_type).T, A.N, B.N);
-// }
-// #scope_export
-
-// VectorVectorHelper :: struct(A: Type, B: Type) {
-//     T :: #run vector_vector_helper(A, B);
-// }
-// #scope_file
-// vector_vector_helper :: ($A: Type, $B: Type) -> Type {
-//     if A.flags == .DENSE_HEAP || B.flags == .DENSE_HEAP {
-//         return DenseHeapVector(UpCast(A.data_type, B.data_type).T, A.N);
-//     }
-//     return DenseVector(UpCast(A.data_type, B.data_type).T, A.N); // TODO other types
-// }
-// #scope_export
