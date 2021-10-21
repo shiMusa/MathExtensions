@@ -65,9 +65,9 @@ str :: (
 
 // * Assuming `to` is initialized to zeroes.
 // * User has to know, what type the result has to be!
-cast_to :: (to: *$W/VectorType, from: $V/VectorType) {
+cast_to :: (to: *$T/VectorType, from: $F/VectorType) {
     for raw(*from) {
-        set(to, it_index, ncast(W.data_type, it));
+        set(to, it_index, ncast(T.data_type, it));
     }
 }
 
@@ -112,9 +112,7 @@ equals :: inline (a: $A/VectorType, b: $B/VectorType) -> bool {
 
 #scope_file
 equals_default :: (a: $A/VectorType, b: $B/VectorType) -> bool {
-    #if CHECKS {
-        assert(dim(a) == dim(b), "vectors not of same dimension (%,%)\n", dim(a), dim(b));
-    }
+    if dim(a) != dim(b) then return false;
 
     for a {
         if it != get(b, it_index) then return false;
@@ -253,6 +251,7 @@ outer_product_default :: (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixTyp
 // ######### ##     ## ##     ##          ## ##     ## ##     ##
 // ##     ## ##     ## ##     ##    ##    ## ##     ## ##     ##
 // ##     ## ########  ########      ######   #######  ########
+
 add :: (a: *$A/VectorType, b: $B/VectorType) {
     inline add_default(a,b);
 }

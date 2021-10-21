@@ -97,6 +97,11 @@ raw :: inline (v: *$V/VectorType) -> VectorRawForExpansion(V) {
     res.vector = v;
     return res;
 }
+raw :: inline (v: $V/VectorType) -> VectorRawForExpansion(V) {
+    res : VectorRawForExpansion(V) = ---;
+    res.vector = *v;
+    return res;
+}
 #scope_file
 VectorRawForExpansion :: struct(T: Type) {
     vector: *T;

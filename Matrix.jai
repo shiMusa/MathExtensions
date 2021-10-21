@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 /*
 
  ######  ######## ########
@@ -103,55 +97,6 @@ str :: (
 
 
 
-
-/*
-
-######## ##          ###     ######    ######
-##       ##         ## ##   ##    ##  ##    ##
-##       ##        ##   ##  ##        ##
-######   ##       ##     ## ##   ####  ######
-##       ##       ######### ##    ##        ##
-##       ##       ##     ## ##    ##  ##    ##
-##       ######## ##     ##  ######    ######
-
-*/
-
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Fig. 3.5 Matrix class derivation tree, page 268
-
-// MATRIX_FLAGS :: enum_flags u32 {
-//     NONE                   :: 0;
-//     SQUARE                 :: (1 <<  0);
-//     SYMMETRIC              :: (1 <<  1) + xx SQUARE;
-//     SYMMETRIC_POSITIVE     :: (1 <<  2) + xx SYMMETRIC;
-//     UPPER_HESSENBERG       :: (1 <<  3);
-//     LOWER_HESSENBERG       :: (1 <<  4); 
-//     ORTHOGONAL             :: (1 <<  5);
-//     TRAPEZOIDAL            :: (1 <<  6);
-//     LOWER_TRAPEZOIDAL      :: (1 <<  7) + xx TRAPEZOIDAL;
-//     LOWER_TRIANGULAR       :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
-//     UNIT_LOWER_TRAPEZOIDAL :: (1 <<  9) + xx LOWER_TRAPEZOIDAL;
-//     UNIT_LOWER_TRIANGULAR  :: (1 << 10) + xx UNIT_LOWER_TRAPEZOIDAL;
-//     UPPER_TRAPEZOIDAL      :: (1 << 11) + xx TRAPEZOIDAL;
-//     UPPER_TRIANGULAR       :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
-//     UNIT_UPPER_TRAPEZOIDAL :: (1 << 13) + xx UPPER_TRAPEZOIDAL;
-//     UNIT_UPPER_TRIANGULAR  :: (1 << 14) + xx UNIT_UPPER_TRAPEZOIDAL;    
-//     HERMITIAN              :: (1 << 15) + xx SQUARE; // not the same as symmetric for complex matrices
-//     DIAGONAL               :: (1 << 16) + xx BAND;
-//     BAND                   :: (1 << 17) + xx TRAPEZOIDAL;
-// }
-
-
-is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
-    return (m.flags & flag) > 0;
-}
-
-
-
-
-
 /*
 #### ##    ## #### ######## ####    ###    ##       #### ######## ########
  ##  ###   ##  ##     ##     ##    ## ##   ##        ##       ##  ##
@@ -164,91 +109,86 @@ is :: inline (m: $M/MatrixType, flag: MATRIX_FLAGS) -> bool {
 
 // * Assuming to is initialized to zeroes.
 // * User has to know, what type the result has to be!
-cast_to :: (from: $F/MatrixType, to: *$T/MatrixType) {
+cast_to :: (to: *$T/MatrixType, from: $F/MatrixType) {
     for raw(*from) {
         set(to, it_row, it_column, ncast(T.data_type, it));
     }
 }
 
-// mat_cast :: ($type: Type, m: $M/MatrixType) -> MatrixCastHelper(M, type).T #must {
-//     res := make(MatrixCastHelper(M, type).T, false);
+//  ######   #######  ########  ##    ##
+// ##    ## ##     ## ##     ##  ##  ##
+// ##       ##     ## ##     ##   ####
+// ##       ##     ## ########     ##
+// ##       ##     ## ##           ##
+// ##    ## ##     ## ##           ##
+//  ######   #######  ##           ##
 
-//     for raw(*m) {
-//         set_raw(*res, it_raw_index, ncast(type, it));
-//     }
-
-//     return res;
-// }
-
-copy :: (m: $M/MatrixType) -> M #must {
-    res := make(M, false);
-
-    for raw(*m) {
-        set_raw(*res, it_raw_index, it);
-    }
-
-    return res;
-}
-
-copy :: inline (from: $M, to: *M/MatrixType) { // ! switched order!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    for from {
+copy :: inline (to: *$M/MatrixType, from: M) {
+    for raw(from) {
         set_lin(to, it_index, it);
     }
 }
 
+// #### ##    ## #### ########
+//  ##  ###   ##  ##     ##
+//  ##  ####  ##  ##     ##
+//  ##  ## ## ##  ##     ##
+//  ##  ##  ####  ##     ##
+//  ##  ##   ###  ##     ##
+// #### ##    ## ####    ##
+
 mat_init :: (m: *$M/MatrixType, vals: ..$T) {
     #if CHECKS {
         #run assert(is_minor_number_type(M.data_type, T));
-        assert(vals.count <= M.N * M.M, "too many values (%) for matrix of % entries\n", vals.count, M.N * M.M);
+        assert(vals.count <= n(m), "too many values (%) for matrix of % entries\n", vals.count, n(m));
     }
-    // println("mat_init");
-    // println("    vals: %", vals);
-
     for vals {
-        j := it_index % M.M;
-        i := (it_index - j) / M.M;
-        // println("    original %, cast %", it, ncast(M.data_type, it));
-        set(m, i, j, ncast(M.data_type, it));
+        set_lin(m, it_index, ncast(M.data_type, it));
     }
 }
 
 mat_init_all :: (m: *$M/MatrixType, value: $T) {
+    v := ncast(M.data_type, value);
     for raw(m) {
-        set_raw(m, it_raw_index, ncast(M.data_type, value));
+        set_raw(m, it_raw_index, v);
     }
 }
 
-mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = false) {
+mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = true) {
     #if init_zeroes {
+        z := zero(M.data_type);
+        o := one(M.data_type);
         for m {
             if it_row == it_column {
-                set_lin(m, it_index, zero(M.data_type));
+                set_lin(m, it_index, z);
             } else {
-                set_lin(m, it_index, one(M.data_type));
+                set_lin(m, it_index, o);
             }
         }
     } else {
-        for i: 0..min(rows(m), cols(m))-1 {
-            set(m, i, i, one(M.data_type));
+        o := one(M.data_type);
+        for 0..min(rows(m), cols(m))-1 {
+            set(m, it, it, o);
         }
     }
 }
 
-mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = false) {
+mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = true) {
     #if CHECKS {
-        assert(values.count == min(M.N, M.M), "not enough values (% values) for diagonal (% values)\n", values.count, min(M.N, M.M));
+        assert(values.count == min(rows(m), cols(m)), "not enough values (% values) for diagonal (% values)\n", values.count, min(rows(m), cols(m)));
     }
     #if init_zeroes {
+        z := zero(M.data_type);
         for m {
             if it_column == it_row {
                 set_lin(m, it_index, ncast(M.data_type, values[it_row]));
             } else {
-                set_lin(m, it_index, zero(M.data_type));
+                set_lin(m, it_index, z);
             }
         }
     } else {
-        for i: 0..min(M.N, M.M)-1 {
-            set(m, i, i, ncast(M.data_type, values[i]));
+        for 0..min(rows(m), cols(m))-1 {
+            set(m, it, it, ncast(M.data_type, values[it]));
         }
     }
 }
@@ -256,32 +196,47 @@ mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = false) {
 
 mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
     #if CHECKS {
-        #run assert(M.N == 2 && M.M == 2);
+        assert(rows(m) == 2 && cols(m) == 2);
     }
     mat_init(m, 1, 1, 1, -1);
 }
 
 
 // TODO come back to that later!
-// mat_hadamard :: ($type: Type, $nestings: int) -> Matrix(type, 1<<nestings, 1<<nestings) {
+// mat_init_hadamard :: (m: *$M/MatrixType, nestings: int = 0) {
 //     #if CHECKS {
-//         #run assert(nestings >= 0, "Nestings must be >=0 but = %", nestings);
+//         assert(rows(m) == cols(m), "matrix not square (%,%)\n", rows(m), cols(m));
+//         assert(rows(m) == 1<<nestings, "matrix not of correct size: needed %, given %\n", 1<<nestings, rows(m));
+//         assert(nestings >= 0, "Nestings must be >=0 but given %\n", nestings);
 //     }
 //     #if nestings == 0 {
-//         return mat_hadamard_2(type);
+//         inline mat_init_hadamard_2(m);
 //     } else {
+//         // TODO update `tenser` before fixing this
 //         return tensor(mat_hadamard_2(type), mat_hadamard(type, nestings-1));
 //     }
 // }
 
 
-mat_reflector :: (normal: $V/VectorType) -> DenseMatrix(V.data_type, V.N, V.N) #must {
-    tau := ncast(T, 2)/(conjugate(normal)*normal);
+mat_init_reflector :: (m: *$M/MatrixType, normal: $V/VectorType) {
+    #if CHECKS {
+        #run assert(M.data_type == V.data_type, "data_types mismatch %, %\n", M.data_type, V.data_type);
+        assert(rows(m) == cols(m), "matrix not square, (%, %)\n", rows(m), cols(m));
+        assert(rows(m) == dim(normal), "dimensions mismatch mat(%,%), vec(%)\n", rows(m), cols(m), dim(normal));
+    }
+    T :: M.data_type;
+    dot := zero(T);
+    for normal {
+        dot += conjugate(it) * it;
+    }
+    dot = ncast(T, 2)/dot;
 
-    res := make(DenseMatrix(V.data_type, V.N, V.N), false);
-    mat_init_unit(*res, true);
-    sub(*res, tau * normal / normal);
-    return res;
+    mat_init_unit(m);
+    for m {
+        // TODO this should be a gaxpy, right?
+        // ! added the `conjugate` since it should be |normal><normal|
+        set(m, it_row, it_column, get(m, it_row, it_column) - tau * get(normal, it_row) * conjugate(get(normal, it_column)) )
+    }
 }
 
 
@@ -289,31 +244,40 @@ mat_reflector :: (normal: $V/VectorType) -> DenseMatrix(V.data_type, V.N, V.N) #
 
 
 
+//  ######  ##     ## ########  ##     ##    ###    ######## ########  #### ##     ##
+// ##    ## ##     ## ##     ## ###   ###   ## ##      ##    ##     ##  ##   ##   ##
+// ##       ##     ## ##     ## #### ####  ##   ##     ##    ##     ##  ##    ## ##
+//  ######  ##     ## ########  ## ### ## ##     ##    ##    ########   ##     ###
+//       ## ##     ## ##     ## ##     ## #########    ##    ##   ##    ##    ## ##
+// ##    ## ##     ## ##     ## ##     ## ##     ##    ##    ##    ##   ##   ##   ##
+//  ######   #######  ########  ##     ## ##     ##    ##    ##     ## #### ##     ##
+
 // inclusive first bound, exclusive last bound
 mat_submatrix :: (
+    sm: *$SM/MatrixType,
     m: $M/MatrixType, 
-    $row_from: int, 
-    $row_to: int, 
-    $column_from: int, 
-    $column_to: int
-) -> MatrixSubmatrixHelper(M, row_to-row_from, column_to-column_from).T #must {
+    row_from: int, 
+    row_to: int, 
+    column_from: int, 
+    column_to: int
+) {
     #if CHECKS {
-        #run assert(row_to > row_from, "\ncannot create submatrix with rows %->%\n", row_to, row_from);
-        #run assert(column_to > column_from, "\ncannot create submatrix with columns %->%\n", column_to, column_from);
-        #run assert(row_to <= M.N);
-        #run assert(column_to <= M.M);
-        #run assert(row_from >= 0);
-        #run assert(column_from >= 0);
+        #run assert(SM.data_type == M.data_type, "data_types do not match: %, %\n", SM.data_type, M.data_type);
+        assert(rows(sm) == row_to - row_from, "submatrix rows-dimensions mismatch: %, %->%\n", rows(sm), row_from, row_to);
+        assert(cols(sm) == column_to - column_from, "submatrix cols-dimensions mismatch: %, %->%\n", cols(sm), column_from, column_to);
+        assert(row_to > row_from, "cannot create submatrix with rows %->%\n", row_to, row_from);
+        assert(column_to > column_from, "cannot create submatrix with columns %->%\n", column_to, column_from);
+        assert(row_to <= rows(m));
+        assert(column_to <= cols(m));
+        assert(row_from >= 0);
+        assert(column_from >= 0);
     }
-    res := make(MatrixSubmatrixHelper(M, row_to-row_from, column_to-column_from).T, false);
 
     for i: 0..row_to-row_from-1 {
         for j: 0..column_to-column_from-1 {
-            set(*res, i, j, get(m, i+row_from, j+column_from));
+            set(sm, i, j, get(m, i+row_from, j+column_from));
         }
     }
-
-    return res;
 }
 
 
@@ -335,31 +299,27 @@ mat_submatrix :: (
 */
 
 
-// TODO non-allocating versions of these functions!
-
-row :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.M).T #must {
+row :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
     #if CHECKS {
-        assert(i >= 0 && i < M.N);
+        #run assert(V.data_type == M.data_type, "data_types do not match: %, %\n", V.data_type, M.data_type);
+        assert(dim(v) == cols(m), "dimensions mismatch v%, m%\n", dim(v), cols(m));
+        assert(i >= 0 && i < rows(m));
     }
-    res := make(MatrixVectorHelper(M, M.M).T, false);
-    for 0..M.M-1 {
-        set(*res, it, get(m,i,it));
+    for v {
+        set(v, it_index, get(m,i,it_index));
     }
-    return res;
 }
 
-column :: (m: $M/MatrixType, i: int) -> MatrixVectorHelper(M, M.N).T #must {
+column :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
     #if CHECKS {
-        assert(i >= 0 && i < M.M);
+        #run assert(V.data_type == M.data_type, "data_types do not match: %, %\n", V.data_type, M.data_type);
+        assert(dim(v) == rows(m), "dimensions mismatch v%, m%\n", dim(v), rows(m));
+        assert(i >= 0 && i < cols(m));
     }
-    res := make(MatrixVectorHelper(M, M.N).T, false);
-    for 0..M.N-1 {
-        set(*res,it, get(m,it,i));
+    for v {
+        set(v, it_index, get(m,it_index,i));
     }
-    return res;
 }
-
-
 
 
 
@@ -389,7 +349,46 @@ operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
     }
 }
 
+equals :: inline (a: $A/MatrixType, b: $B/MatrixType) -> bool {
+    #if A.flags == .DENSE && B.flags == .DENSE {
+        return equals_dense_dense(a,b);
+    } else {
+        // * default implementation
+        return equals_default(a,b);
+    }
+}
 
+#scope_file
+equals_default :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
+    if rows(a) != rows(b) || cols(a) != cols(b) then return false;
+
+    for a {
+        if it != get(b, it_index) then return false;
+    }
+
+    return true;
+}
+equals_dense_dense :: (a: DenseMatrix($AT, $AN, $AM), b: DenseMatrix($BT, $BN, $BM)) -> bool {
+    #if AN != BN || AM != BM {
+        return false;
+    } else {
+        for a {
+            if it != get_lin(b, it_index) then return false;
+        }
+        return true;
+    }
+}
+#scope_export
+
+
+
+// ##     ##    ###    ########                 ##     ##    ###    ########
+// ###   ###   ## ##      ##        ##   ##     ###   ###   ## ##      ##
+// #### ####  ##   ##     ##         ## ##      #### ####  ##   ##     ##
+// ## ### ## ##     ##    ##       #########    ## ### ## ##     ##    ##
+// ##     ## #########    ##         ## ##      ##     ## #########    ##
+// ##     ## ##     ##    ##        ##   ##     ##     ## ##     ##    ##
+// ##     ## ##     ##    ##                    ##     ## ##     ##    ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
@@ -405,86 +404,108 @@ operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mat_mul_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+
+mat_mul_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    mat_mul_mat_default(a,b,res);
+}
+
+#scope_file
+mat_mul_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     #if CHECKS {
-        #run assert(A.M == B.N, "Matrix dimensions don't match: a.cols = %, b.rows = %", A.M, B.N);
-        #run assert(A.N == C.N, "Matrix dimensions don't match: a.rows = %, c.rows = %", A.N, C.N);
-        #run assert(B.M == C.M, "Matrix dimensions don't match: b.cols = %, c.cols = %", B.M, C.M);
+        assert(cols(a) == rows(b)  , "Matrix dimensions don't match: a.cols = %, b.rows = %", cols(a), rows(b)  );
+        assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, c.rows = %", rows(a), rows(res));
+        assert(cols(b) == cols(res), "Matrix dimensions don't match: b.cols = %, c.cols = %", cols(b), cols(res));
     }
 
-    for j: 0..B.M-1 {
-        for k: 0..A.M-1 {
+    for j: 0..cols(b)-1 {
+        for k: 0..cols(a)-1 {
             tmp := get(b,k,j);
-            for i: 0..A.N-1 {
+            for i: 0..rows(a)-1 {
                 set(res,i,j, get(res,i,j) + get(a,i,k) * tmp);
             }
         }
     }
 }
+#scope_export
 
-operator * :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.N, B.M).T {
-    res := make(MatrixMultiplicationHelper(A,B,A.N, B.M).T);
-    inline mat_mul_mat(a,b,*res);
-    return res;
-}
+// ##     ##    ###    ########                 ##     ## ########  ######
+// ###   ###   ## ##      ##        ##   ##     ##     ## ##       ##    ##
+// #### ####  ##   ##     ##         ## ##      ##     ## ##       ##
+// ## ### ## ##     ##    ##       #########    ##     ## ######   ##
+// ##     ## #########    ##         ## ##       ##   ##  ##       ##
+// ##     ## ##     ##    ##        ##   ##       ## ##   ##       ##    ##
+// ##     ## ##     ##    ##                       ###    ########  ######
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mat_mul_vec :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
+
+mat_mul_vec :: inline (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
+    mat_mul_vec_default(a,b,res);
+}
+
+#scope_file
+mat_mul_vec_default :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.M == B.N, "Dimensions mismatch: a.cols = %, b.dim   = %", A.M, B.N);
-        #run assert(A.N == C.N, "Dimensions mismatch: a.rows = %, res.dim = %", A.N, C.N);
+        assert(cols(a) == rows(b) , "Dimensions mismatch: a.cols = %, b.dim   = %", cols(a), rows(b) );
+        assert(rows(a) == dim(res), "Dimensions mismatch: a.rows = %, res.dim = %", rows(a), dim(res));
     }
 
     for a {
         set(res, it_row, get(res, it_row) + it * get(b, it_column));
     }
 }
-operator * :: (a: $A/MatrixType, b: $B/VectorType) -> MatrixVectorMultiplicationHelper(A,B,A.N).T {
-    res := make(MatrixVectorMultiplicationHelper(A,B,A.N).T);
-    inline mat_mul_vec(a,b,*res);
-    return res;
-}
+#scope_export
+
+// ##     ## ########  ######                  ##     ##    ###    ########
+// ##     ## ##       ##    ##     ##   ##     ###   ###   ## ##      ##
+// ##     ## ##       ##            ## ##      #### ####  ##   ##     ##
+// ##     ## ######   ##          #########    ## ### ## ##     ##    ##
+//  ##   ##  ##       ##            ## ##      ##     ## #########    ##
+//   ## ##   ##       ##    ##     ##   ##     ##     ## ##     ##    ##
+//    ###    ########  ######                  ##     ## ##     ##    ##
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-vec_mul_mat :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
+vec_mul_mat :: inline (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
+    vec_mul_mat_default(a,b,res);
+}
+
+#scope_file
+vec_mul_mat_default :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == B.N, "Dimensions mismatch: a.dim  = %, b.rows  = %", A.N, B.N);
-        #run assert(B.M == C.N, "Dimensions mismatch: b.cols = %, res.dim = %", B.M, C.N);
+        assert(dim(a)  == rows(b), "Dimensions mismatch: a.dim  = %, b.rows  = %", dim(a) , rows(b));
+        assert(cols(b) == dim(c) , "Dimensions mismatch: b.cols = %, res.dim = %", cols(b), dim(c) );
     }
 
-    for j: 0..B.N-1 {
-        for i: 0..A.N-1 {
+    for j: 0..rows(b)-1 {
+        for i: 0..dim(a)-1 {
             set(res,j, get(res,j) + get(a,i) * get(b,i,j));
         }
     }
 }
-operator * :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplicationHelper(A,B,B.M).T {
-    res := make(MatrixVectorMultiplicationHelper(A,B,B.M).T);
-    inline vec_mul_mat(a,b,*res);
-    return res;
-}
+#scope_export
+
+
+// ##     ##    ###    ########                  ######   ######     ###    ##
+// ###   ###   ## ##      ##        ##   ##     ##    ## ##    ##   ## ##   ##
+// #### ####  ##   ##     ##         ## ##      ##       ##        ##   ##  ##
+// ## ### ## ##     ##    ##       #########     ######  ##       ##     ## ##
+// ##     ## #########    ##         ## ##            ## ##       ######### ##
+// ##     ## ##     ##    ##        ##   ##     ##    ## ##    ## ##     ## ##
+// ##     ## ##     ##    ##                     ######   ######  ##     ## ########
 
 // * User has to know, what type the result has to be!
 mul :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
     if !is_number(B) {B = null; return;}
 } {
     #if CHECKS {
-        #run assert(A.N == C.N, "Dimensions mismatch: a.rows  = %, res.rows  = %", A.N, C.N);
-        #run assert(A.M == C.M, "Dimensions mismatch: a.cols  = %, res.cols  = %", A.M, C.M);
+        assert(rows(a) == rows(c), "Dimensions mismatch: a.rows  = %, res.rows  = %", rows(a), rows(c));
+        assert(cols(a) == cols(c), "Dimensions mismatch: a.cols  = %, res.cols  = %", cols(a), cols(c));
     }
 
-    for a {
-        set_lin(res, it_index, it * b);
+    for raw(a) {
+        set_raw(res, it_raw_index, it * b);
     }
-}
-operator * :: (a: $A/MatrixType, b: $B) -> MatrixCastHelper(A, B).T #modify {
-    if !is_number(B) {B = null; return;}    
-} #symmetric {
-    res := make(MatrixCastHelper(A, B).T, false);
-    inline mul(a,b,*res);
-    return res;
 }
 
 
@@ -502,35 +523,46 @@ mul :: (a: *$A/MatrixType, b: $B) #modify {
 
 
 
+// // ##     ##    ###    ########          ##    ##     ##    ###    ########
+// // ###   ###   ## ##      ##            ##     ###   ###   ## ##      ##
+// // #### ####  ##   ##     ##           ##      #### ####  ##   ##     ##
+// // ## ### ## ##     ##    ##          ##       ## ### ## ##     ##    ##
+// // ##     ## #########    ##         ##        ##     ## #########    ##
+// // ##     ## ##     ##    ##        ##         ##     ## ##     ##    ##
+// // ##     ## ##     ##    ##       ##          ##     ## ##     ##    ##
 
-
-// mat_div_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+// // mat_div_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+// // }
+// operator / :: inline (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.M,B.M).T { 
+//     return inverse(b) * a;
 // }
-operator / :: inline (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMultiplicationHelper(A,B,A.M,B.M).T { 
-    return inverse(b) * a;
-}
 
-operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplicationHelper(B, A, A.N).T { 
-    return inverse(b) * a;
-}
+// operator / :: (a: $A/VectorType, b: $B/MatrixType) -> MatrixVectorMultiplicationHelper(B, A, A.N).T { 
+//     return inverse(b) * a;
+// }
+
+
+// ##     ##    ###    ########          ##     ######   ######     ###    ##
+// ###   ###   ## ##      ##            ##     ##    ## ##    ##   ## ##   ##
+// #### ####  ##   ##     ##           ##      ##       ##        ##   ##  ##
+// ## ### ## ##     ##    ##          ##        ######  ##       ##     ## ##
+// ##     ## #########    ##         ##              ## ##       ######### ##
+// ##     ## ##     ##    ##        ##         ##    ## ##    ## ##     ## ##
+// ##     ## ##     ##    ##       ##           ######   ######  ##     ## ########
 
 // * User has to know, what type the result has to be!
 div :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
     if !is_number(B) { B = null; return; }
 } {
-    for a {
-        set_lin(res, it_index, it / b);
+    #if CHECKS {
+        assert(rows(a) == rows(c), "Dimensions mismatch: a.rows  = %, res.rows  = %", rows(a), rows(c));
+        assert(cols(a) == cols(c), "Dimensions mismatch: a.cols  = %, res.cols  = %", cols(a), cols(c));
+    }
+
+    for raw(a) {
+        set_raw(res, it_raw_index, it / b);
     }
 }
-operator / :: inline (a: $A/MatrixType, b: $B) -> MatrixCastHelper(A, B).T #modify {
-    if !is_number(B) {B = null; return;}
-} { 
-    res := make(MatrixCastHelper(A, B).T, false);
-    inline div(a,b,*res);
-    return res;
-}
-
-
 
 div :: (a: *$A/MatrixType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
@@ -545,32 +577,42 @@ div :: (a: *$A/MatrixType, b: $B) #modify {
 }
 
 
+// ##     ##    ###    ########              ##     ##    ###    ########
+// ###   ###   ## ##      ##         ##      ###   ###   ## ##      ##
+// #### ####  ##   ##     ##         ##      #### ####  ##   ##     ##
+// ## ### ## ##     ##    ##       ######    ## ### ## ##     ##    ##
+// ##     ## #########    ##         ##      ##     ## #########    ##
+// ##     ## ##     ##    ##         ##      ##     ## ##     ##    ##
+// ##     ## ##     ##    ##                 ##     ## ##     ##    ##
+
 // * User has to know, what type the result has to be!
-mat_add_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+mat_add_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    mat_add_mat_default(a,b,res);
+}
+
+#scope_file
+mat_add_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     #if CHECKS {
-        #run assert(A.N == B.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, B.N);
-        #run assert(A.N == C.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, C.N);
-        #run assert(A.M == B.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, B.M);
-        #run assert(A.M == C.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, C.M);
+        assert(rows(a) == rows(b)  , "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(b)  );
+        assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(res));
+        assert(cols(a) == cols(b)  , "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(b)  );
+        assert(cols(a) == cols(res), "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(res));
     }
 
     for a {
         set_lin(res, it_index, it + get_lin(b, it_index));
     }
 }
-operator + :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
-    res := make(MatrixMatrixCastHelper(A,B).T, false);
-    inline mat_add_mat(a,b,*res);
-    return res;
-}
-
-
-
-
+#scope_export
 
 add :: (a: *$A/MatrixType, b: $B/MatrixType) {
+    add_default(a,b);
+}
+
+#scope_file
+add_default :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
+        #run assert(rows(a)== rows(b) && cols(a) == cols(b), "matrix dimensions do not match A(% x %), B(% x %)", rows(a), cols(a), rows(b), cols(b));
         #run assert(is_minor_number_type(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
     }
 
@@ -578,11 +620,16 @@ add :: (a: *$A/MatrixType, b: $B/MatrixType) {
         set_lin(a, it_index, it + get_lin(b, it_index));
     }
 }
+#scope_export
 
 
-
-
-
+// ##     ##    ###    ########               ##     ##    ###    ########
+// ###   ###   ## ##      ##                  ###   ###   ## ##      ##
+// #### ####  ##   ##     ##                  #### ####  ##   ##     ##
+// ## ### ## ##     ##    ##       #######    ## ### ## ##     ##    ##
+// ##     ## #########    ##                  ##     ## #########    ##
+// ##     ## ##     ##    ##                  ##     ## ##     ##    ##
+// ##     ## ##     ##    ##                  ##     ## ##     ##    ##
 
 
 // * User has to know, what type the result has to be!

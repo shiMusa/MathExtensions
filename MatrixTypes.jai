@@ -7,6 +7,35 @@
 // ##       ##       ##     ## ##    ##  ##    ##
 // ##       ######## ##     ##  ######    ######
 
+
+// Scientific Computing, Vol I: Linear and nonlinear equations
+// Texts in computational science and engineering 18
+// Springer
+// Fig. 3.5 Matrix class derivation tree, page 268
+
+// MATRIX_FLAGS :: enum_flags u32 {
+//     NONE                   :: 0;
+//     SQUARE                 :: (1 <<  0);
+//     SYMMETRIC              :: (1 <<  1) + xx SQUARE;
+//     SYMMETRIC_POSITIVE     :: (1 <<  2) + xx SYMMETRIC;
+//     UPPER_HESSENBERG       :: (1 <<  3);
+//     LOWER_HESSENBERG       :: (1 <<  4); 
+//     ORTHOGONAL             :: (1 <<  5);
+//     TRAPEZOIDAL            :: (1 <<  6);
+//     LOWER_TRAPEZOIDAL      :: (1 <<  7) + xx TRAPEZOIDAL;
+//     LOWER_TRIANGULAR       :: (1 <<  8) + xx LOWER_TRAPEZOIDAL;
+//     UNIT_LOWER_TRAPEZOIDAL :: (1 <<  9) + xx LOWER_TRAPEZOIDAL;
+//     UNIT_LOWER_TRIANGULAR  :: (1 << 10) + xx UNIT_LOWER_TRAPEZOIDAL;
+//     UPPER_TRAPEZOIDAL      :: (1 << 11) + xx TRAPEZOIDAL;
+//     UPPER_TRIANGULAR       :: (1 << 12) + xx UPPER_TRAPEZOIDAL;
+//     UNIT_UPPER_TRAPEZOIDAL :: (1 << 13) + xx UPPER_TRAPEZOIDAL;
+//     UNIT_UPPER_TRIANGULAR  :: (1 << 14) + xx UNIT_UPPER_TRAPEZOIDAL;    
+//     HERMITIAN              :: (1 << 15) + xx SQUARE; // not the same as symmetric for complex matrices
+//     DIAGONAL               :: (1 << 16) + xx BAND;
+//     BAND                   :: (1 << 17) + xx TRAPEZOIDAL;
+// }
+
+
 MATRIX_FLAGS :: enum_flags u32 {
     VIEW  :: 0;
     DENSE :: (1 << 0);
@@ -143,6 +172,12 @@ raw :: inline (m: *$M/MatrixType) -> MatrixRawForExpansion(M) {
     res.matrix = m;
     return res;
 }
+raw :: inline (m: $M/MatrixType) -> MatrixRawForExpansion(M) {
+    res : MatrixRawForExpansion(M) = ---;
+    res.matrix = *m;
+    return res;
+}
+
 #scope_file
 MatrixRawForExpansion :: struct(T: Type) {
     matrix: *T;
