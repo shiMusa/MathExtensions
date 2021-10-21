@@ -612,8 +612,8 @@ add :: (a: *$A/MatrixType, b: $B/MatrixType) {
 #scope_file
 add_default :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        #run assert(rows(a)== rows(b) && cols(a) == cols(b), "matrix dimensions do not match A(% x %), B(% x %)", rows(a), cols(a), rows(b), cols(b));
         #run assert(is_minor_number_type(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
+        assert(rows(a)== rows(b) && cols(a) == cols(b), "matrix dimensions do not match A(% x %), B(% x %)", rows(a), cols(a), rows(b), cols(b));
     }
 
     for a {
@@ -633,52 +633,50 @@ add_default :: (a: *$A/MatrixType, b: $B/MatrixType) {
 
 
 // * User has to know, what type the result has to be!
-mat_sub_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+mat_sub_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    mat_sub_mat_default(a,b,res);
+}
+
+#scope_file
+mat_sub_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     #if CHECKS {
-        #run assert(A.N == B.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, B.N);
-        #run assert(A.N == C.N, "Matrix dimensions don't match: a.rows = %, b.rows = %", A.N, C.N);
-        #run assert(A.M == B.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, B.M);
-        #run assert(A.M == C.M, "Matrix dimensions don't match: a.cols = %, c.cols = %", A.M, C.M);
+        assert(rows(a) == rows(b)  , "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(b)  );
+        assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(res));
+        assert(cols(a) == cols(b)  , "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(b)  );
+        assert(cols(a) == cols(res), "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(res));
     }
 
     for a {
         set_lin(res, it_index, it - get_lin(b, it_index));
     }
 }
-operator - :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixMatrixCastHelper(A,B).T {
-    res := make(MatrixMatrixCastHelper(A,B).T, false);
-    inline mat_sub_mat(a,b,*res);
-    return res;
+#scope_export
+
+sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
+    sub_default(a,b);
 }
 
-
-// TODO check for "UpCast" of Matrices
-sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
+#scope_file
+sub_default :: (a: *$A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        #run assert(A.N == B.N && A.M == B.M, "matrix dimensions do not match A(% x %), B(% x %)", A.N, A.M, B.N, B.M);
         #run assert(is_minor_number_type(A.data_type, B.data_type), "cannot cast % to %.", B.data_type, A.data_type);
+        assert(rows(a)== rows(b) && cols(a) == cols(b), "matrix dimensions do not match A(% x %), B(% x %)", rows(a), cols(a), rows(b), cols(b));
     }
 
     for a {
         set_lin(a, it_index, it - get_lin(b, it_index));
     }
 }
+#scope_export
 
 
-
-
-
-operator - :: (a: $A/MatrixType) -> A {
-    res := make(A, false);
-
-    for a {
-        set_lin(*res, it_index, -it);
-    }
-
-    return res;
-}
-
-
+// ##    ## ########  ######
+// ###   ## ##       ##    ##
+// ####  ## ##       ##
+// ## ## ## ######   ##   ####
+// ##  #### ##       ##    ##
+// ##   ### ##       ##    ##
+// ##    ## ########  ######
 
 // ? by iterating through the raw data, there is no double-negation issue!
 neg :: (a: *$A/MatrixType) {
@@ -688,174 +686,165 @@ neg :: (a: *$A/MatrixType) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+//              ###    ##     ## ########  ##    ##
+//  ##   ##    ## ##    ##   ##  ##     ##  ##  ##
+//   ## ##    ##   ##    ## ##   ##     ##   ####
+// ######### ##     ##    ###    ########     ##
+//   ## ##   #########   ## ##   ##           ##
+//  ##   ##  ##     ##  ##   ##  ##           ##
+//           ##     ## ##     ## ##           ##
 
 // ? Matrix Computations, 4th edition
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
 // ? Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
-// ? C = C + A*B
-saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+// ? C = C + A * B
+saxpy :: inline (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    saxpy_default(c,a,b);
+}
+
+#scope_file
+saxpy_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
-        #run assert(A.N == C.N);
-        #run assert(B.N == A.M && B.M == C.M);
         #run assert(is_minor_number_type(C.data_type, A.data_type) && is_minor_number_type(C.data_type, B.data_type));
+        assert(rows(a) == rows(c));
+        assert(rows(b) == cols(a) && cols(b) == cols(c));
     }
 
-    for j: 0..C.M-1 {
-        for k: 0..A.M-1 {
+    for j: 0..cols(c)-1 {
+        for k: 0..cols(a)-1 {
             tmp := get(b,k,j);
-            for i: 0..C.N-1 {
+            for i: 0..rows(c)-1 {
                 set(c,i,j, get(c,i,j) + get(a,i,k) * tmp);
             }
         }
     }
 }
+#scope_export
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-######## ########     ###    ##    ##  ######  ########
-   ##    ##     ##   ## ##   ###   ## ##    ## ##
-   ##    ##     ##  ##   ##  ####  ## ##       ##
-   ##    ########  ##     ## ## ## ##  ######  ######
-   ##    ##   ##   ######### ##  ####       ## ##
-   ##    ##    ##  ##     ## ##   ### ##    ## ##
-   ##    ##     ## ##     ## ##    ##  ######  ##
-*/
-
+// ########  ######## ########  ##     ## ##     ## ######## ########
+// ##     ## ##       ##     ## ###   ### ##     ##    ##    ##
+// ##     ## ##       ##     ## #### #### ##     ##    ##    ##
+// ########  ######   ########  ## ### ## ##     ##    ##    ######
+// ##        ##       ##   ##   ##     ## ##     ##    ##    ##
+// ##        ##       ##    ##  ##     ## ##     ##    ##    ##
+// ##        ######## ##     ## ##     ##  #######     ##    ########
 
 
 // there are faster ways of doing this.
 // check for compatible matrix types: e.g. this is not possible with triangular matrices
-permute_rows :: (m: $M/MatrixType, order: ..int) -> M #must {
-    #if CHECKS {
-        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
-        assert(order.count == N);
-    }
-
-    res := make(M, false);
-
-    for res {
-        set(*res, it_row, it_column, get(m, order[it_row], it_column));
-    }
-
-    return res;
+permute_rows :: inline (m: *$M/MatrixType, order: ..int) {
+    permute_rows_default(m, ..order);
 }
 
-// there are faster ways of doing this.
-permute_columns :: (m: $M/MatrixType, order: ..int) -> M #must {
+#scope_file
+permute_rows_default :: (m: *$M/MatrixType, order: ..int) {
     #if CHECKS {
-        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
-        assert(order.count == M.M);
+        // #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
+        assert(order.count == rows(m));
     }
 
-    res := make(M, false);
-
-    for res {
-        set(*res, it_row, it_column, get(m, it_row, order[it_column]));
+    for 0..rows(m)-1 {
+        if order[it] <= it then continue;
+        inline swap_rows(m, it, order[it]);
     }
+}
+#scope_export
 
-    return res;
+permute_cols :: inline (m: *$M/MatrixType, order: ..int) {
+    permute_cols_default(m, ..order);
 }
 
-// there are faster ways of doing this.
-permute :: (m: $M/MatrixType, row_order: [M.N]int, col_order: [M.M]int) -> M #must {
+#scope_file
+permute_cols_default :: (m: *$M/MatrixType, order: ..int) {
     #if CHECKS {
-        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
+        // #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
+        assert(order.count == cols(m));
     }
 
-    res := make(M, false);
-
-    for res {
-        set(*res, it_row, it_column, get(m, row_order[it_row], col_order[it_column]));
+    for 0..cols(m)-1 {
+        if order[it] <= it then continue;
+        inline swap_cols(m, it, order[it]);
     }
+}
+#scope_export
 
-    return res;
+//  ######  ##      ##    ###    ########
+// ##    ## ##  ##  ##   ## ##   ##     ##
+// ##       ##  ##  ##  ##   ##  ##     ##
+//  ######  ##  ##  ## ##     ## ########
+//       ## ##  ##  ## ######### ##
+// ##    ## ##  ##  ## ##     ## ##
+//  ######   ###  ###  ##     ## ##
+
+swap_cols :: inline (m: *$M/MatrixType, i: int, j: int) {
+    swap_cols_default(m,i,j);
 }
 
-
-swap_columns :: (m: *$M/MatrixType, i: int, j: int) {
+#scope_file
+swap_cols_default :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
-        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
+        // #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
         assert(i >= 0 && j >= 0);
-        assert(i < M.M && j < M.M);
+        assert(i < cols(m) && j < cols(m));
     }
 
     if i == j then return;
 
-    for r: 0..M.N-1 {
+    for r: 0..rows(m)-1 {
         tmp := get(m, r, i);
         set(m, r, i, get(m, r, j));
         set(m, r, j, tmp);
     }
 }
+#scope_export
 
-swap_rows :: (m: *$M/MatrixType, i: int, j: int) {
+swap_rows :: inline (m: *$M/MatrixType, i: int, j: int) {
+    swap_rows_default(m,i,j);
+}
+
+#scope_file
+swap_rows_default :: (m: *$M/MatrixType, i: int, j: int) {
     #if CHECKS {
-        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense) : %\n", M.flags);
+        // #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense) : %\n", M.flags);
         assert(i >= 0 && j >= 0);
-        assert(i < M.N && j < M.N);
+        assert(i < rows(m) && j < rows(m));
     }
 
     if i == j then return;
 
-    for c: 0..M.M-1 {
+    for c: 0..cols(m)-1 {
         tmp := get(m, i, c);
         set(m, i, c, get(m, j, c));
         set(m, j, c, tmp);
     }
 }
+#scope_export
 
+// ######## ########     ###    ##    ##  ######  ########   #######   ######  ########
+//    ##    ##     ##   ## ##   ###   ## ##    ## ##     ## ##     ## ##    ## ##
+//    ##    ##     ##  ##   ##  ####  ## ##       ##     ## ##     ## ##       ##
+//    ##    ########  ##     ## ## ## ##  ######  ########  ##     ##  ######  ######
+//    ##    ##   ##   ######### ##  ####       ## ##        ##     ##       ## ##
+//    ##    ##    ##  ##     ## ##   ### ##    ## ##        ##     ## ##    ## ##
+//    ##    ##     ## ##     ## ##    ##  ######  ##         #######   ######  ########
 
-transpose :: (m: $M/MatrixType) -> MatrixTransposeHelper(M).T #must {
-    #if CHECKS {
-        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)");
+transpose :: inline (m: *$M/MatrixType) {
+    #if M.flags == .DENSE {
+        transpose_dense(m);
+    } else if M.flags == .DENSE & .HEAP {
+        transpose_dense_heap(m);
     }
-
-    // println_push("transpose", color = .FG_BLUE);
-
-    res := make(MatrixTransposeHelper(M).T);
-
-    for m {
-        set(*res, it_column, it_row, it);
-    }
-
-    // println("res = %", pstr(m));
-    return res;
 }
 
-// There are better ways to do this!
-transpose :: (m: *$M/MatrixType) {
-    #if CHECKS {
-        #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)");
-    }
-
-    for i: 0..M.N-1 {
-        for j: i+1..M.M-1 {
+#scope_file
+// ? only square matrices here
+// ? maybe add an additional runtime variable `transpose: bool` to DenseMatrix?
+transpose_dense :: (m: *DenseMatrix($T, $N, N)) {
+    for i: 0..N-1 {
+        for j: i+1..N-1 {
             tmp := get(m, i, j);
             set(m, i, j, get(m, j, i));
             set(m, j, i, tmp);
@@ -863,21 +852,52 @@ transpose :: (m: *$M/MatrixType) {
     }
 }
 
-
-
-
-
-conjugate :: (m: $M/MatrixType) -> M #must {
-    res := make(M, false);
-    #if #run !is_non_real_number(M.data_type) {
-        copy(*res, m);
-    } else {
-        for raw(*m) {
-            set_raw(*res, it_raw_index, conjugate(it));
+// ? https://www.wikiwand.com/en/In-place_matrix_transposition
+transpose_dense_heap :: (m: *DenseHeapMatrix) {
+    if rows(m) == cols(m) {
+        for i: 0..rows(m)-1 {
+            for j: i+1..cols(m)-1 {
+                tmp := get(m, i, j);
+                set(m, i, j, get(m, j, i));
+                set(m, j, i, tmp);
+            }
         }
+    } else {
+        //     0 1 2 3
+        //     4 5 6 7
+        //     8 9 a b
+        // ->  
+        //     0 4 8     0 4 8 1
+        //     1 5 9  ~  5 9 2 6
+        //     2 6 a     a 3 7 b
+        //     3 7 b 
+
+        r := rows(m);
+        c := cols(m);
+        for m {
+            pi := if it_index == r*c-1 then r*c-1 else (r*it_index) % (r*c-1);
+            if pi <= it_index then continue; // ! this is my tweak. I hope it works?!
+
+            tmp := get_lin(m, pi);
+            set_lin(m, pi, it);
+            set_lin(m, it_index, tmp);
+        }
+        m.rows = c;
+        m.cols = r;
     }
-    return res;
+
 }
+#scope_export
+
+
+
+//  ######   #######  ##    ##       ## ##     ##  ######      ###    ######## ########
+// ##    ## ##     ## ###   ##       ## ##     ## ##    ##    ## ##      ##    ##
+// ##       ##     ## ####  ##       ## ##     ## ##         ##   ##     ##    ##
+// ##       ##     ## ## ## ##       ## ##     ## ##   #### ##     ##    ##    ######
+// ##       ##     ## ##  #### ##    ## ##     ## ##    ##  #########    ##    ##
+// ##    ## ##     ## ##   ### ##    ## ##     ## ##    ##  ##     ##    ##    ##
+//  ######   #######  ##    ##  ######   #######   ######   ##     ##    ##    ########
 
 conjugate :: inline (m: *$M/MatrixType) {
     #if #run !is_non_real_number(M.data_type) {
@@ -890,53 +910,68 @@ conjugate :: inline (m: *$M/MatrixType) {
 }
 
 
-conjugate_transpose :: inline (m: $M/MatrixType) -> MatrixTransposeHelper(M).T #must {
-    return conjugate(transpose(m));
-}
+// ########     ###     ######    ######   ######## ########
+// ##     ##   ## ##   ##    ##  ##    ##  ##       ##     ##
+// ##     ##  ##   ##  ##        ##        ##       ##     ##
+// ##     ## ##     ## ##   #### ##   #### ######   ########
+// ##     ## ######### ##    ##  ##    ##  ##       ##   ##
+// ##     ## ##     ## ##    ##  ##    ##  ##       ##    ##
+// ########  ##     ##  ######    ######   ######## ##     ##
+
+dagger :: conjugate_transpose;
+hermitian_conjugate :: conjugate_transpose;
+hermitian_transpose :: conjugate_transpose;
+
 conjugate_transpose :: inline (m: *$M/MatrixType) {
     transpose(m);
     conjugate(m);
 }
-dagger :: conjugate_transpose;
-// hermitian :: conjugate_transpose;
 
 
 
-
+// ######## ######## ##    ##  ######   #######  ########
+//    ##    ##       ###   ## ##    ## ##     ## ##     ##
+//    ##    ##       ####  ## ##       ##     ## ##     ##
+//    ##    ######   ## ## ##  ######  ##     ## ########
+//    ##    ##       ##  ####       ## ##     ## ##   ##
+//    ##    ##       ##   ### ##    ## ##     ## ##    ##
+//    ##    ######## ##    ##  ######   #######  ##     ##
 
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A, B, A.N*B.N, A.M*B.M).T {
-    res := make(MatrixHelper(A, B, A.N*B.N, A.M*B.M).T, false);
+tensor :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    tensor_default(a,b,res);
+}
 
-    for r: 0..res.M-1 {
-        ar := r/B.N;
-        br := r % B.N;
+#scope_file
+tensor_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    #if CHECKS {
+        #run assert(is_minor_number_type(C.data_type, A.data_type) && is_minor_number_type(C.data_type, B.data_type));
+        assert(rows(res) == rows(a)*rows(b) && cols(res) == cols(a)*cols(b), "dimensions mismatch: needed (%,%), but res(%,%)", rows(a)*rows(b), cols(a)*cols(b), rows(res), cols(res));
+    }
+
+    for r: 0..rows(res)-1 {
+        ar := r/rows(b);
+        br := r % rows(b);
         
-        for c: 0..res.M-1 {
-            ac := c/B.M;
-            bc := c % B.M;
+        for c: 0..cols(res)-1 {
+            ac := c/cols(b);
+            bc := c % cols(b);
 
             set(*res, r, c, get(a, ar, ac) * get(b, br, bc));
         }
     }
-    return res;
 }
+#scope_export
 
 
 
-
-
-/*
-        ##        ######   ######     ###    ##          ###    ########
-         ##      ##    ## ##    ##   ## ##   ##         ## ##   ##     ##
-          ##     ##       ##        ##   ##  ##        ##   ##  ##     ##
-#######    ##     ######  ##       ##     ## ##       ##     ## ########
-          ##           ## ##       ######### ##       ######### ##   ##
-         ##      ##    ## ##    ## ##     ## ##       ##     ## ##    ##
-        ##        ######   ######  ##     ## ######## ##     ## ##     ##
-*/
-
-
+// ##    ##  #######  ########  ##     ##
+// ###   ## ##     ## ##     ## ###   ###
+// ####  ## ##     ## ##     ## #### ####
+// ## ## ## ##     ## ########  ## ### ##
+// ##  #### ##     ## ##   ##   ##     ##
+// ##   ### ##     ## ##    ##  ##     ##
+// ##    ##  #######  ##     ## ##     ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
@@ -948,12 +983,18 @@ tensor :: (a: $A/MatrixType, b: $B/MatrixType) -> MatrixHelper(A, B, A.N*B.N, A.
 //     return norm(v, 2.0);
 // }
 
-norm_1 :: (m: $M/MatrixType) -> float64 {
+
+norm_1 :: inline (m: $M/MatrixType) -> float64 {
+    return norm_1_default(m);
+}
+
+#scope_file
+norm_1_default :: (m: $M/MatrixType) -> float64 {
     res : float64 = 0.0;
 
-    for j: 0..M.M-1 {
+    for j: 0..cols(m)-1 {
         sum : float64 = 0.0;
-        for i: 0..M.N-1 {
+        for i: 0..rows(m)-1 {
             sum += abs(get(m,i,j));
         }
         res = ifx res < sum then sum else res;
@@ -961,13 +1002,22 @@ norm_1 :: (m: $M/MatrixType) -> float64 {
 
     return res;
 }
+#scope_export
 
-norm_inf :: (m: $M/MatrixType) -> float64 {
+
+
+
+norm_inf :: inline (m: $M/MatrixType) -> float64 {
+    return norm_inf_default(m);
+}
+
+#scope_file
+norm_inf_default :: (m: $M/MatrixType) -> float64 {
     res : float64 = 0.0;
 
-    for i: 0..M.N-1 {
+    for i: 0..rows(m)-1 {
         sum : float64 = 0.0;
-        for j: 0..M.M-1 {
+        for j: 0..cols(m)-1 {
             sum += abs(get(m,i,j));
         }
         res = ifx res < sum then sum else res;
@@ -975,16 +1025,41 @@ norm_inf :: (m: $M/MatrixType) -> float64 {
 
     return res;
 }
+#scope_export
 
-norm_frobenius :: (m: $M/MatrixType) -> float64 {
+
+
+norm_frobenius :: inline (m: $M/MatrixType) -> float64 {
+    return norm_frobenius_default(m);
+}
+
+#scope_file
+norm_frobenius_default :: (m: $M/MatrixType) -> float64 {
     sum : float64 = 0.0;
 
     for m {
-        sum += abs(it);
+        sum += abs_sq(it);
     }
 
-    return sum;
+    return sqrt(sum);
 }
+#scope_export
+
+
+norm_max :: inline (m: $M/MatrixType) -> float64 {
+    return norm_max_default(m);
+}
+
+#scope_file
+norm_max_default :: (m: $M/MatrixType) -> float64 {
+    res : float64 = 0.0;
+    for m {
+        a := abs(it);
+        if a > res then res = a;
+    }
+    return res;
+}
+#scope_export
 
 
 

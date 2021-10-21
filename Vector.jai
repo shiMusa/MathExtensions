@@ -449,14 +449,14 @@ gaxpy_default :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
 // }
 
 // TODO: check, if this in-place permutation is correct!
-permute :: (v: *$V/VectorType, order: ..int) {
-    inline permute_default(v, ..order);
+permute :: inline (v: *$V/VectorType, order: ..int) {
+    permute_default(v, ..order);
 }
 
 #scope_file
 permute_default :: (v: *$V/VectorType, order: ..int) {
     #if CHECKS {
-        assert(V.N == order.count);
+        assert(dim(v) == order.count);
     }
 
     for v {
