@@ -21,7 +21,13 @@ pstr :: inline (m: $V/MatrixType) -> string {
     return str(m, print_options.offset, print_options.shift, "│", print_options.indent_charactoer_every);
 }
 
-str :: (m: $M/MatrixType, offset: int = 0, indent: int = 4, indent_character: string = " ", indent_charactoer_every: int = 4) -> string {
+str :: (
+    m: $M/MatrixType, 
+    offset: int = 0, 
+    indent: int = 4, 
+    indent_character: string = " ", 
+    indent_charactoer_every: int = 4
+) -> string {
     
     shift :: (ind: int = 0, additional_indent: int = 0) #expand {
         for 0..offset-1 {
