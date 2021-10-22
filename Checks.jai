@@ -9,7 +9,7 @@
 
 is_diagonal_unit :: (m: $M/MatrixType) -> bool {
     res := true;
-    n :: #run min(M.N, M.M);
+    n := min(rows(m), cols(m));
     eins := one(M.data_type);
     for 0..n-1 {
         if get(m,it,it) != eins then return false;
@@ -21,8 +21,8 @@ is_diagonal_unit :: (m: $M/MatrixType) -> bool {
 // checks if values != 0 are only in the bottom left corner
 is_left_triangular :: (m: $M/MatrixType) -> bool {
     zro := zero(M.data_type);
-    for i: 0..M.N-1 {
-        for j: i+1..M.M-1 {
+    for i: 0..rows(m)-1 {
+        for j: i+1..cols(m)-1 {
             #if #run is_float_number(M.data_type) {
                 if !approx(get(m,i,j), zro) then return false;
             } else {
@@ -36,7 +36,7 @@ is_left_triangular :: (m: $M/MatrixType) -> bool {
 // checks if values != 0 are only in the top right corner
 is_right_triangular :: (m: $M/MatrixType) -> bool {
     zro := zero(M.data_type);
-    for i: 0..M.N-1 {
+    for i: 0..rows(m)-1 {
         for j: 0..i-1 {
             #if #run is_float_number(M.data_type) {
                 if !approx(get(m,i,j), zro) then return false;
@@ -50,7 +50,7 @@ is_right_triangular :: (m: $M/MatrixType) -> bool {
 
 is_right_quasi_triangular :: (R: $M/MatrixType) -> bool {
     zro := zero(M.data_type);
-    for i: 0..M.N-1 {
+    for i: 0..rows(R)-1 {
         for j: 0..i-2 {
             if i>j+1 { 
                 if get(R,i,j) != zro {
@@ -86,18 +86,25 @@ is_right_quasi_triangular :: (R: $M/MatrixType) -> bool {
     return true;
 }
 
-is_unitary :: (U: $M/MatrixType) -> bool {
-    return is_quadratic(U) && is_diagonal_unit(dagger(U)*U);
+is_unitary :: (m: $M/MatrixType) -> bool {
+    dm := dhmat(M.data_type, rows(m), cols(m));
+    defer free(dm);
+    copy(*dm, m);
+    dagger(*d);
+    dmm := dhmat(M.data_type, cols(m), cols(m));
+    defer free(dmm);
+    mat_mul_mat(dm, m, *dmm);
+    return is_quadratic(m) && is_diagonal_unit(dmm);
 }
 
 // more rows than columns
 is_left_trapezoidal :: inline (m: $M/MatrixType) -> bool {
-    return M.N >= M.M && is_left_triangular(m);
+    return rows(m) >= cols(m) && is_left_triangular(m);
 }
 
 // more columns than rows
 is_right_trapezoidal :: inline (m: $M/MatrixType) -> bool {
-    return M.M >= M.N && is_right_triangular(m);
+    return cols(m) >= rows(m) && is_right_triangular(m);
 }
 
 
@@ -135,14 +142,15 @@ test_checks :: () {
             0, 1, 2, 3,
             0, 0, 0, 2
         );
-        cm := mat_cast(C64, m);
+        cm : DenseMatrix(C64, 4, 4);
+        cast_to(*cm, m);
 
         assert(is_right_quasi_triangular(m));
-        m = transpose(m);
+        transpose(*m);
         assert(!is_right_quasi_triangular(m));
 
         assert(is_right_quasi_triangular(cm));
-        cm = transpose(cm);
+        transpose(*cm);
         assert(!is_right_quasi_triangular(cm));
     }
 }

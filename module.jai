@@ -15,7 +15,7 @@
 #load "Vector.jai";
 #load "Matrix.jai";
 
-// #load "Checks.jai";
+#load "Checks.jai";
 // #load "LinearAlgebra.jai";
 
 
@@ -40,7 +40,7 @@ run_all_tests :: () {
     test_vector();
     test_matrix();
 
-    // test_checks();
+    test_checks();
     // test_linear_algebra();
 }
 
