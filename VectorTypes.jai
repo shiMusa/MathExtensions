@@ -39,11 +39,11 @@ VectorType :: struct(
     from_raw_index: (v: vector_type, int) -> int
 ){}
 
-dim :: inline (v: *$V/VectorType) -> int {
-    return V.dim(<<v);
-}
 dim :: inline (v: $V/VectorType) -> int {
     return V.dim(v);
+}
+dim :: inline (v: *$V/VectorType) -> int {
+    return V.dim(<<v);
 }
 
 get :: inline (v: $V/VectorType, i: int) -> V.data_type {
@@ -85,7 +85,7 @@ for_expansion :: (v: *$V/VectorType, body: Code, flags: For_Flags) #expand {
     i := 0;
     while i < dim(v) {
         `it_index := i;
-        `it := get(<<v, i);
+        `it := get(v, i);
         #insert body;
         i += 1;
     }
@@ -142,7 +142,7 @@ VectorView :: struct(V: Type, N: int) {
         #this,
         V.data_type,
         vector_view_dim,
-        .VIEW & V.flags,
+        VECTOR_FLAGS.VIEW & V.flags,
 
         vector_view_init,
 
@@ -205,7 +205,7 @@ HeapVectorView :: struct(V: Type) {
         #this,
         V.data_type,
         heap_vector_view_dim,
-        .VIEW & V.flags,
+        VECTOR_FLAGS.VIEW & V.flags,
 
         heap_vector_view_init,
 
@@ -218,16 +218,16 @@ HeapVectorView :: struct(V: Type) {
         heap_vector_view_raw_index
     );
 
-    dim: int;
+    dims: int;
     start_index: int = 0;
     stride: int = 1;
     vec: *V;
 }
 
 
-hvecview :: inline(vec: *$V/VectorType, start_index: int = 0, num_elements: int = N, stride: int = 1) -> HeapVectorView(V) {
+hvecview :: inline(vec: *$V/VectorType, num_elements: int, start_index: int = 0, stride: int = 1) -> HeapVectorView(V) {
     #if CHECKS {
-        assert(start_index + (num_elements-1) * stride <= N);
+        assert(start_index + (num_elements-1) * stride <= dim(vec));
     }
     res : HeapVectorView(V);
     res.dim = num_elements;
@@ -240,18 +240,18 @@ hvecview :: inline(vec: *$V/VectorType, start_index: int = 0, num_elements: int 
 
 #scope_file
 heap_vector_view_dim :: inline (v: HeapVectorView) -> int {
-    return v.dim;
+    return v.dims;
 }
 heap_vector_view_n_raw :: inline (v: HeapVectorView) -> int {
-    return v.dim;
+    return v.dims;
 }
 heap_vector_view_raw_index :: inline (v: HeapVectorView, i: int) -> int {
     return i;
 }
-heap_vector_view_get :: inline (v: HeapVectorView, i: int) -> T {
+heap_vector_view_get :: inline (v: HeapVectorView, i: int) -> v.data_type {
     return get(v.vec, v.start_index + v.stride * i);
 }
-heap_vector_view_set :: inline (v: *HeapVectorView($T), i: int, value: T) {
+heap_vector_view_set :: inline (v: *HeapVectorView($T), i: int, value: v.data_type) {
     set(v.vec, v.start_index + v.stride * i, value);
 }
 #scope_export
@@ -272,9 +272,7 @@ DenseVector :: struct(_T: Type, _N: int) {
         #this,
         _T,
         dense_vector_dim,
-        .DENSE,
-
-        dense_vector_init,
+        VECTOR_FLAGS.DENSE,
 
         dense_vector_get,
         dense_vector_set,
@@ -344,9 +342,7 @@ DenseHeapVector :: struct(_T: Type) {
         #this,
         _T,
         dense_heap_vector_dim,
-        .DENSE & .HEAP,
-
-        dense_heap_vector_init,
+        VECTOR_FLAGS.DENSE & VECTOR_FLAGS.HEAP,
 
         dense_heap_vector_get,
         dense_heap_vector_set,
@@ -357,7 +353,7 @@ DenseHeapVector :: struct(_T: Type) {
         dense_heap_vector_raw_index
     );
 
-    dim : int;
+    dims : int;
     data: []_T;
 }
 
@@ -379,17 +375,23 @@ dhvec :: ($T: Type, N: int, values: ..$U) -> DenseHeapVector(T) {
         #run assert(is_minor_number_type(T, U));
         assert(values.count <= N);
     }
-    res := make(DenseHeapVector(T));
-    for values {
-        set(*res, it_index, ncast(T, it));
+    res : DenseHeapVector(T);
+    res.dims = N;
+    res.data = NewArray(N, T, false);
+    for 0..N-1 {
+        if it < values.count {
+            res.data[it] = ncast(T, values[it]);
+        } else {
+            res.data[it] = zero(T);
+        }
     }
     return res;
 }
 
 init :: inline (v: *DenseHeapVector($T), $initialize_variables: bool = true) {
-    v.data = NewArray(v.dim, T, false);
+    v.data = NewArray(v.dims, T, false);
     #if initialize_variables {
-        for 0..v.dim-1 {
+        for 0..v.dims-1 {
             v.data[it] = zero(T);
         }
     }
@@ -397,10 +399,10 @@ init :: inline (v: *DenseHeapVector($T), $initialize_variables: bool = true) {
 
 #scope_file
 dense_heap_vector_dim :: inline (v: DenseHeapVector($T)) -> int {
-    return v.dim;
+    return v.dims;
 }
 dense_heap_vector_n_raw :: inline (v: DenseHeapVector($T)) -> int {
-    return v.dim;
+    return v.dims;
 }
 dense_heap_vector_raw_index :: inline (v: DenseHeapVector($T), i: int) -> int {
     return i;

@@ -674,31 +674,27 @@ test_vector :: () {
     {
         println_push("DenseVector", color = .FG_GREEN);    
         {
-            v := make(DenseVector(float64, 5));
-            println("v = %", pstr(v));
-            vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
+            v := dvec(float64, 5, 1, 2, 3, 4, 5);
             println("v = %", pstr(v));
             // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
-            a := v + v;
-            println("a = %", pstr(v));
-            a = a + v;
-            println("a = %", pstr(v));
+
+            add(*v, v);
+            println("v = %", pstr(v));
+            add(*v, v);
+            println("v = %", pstr(v));
         }
     }
 
     {
         println_push("DenseHeapVector", color = .FG_GREEN);    
         {
-            v := make(DenseHeapVector(float64, 5));
+            v := dhvec(float64, 5, 1,2,3,4,5);
             defer free(v);
             println("v = %", pstr(v));
-            vec_init(*v, 1.0, 2.0, 3.0, 4.0, 5.0);
+            add(*v,v);
             println("v = %", pstr(v));
-            // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
-            a := v + v;
-            println("a = %", pstr(v));
-            a = a + v;
-            println("a = %", pstr(v));
+            add(*v,v);
+            println("v = %", pstr(v));
         }
     }
 }

@@ -13,10 +13,10 @@
 #load "VectorTypes.jai";
 #load "MatrixTypes.jai";
 #load "Vector.jai";
-#load "Matrix.jai";
+// #load "Matrix.jai";
 
-#load "Checks.jai";
-#load "LinearAlgebra.jai";
+// #load "Checks.jai";
+// #load "LinearAlgebra.jai";
 
 
 
@@ -38,10 +38,10 @@ run_all_tests :: () {
     test_approximations();
     
     test_vector();
-    test_matrix();
+    // test_matrix();
 
-    test_checks();
-    test_linear_algebra();
+    // test_checks();
+    // test_linear_algebra();
 }
 
 
