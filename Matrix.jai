@@ -110,7 +110,7 @@ str :: (
 // * Assuming to is initialized to zeroes.
 // * User has to know, what type the result has to be!
 cast_to :: (to: *$T/MatrixType, from: $F/MatrixType) {
-    for raw(*from) {
+    for raw(from) {
         set(to, it_row, it_column, ncast(T.data_type, it));
     }
 }
@@ -137,7 +137,12 @@ copy :: inline (to: *$M/MatrixType, from: M) {
 //  ##  ##   ###  ##     ##
 // #### ##    ## ####    ##
 
-mat_init :: (m: *$M/MatrixType, vals: ..$T) {
+mat_init :: inline (m: *$M/MatrixType, vals: ..$T) {
+    mat_init_default(m, ..vals);
+}
+
+#scope_file
+mat_init_default :: (m: *$M/MatrixType, vals: ..$T) {
     #if CHECKS {
         #run assert(is_minor_number_type(M.data_type, T));
         assert(vals.count <= n(m), "too many values (%) for matrix of % entries\n", vals.count, n(m));
@@ -146,15 +151,32 @@ mat_init :: (m: *$M/MatrixType, vals: ..$T) {
         set_lin(m, it_index, ncast(M.data_type, it));
     }
 }
+#scope_export
 
-mat_init_all :: (m: *$M/MatrixType, value: $T) {
+
+
+
+mat_init_all :: inline (m: *$M/MatrixType, value: $T) {
+    mat_init_all_default(m, value);
+}
+
+#scope_file
+mat_init_all_default :: (m: *$M/MatrixType, value: $T) {
     v := ncast(M.data_type, value);
     for raw(m) {
         set_raw(m, it_raw_index, v);
     }
 }
+#scope_export
 
-mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = true) {
+
+
+mat_init_unit :: inline (m: *$M/MatrixType, $init_zeroes: bool = true) {
+    mat_init_unit_default(m, init_zeroes);
+}
+
+#scope_file
+mat_init_unit_default :: (m: *$M/MatrixType, $init_zeroes: bool = true) {
     #if init_zeroes {
         z := zero(M.data_type);
         o := one(M.data_type);
@@ -172,7 +194,15 @@ mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = true) {
         }
     }
 }
+#scope_export
 
+
+
+mat_init_diag :: inline (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = true) {
+    mat_init_diag_default(m,..values,init_zeroes);
+}
+
+#scope_file
 mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = true) {
     #if CHECKS {
         assert(values.count == min(rows(m), cols(m)), "not enough values (% values) for diagonal (% values)\n", values.count, min(rows(m), cols(m)));
@@ -192,33 +222,67 @@ mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = true) {
         }
     }
 }
+#scope_export
+
+
 
 
 mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
+    mat_init_hadamard_2_default(m);
+}
+
+#scope_file
+mat_init_hadamard_2_default :: inline (m: *$M/MatrixType) {
     #if CHECKS {
         assert(rows(m) == 2 && cols(m) == 2);
     }
     mat_init(m, 1, 1, 1, -1);
 }
+#scope_export
 
 
-// TODO come back to that later!
-// mat_init_hadamard :: (m: *$M/MatrixType, nestings: int = 0) {
-//     #if CHECKS {
-//         assert(rows(m) == cols(m), "matrix not square (%,%)\n", rows(m), cols(m));
-//         assert(rows(m) == 1<<nestings, "matrix not of correct size: needed %, given %\n", 1<<nestings, rows(m));
-//         assert(nestings >= 0, "Nestings must be >=0 but given %\n", nestings);
-//     }
-//     #if nestings == 0 {
-//         inline mat_init_hadamard_2(m);
-//     } else {
-//         // TODO update `tenser` before fixing this
-//         return tensor(mat_hadamard_2(type), mat_hadamard(type, nestings-1));
-//     }
-// }
 
 
-mat_init_reflector :: (m: *$M/MatrixType, normal: $V/VectorType) {
+
+mat_init_hadamard :: inline (m: *$M/MatrixType, nestings: int = 0) {
+    mat_init_hadamard_default(m, nestings);
+}
+
+#scope_file
+mat_init_hadamard_default :: (m: *$M/MatrixType, nestings: int = 0) {
+    #if CHECKS {
+        assert(rows(m) == cols(m), "matrix not square (%,%)\n", rows(m), cols(m));
+        assert(rows(m) == 1<<nestings, "matrix not of correct size: needed %, given %\n", 1<<nestings, rows(m));
+        assert(nestings >= 0, "Nestings must be >=0 but given %\n", nestings);
+        assert(rows(m)%2 == 0, "matrix dimensions not even! %\n", rows(m));
+    }
+    #if nestings == 0 {
+        inline mat_init_hadamard_2(m);
+    } else {
+        r2 := rows(m)/2;
+        c2 := cols(m)/2;
+
+        tl := hmatview(m, r2, c2,  0,  0);
+        tr := hmatview(m, r2, c2,  0, c2);
+        bl := hmatview(m, r2, c2, r2,  0);
+        br := hmatview(m, r2, c2, r2, c2);
+
+        mat_init_hadamard(*tl, nestings-1);
+        mat_init_hadamard(*tr, nestings-1);
+        mat_init_hadamard(*bl, nestings-1);
+        mat_init_hadamard(*br, nestings-1);
+        neg(*br);
+    }
+}
+#scope_export
+
+
+mat_init_reflector :: inline (m: *$M/MatrixType, normal: $V/VectorType) {
+    mat_init_reflector_default(m,normal);
+}
+
+#scope_file
+mat_init_reflector_default :: (m: *$M/MatrixType, normal: $V/VectorType) {
     #if CHECKS {
         #run assert(M.data_type == V.data_type, "data_types mismatch %, %\n", M.data_type, V.data_type);
         assert(rows(m) == cols(m), "matrix not square, (%, %)\n", rows(m), cols(m));
@@ -238,6 +302,7 @@ mat_init_reflector :: (m: *$M/MatrixType, normal: $V/VectorType) {
         set(m, it_row, it_column, get(m, it_row, it_column) - tau * get(normal, it_row) * conjugate(get(normal, it_column)) )
     }
 }
+#scope_export
 
 
 
@@ -253,7 +318,19 @@ mat_init_reflector :: (m: *$M/MatrixType, normal: $V/VectorType) {
 //  ######   #######  ########  ##     ## ##     ##    ##    ##     ## #### ##     ##
 
 // inclusive first bound, exclusive last bound
-mat_submatrix :: (
+mat_submatrix :: inline (
+    sm: *$SM/MatrixType,
+    m: $M/MatrixType, 
+    row_from: int, 
+    row_to: int, 
+    column_from: int, 
+    column_to: int
+) {
+    mat_submatrix_default(sm, m, row_from, row_to, column_from, column_to);
+}
+
+#scope_file
+mat_submatrix_default :: (
     sm: *$SM/MatrixType,
     m: $M/MatrixType, 
     row_from: int, 
@@ -279,7 +356,7 @@ mat_submatrix :: (
         }
     }
 }
-
+#scope_export
 
 
 
@@ -299,7 +376,12 @@ mat_submatrix :: (
 */
 
 
-row :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
+row :: inline (v: *$V/VectorType, m: $M/MatrixType, i: int) {
+    row_default(v,m,i);
+}
+
+#scope_file
+row_default :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
     #if CHECKS {
         #run assert(V.data_type == M.data_type, "data_types do not match: %, %\n", V.data_type, M.data_type);
         assert(dim(v) == cols(m), "dimensions mismatch v%, m%\n", dim(v), cols(m));
@@ -309,8 +391,14 @@ row :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
         set(v, it_index, get(m,i,it_index));
     }
 }
+#scope_export
 
 column :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
+    column_default(v,m,i);
+}
+
+#scope_file
+column_default :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
     #if CHECKS {
         #run assert(V.data_type == M.data_type, "data_types do not match: %, %\n", V.data_type, M.data_type);
         assert(dim(v) == rows(m), "dimensions mismatch v%, m%\n", dim(v), rows(m));
@@ -320,6 +408,7 @@ column :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
         set(v, it_index, get(m,it_index,i));
     }
 }
+#scope_export
 
 
 

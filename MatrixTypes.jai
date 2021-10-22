@@ -209,6 +209,177 @@ for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) 
 // ##     ## ##     ##    ##          ##       ##    ##        ########  ######
 
 
+// ##     ## #### ######## ##      ##
+// ##     ##  ##  ##       ##  ##  ##
+// ##     ##  ##  ##       ##  ##  ##
+// ##     ##  ##  ######   ##  ##  ##
+//  ##   ##   ##  ##       ##  ##  ##
+//   ## ##    ##  ##       ##  ##  ##
+//    ###    #### ########  ###  ###
+
+
+MatrixView :: struct(V: Type, N: int, M: int) {
+    using _m: MatrixType(
+        #this,
+        V.data_type,
+        matrix_view_rows,
+        matrix_view_cols,
+        .VIEW & V.flags,
+
+        matrix_view_get,
+        matrix_view_set,
+
+        matrix_view_get_lin,
+        matrix_view_set_lin,
+
+        matrix_view_n_raw,
+        matrix_view_get_lin, // ? ther is no difference between raw and lin for DENSE matrices
+        matrix_view_set_lin, // ? ther is no difference between raw and lin for DENSE matrices
+        matrix_view_from_raw_index
+    );
+
+    start_row: int = 0;
+    start_col: int = 0;
+    stride_row: int = 1;
+    stride_col: int = 1;
+    mat: *V;
+}
+
+
+matview :: (mat: *$M/MatrixType, $num_rows: int, $num_cols: int, start_row: int = 0, start_col: int = 0, stride_row: int = 1, stride_col: int = 1) -> MatrixView(M, num_rows, num_cols) {
+    #if CHECKS {
+        assert(start_row + (num_rows-1)*stride_row <=  rows(mat));
+        assert(start_col + (num_cols-1)*stride_col <=  cols(mat));
+    }
+    res : MatrixView(M, num_rows, num_cols);
+    res.start_row = start_row;
+    res.start_col = start_col;
+    res.stride_row = stride_row;
+    res.stride_col = stride_col;
+    res.mat = mat;
+    return res;
+}
+
+
+#scope_file
+matrix_view_rows :: inline (m: MatrixView($V, $N, $M)) -> int {
+    return N;
+}
+matrix_view_cols :: inline (m: MatrixView($V, $N, $M)) -> int {
+    return M;
+}
+
+matrix_view_get :: inline (m: MatrixView, i: int, j: int) -> m.data_type {
+    return get(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col);
+}
+matrix_view_set :: inline (m: *MatrixView, i: int, j: int, val: m.data_type) {
+    set(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col, val);
+}
+
+matrix_view_get_lin :: inline (m: MatrixView, i: int) -> m.data_type {
+    r, c := from_lin_index(m, i);
+    return matrix_view_get(m, r, c);
+}
+matrix_view_set_lin :: inline (m: *MatrixView, i: int, val: m.data_type) {
+    r, c := from_lin_index(m, i);
+    matrix_view_set(m, r, c, val);
+}
+
+matrix_view_n_raw :: inline (m: MatrixView($T, $N, $M)) -> int {
+    return N*M;
+}
+matrix_view_from_raw_index :: inline(m: MatrixView, i: int) -> int {
+    return i;
+}
+#scope_export
+
+
+// ##     ## ########    ###    ########     ##     ## #### ######## ##      ##
+// ##     ## ##         ## ##   ##     ##    ##     ##  ##  ##       ##  ##  ##
+// ##     ## ##        ##   ##  ##     ##    ##     ##  ##  ##       ##  ##  ##
+// ######### ######   ##     ## ########     ##     ##  ##  ######   ##  ##  ##
+// ##     ## ##       ######### ##            ##   ##   ##  ##       ##  ##  ##
+// ##     ## ##       ##     ## ##             ## ##    ##  ##       ##  ##  ##
+// ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
+
+HeapMatrixView :: struct(V: Type) {
+    using _m: MatrixType(
+        #this,
+        V.data_type,
+        heap_matrix_view_rows,
+        heap_matrix_view_cols,
+        .VIEW & V.flags,
+
+        heap_matrix_view_get,
+        heap_matrix_view_set,
+
+        heap_matrix_view_get_lin,
+        heap_matrix_view_set_lin,
+
+        heap_matrix_view_n_raw,
+        heap_matrix_view_get_lin, // ? ther is no difference between raw and lin for DENSE matrices
+        heap_matrix_view_set_lin, // ? ther is no difference between raw and lin for DENSE matrices
+        heap_matrix_view_from_raw_index
+    );
+
+    rows: int;
+    cols : int;
+    start_row: int = 0;
+    start_col: int = 0;
+    stride_row: int = 1;
+    stride_col: int = 1;
+    mat: *V;
+}
+
+
+hmatview :: (mat: *$M/MatrixType, num_rows: int, num_cols: int, start_row: int = 0, start_col: int = 0, stride_row: int = 1, stride_col: int = 1) -> HeapMatrixView(M) {
+    #if CHECKS {
+        assert(start_row + (num_rows-1)*stride_row <=  rows(mat));
+        assert(start_col + (num_cols-1)*stride_col <=  cols(mat));
+    }
+    res : HeapMatrixView(M);
+    res.rows = num_rows;
+    res.cols = num_cols;
+    res.start_row = start_row;
+    res.start_col = start_col;
+    res.stride_row = stride_row;
+    res.stride_col = stride_col;
+    res.mat = mat;
+    return res;
+}
+
+
+#scope_file
+heap_matrix_view_rows :: inline (m: HeapMatrixView) -> int {
+    return m.rows;
+}
+heap_matrix_view_cols :: inline (m: HeapMatrixView) -> int {
+    return m.cols;
+}
+
+heap_matrix_view_get :: inline (m: HeapMatrixView, i: int, j: int) -> m.data_type {
+    return get(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col);
+}
+heap_matrix_view_set :: inline (m: *HeapMatrixView, i: int, j: int, val: m.data_type) {
+    set(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col, val);
+}
+
+heap_matrix_view_get_lin :: inline (m: HeapMatrixView, i: int) -> m.data_type {
+    r, c := from_lin_index(m, i);
+    return heap_matrix_view_get(m, r, c);
+}
+heap_matrix_view_set_lin :: inline (m: *HeapMatrixView, i: int, val: m.data_type) {
+    r, c := from_lin_index(m, i);
+    heap_matrix_view_set(m, r, c, val);
+}
+
+heap_matrix_view_n_raw :: inline (m: HeapMatrixView) -> int {
+    return m.rows * m.cols;
+}
+heap_matrix_view_from_raw_index :: inline(m: HeapMatrixView, i: int) -> int {
+    return i;
+}
+#scope_export
 
 
 

@@ -182,10 +182,10 @@ vector_view_n_raw :: inline (v: VectorView($T, $N)) -> int {
 vector_view_raw_index :: inline (v: VectorView, i: int) -> int {
     return i;
 }
-vector_view_get :: inline (v: VectorView, i: int) -> T {
+vector_view_get :: inline (v: VectorView, i: int) -> v.data_type {
     return get(v.vec, v.start_index + v.stride * i);
 }
-vector_view_set :: inline (v: *VectorView($T, $N), i: int, value: T) {
+vector_view_set :: inline (v: *VectorView, i: int, value: v.data_type) {
     set(v.vec, v.start_index + v.stride * i, value);
 }
 #scope_export
