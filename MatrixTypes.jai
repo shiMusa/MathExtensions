@@ -58,69 +58,56 @@ MATRIX_FLAGS :: enum_flags u32 {
 //    ##    ##    ##  ##     ##  ##     ##
 //    ##    ##     ## ##     ## ####    ##
 
+/*
+* All concrete types must implement the following functions:
+* 
+* rows: (m: matrix_type) -> int
+* cols: (m: matrix_type) -> int
+* 
+* get: (m: matrix_type, int, int) -> data_type
+* set: (m: *matrix_type, int, int, data_type) -> ()
+* 
+* get_lin: (m: matrix_type, int) -> data_type
+* set_lin: (m: *matrix_type, int, data_type) -> ()
+* 
+* n_raw : (m: matrix_type) -> int
+* get_raw : (m: matrix_type, int) -> data_type
+* set_raw: (m: *matrix_type, int, data_type) -> ()
+* from_raw_index: (m: matrix_type, int) -> int
+*/
 MatrixType :: struct(
-    matrix_type: Type, 
     data_type: Type,
-    rows: (m: matrix_type) -> int,
-    cols: (m: matrix_type) -> int,
-    flags: MATRIX_FLAGS,
-
-    // * (row,column) access
-    get: (m: matrix_type, int, int) -> data_type,
-    set: (m: *matrix_type, int, int, data_type) -> (),
-    
-    // * linear access to all elements of the matrix
-    get_lin: (m: matrix_type, int) -> data_type,
-    set_lin: (m: *matrix_type, int, data_type) -> (),
-
-    // * raw data access
-    n_raw : (m: matrix_type) -> int,
-    get_raw : (m: matrix_type, int) -> data_type,
-    set_raw: (m: *matrix_type, int, data_type) -> (),
-    from_raw_index: (m: matrix_type, int) -> int
+    flags: MATRIX_FLAGS
 ){}
 
 
+get :: inline (v: *$M/MatrixType, i: int, j: int) -> M.data_type {
+    return get(<<v, i, j);
+}
+get_lin :: inline (v: *$M/MatrixType, i: int) -> M.data_type {
+    return get_lin(<<v, i);
+}
+get_raw :: inline (v: *$M/MatrixType, i: int) -> M.data_type {
+    return get_raw(<<v, i);
+}
+rows :: inline (v: *$M/MatrixType) -> int {
+    return rows(<<v);
+}
+cols :: inline (v: *$M/MatrixType) -> int {
+    return cols(<<v);
+}
+
+from_raw_index :: inline (m: *$M/MatrixType, i: int) -> int, int {
+    return from_raw_index(<<m, i);
+}
+
 n :: inline (m: $M/MatrixType) -> int {
-    return M.rows(m) * M.cols(m);
+    return rows(m) * M.cols(m);
 }
 n :: inline (m: *$M/MatrixType) -> int {
-    return M.rows(<<m) * M.cols(<<m);
+    return rows(<<m) * cols(<<m);
 }
 
-rows :: inline (m: $M/MatrixType) -> int {
-    return M.rows(m);
-}
-rows :: inline (m: *$M/MatrixType) -> int {
-    return M.rows(<<m);
-}
-cols :: inline (m: $M/MatrixType) -> int {
-    return M.cols(m);
-}
-cols :: inline (m: *$M/MatrixType) -> int {
-    return M.cols(<<m);
-}
-
-
-get :: inline (m: $M/MatrixType, i: int, j: int) -> M.data_type {
-    return M.get(m, i, j);
-}
-get :: inline (m: *$M/MatrixType, i: int, j: int) -> M.data_type {
-    return M.get(<<m, i, j);
-}
-set :: inline (m: *$M/MatrixType, i: int, j: int, value: M.data_type) {
-    M.set(m, i, j, value);
-}
-
-get_lin :: inline (m: $M/MatrixType, i: int) -> M.data_type {
-    return M.get_lin(m, i);
-}
-get_lin :: inline (m: *$M/MatrixType, i: int) -> M.data_type {
-    return M.get_lin(<<m, i);
-}
-set_lin :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
-    M.set_lin(m, i, value);
-}
 from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
     c := cols(m);
     return (i - i%c)/c, i%c;
@@ -128,18 +115,11 @@ from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
 to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
     return i * cols(m) + j;
 }
-
-n_raw :: inline (m: $M/MatrixType) -> int {
-    return M.n_raw(m);
+from_lin_index :: inline (m: *$M/MatrixType, i: int) -> int, int {
+    return from_lin_index(<<m, i);
 }
-get_raw :: inline (m: $M/MatrixType, i: int) -> M.data_type {
-    return M.get_raw(m, i);
-}
-set_raw :: inline (m: *$M/MatrixType, i: int, value: M.data_type) {
-    M.set_raw(m, i, value);
-}
-from_raw_index :: inline (m: $M/MatrixType, i: int) -> int {
-    return M.from_raw_index(m, i);
+to_lin_index :: inline (m: *$M/MatrixType, i: int, j: int) -> int {
+    return to_lin_index(<<m, i, j);
 }
 
 
@@ -219,25 +199,7 @@ for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) 
 
 
 MatrixView :: struct(V: Type, N: int, M: int) {
-    using _m: MatrixType(
-        #this,
-        V.data_type,
-        matrix_view_rows,
-        matrix_view_cols,
-        .VIEW & V.flags,
-
-        matrix_view_get,
-        matrix_view_set,
-
-        matrix_view_get_lin,
-        matrix_view_set_lin,
-
-        matrix_view_n_raw,
-        matrix_view_get_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        matrix_view_set_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        matrix_view_from_raw_index
-    );
-
+    using _m: MatrixType(V.data_type, MATRIX_FLAGS.VIEW & V.flags);
     start_row: int = 0;
     start_col: int = 0;
     stride_row: int = 1;
@@ -260,38 +222,44 @@ matview :: (mat: *$M/MatrixType, $num_rows: int, $num_cols: int, start_row: int 
     return res;
 }
 
-
-#scope_file
-matrix_view_rows :: inline (m: MatrixView($V, $N, $M)) -> int {
+rows :: inline (m: MatrixView($V, $N, $M)) -> int {
     return N;
 }
-matrix_view_cols :: inline (m: MatrixView($V, $N, $M)) -> int {
+cols :: inline (m: MatrixView($V, $N, $M)) -> int {
     return M;
 }
 
-matrix_view_get :: inline (m: MatrixView, i: int, j: int) -> m.data_type {
+get :: inline (m: MatrixView, i: int, j: int) -> m.data_type {
     return get(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col);
 }
-matrix_view_set :: inline (m: *MatrixView, i: int, j: int, val: m.data_type) {
+set :: inline (m: *MatrixView, i: int, j: int, val: m.data_type) {
     set(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col, val);
 }
 
-matrix_view_get_lin :: inline (m: MatrixView, i: int) -> m.data_type {
+get_lin :: inline (m: MatrixView, i: int) -> m.data_type {
     r, c := from_lin_index(m, i);
-    return matrix_view_get(m, r, c);
+    return get(m, r, c);
 }
-matrix_view_set_lin :: inline (m: *MatrixView, i: int, val: m.data_type) {
+set_lin :: inline (m: *MatrixView, i: int, val: m.data_type) {
     r, c := from_lin_index(m, i);
-    matrix_view_set(m, r, c, val);
+    set(m, r, c, val);
 }
 
-matrix_view_n_raw :: inline (m: MatrixView($T, $N, $M)) -> int {
+get_raw :: inline (m: MatrixView, i: int) -> m.data_type {
+    r, c := from_lin_index(m, i);
+    return get(m, r, c);
+}
+set_raw :: inline (m: *MatrixView, i: int, val: m.data_type) {
+    r, c := from_lin_index(m, i);
+    set(m, r, c, val);
+}
+
+n_raw :: inline (m: MatrixView($T, $N, $M)) -> int {
     return N*M;
 }
-matrix_view_from_raw_index :: inline(m: MatrixView, i: int) -> int {
+from_raw_index :: inline(m: MatrixView, i: int) -> int {
     return i;
 }
-#scope_export
 
 
 // ##     ## ########    ###    ########     ##     ## #### ######## ##      ##
@@ -303,25 +271,7 @@ matrix_view_from_raw_index :: inline(m: MatrixView, i: int) -> int {
 // ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
 
 HeapMatrixView :: struct(V: Type) {
-    using _m: MatrixType(
-        #this,
-        V.data_type,
-        heap_matrix_view_rows,
-        heap_matrix_view_cols,
-        .VIEW & V.flags,
-
-        heap_matrix_view_get,
-        heap_matrix_view_set,
-
-        heap_matrix_view_get_lin,
-        heap_matrix_view_set_lin,
-
-        heap_matrix_view_n_raw,
-        heap_matrix_view_get_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        heap_matrix_view_set_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        heap_matrix_view_from_raw_index
-    );
-
+    using _m: MatrixType(V.data_type, MATRIX_FLAGS.VIEW & V.flags);
     rows: int;
     cols : int;
     start_row: int = 0;
@@ -349,37 +299,43 @@ hmatview :: (mat: *$M/MatrixType, num_rows: int, num_cols: int, start_row: int =
 }
 
 
-#scope_file
-heap_matrix_view_rows :: inline (m: HeapMatrixView) -> int {
+rows :: inline (m: HeapMatrixView) -> int {
     return m.rows;
 }
-heap_matrix_view_cols :: inline (m: HeapMatrixView) -> int {
+cols :: inline (m: HeapMatrixView) -> int {
     return m.cols;
 }
 
-heap_matrix_view_get :: inline (m: HeapMatrixView, i: int, j: int) -> m.data_type {
+get :: inline (m: HeapMatrixView, i: int, j: int) -> m.data_type {
     return get(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col);
 }
-heap_matrix_view_set :: inline (m: *HeapMatrixView, i: int, j: int, val: m.data_type) {
+set :: inline (m: *HeapMatrixView, i: int, j: int, val: m.data_type) {
     set(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col, val);
 }
 
-heap_matrix_view_get_lin :: inline (m: HeapMatrixView, i: int) -> m.data_type {
+get_lin :: inline (m: HeapMatrixView, i: int) -> m.data_type {
     r, c := from_lin_index(m, i);
-    return heap_matrix_view_get(m, r, c);
+    return get(m, r, c);
 }
-heap_matrix_view_set_lin :: inline (m: *HeapMatrixView, i: int, val: m.data_type) {
+set_lin :: inline (m: *HeapMatrixView, i: int, val: m.data_type) {
     r, c := from_lin_index(m, i);
-    heap_matrix_view_set(m, r, c, val);
+    set(m, r, c, val);
 }
 
-heap_matrix_view_n_raw :: inline (m: HeapMatrixView) -> int {
+get_raw :: inline (m: HeapMatrixView, i: int) -> m.data_type {
+    r, c := from_lin_index(m, i);
+    return get(m, r, c);
+}
+set_raw :: inline (m: *HeapMatrixView, i: int, val: m.data_type) {
+    r, c := from_lin_index(m, i);
+    set(m, r, c, val);
+}
+n_raw :: inline (m: HeapMatrixView) -> int {
     return m.rows * m.cols;
 }
-heap_matrix_view_from_raw_index :: inline(m: HeapMatrixView, i: int) -> int {
+from_raw_index :: inline(m: HeapMatrixView, i: int) -> int {
     return i;
 }
-#scope_export
 
 
 
@@ -396,24 +352,7 @@ heap_matrix_view_from_raw_index :: inline(m: HeapMatrixView, i: int) -> int {
 
 // The only data that actually exists in memory during runtime is "data", the ONELY field of the struct.
 DenseMatrix :: struct(_T: Type, _N: int, _M: int) {
-    using _m: MatrixType(
-        #this,
-        _T,
-        dense_matrix_rows,
-        dense_matrix_cols,
-        .DENSE,
-
-        dense_matrix_get,
-        dense_matrix_set,
-        
-        dense_matrix_get_lin,
-        dense_matrix_set_lin,
-
-        dense_matrix_n_raw,
-        dense_matrix_get_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        dense_matrix_set_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        dense_matrix_from_raw_index
-    ); 
+    using _m: MatrixType(_T, MATRIX_FLAGS.DENSE); 
     data: [_N*_M]_T;
 }
 
@@ -448,36 +387,39 @@ dmat :: inline ($N: int, $M: int, values: ..$T) -> DenseMatrix(T,N,M) {
     return res;
 }
 
-#scope_file
-dense_matrix_rows :: inline (m: DenseMatrix($T, $N, $M)) -> int {
+rows :: inline (m: DenseMatrix($T, $N, $M)) -> int {
     return N;
 }
-dense_matrix_cols :: inline (m: DenseMatrix($T, $N, $M)) -> int {
+cols :: inline (m: DenseMatrix($T, $N, $M)) -> int {
     return M;
 }
 
-dense_matrix_get :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> T {
+get :: inline (m: DenseMatrix($T, $N, $M), i: int, j: int) -> T {
     return m.data[i*M + j];
 }
-dense_matrix_set :: inline (m: *DenseMatrix($T, $N, $M), i: int, j: int, value: T) {
+set :: inline (m: *DenseMatrix($T, $N, $M), i: int, j: int, value: T) {
     m.data[i*M + j] = value;
 }
 
-
-dense_matrix_get_lin :: inline (m: DenseMatrix($T, $N, $M), i: int) -> T {
+get_lin :: inline (m: DenseMatrix($T, $N, $M), i: int) -> T {
     return m.data[i];
 }
-dense_matrix_set_lin :: inline (m: *DenseMatrix($T, $N, $M), i: int, value: T) {
+set_lin :: inline (m: *DenseMatrix($T, $N, $M), i: int, value: T) {
     m.data[i] = value;
 }
 
-dense_matrix_n_raw :: inline (m: DenseMatrix($T, $N, $M)) -> int {
+get_raw :: inline (m: DenseMatrix($T, $N, $M), i: int) -> T {
+    return m.data[i];
+}
+set_raw :: inline (m: *DenseMatrix($T, $N, $M), i: int, value: T) {
+    m.data[i] = value;
+}
+n_raw :: inline (m: DenseMatrix($T, $N, $M)) -> int {
     return N*M;
 }
-dense_matrix_from_raw_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int {
+from_raw_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> int {
     return i;
 }
-#scope_export
 
 
 // ########  ######## ##    ##  ######  ########    ##     ## ########    ###    ########
@@ -490,24 +432,7 @@ dense_matrix_from_raw_index :: inline (m: DenseMatrix($T, $N, $M), i: int) -> in
 
 
 DenseHeapMatrix :: struct(_T: Type) {
-    using _m: MatrixType(
-        #this,
-        _T,
-        dense_heap_matrix_rows,
-        dense_heap_matrix_cols,
-        .DENSE & .HEAP,
-
-        dense_heap_matrix_get,
-        dense_heap_matrix_set,
-        
-        dense_heap_matrix_get_lin,
-        dense_heap_matrix_set_lin,
-
-        dense_heap_matrix_n_raw,
-        dense_heap_matrix_get_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        dense_heap_matrix_set_lin, // ? ther is no difference between raw and lin for DENSE matrices
-        dense_heap_matrix_from_raw_index
-    ); 
+    using _m: MatrixType(_T, MATRIX_FLAGS.DENSE & .HEAP); 
     rows: int;
     cols: int;
     data : []_T; // * heap-allocated data!
@@ -517,7 +442,7 @@ free :: inline (m: $M/DenseHeapMatrix) {
     array_free(m.data);
 }
 
-dhmat :: ($T: Type, N: int, M: int, init_zeroes: bool = true) -> DenseHeapMatrix(T) {
+dhmat :: ($T: Type, N: int, M: int, $init_zeroes: bool = true) -> DenseHeapMatrix(T) {
     res : DenseHeapMatrix(T) = ---;
     res.rows = N;
     res.cols = M;
@@ -558,33 +483,37 @@ dhmat :: inline (N: int, M: int, values: ..$T) -> DenseHeapMatrix(T) {
     return res;
 }
 
-#scope_file
-dense_heap_matrix_rows :: inline (m: DenseHeapMatrix($T)) -> int {
+rows :: inline (m: DenseHeapMatrix($T)) -> int {
     return m.rows;
 }
-dense_heap_matrix_cols :: inline (m: DenseHeapMatrix($T)) -> int {
+cols :: inline (m: DenseHeapMatrix($T)) -> int {
     return m.cols;
 }
 
-dense_heap_matrix_get :: inline (m: DenseHeapMatrix($T), i: int, j: int) -> T {
+get :: inline (m: DenseHeapMatrix($T), i: int, j: int) -> T {
     return m.data[i*cols(m) + j];
 }
-dense_heap_matrix_set :: inline (m: *DenseHeapMatrix($T), i: int, j: int, value: T) {
+set :: inline (m: *DenseHeapMatrix($T), i: int, j: int, value: T) {
     m.data[i*cols(m) + j] = value;
 }
 
 
-dense_heap_matrix_get_lin :: inline (m: DenseHeapMatrix($T), i: int) -> T {
+get_lin :: inline (m: DenseHeapMatrix($T), i: int) -> T {
     return m.data[i];
 }
-dense_heap_matrix_set_lin :: inline (m: *DenseHeapMatrix($T), i: int, value: T) {
+set_lin :: inline (m: *DenseHeapMatrix($T), i: int, value: T) {
     m.data[i] = value;
 }
 
-dense_heap_matrix_n_raw :: inline (m: DenseHeapMatrix($T)) -> int {
+get_raw :: inline (m: DenseHeapMatrix($T), i: int) -> T {
+    return m.data[i];
+}
+set_raw :: inline (m: *DenseHeapMatrix($T), i: int, value: T) {
+    m.data[i] = value;
+}
+n_raw :: inline (m: DenseHeapMatrix($T)) -> int {
     return rows(m)*cols(m);
 }
-dense_heap_matrix_from_raw_index :: inline (m: DenseHeapMatrix($T), i: int) -> int {
+from_raw_index :: inline (m: DenseHeapMatrix($T), i: int) -> int {
     return i;
 }
-#scope_export

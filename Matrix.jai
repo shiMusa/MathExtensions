@@ -446,7 +446,7 @@ equals_default :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
     if rows(a) != rows(b) || cols(a) != cols(b) then return false;
 
     for a {
-        if it != get(b, it_index) then return false;
+        if it != get_lin(b, it_index) then return false;
     }
 
     return true;
@@ -917,7 +917,7 @@ swap_rows_default :: (m: *$M/MatrixType, i: int, j: int) {
 transpose :: inline (m: *$M/MatrixType) {
     #if M.flags == .DENSE {
         transpose_dense(m);
-    } else if M.flags == .DENSE & .HEAP {
+    } else if M.flags == MATRIX_FLAGS.DENSE & MATRIX_FLAGS.HEAP {
         transpose_dense_heap(m);
     }
 }
@@ -1337,7 +1337,7 @@ test_matrix :: () {
 
         {
             println_push("test 3", color = .FG_YELLOW);
-            m : dhmat(float64, 3, 3);
+            m := dhmat(float64, 3, 3);
             defer free(m);
             mat_init_all(*m, 42.0);
             println("%", pstr(m));
@@ -1408,12 +1408,14 @@ test_matrix :: () {
 
         {
             println_push("test 9", color = .FG_YELLOW);
-            m := make(DenseHeapMatrix(C64, 2, 2));
+            m := dhmat(C64, 2, 2);
             defer free(m);
             mat_init(*m, R, 2*R, 3*R, 4*R);
             println("m = %", pstr(m));
-            m = m * m;
-            println("m = %", pstr(m));
+            res := dhmat(C64, 2, 2);
+            defer free(res);
+            mat_mul_mat(m, m, *res);
+            println("res = %", pstr(res));
         }
         {
             println_push("test 10", color = .FG_YELLOW);
