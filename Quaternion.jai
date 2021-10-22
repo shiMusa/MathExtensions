@@ -402,12 +402,10 @@ operator / :: (a: Complex($A), b: Quaternion($B)) -> Quaternion(UpCast(A,B).T) {
 
 
 operator == :: inline (a: Quaternion($T), b: Quaternion($U)) -> bool {
-    // TODO UpCast here?
     return a.r == b.r && a.i == b.i && a.j == b.j && a.k == b.k;
 }
 
 operator == :: inline (a: Quaternion($T), b: Complex($U)) -> bool #symmetric {
-    // TODO UpCast here?
     return a.r == b.real && a.i == b.imag && a.j == 0 && a.k == 0;
 }
 

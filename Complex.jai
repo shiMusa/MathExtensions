@@ -142,7 +142,6 @@ operator / :: inline (v : $U, a: Complex($T)) -> Complex(UpCast(T,U).T) #modify 
 }
 
 operator == :: inline (a: Complex($T), b: Complex($U)) -> bool {
-    // TODO UpCast here?
     return a.real == b.real && a.imag == b.imag;
 }
 

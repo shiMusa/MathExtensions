@@ -63,7 +63,6 @@ binomial :: inline (from: $T, choose: T) -> T {
         assert(choose <= from, "Out of range: from = %, choose = %", from, choose);
     }
 
-    // assert(from >= choose); // TODO disable for release build?!
     if choose == zero(T) || from == choose {
         return one(T);
     }
@@ -429,7 +428,7 @@ asin :: inline (n: $T) -> T {
         X :: #run get_number_inner_type(T);
         i := cpx_i(X);
         r := cpx_r(X);
-        return -i * log(i*n + sqrt(r - n*n, T)); // TODO make I and R generic over type
+        return -i * log(i*n + sqrt(r - n*n, T));
     } else 
         return Math.asin(n);
 }
@@ -444,7 +443,7 @@ acos :: inline (n: $T) -> T {
         X :: #run get_number_inner_type(T);
         i := cpx_i(X);
         r := cpx_r(X);
-        return cpx(Math.PI * 0.5) + i * log(i*n + sqrt(r - n*n, T)); // TODO make I and R generic over type
+        return cpx(Math.PI * 0.5) + i * log(i*n + sqrt(r - n*n, T));
     } else 
         return Math.acos(n);
 }
@@ -460,7 +459,7 @@ atan :: inline (n: $T) -> T {
         X :: #run get_number_inner_type(T);
         i := cpx_i(X);
         r := cpx_r(X);
-        return cpx(0.0, 0.5) * (log(r-i*n) - log(r + i*n)); // TODO make I and R generic over type
+        return cpx(0.0, 0.5) * (log(r-i*n) - log(r + i*n));
     } else 
         return Math.atan(n);
 }
@@ -473,7 +472,7 @@ acot :: inline (n: $T) -> T {
     } else #if #run is_complex_number(T) {
         X :: #run get_number_inner_type(T);
         i := cpx_i(X);
-        return cpx(0.0, 0.5) * ( log((n - i)/n) - log((n + i)/n) ); // TODO make I and R generic over type
+        return cpx(0.0, 0.5) * ( log((n - i)/n) - log((n + i)/n) );
     } else 
         return Math.PI*0.5 - Math.atan(n);
 }
@@ -486,7 +485,7 @@ asec :: inline (n: $T) -> T {
         X :: #run get_number_inner_type(T);
         i := cpx_i(X);
         r := cpx_r(X);
-        return cpx(Math.PI * 0.5) + i * log( sqrt(r - r/(n*n), T) + i/n ); // TODO make I and R generic over type
+        return cpx(Math.PI * 0.5) + i * log( sqrt(r - r/(n*n), T) + i/n );
     } else 
         return acos(1.0/n);
 }
@@ -499,7 +498,7 @@ acsc :: inline (n: $T) -> T {
         X :: #run get_number_inner_type(T);
         i := cpx_i(X);
         r := cpx_r(X);
-        return -i * log( sqrt(r - r/(n*n), T) + i/n ); // TODO make I and R generic over type
+        return -i * log( sqrt(r - r/(n*n), T) + i/n );
     } else 
         return asin(1.0/n);
 }

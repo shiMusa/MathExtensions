@@ -161,9 +161,9 @@ VectorView :: struct(V: Type, N: int) {
 }
 
 
-vecview :: inline(vec: *$V/VectorType, start_index: int = 0, $num_elements: int, stride: int = 1) -> VectorView(V, num_elements) {
+vecview :: (vec: *$V/VectorType, start_index: int = 0, $num_elements: int, stride: int = 1) -> VectorView(V, num_elements) {
     #if CHECKS {
-        assert(start_index + (num_elements-1) * stride <= N);
+        assert(start_index + (num_elements-1) * stride <= dim(vec));
     }
     res : VectorView(V, num_elements);
     res.start_index = start_index;

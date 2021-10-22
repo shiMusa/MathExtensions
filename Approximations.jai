@@ -29,15 +29,19 @@ Not sure how to do that atm in Jai...
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 2.3.1.4, page 50
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 2.3.1.4, page 50
 approx_inverse :: (val: $T, guess: T, rtol: T, $show_steps: bool = false) -> T #modify {
-    if T.type != .FLOAT {T = null; return;}    
+    if !is_number(T) {T = null; return;}    
 } {
-    x : T = guess + rtol + rtol;
-    xnew : T = guess;
+    #if CHECKS {
+        #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);
+    }
+
+    x := guess + rtol + rtol;
+    xnew := guess;
     i := 0;
 
     #if show_steps {
@@ -56,14 +60,18 @@ approx_inverse :: (val: $T, guess: T, rtol: T, $show_steps: bool = false) -> T #
     return x;
 }
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 2.3.1.4, page 50
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 2.3.1.4, page 50
 approx_inverse :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
-    if T.type != .FLOAT {T = null; return;}    
+    if !is_number(T) {T = null; return;}    
 } {
-    x : T = guess;
+    #if CHECKS {
+        #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);
+    }
+
+    x := guess;
 
     #if show_steps {
         println_push("approx_inverse (iterations)");
@@ -82,15 +90,18 @@ approx_inverse :: (val: $T, guess: T, iterations: int, $show_steps: bool = false
 
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 2.3.1.5, page 51
-// TODO: bit shift exponent (divid by 2) for initial guess
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 2.3.1.5, page 51
+// TODO: bit shift exponent (divide by 2) for initial guess
 approx_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
-    if T.type != .FLOAT {T = null; return;}    
+    if !is_number(T) {T = null; return;}    
 } {
-    x : T = guess;
+    #if CHECKS {
+        #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);
+    }
+    x := guess;
 
     #if show_steps {
         println_push("approx_sqrt");
@@ -132,14 +143,18 @@ approx_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -
 // }
 
 
-// Scientific Computing, Vol I: Linear and nonlinear equations
-// Texts in computational science and engineering 18
-// Springer
-// Algorithm 2.3.1.6, page 51
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? Algorithm 2.3.1.6, page 51
 approx_inv_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
-    if T.type != .FLOAT {T = null; return;}    
+    if !is_number(T) {T = null; return;}    
 } {
-    x : T = guess;
+    #if CHECKS {
+        #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);
+    }
+
+    x := guess;
 
     #if show_steps {
         println_push("approx_inv_sqrt");

@@ -427,15 +427,7 @@ column_default :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
 
 
 operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
-    #if A.N != B.N || A.M != B.M {
-        return false;
-    } else {
-        // TODO be smart about this, e.g. for sparse matrices
-        for a {
-            if get_lin(b, it_index) != it then return false;
-        }
-        return true;
-    }
+    return equals(a,b);
 }
 
 equals :: inline (a: $A/MatrixType, b: $B/MatrixType) -> bool {
