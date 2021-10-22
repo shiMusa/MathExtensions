@@ -184,9 +184,9 @@ mat_init_unit_default :: (m: *$M/MatrixType, $init_zeroes: bool = true) {
         o := one(M.data_type);
         for m {
             if it_row == it_column {
-                set_lin(m, it_index, z);
-            } else {
                 set_lin(m, it_index, o);
+            } else {
+                set_lin(m, it_index, z);
             }
         }
     } else {
@@ -1202,7 +1202,7 @@ test_matrix :: () {
         }
 
         {
-            m : DenseMatrix(C64, 4, 4);
+            m : DenseMatrix(C64, 4, 4) = ---;
             mat_init_unit(*m);
             println("m = %", pstr(m));
             assert(get(m,0,1) == C_ZERO);
@@ -1232,8 +1232,7 @@ test_matrix :: () {
             assert(a == b);
 
             add(*a, b);
-            mul(*a, 2);
-            mul(*b, 3);
+            mul(*b, 2);
             assert(a == b);
         }
 
@@ -1401,8 +1400,7 @@ test_matrix :: () {
             assert(a == b);
 
             add(*a, b);
-            mul(*a, 2.0);
-            mul(*b, 3.0);
+            mul(*b, 2.0);
             assert(a == b);
         }
 
@@ -1419,34 +1417,42 @@ test_matrix :: () {
         }
         {
             println_push("test 10", color = .FG_YELLOW);
-            m := make(DenseHeapMatrix(C64, 2, 2));
+            m := dhmat(C64, 2, 2);
             defer free(m);
             mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
             println("m = %", pstr(m));
-            m = m * m;
-            println("m = %", pstr(m));
+            res := dhmat(C64, 2, 2);
+            defer free(res);
+            mat_mul_mat(m, m, *res);
+            println("res = %", pstr(res));
         }
         {
             println_push("test 11", color = .FG_YELLOW);
-            m := make(DenseHeapMatrix(C64, 2, 2));
+            m := dhmat(C64, 2, 2);
             defer free(m);
             mat_init(*m, 
                 C_ZERO, -I, 
                 I, C_ZERO
             );
-            assert( dagger(m) == m );
+            b := dhmat(C64, 2, 2);
+            defer free(b);
+            copy(*b, m);
+
+            dagger(*b);
+            assert( b == m );
         }
 
 
         {
             println_push("test 12", color = .FG_YELLOW);
-            m := make(DenseHeapMatrix(C64, 2, 2));
+            m := dhmat(C64, 2, 2);
             defer free(m);
             mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
             println("m = %", pstr(m));
-            t1 := tensor(m, m);
+            t1 := dhmat(C64, 4, 4);
+            tensor(m, m, *t1);
             println("t1 = %", pstr(t1));
-            t2 := make(DenseHeapMatrix(C64, 4, 4));
+            t2 := dhmat(C64, 4, 4);
             mat_init(*t2,
                 R            ,             I,             I,   -R           ,
                 2.0 -       I, 2.0 + 3.0 * I, 1.0 + 2.0 * I, -3.0 +  2.0 * I,
@@ -1459,7 +1465,7 @@ test_matrix :: () {
 
         {
             println_push("test 13", color = .FG_YELLOW);
-            M := make(DenseHeapMatrix(C64, 3, 3));
+            M := dhmat(C64, 3, 3);
             defer free(M);
             mat_init(*M,
                 C_ZERO, R, 2*R,
@@ -1467,9 +1473,11 @@ test_matrix :: () {
                 6*R, 7*R, 8*R
             );
 
-            S := mat_submatrix(M, 1, 3, 1, 3);
+            S := hmatview(*M, 2, 2, 1, 1);
+            println("S = %", pstr(S));
             
-            res := make(DenseHeapMatrix(C64, 2, 2));
+            res := dhmat(C64, 2, 2);
+            defer free(res);
             mat_init(*res, 4*R, 5*R, 7*R, 8*R);
             
             assert(S == res);
