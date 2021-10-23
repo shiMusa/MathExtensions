@@ -390,26 +390,39 @@ solve_linear_right_trapezoidal_default :: (r: $A/MatrixType, m: $B/MatrixType, x
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
-decompose_LR :: (m: $A/MatrixType) -> L: A #must, R: A #must {
-    L : A;
+decompose_LR :: inline (m: $A/MatrixType, L: *$B/MatrixType, R: *$C/MatrixType) {
+    decompose_LR_default(m,L,R);
+}
+
+#scope_file
+decompose_LR_default :: (m: $A/MatrixType, L: *$B/MatrixType, R: *$C/MatrixType) {
+    #if CHECKS {
+        assert(rows(m) == rows(L) && cols(m) == cols(L), "dimension mismatch: m(%,%), L(%,%)\n", rows(m), cols(m), rows(L), cols(L));
+        assert(rows(m) == rows(R) && cols(m) == cols(R), "dimension mismatch: m(%,%), R(%,%)\n", rows(m), cols(m), rows(R), cols(R));
+    }
+
     mat_init_unit(*L);
-    R : A;
 
     for m {
         if it_column >= it_row {
-            set(*R, it_row, it_column, it);
+            set(R, it_row, it_column, it);
         } else {
-            set(*L, it_row, it_column, it);
+            set(L, it_row, it_column, it);
         }
     }
-
-    return L, R;
 }
+#scope_export
 
 
 
 
-
+//  ######      ###    ##     ##  ######   ######     ########    ###     ######     ##    ## ########
+// ##    ##    ## ##   ##     ## ##    ## ##    ##    ##         ## ##   ##    ##    ###   ## ##     ##
+// ##         ##   ##  ##     ## ##       ##          ##        ##   ##  ##          ####  ## ##     ##
+// ##   #### ##     ## ##     ##  ######   ######     ######   ##     ## ##          ## ## ## ########
+// ##    ##  ######### ##     ##       ##       ##    ##       ######### ##          ##  #### ##
+// ##    ##  ##     ## ##     ## ##    ## ##    ##    ##       ##     ## ##    ##    ##   ### ##
+//  ######   ##     ##  #######   ######   ######     ##       ##     ##  ######     ##    ## ##
 
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
