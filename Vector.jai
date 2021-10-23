@@ -1,3 +1,29 @@
+
+
+
+
+
+
+
+//TODO ########  #######  ########   #######
+//TODO    ##    ##     ## ##     ## ##     ##
+//TODO    ##    ##     ## ##     ## ##     ##
+//TODO    ##    ##     ## ##     ## ##     ##
+//TODO    ##    ##     ## ##     ## ##     ##
+//TODO    ##    ##     ## ##     ## ##     ##
+//TODO    ##     #######  ########   #######
+
+
+// TODO loop unrolling for stack-allocated vectors of size <= 4
+
+
+
+
+
+
+
+
+
 /*
  ######  ######## ########
 ##    ##    ##    ##     ##
@@ -142,35 +168,42 @@ equals_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> bool {
 // ##     ## ##     ##    ##
 // ########   #######     ##
 
+// ? by default, the left vector will be conjugated, 
+// ? like `⟨ψ|φ⟩ = ∑ₙ conjugate(ψₙ) φₙ` in quantum mechanics
 operator * :: inline (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
     return dot(a,b);
 }
-dot :: inline (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
+dot :: inline (a: $A/VectorType, b: $B/VectorType, $conjugate: bool = true) -> UpCast(A.data_type,B.data_type).T {
     #if A.flags == .DENSE && B.flags == .DENSE {
-        return dot_dense_dense(a,b);
+        return dot_dense_dense(a,b,conjugate);
     } else {
         // * default implementation
-        return dot_default(a,b);
+        return dot_default(a,b,conjugate);
     }
 }
 #scope_file
-dot_default :: (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,b.data_type).T {
+dot_default :: (a: $A/VectorType, b: $B/VectorType, $conjugate: bool = true) -> UpCast(A.data_type,b.data_type).T {
     #if CHECKS {
         assert(dim(a) == dim(b), "vectors not of same dimensions (%, %)\n", dim(a), dim(b));
     }
     res := zero(UpCast(A.data_type,b.data_type).T);
     for a {
-        res += it * get(b, it_index);
+        #if conjugate {
+            res += conjugate(it) * get(b, it_index);
+        } else {
+            res += it * get(b, it_index);
+        }
     }
     return res;
 }
-dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> UpCast(T,U).T {
-    #if CHECKS {
-        #run assert(N == M, "vectors not of same dimensions (%, %)\n", N, M);
-    }
+dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, N), $conjugate: bool = true) -> UpCast(T,U).T {
     res := zero(UpCast(T,U).T);
     for a {
-        res += it * get(b, it_index);
+        #if conjugate {
+            res += conjugate(it) * get(b, it_index);
+        } else {
+            res += it * get(b, it_index);
+        }
     }
     return res;
 }

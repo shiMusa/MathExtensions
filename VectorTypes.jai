@@ -129,7 +129,7 @@ MatrixRowView :: struct(M: Type, N: int) {
 }
 
 
-mat_row_view :: (mat: *$M/MatrixType, row: int, start_index: int = 0, $num_elements: int, stride: int = 1) -> MatrixRowView(M, num_elements) {
+mat_row_view :: (mat: *$M/MatrixType, row: int, $num_elements: int, start_index: int = 0, stride: int = 1) -> MatrixRowView(M, num_elements) {
     #if CHECKS {
         assert(row >= 0 && row < rows(mat));
         assert(start_index + (num_elements-1) * stride <= dim(vec));
@@ -183,7 +183,7 @@ MatrixColumnView :: struct(M: Type, N: int) {
 }
 
 
-mat_col_view :: (mat: *$M/MatrixType, col: int, start_index: int = 0, $num_elements: int, stride: int = 1) -> MatrixColumnView(M, num_elements) {
+mat_col_view :: (mat: *$M/MatrixType, col: int, $num_elements: int, start_index: int = 0, stride: int = 1) -> MatrixColumnView(M, num_elements) {
     #if CHECKS {
         assert(col >= 0 && col < cols(mat));
         assert(start_index + (num_elements-1) * stride <= dim(vec));
@@ -220,6 +220,120 @@ from_raw_index :: inline (v: MatrixColumnView, i: int) -> int {
 }
 
 
+// ##     ##    ###    ########    ########   #######  ##      ##    ##     ## ########    ###    ########     ##     ## #### ######## ##      ##
+// ###   ###   ## ##      ##       ##     ## ##     ## ##  ##  ##    ##     ## ##         ## ##   ##     ##    ##     ##  ##  ##       ##  ##  ##
+// #### ####  ##   ##     ##       ##     ## ##     ## ##  ##  ##    ##     ## ##        ##   ##  ##     ##    ##     ##  ##  ##       ##  ##  ##
+// ## ### ## ##     ##    ##       ########  ##     ## ##  ##  ##    ######### ######   ##     ## ########     ##     ##  ##  ######   ##  ##  ##
+// ##     ## #########    ##       ##   ##   ##     ## ##  ##  ##    ##     ## ##       ######### ##            ##   ##   ##  ##       ##  ##  ##
+// ##     ## ##     ##    ##       ##    ##  ##     ## ##  ##  ##    ##     ## ##       ##     ## ##             ## ##    ##  ##       ##  ##  ##
+// ##     ## ##     ##    ##       ##     ##  #######   ###  ###     ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
+
+MatrixRowHeapView :: struct(M: Type) {
+    // using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW & M.flags); // TODO implement flags conversion
+    using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
+    row: int;
+    cols: int;
+    start_index: int = 0;
+    stride: int = 1;
+    mat: *M;
+}
+
+
+mat_row_heap_view :: (mat: *$M/MatrixType, row: int, num_elements: int, start_index: int = 0, stride: int = 1) -> MatrixRowHeapView(M) {
+    #if CHECKS {
+        assert(row >= 0 && row < rows(mat));
+        assert(start_index + (num_elements-1) * stride <= dim(vec));
+    }
+    res : MatrixRowHeapView(M);
+    res.row = row;
+    res.cols = num_elements;
+    res.start_index = start_index;
+    res.stride = stride;
+    res.mat = mat;
+    return res;
+}
+
+dim :: inline (v: MatrixRowHeapView) -> int {
+    return v.cols;
+}
+get :: inline (v: MatrixRowHeapView, i: int) -> v.data_type {
+    return get(v.mat, v.row, v.start_index + v.stride * i);
+}
+set :: inline (v: *MatrixRowHeapView, i: int, value: v.data_type) {
+    set(v.mat, v.row, v.start_index + v.stride * i, value);
+}
+// TODO be smarter about this?
+get_raw :: inline (v: MatrixRowHeapView, i: int) -> v.data_type {
+    return get(v.mat, v.row, v.start_index + v.stride * i);
+}
+set_raw :: inline (v: *MatrixRowHeapView, i: int, value: v.data_type) {
+    set(v.mat, v.row, v.start_index + v.stride * i, value);
+}
+n_raw :: inline (v: MatrixRowHeapView) -> int {
+    return v.cols; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
+}
+from_raw_index :: inline (v: MatrixRowHeapView, i: int) -> int {
+    return i;
+}
+
+// ##     ##    ###    ########     ######   #######  ##          ##     ## ########    ###    ########     ##     ## #### ######## ##      ##
+// ###   ###   ## ##      ##       ##    ## ##     ## ##          ##     ## ##         ## ##   ##     ##    ##     ##  ##  ##       ##  ##  ##
+// #### ####  ##   ##     ##       ##       ##     ## ##          ##     ## ##        ##   ##  ##     ##    ##     ##  ##  ##       ##  ##  ##
+// ## ### ## ##     ##    ##       ##       ##     ## ##          ######### ######   ##     ## ########     ##     ##  ##  ######   ##  ##  ##
+// ##     ## #########    ##       ##       ##     ## ##          ##     ## ##       ######### ##            ##   ##   ##  ##       ##  ##  ##
+// ##     ## ##     ##    ##       ##    ## ##     ## ##          ##     ## ##       ##     ## ##             ## ##    ##  ##       ##  ##  ##
+// ##     ## ##     ##    ##        ######   #######  ########    ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
+
+
+MatrixColumnHeapView :: struct(M: Type) {
+    // using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW & M.flags); // TODO implement flags conversion
+    using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
+    col: int;
+    rows: int;
+    start_index: int = 0;
+    stride: int = 1;
+    mat: *M;
+}
+
+
+mat_col_heap_view :: (mat: *$M/MatrixType, col: int, num_elements: int, start_index: int = 0, stride: int = 1) -> MatrixColumnHeapView(M) {
+    #if CHECKS {
+        assert(col >= 0 && col < cols(mat));
+        assert(start_index + (num_elements-1) * stride <= dim(vec));
+    }
+    res : MatrixColumnHeapView(M, num_elements);
+    res.col = col;
+    res.rows = num_elements;
+    res.start_index = start_index;
+    res.stride = stride;
+    res.mat = mat;
+    return res;
+}
+
+dim :: inline (v: MatrixColumnHeapView) -> int {
+    return v.rows;
+}
+get :: inline (v: MatrixColumnHeapView, i: int) -> v.data_type {
+    return get(v.mat, v.start_index + v.stride * i, v.col);
+}
+set :: inline (v: *MatrixColumnHeapView, i: int, value: v.data_type) {
+    set(v.mat, v.start_index + v.stride * i, v.col, value);
+}
+// TODO be smarter about this?
+get_raw :: inline (v: MatrixColumnHeapView, i: int) -> v.data_type {
+    return get(v.mat, v.start_index + v.stride * i, v.col);
+}
+set_raw :: inline (v: *MatrixColumnHeapView, i: int, value: v.data_type) {
+    set(v.mat, v.start_index + v.stride * i, value, v.col);
+}
+n_raw :: inline (v: MatrixColumnHeapView) -> int {
+    return v.rows; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
+}
+from_raw_index :: inline (v: MatrixColumnHeapView, i: int) -> int {
+    return i;
+}
+
+
 // ##     ## #### ######## ##      ##
 // ##     ##  ##  ##       ##  ##  ##
 // ##     ##  ##  ##       ##  ##  ##
@@ -236,7 +350,7 @@ VectorView :: struct(V: Type, N: int) {
 }
 
 
-vec_view :: (vec: *$V/VectorType, start_index: int = 0, $num_elements: int, stride: int = 1) -> VectorView(V, num_elements) {
+vec_view :: (vec: *$V/VectorType, $num_elements: int, start_index: int = 0, stride: int = 1) -> VectorView(V, num_elements) {
     #if CHECKS {
         assert(start_index + (num_elements-1) * stride <= dim(vec));
     }

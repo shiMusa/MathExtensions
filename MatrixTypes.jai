@@ -282,7 +282,7 @@ HeapMatrixView :: struct(V: Type) {
 }
 
 
-hmatview :: (mat: *$M/MatrixType, num_rows: int, num_cols: int, start_row: int = 0, start_col: int = 0, stride_row: int = 1, stride_col: int = 1) -> HeapMatrixView(M) {
+hmat_view :: (mat: *$M/MatrixType, num_rows: int, num_cols: int, start_row: int = 0, start_col: int = 0, stride_row: int = 1, stride_col: int = 1) -> HeapMatrixView(M) {
     #if CHECKS {
         assert(start_row + (num_rows-1)*stride_row <=  rows(mat));
         assert(start_col + (num_cols-1)*stride_col <=  cols(mat));

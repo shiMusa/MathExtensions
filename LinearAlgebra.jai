@@ -251,17 +251,11 @@ solve_linear_successive_orthogonal_projection_default :: (Q: $A/MatrixType, b: *
     }
 
     for i: 0..rows(Q)-1 {
-        cq_dot_b := zero(C.data_type);
-        for 0..cols(Q) {
-            cq_dot_b += conjugate(get(Q,i,it)) * get(b, it);
-        }
+
+        q := mat_row_heap_view(*Q, i, cols(Q));
+        cq_dot_b := q * b; // ? the conjugation is on by default for the dot product
         set(x, i, cq_dot_b);
-
-        for b {
-            set(b, it_index, it - get(Q, i, it_index) * cq_dot_b);
-        }
-
-        q := mat_row_view(*Q, i, 0, )
+        saxpy(b, q, -cq_dot_b);
 
         // q := row(Q, i);
         // set(x,i, conjugate(q) * b); // not sure if this is performant...
@@ -272,58 +266,67 @@ solve_linear_successive_orthogonal_projection_default :: (Q: $A/MatrixType, b: *
 
 
 
-
+//  ######     ##       #### ##    ##    ##       ########    ######## ########  ########  ########
+// ##    ##    ##        ##  ###   ##    ##       ##             ##    ##     ## ##     ##      ##
+// ##          ##        ##  ####  ##    ##       ##             ##    ##     ## ##     ##     ##
+//  ######     ##        ##  ## ## ##    ##       ######         ##    ########  ########     ##
+//       ##    ##        ##  ##  ####    ##       ##             ##    ##   ##   ##          ##
+// ##    ##    ##        ##  ##   ###    ##       ##             ##    ##    ##  ##         ##
+//  ######     ######## #### ##    ##    ######## ########       ##    ##     ## ##        ########
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? 3.4.5.1 Left Trapezoidal, page 159
 slltz :: solve_linear_left_trapezoidal;
-solve_linear_left_trapezoidal :: (L: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
+
+solve_linear_left_trapezoidal :: inline (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    solve_linear_left_trapezoidal(L,b,x);
+}
+
+#scope_file
+solve_linear_left_trapezoidal_default :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
+        assert(rows(L) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(L), cols(L), dim(b));
+        assert(cols(L) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(L), cols(L), dim(x));
         assert(is_left_trapezoidal(L)); // more rows than columns N >= M
     }
 
-    L2 := mat_submatrix(L, 0, A.M, 0, A.M);
-    b2 := vec_subvector(b, 0, A.M);
+    L2 := hmat_view(*L, cols(L), cols(L));
+    b2 := hvec_view(*b, cols(L));
+    solve_linear_left_triangular(L2, b2, x);
+}
+#scope_export
 
-    res := solve_linear_left_triangular(L2, b2);
 
-    // * checking the result, but this shouldn't be part of the algorithm
-    // #if CHECKS {
-    //     #if A.N == A.M {
-    //         assert( approx( L2 * res, b2 ) );
-    //     } else {
-    //         L3 := mat_submatrix(L, A.M, A.N, 0, A.M);
-    //         b3 := vec_subvector(b, A.M, A.N);
-    //         assert( approx(L3 * res, b3) );
-    //     }
-    // }
-
-    return res;
+solve_linear_left_trapezoidal :: inline (l: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
+    solve_linear_left_trapezoidal_default(l,m,x);
 }
 
-
-solve_linear_left_trapezoidal :: (l: $A/MatrixType, m: $B/MatrixType) -> MatrixHelper(A,B, A.M, B.M).T {
+#scope_file
+solve_linear_left_trapezoidal_default :: (l: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
     #if CHECKS {
-        #run assert(A.M == B.N, "dimensions mismatch (%,%), (%,%)\n", A.N, A.M, B.N, B.M);
-    }
-    res : MatrixHelper(A,B, A.M, B.M).T = ---;
-
-    for j: 0..B.M-1 {
-        b := column(m, j);
-        tmp := solve_linear_left_trapezoidal(l, b);
-        for tmp {
-            set(*res,it_index,j, it);
-        }
+        assert(rows(l) == rows(m), "dimensions mismatch l(%,%), m(%,%)\n", rows(l), cols(l), rows(b), cols(b));
+        assert(cols(l) == rows(x), "dimensions mismatch l(%,%), x(%,%)\n", rows(l), cols(l), rows(x), cols(x));
+        assert(cols(m) == cols(x), "dimensions mismatch m(%,%), x(%,%)\n", rows(m), cols(m), rows(x), cols(x));
     }
 
-    return res;
+    for j: 0..cols(m)-1 {
+        b := mat_col_heap_view(*m, j, rows(m));
+        tmp := mat_col_heap_view(x, j, rows(x));
+        solve_linear_left_trapezoidal(l, b, *tmp);
+    }
 }
+#scope_export
 
 
-
+//  ######     ##       #### ##    ##    ########  ####    ######## ########  ########  ########
+// ##    ##    ##        ##  ###   ##    ##     ##  ##        ##    ##     ## ##     ##      ##
+// ##          ##        ##  ####  ##    ##     ##  ##        ##    ##     ## ##     ##     ##
+//  ######     ##        ##  ## ## ##    ########   ##        ##    ########  ########     ##
+//       ##    ##        ##  ##  ####    ##   ##    ##        ##    ##   ##   ##          ##
+// ##    ##    ##        ##  ##   ###    ##    ##   ##        ##    ##    ##  ##         ##
+//  ######     ######## #### ##    ##    ##     ## ####       ##    ##     ## ##        ########
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
