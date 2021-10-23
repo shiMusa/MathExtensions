@@ -1,23 +1,29 @@
 
-
+//  ######     ##       #### ##    ##     #######  ##     ##  #######
+// ##    ##    ##        ##  ###   ##    ##     ##  ##   ##  ##     ##
+// ##          ##        ##  ####  ##           ##   ## ##          ##
+//  ######     ##        ##  ## ## ##     #######     ###     #######
+//       ##    ##        ##  ##  ####    ##          ## ##   ##
+// ##    ##    ##        ##  ##   ###    ##         ##   ##  ##
+//  ######     ######## #### ##    ##    ######### ##     ## #########
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? Algorithm 3.4.1 2x2 Linear System Solve, page 153
-// ? solves the system A x = b with 2x2 matrix A
+// ? solves the system `a x = b` with 2x2 matrix `a` and vectors `x`, `b`
 sl2 :: solve_linear_2x2;
-solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N).T {
-    res := make(VectorHelper(A,B,A.N).T); // * initialize with zeros.
-    inline solve_linear_2x2(a,b, *res);
-    return res;
+solve_linear_2x2 :: inline (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    solve_linear_2x2_default(a,b,x);
 }
-solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+
+#scope_file
+solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == 2, "dimension mismatch: 2 != A.N = %\n", A.N);
-        #run assert(A.M == 2, "dimension mismatch: 2 != A.M = %\n", A.M);
-        #run assert(B.N == 2, "dimension mismatch: 2 != B.N = %\n", B.N);
-        #run assert(C.N == 2, "dimension mismatch: 2 != C.N = %\n", C.N);
+        assert(rows(a) == 2, "dimension mismatch: 2 != A.N = %\n", A.N);
+        assert(cols(a) == 2, "dimension mismatch: 2 != A.M = %\n", A.M);
+        assert(dim(b) == 2, "dimension mismatch: 2 != B.N = %\n", B.N);
+        assert(dim(x) == 2, "dimension mismatch: 2 != C.N = %\n", C.N);
     }
 
     sigma := max(abs(get(a,0,0)), abs(get(a,0,1)), abs(get(a,1,0)), abs(get(a,1,1)));
@@ -29,12 +35,19 @@ solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     m := dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0));
     mat_mul_vec(m, g, x);
 }
+#scope_export
 
 
 
 
 
-
+//  ######     ##       #### ##    ##    ##       ########    ######## ########  ####
+// ##    ##    ##        ##  ###   ##    ##       ##             ##    ##     ##  ##
+// ##          ##        ##  ####  ##    ##       ##             ##    ##     ##  ##
+//  ######     ##        ##  ## ## ##    ##       ######         ##    ########   ##
+//       ##    ##        ##  ##  ####    ##       ##             ##    ##   ##    ##
+// ##    ##    ##        ##  ##   ###    ##       ##             ##    ##    ##   ##
+//  ######     ######## #### ##    ##    ######## ########       ##    ##     ## ####
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
@@ -43,21 +56,21 @@ solve_linear_2x2 :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
 // ? solve the system Lx = b where L is a unit left-triangluar matrix
 // ? that means, all diagonals are 1 and all L_ij = 0 for j > i.
 sllta :: solve_linear_left_triangular;
-solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType) -> VectorVectorHelper(B,A).T {    
-    res := make(VectorVectorHelper(B,A).T);
-    inline solve_linear_left_triangular(L, b, *res);
-    return res;
+solve_linear_left_triangular :: inline (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {    
+    solve_linear_left_triangular_default(L,b,x);
 }
-solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+
+#scope_file
+solve_linear_left_triangular_default :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == A.M, "L is not quadratic L(%,%)\n", A.N, A.M);
-        #run assert(A.N == B.N, "dimensions mismatch L(%,%), b(%)\n", A.N, A.M, B.N);
-        #run assert(A.M == C.N, "dimensions mismatch L(%,%), x(%)\n", A.N, A.M, x.N);
+        assert(rows(L) == cols(L), "L is not quadratic L(%,%)\n", rows(L), cols(L));
+        assert(rows(L) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(L), cols(L), dim(b));
+        assert(cols(L) == dim(x), "dimensions mismatch L(%,%), x(%)\n", rows(L), cols(L), dim(x));
         assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1\n");
         assert(is_left_triangular(L), "L is not left-triangular\n");
     }
     
-    for i: 0..B.N-1 {
+    for i: 0..dim(b)-1 {
         sum := zero(C.data_type);
         for j: 0..i-1 {
             sum += get(L,i,j) * get(x,j);
@@ -65,9 +78,16 @@ solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/Vect
         set(x,i, get(b,i) - sum);
     }
 }
+#scope_export
 
 
-
+//  ######     ##       #### ##    ##    ########  ####    ######## ########  ####
+// ##    ##    ##        ##  ###   ##    ##     ##  ##        ##    ##     ##  ##
+// ##          ##        ##  ####  ##    ##     ##  ##        ##    ##     ##  ##
+//  ######     ##        ##  ## ## ##    ########   ##        ##    ########   ##
+//       ##    ##        ##  ##  ####    ##   ##    ##        ##    ##   ##    ##
+// ##    ##    ##        ##  ##   ###    ##    ##   ##        ##    ##    ##   ##
+//  ######     ######## #### ##    ##    ##     ## ####       ##    ##     ## ####
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
@@ -76,63 +96,70 @@ solve_linear_left_triangular :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/Vect
 // ? solve the system Rx = b where R is a right-triangluar matrix
 // ? that means all R_ij = 0 for j < i.
 slrta :: solve_linear_right_triangular;
-solve_linear_right_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> VectorVectorHelper(B,A).T {
-    res := make(VectorVectorHelper(B,A).T);
-    inline solve_linear_right_triangular(R,b,*res);
-    return res;
+solve_linear_right_triangular :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    solve_linear_right_triangular_default(R,b,x);
 }
-solve_linear_right_triangular :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+
+#scope_file
+solve_linear_right_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == A.M, "L is not quadratic L(%,%)\n", A.N, A.M);
-        #run assert(A.N == B.N, "dimensions mismatch L(%,%), b(%)\n", A.N, A.M, B.N);
-        #run assert(A.M == C.N, "dimensions mismatch L(%,%), x(%)\n", A.N, A.M, C.N);
+        assert(rows(R) == cols(R), "L is not quadratic L(%,%)\n", rows(R), cols(R));
+        assert(rows(R) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(R), cols(R), dim(b));
+        assert(cols(R) == dim(x), "dimensions mismatch L(%,%), x(%)\n", rows(R), cols(R), dim(x));
         assert(is_right_triangular(R), "R is not right-triangular\n");
     }
 
     i : int;
-    for 0..B.N-1 {
-        i = B.N-1 - it;
+    for 0..dim(b)-1 {
+        i = dim(b)-1 - it;
         sum := zero(x.data_type);
-        for j: i+1..B.N-1 {
+        for j: i+1..dim(b)-1 {
             sum += get(R,i,j)*get(x,j);
         }
         set(x,i, (get(b,i) - sum)/get(R,i,i));
     }
 }
+#scope_export
 
 
 
 
 
-
+//  ######     ##       #### ##    ##    ########  ####     #######  ######## ########  ####
+// ##    ##    ##        ##  ###   ##    ##     ##  ##     ##     ##    ##    ##     ##  ##
+// ##          ##        ##  ####  ##    ##     ##  ##     ##     ##    ##    ##     ##  ##
+//  ######     ##        ##  ## ## ##    ########   ##     ##     ##    ##    ########   ##
+//       ##    ##        ##  ##  ####    ##   ##    ##     ##  ## ##    ##    ##   ##    ##
+// ##    ##    ##        ##  ##   ###    ##    ##   ##     ##    ##     ##    ##    ##   ##
+//  ######     ######## #### ##    ##    ##     ## ####     ##### ##    ##    ##     ## ####
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
-// ? solve the system Rx=b where R is a right(upper) quasi-triangular matrix.
+// ? solve the system `Rx=b` where `R` is a right(upper) quasi-triangular matrix and `x`, `b` are vectors.
 slrqta :: solve_linear_right_quasi_triangular;
-solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType) -> VectorVectorHelper(B,A).T {
-    res := make(VectorVectorHelper(B,A).T, false);
-    inline solve_linear_right_quasi_triangular(R,b,*res);
-    return res;
+solve_linear_right_quasi_triangular :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    solve_linear_right_quasi_triangular_default(R,b,x);
 }
-solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+
+#scope_file
+solve_linear_right_quasi_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == A.M, "L is not quadratic L(%,%)\n", A.N, A.M);
-        #run assert(A.N == B.N, "dimensions mismatch L(%,%), b(%)\n", A.N, A.M, B.N);
-        #run assert(A.M == C.N, "dimensions mismatch L(%,%), x(%)\n", A.N, A.M, C.N);
+        assert(rows(R) == cols(R), "L is not quadratic L(%,%)\n", rows(R), cols(R));
+        assert(rows(R) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(R), cols(R), dim(b));
+        assert(cols(R) == dim(x), "dimensions mismatch L(%,%), x(%)\n", rows(R), cols(R), dim(x));
         assert(is_right_quasi_triangular(R), "R is not right quasi-triangular!\n");
     }
     U :: C.data_type;
 
-    i := B.N-1; // start with last row and wrap from bottom to up
+    i := dim(b)-1; // start with last row and wrap from bottom to up
     while i >= 0 {
         // check if 2x2 block by looking at left column
         // the term `|| i == 0` was missing
         if (i > 0 && get(R,i,i-1) == zero(U)) || i == 0 {
             sum := zero(U);
-            for j: i+1..B.N-1 {
+            for j: i+1..dim(b)-1 {
                 sum += get(R,i,j) * get(x,j);
             }
             set(x,i, (get(b,i) - sum)/get(R,i,i));
@@ -145,24 +172,32 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType, x: *
             );
             sum1 := zero(U);
             sum2 := zero(U);
-            for j: i+1..B.N-1 {
+            for j: i+1..dim(b)-1 {
                 sum1 += get(R,i-1,j) * get(x,j);
                 sum2 += get(R,i,j) * get(x,j);
             }
             c := dvec(2, get(b,i-1)-sum1, get(b,i)-sum2);
-            tmp := solve_linear_2x2(a, c);
+            tmp : DenseVector(U, 2, 2);
+            solve_linear_2x2(a, c, *tmp);
             set(x, i-1, get(tmp,0));
             set(x, i,   get(tmp,1));
             i -= 2;
         }
     }
 }
+#scope_export
 
 
 
 
 
-
+//  ######     ##       #### ##    ##    ##     ## ##    ## ####
+// ##    ##    ##        ##  ###   ##    ##     ## ###   ##  ##
+// ##          ##        ##  ####  ##    ##     ## ####  ##  ##
+//  ######     ##        ##  ## ## ##    ##     ## ## ## ##  ##
+//       ##    ##        ##  ##  ####    ##     ## ##  ####  ##
+// ##    ##    ##        ##  ##   ###    ##     ## ##   ###  ##
+//  ######     ######## #### ##    ##     #######  ##    ## ####
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
@@ -170,27 +205,32 @@ solve_linear_right_quasi_triangular :: (R: $A/MatrixType, b: $B/VectorType, x: *
 // ? Algorithm 3.4.8 Orthogonal Projection, page 167
 solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop                 :: solve_linear_orthogonal_projection;
-solve_linear_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
-    res := make(VectorHelper(A,B,A.M).T);
-    QQ := copy(Q);
-    inline solve_linear_orthogonal_projection(*QQ,b,*res);
-    return res;
+solve_linear_orthogonal_projection :: inline (Q: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    solve_linear_orthogonal_projection_default(Q,b,x);
 }
-solve_linear_orthogonal_projection :: (Q: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+
+#scope_file
+solve_linear_orthogonal_projection_default :: (Q: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.M == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
-        #run assert(A.M == C.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, C.N);
+        assert(cols(Q) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(b));
+        assert(cols(Q) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(x));
         assert(is_unitary(Q));
     }
-
     dagger(Q);
     mat_mul_vec(<<Q, b, x);
 }
+#scope_export
 
 
 
 
-
+//  ######     ##       #### ##    ##     ######  ##     ##  ######   ######      #######  ########  ######## ##     ##    ########  ########        ##
+// ##    ##    ##        ##  ###   ##    ##    ## ##     ## ##    ## ##    ##    ##     ## ##     ##    ##    ##     ##    ##     ## ##     ##       ##
+// ##          ##        ##  ####  ##    ##       ##     ## ##       ##          ##     ## ##     ##    ##    ##     ##    ##     ## ##     ##       ##
+//  ######     ##        ##  ## ## ##     ######  ##     ## ##       ##          ##     ## ########     ##    #########    ########  ########        ##
+//       ##    ##        ##  ##  ####          ## ##     ## ##       ##          ##     ## ##   ##      ##    ##     ##    ##        ##   ##   ##    ##
+// ##    ##    ##        ##  ##   ###    ##    ## ##     ## ##    ## ##    ##    ##     ## ##    ##     ##    ##     ##    ##        ##    ##  ##    ##
+//  ######     ######## #### ##    ##     ######   #######   ######   ######      #######  ##     ##    ##    ##     ##    ##        ##     ##  ######
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
@@ -198,25 +238,37 @@ solve_linear_orthogonal_projection :: (Q: *$A/MatrixType, b: $B/VectorType, x: *
 // ? Algorithm 3.4.9 Successive Orthogonal Projection, page 168
 // ? not sure if this algo is useful. seems to be slower than the previous one.
 slsop :: solve_linear_successive_orthogonal_projection;
-solve_linear_successive_orthogonal_projection :: (Q: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
-    res := make(VectorHelper(A,B,A.M).T, false);
-    bb := copy(b);
-    inline solve_linear_successive_orthogonal_projection(Q,*bb,*res);
-    return res;
+solve_linear_successive_orthogonal_projection :: inline (Q: $A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
+    solve_linear_successive_orthogonal_projection(Q,b,x);
 }
-solve_linear_successive_orthogonal_projection :: (Q: $A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
+
+#scope_file
+solve_linear_successive_orthogonal_projection_default :: (Q: $A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.M == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
-        #run assert(A.M == C.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, C.N);
+        assert(cols(Q) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(b));
+        assert(cols(Q) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(x));
         assert(is_unitary(Q));
     }
 
-    for i: 0..A.M-1 {
-        q := row(Q, i);
-        set(x,i, conjugate(q) * b); // not sure if this is performant...
-        b = b - q * get(x,i);
+    for i: 0..rows(Q)-1 {
+        cq_dot_b := zero(C.data_type);
+        for 0..cols(Q) {
+            cq_dot_b += conjugate(get(Q,i,it)) * get(b, it);
+        }
+        set(x, i, cq_dot_b);
+
+        for b {
+            set(b, it_index, it - get(Q, i, it_index) * cq_dot_b);
+        }
+
+        q := mat_row_view(*Q, i, 0, )
+
+        // q := row(Q, i);
+        // set(x,i, conjugate(q) * b); // not sure if this is performant...
+        // b = b - q * get(x,i);
     }
 }
+#scope_export
 
 
 
