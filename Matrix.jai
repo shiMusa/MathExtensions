@@ -264,10 +264,10 @@ mat_init_hadamard_default :: (m: *$M/MatrixType, nestings: int = 0) {
         r2 := rows(m)/2;
         c2 := cols(m)/2;
 
-        tl := hmat_view(m, r2, c2,  0,  0);
-        tr := hmat_view(m, r2, c2,  0, c2);
-        bl := hmat_view(m, r2, c2, r2,  0);
-        br := hmat_view(m, r2, c2, r2, c2);
+        tl := mat_heap_view(m, r2, c2,  0,  0);
+        tr := mat_heap_view(m, r2, c2,  0, c2);
+        bl := mat_heap_view(m, r2, c2, r2,  0);
+        br := mat_heap_view(m, r2, c2, r2, c2);
 
         mat_init_hadamard(*tl, nestings-1);
         mat_init_hadamard(*tr, nestings-1);
@@ -1298,7 +1298,7 @@ test_matrix :: () {
                 6*R, 7*R, 8*R
             );
 
-            S := matview(*M, 2, 2, 1, 1);
+            S := mat_view(*M, 2, 2, 1, 1);
             
             res : DenseMatrix(C64, 2, 2);
             mat_init(*res, 4*R, 5*R, 7*R, 8*R);
@@ -1473,7 +1473,7 @@ test_matrix :: () {
                 6*R, 7*R, 8*R
             );
 
-            S := hmat_view(*M, 2, 2, 1, 1);
+            S := mat_heap_view(*M, 2, 2, 1, 1);
             println("S = %", pstr(S));
             
             res := dhmat(C64, 2, 2);

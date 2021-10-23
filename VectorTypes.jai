@@ -403,7 +403,7 @@ HeapVectorView :: struct(V: Type) {
 }
 
 
-hvec_view :: inline(vec: *$V/VectorType, num_elements: int, start_index: int = 0, stride: int = 1) -> HeapVectorView(V) {
+vec_heap_view :: inline(vec: *$V/VectorType, num_elements: int, start_index: int = 0, stride: int = 1) -> HeapVectorView(V) {
     #if CHECKS {
         assert(start_index + (num_elements-1) * stride <= dim(vec));
     }

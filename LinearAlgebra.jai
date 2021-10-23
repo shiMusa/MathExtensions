@@ -292,8 +292,8 @@ solve_linear_left_trapezoidal_default :: (L: $A/MatrixType, b: $B/VectorType, x:
         assert(is_left_trapezoidal(L)); // more rows than columns N >= M
     }
 
-    L2 := hmat_view(*L, cols(L), cols(L));
-    b2 := hvec_view(*b, cols(L));
+    L2 := mat_heap_view(*L, cols(L), cols(L));
+    b2 := vec_heap_view(*b, cols(L));
     solve_linear_left_triangular(L2, b2, x);
 }
 #scope_export
@@ -313,8 +313,8 @@ solve_linear_left_trapezoidal_default :: (l: $A/MatrixType, m: $B/MatrixType, x:
 
     for j: 0..cols(m)-1 {
         b := mat_col_heap_view(*m, j, rows(m));
-        tmp := mat_col_heap_view(x, j, rows(x));
-        solve_linear_left_trapezoidal(l, b, *tmp);
+        y := mat_col_heap_view( x, j, rows(x));
+        solve_linear_left_trapezoidal(l, b, *y);
     }
 }
 #scope_export
@@ -334,46 +334,57 @@ solve_linear_left_trapezoidal_default :: (l: $A/MatrixType, m: $B/MatrixType, x:
 // ? 3.4.5.2 Right Trapezoidal, page 160
 // ? There are degrees of freedom left. These are set to 0 here.
 slrtz :: solve_linear_right_trapezoidal;
-solve_linear_right_trapezoidal :: (R: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
-    #if CHECKS {
-        #run assert(A.N == B.N, "dimensions mismatch (%,%), (%)\n", A.N, A.M, B.N);
-        assert(is_right_trapezoidal(R), "Matrix is not right trapezoidal: M(%) >= N(%)?\n", A.M, A.N);
-    }
-
-    R2 := mat_submatrix(R, 0, A.N, 0, A.N);
-
-    tmp := solve_linear_right_triangular(R2, b);
-
-    // * tmp and res are of different dimensions!
-    res : VectorHelper(A,B,A.M).T;
-    for tmp {
-        set(*res, it_index, it);
-    }
-    return res;
+solve_linear_right_trapezoidal :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    solve_linear_right_trapezoidal_default(R,b,x);
 }
 
-
-solve_linear_right_trapezoidal :: (r: $A/MatrixType, m: $B/MatrixType) -> MatrixHelper(A,B,A.M,B.M).T {
+#scope_file
+solve_linear_right_trapezoidal_default :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
-        #run assert(A.N == B.N, "dimensions mismatch (%,%), (%,%)\n", A.N, A.M, B.N, B.M);
-    }
-    res : MatrixHelper(A,B,A.M,B.M).T = ---;
-
-    for j: 0..B.M-1 {
-        b := column(m, j);
-        tmp := solve_linear_right_trapezoidal(r, b);
-        for tmp {
-            set(*res,it_index,j, it);
-        }
+        assert(rows(R) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(R), cols(R), dim(b));
+        assert(cols(R) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(R), cols(R), dim(x));
+        assert(is_right_trapezoidal(R), "Matrix is not right trapezoidal: M(%) >= N(%)?\n", cols(R), rows(R));
     }
 
-    return res;
+    R2 := mat_heap_view(*R, rows(R), rows(R));
+    b2 := vec_heap_view(*b, rows(R));
+    x2 := vec_heap_view(x, rows(R));
+    solve_linear_right_triangular(R2,b2,*x2);
+}
+#scope_export
+
+
+solve_linear_right_trapezoidal :: inline (r: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
+    solve_linear_right_trapezoidal_default(r,m,x);
 }
 
+#scope_file
+solve_linear_right_trapezoidal_default :: (r: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
+    #if CHECKS {
+        assert(rows(r) == rows(m), "dimensions mismatch (%,%), (%,%)\n", rows(r), cols(r), rows(m), cols(m));
+        assert(cols(r) == rows(x), "dimensions mismatch (%,%), (%,%)\n", rows(r), cols(r), rows(x), cols(x));
+        assert(cols(x) == cols(m), "dimensions mismatch (%,%), (%,%)\n", rows(x), cols(x), rows(m), cols(m));
+    }
+
+
+    for j: 0..cols(m)-1 {
+        b := mat_col_heap_view(*m, j, rows(m));
+        y := mat_col_heap_view( x, j, rows(x));
+        solve_linear_right_trapezoidal(r, b, *y);
+    }
+}
+#scope_export
 
 
 
 
+// ##       ########
+// ##       ##     ##
+// ##       ##     ##
+// ##       ########
+// ##       ##   ##
+// ##       ##    ##
+// ######## ##     ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
