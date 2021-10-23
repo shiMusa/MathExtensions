@@ -55,6 +55,10 @@ solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorTy
 // ? Algorithm 3.4.2 Forward Linear Recurrence, page 155
 // ? solve the system Lx = b where L is a unit left-triangluar matrix
 // ? that means, all diagonals are 1 and all L_ij = 0 for j > i.
+
+// TODO clarify, does this work with sllta(L, x, *x) ?
+// TODO it seems, that the inner loop only traverses already updated data, so it should be possible
+
 sllta :: solve_linear_left_triangular;
 solve_linear_left_triangular :: inline (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {    
     solve_linear_left_triangular_default(L,b,x);
@@ -96,6 +100,11 @@ solve_linear_left_triangular_default :: (L: $A/MatrixType, b: $B/VectorType, x: 
 // ? Algorithm 3.4.4 Backward Linear Recurrence, page 158
 // ? solve the system Rx = b where R is a right-triangluar matrix
 // ? that means all R_ij = 0 for j < i.
+
+// TODO clarify, does this work with sllta(L, x, *x) ?
+// TODO It seems, that the inner loop only traverses already updated data, so it should be possible.
+// TODO Note the reversed order!
+
 slrta :: solve_linear_right_triangular;
 solve_linear_right_triangular :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     solve_linear_right_triangular_default(R,b,x);
@@ -112,7 +121,7 @@ solve_linear_right_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x:
 
     i : int;
     for 0..dim(b)-1 {
-        i = dim(b)-1 - it;
+        i = dim(b)-1 - it; // ? reverse order!
         sum := zero(x.data_type);
         for j: i+1..dim(b)-1 {
             sum += get(R,i,j)*get(x,j);
@@ -287,7 +296,9 @@ solve_linear_left_trapezoidal_default :: (L: $A/MatrixType, b: $B/VectorType, x:
     #if CHECKS {
         assert(rows(L) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(L), cols(L), dim(b));
         assert(cols(L) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(L), cols(L), dim(x));
-        assert(is_left_trapezoidal(L)); // more rows than columns N >= M
+
+        // ? this test should be disabled since `solve_linear_left_triangular` works with any matrix and prevents unnecessary allocations
+        // assert(is_left_trapezoidal(L)); // more rows than columns N >= M
     }
 
     L2 := mat_heap_view(*L, cols(L), cols(L));
@@ -341,7 +352,9 @@ solve_linear_right_trapezoidal_default :: (R: $A/MatrixType, b: $B/VectorType, x
     #if CHECKS {
         assert(rows(R) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(R), cols(R), dim(b));
         assert(cols(R) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(R), cols(R), dim(x));
-        assert(is_right_trapezoidal(R), "Matrix is not right trapezoidal: M(%) >= N(%)?\n", cols(R), rows(R));
+
+        // ? this test should be disabled since `solve_linear_right_triangular` works with any matrix and prevents unnecessary allocations
+        // assert(is_right_trapezoidal(R), "Matrix is not right trapezoidal: M(%) >= N(%)?\n", cols(R), rows(R));
     }
 
     R2 := mat_heap_view(*R, rows(R), rows(R));
@@ -453,6 +466,8 @@ gaussian_factorization_no_pivot_default :: (m: *$A/MatrixType) {
 #scope_export
 
 
+
+
 //  ######  ##        ######   ########         ##    ## ########
 // ##    ## ##       ##    ##  ##               ###   ## ##     ##
 // ##       ##       ##        ##               ####  ## ##     ##
@@ -468,24 +483,34 @@ gaussian_factorization_no_pivot_default :: (m: *$A/MatrixType) {
 slgf_np :: solve_linear_gaussian_factorization_no_pivot;
 solve_LRnp :: solve_linear_gaussian_factorization_no_pivot;
 solve_LUnp :: solve_linear_gaussian_factorization_no_pivot;
-solve_linear_gaussian_factorization_no_pivot :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.M).T {
-    M := gaussian_factorization_no_pivot(a);
-    L, R := decompose_LR(M);
-    y := solve_linear_left_trapezoidal(L, b);
-    return solve_linear_right_trapezoidal(R, y);
+solve_linear_gaussian_factorization_no_pivot :: inline (a: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    solve_linear_gaussian_factorization_no_pivot_default(a,b,x);
 }
 
+#scope_file
+solve_linear_gaussian_factorization_no_pivot_default :: (a: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+    gaussian_factorization_no_pivot(a);
+    solve_linear_left_trapezoidal (<<a, b, x); // ? this should be possible, see function implementations!
+    solve_linear_right_trapezoidal(<<a, x, x); // ? this should be possible, see function implementations!
+}
+#scope_export
 
 
 
 
-
-
+//  ######   ########         ######## ########
+// ##    ##  ##               ##       ##     ##
+// ##        ##               ##       ##     ##
+// ##   #### ######           ######   ########
+// ##    ##  ##               ##       ##
+// ##    ##  ##               ##       ##
+//  ######   ##       ####### ##       ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
+gf_fp :: gaussian_factorization_full_pivot;
 gaussian_factorization_full_pivot :: (m: $A/MatrixType)
  -> A #must, 
     rows: [A.N]int #must, 
