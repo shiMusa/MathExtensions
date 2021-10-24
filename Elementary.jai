@@ -47,7 +47,7 @@ inverse :: inline (n: $T) -> T #modify {
     #if #run is_quaternion_number(T) {
         return qtn_inv(n);
     } else #if #run is_complex_number(T) {
-        return #run cpx_inv(n);
+        return cpx_inv(n);
     } else return 1/n;
 }
 
@@ -119,20 +119,6 @@ quat_k :: inline (n: $T) -> $U #modify {
         return n.j;
     } else {
         return zero(T);
-    }
-}
-
-
-
-inverse :: inline (n: $T) -> T #modify {
-    if !is_number(T) {T = null; return;}
-} {
-    #if #run is_quaternion_number(n) {
-        return qtn_inv(n);
-    } else #if #run is_complex_number(n) {
-        return #run cpx_inv(n);
-    } else {
-        return one(T)/n;
     }
 }
 

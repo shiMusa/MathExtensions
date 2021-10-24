@@ -67,7 +67,7 @@ cpx :: inline ($$re: $T = 0.0, $$im: T = 0.0) -> Complex(T) {
 
 cpx_inv :: inline (z: Complex($T)) -> Complex(T) {
     z_abs_sq := abs_sq(z);
-    return cpx(z.real / abs_sq, -z.imag / abs_sq);
+    return cpx(z.real / z_abs_sq, -z.imag / z_abs_sq);
 }
 
 

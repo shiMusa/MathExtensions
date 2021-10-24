@@ -219,10 +219,10 @@ dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, N), $conjugate: b
 // ##    ## ##    ## ##     ## ##          ##     ## ##     ## ##
 //  ######   ######  ##     ## ########    ##     ##  #######  ########
 
-mul :: (a: *$A/VectorType, b: $B) #modify {
+mul :: inline (a: *$A/VectorType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
-    inline mul_default(a,b);
+    mul_default(a,b);
 }
 
 #scope_file
@@ -239,10 +239,10 @@ mul_default :: (a: *$A/VectorType, b: $B) #modify {
 #scope_export
 
 
-div :: (a: *$A/VectorType, b: $B) #modify {
+div :: inline (a: *$A/VectorType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
-    inline div(a,b);
+    div_default(a,b);
 }
 
 #scope_file
@@ -417,14 +417,15 @@ reflect_default :: (vec: $A/VectorType, normal: $B/VectorType, res: *$C/VectorTy
 // ? Matrix Computations, 4th edition
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.2 Saxpy, page 4
-saxpy :: (a: *$A/VectorType, b: $B/VectorType, factor: $C) #modify {
+// ? y = a * x + y
+saxpy :: (y: *$A/VectorType, a: $B/VectorType, x: $C) #modify {
     if !is_number(C) {C = null; return;}    
 } {
-    inline saxpy_default(a, b, factor);
+    inline saxpy_default(y, a, x);
 }
 
 #scope_file
-saxpy_default :: (a: *$A/VectorType, b: $B/VectorType, factor: $C) #modify {
+saxpy_default :: (y: *$A/VectorType, a: $B/VectorType, x: $C) #modify {
     if !is_number(C) {C = null; return;}    
 } {
     #if CHECKS {
@@ -432,8 +433,8 @@ saxpy_default :: (a: *$A/VectorType, b: $B/VectorType, factor: $C) #modify {
         #assert(is_minor_number_type(A.data_type, B) && is_minor_number_type(A.data_type, C));
     }
 
-    for a {
-        set(a, it_index, it + factor.value * get(b, it_index));
+    for y {
+        set(y, it_index, it + x * get(a, it_index));
     }
 }
 #scope_export
@@ -443,6 +444,7 @@ saxpy_default :: (a: *$A/VectorType, b: $B/VectorType, factor: $C) #modify {
 // ? Matrix Computations, 4th edition
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.3 Row-Oriented Gaxpy, page 5
+// ? y = A * x + y
 gaxpy :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
     inline gaxpy_default(y, A, x);
 }

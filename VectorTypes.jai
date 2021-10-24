@@ -491,7 +491,9 @@ dvec :: inline($N: int, values: ..$T) -> DenseVector(T,N) {
         assert(values.count <= N);
     }
     res : DenseVector(T,N);
-    vec_init(*res, ..values);
+    for values {
+        set(*res, it_index, it);
+    }
     return res;
 }
 

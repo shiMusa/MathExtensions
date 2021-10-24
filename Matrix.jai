@@ -529,7 +529,7 @@ mat_mul_vec :: inline (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) 
 #scope_file
 mat_mul_vec_default :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
     #if CHECKS {
-        assert(cols(a) == rows(b) , "Dimensions mismatch: a.cols = %, b.dim   = %", cols(a), rows(b) );
+        assert(cols(a) == dim(b) , "Dimensions mismatch: a.cols = %, b.dim   = %", cols(a), dim(b) );
         assert(rows(a) == dim(res), "Dimensions mismatch: a.rows = %, res.dim = %", rows(a), dim(res));
     }
 

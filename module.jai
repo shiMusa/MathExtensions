@@ -41,7 +41,7 @@ run_all_tests :: () {
     test_matrix();
 
     test_checks();
-    // test_linear_algebra();
+    test_linear_algebra();
 }
 
 
