@@ -604,9 +604,6 @@ gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows: *$B/Vecto
 
 
 
-
-
-
 //  ######  ##        ######   ########         ######## ########
 // ##    ## ##       ##    ##  ##               ##       ##     ##
 // ##       ##       ##        ##               ##       ##     ##
@@ -674,22 +671,30 @@ solve_linear_gaussian_factorization_full_pivot_default :: (
 // ? Springer
 // ? Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
 gf_rp :: gaussian_factorization_row_pivot;
-gaussian_factorization_row_pivot :: (m: $A/MatrixType) -> A #must, rows: [A.N]int, permutations: int {
-    a := copy(m);
+gaussian_factorization_row_pivot :: inline (m: *$A/MatrixType, rows: *$B/VectorType) -> permutations: int {
+    return gaussian_factorization_row_pivot_default(a,rows);
+}
 
-    rows : [A.N]int = ---;
+#scope_file
+gaussian_factorization_row_pivot_default :: (m: *$A/MatrixType, rows: *$B/VectorType) -> permutations: int {
+    #if CHECKS {
+        assert(rows(m) == dim(rows));
+    }
     permutations := 0;
 
-    for 0..A.N-1 {
-        rows[it] = it;
+    for rows {
+        set(*rows, it_index, it_index);
     }
 
-    for k: 0..#run min(A.N,A.M)-1 {
-        ii := k;
-        rho := abs(get(a,k,k));
+    mr := rows(m);
+    mc := cols(m);
 
-        for i: k..A.N-1 {
-            tmp := abs(get(a,i,k));
+    for k: 0..min(mr,mc)-1 {
+        ii := k;
+        rho := abs(get(m,k,k));
+
+        for i: k..mr-1 {
+            tmp := abs(get(m,i,k));
             if tmp > rho {
                 ii = i;
                 rho = tmp;
@@ -698,28 +703,34 @@ gaussian_factorization_row_pivot :: (m: $A/MatrixType) -> A #must, rows: [A.N]in
 
         assert(rho != 0.0, "\nCannot perform Gaussain factorization due to 0 in diagonal.");
 
-        // instead of swapping, use the permutation arrays rows and cols to access the 
-        // entries of a. Should be faster?
         if ii > k {
-            swap_rows(*a, k, ii);
-            rows[k], rows[ii] = swap(rows[k], rows[ii]);
+            swap_rows(*m, k, ii);
+            swap(*rows, k, ii);
             permutations += 1;
         }
 
-        for i: k+1..A.N-1 {
-            set(*a,i,k, get(a,i,k)/get(a,k,k));
+        for i: k+1..mr-1 {
+            set(*m,i,k, get(m,i,k)/get(m,k,k));
         }
-        for j: k+1..A.M-1 {
-            for i: k+1..A.N-1 {
-                set(*a,i,j, get(a,i,j) - get(a,i,k) * get(a,k,j));
+        for j: k+1..mc-1 {
+            for i: k+1..mr-1 {
+                set(*m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
             }
         }
     }
 
-    return a, rows, permutations;
+    return permutations;
 }
+#scope_export
 
 
+//  ######  ##        ######   ########         ########  ########
+// ##    ## ##       ##    ##  ##               ##     ## ##     ##
+// ##       ##       ##        ##               ##     ## ##     ##
+//  ######  ##       ##   #### ######           ########  ########
+//       ## ##       ##    ##  ##               ##   ##   ##
+// ##    ## ##       ##    ##  ##               ##    ##  ##
+//  ######  ########  ######   ##       ####### ##     ## ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
