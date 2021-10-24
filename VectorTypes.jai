@@ -551,6 +551,13 @@ free :: inline (v: $V/DenseHeapVector) {
     array_free(v.data);
 }
 
+dhvec :: inline ($T: Type, N: int, $initialize_variables: bool = true) -> DenseHeapVector(T) {
+    res : DenseHeapVector(T);
+    res.dims = N;
+    init(*res, initialize_variables);
+    return res;
+}
+
 dhvec :: inline(N: int, values: ..$T) -> DenseHeapVector(T) {
     #if CHECKS {
         assert(values.count <= N);

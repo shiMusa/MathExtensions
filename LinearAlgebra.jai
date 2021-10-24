@@ -492,7 +492,7 @@ solve_linear_gaussian_factorization_no_pivot :: inline (a: *$A/MatrixType, b: $B
 #scope_file
 solve_linear_gaussian_factorization_no_pivot_default :: (a: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     gaussian_factorization_no_pivot(a);
-    solve_linear_left_trapezoidal (<<a, b, x); // ? this should be possible, see function implementations!
+    solve_linear_left_trapezoidal( <<a, b, x); // ? this should be possible, see function implementations!
     solve_linear_right_trapezoidal(<<a, x, x); // ? this should be possible, see function implementations!
 }
 #scope_export
@@ -622,28 +622,58 @@ gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows: *$B/Vecto
 slgf_fp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LRfp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LUfp :: solve_linear_gaussian_factorization_full_pivot;
-solve_linear_gaussian_factorization_full_pivot :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N).T {
-    M, rows, cols := gaussian_factorization_full_pivot(a);
-    L, R := decompose_LR(M);
 
-    y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    w := solve_linear_right_trapezoidal(R, y);
-    return permute(w, ..cols);
+solve_linear_gaussian_factorization_full_pivot :: inline (
+    a: *$A/MatrixType, 
+    b: *$B/VectorTypex, 
+    x: *$C/VectorType, 
+    rows_perm: *$D/VectorType, 
+    cols_perm: *$E/VectorType
+) -> num_row_perm: int, num_col_perm: int {
+    return solve_linear_gaussian_factorization_full_pivot_default(a,b,x,rows_perm,cols_perm);
 }
 
+#scope_file
+solve_linear_gaussian_factorization_full_pivot_default :: (
+    a: *$A/MatrixType, 
+    b: *$B/VectorTypex, 
+    x: *$C/VectorType, 
+    rows_perm: *$D/VectorType, 
+    cols_perm: *$E/VectorType
+) -> num_row_perm: int, num_col_perm: int {
+    #if CHECKS {
+        assert(rows(a) == dim(rows_perm));
+        assert(cols(a) == dim(cols_perm));
+    }
+
+    num_row_perm, num_col_perm := gaussian_factorization_full_pivot(a, rows_perm, cols_perm);
+    permute(b, rows_perm);
+    solve_linear_left_trapezoidal( <<a, <<b, x);
+    solve_linear_right_trapezoidal(<<a, <<x, x);
+    permute(x, cols_perm);
+
+    return num_row_perm, num_col_perm
+}
+#scope_export
 
 
 
 
 
 
-
-
+//  ######   ########         ########  ########
+// ##    ##  ##               ##     ## ##     ##
+// ##        ##               ##     ## ##     ##
+// ##   #### ######           ########  ########
+// ##    ##  ##               ##   ##   ##
+// ##    ##  ##               ##    ##  ##
+//  ######   ##       ####### ##     ## ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
+gf_rp :: gaussian_factorization_row_pivot;
 gaussian_factorization_row_pivot :: (m: $A/MatrixType) -> A #must, rows: [A.N]int, permutations: int {
     a := copy(m);
 

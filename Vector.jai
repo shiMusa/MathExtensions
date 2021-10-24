@@ -486,6 +486,7 @@ permute :: inline (v: *$V/VectorType, order: ..int) {
     permute_default(v, ..order);
 }
 
+
 #scope_file
 permute_default :: (v: *$V/VectorType, order: ..int) {
     #if CHECKS {
@@ -495,6 +496,38 @@ permute_default :: (v: *$V/VectorType, order: ..int) {
     for v {
         if order[it_index] <= it_index then continue;
         inline swap(v, it_index, order[it_index]);
+    }
+
+    // example:
+    // order 1 5 4 6 2 3
+    //       1 2 3 4 5 6
+    //    -> 1 5 3 4 2 6
+    //    -> 1 5 4 3 2 6
+    //    -> 1 5 4 6 2 3 done
+
+    // * original code
+    // for 0..N-1 {
+    //     if order[it] <= it then continue;
+
+    //     v.data[it], v.data[order[it]] = swap(v.data[it], v.data[order[it]]);
+    // }
+}
+#scope_export
+
+
+permute :: inline (v: *$V/VectorType, order: $O/VectorType) {
+    permute_default(v,order);
+}
+
+#scope_file
+permute_default :: (v: *$V/VectorType, order: $O/VectorType) {
+    #if CHECKS {
+        assert(dim(v) == dim(order));
+    }
+
+    for v {
+        if get(order,it_index) <= it_index then continue;
+        inline swap(v, it_index, get(order,it_index));
     }
 
     // example:
