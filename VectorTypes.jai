@@ -439,6 +439,38 @@ from_raw_index :: inline (v: HeapVectorView, i: int) -> int {
 }
 
 
+// TODO flags for array views?
+// //    ###    ########  ########     ###    ##    ##    ##     ## #### ######## ##      ##
+// //   ## ##   ##     ## ##     ##   ## ##    ##  ##     ##     ##  ##  ##       ##  ##  ##
+// //  ##   ##  ##     ## ##     ##  ##   ##    ####      ##     ##  ##  ##       ##  ##  ##
+// // ##     ## ########  ########  ##     ##    ##       ##     ##  ##  ######   ##  ##  ##
+// // ######### ##   ##   ##   ##   #########    ##        ##   ##   ##  ##       ##  ##  ##
+// // ##     ## ##    ##  ##    ##  ##     ##    ##         ## ##    ##  ##       ##  ##  ##
+// // ##     ## ##     ## ##     ## ##     ##    ##          ###    #### ########  ###  ###
+
+// dim :: inline (v: []$T) -> int {
+//     return v.count;
+// }
+
+// get :: inline (v: []$T, i: int) -> T {
+//     return v[i];
+// }
+// set :: inline (v: *[]$T, i: int, value: T) {
+//     v[i] = value;
+// }
+
+// get_raw :: inline (v: []$T, i: int) -> T {
+//     return v[i];
+// }
+// set_raw :: inline (v: *[]$T, i: int, value: T) {
+//     v[i] = value;
+// }
+// n_raw :: inline (v: []$T) -> int {
+//     return v.count;
+// }
+// from_raw_index :: inline (v: []$T, i: int) -> int {
+//     return i;
+// }
 
 
 // ########  ######## ##    ##  ######  ########

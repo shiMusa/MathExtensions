@@ -47,7 +47,11 @@ f32 :: inline (x: $T) -> float64 #modify {
 
 
 
-
+swap_code :: (a: Code, b: Code) #expand {
+    t := (#insert a);
+    (#insert a) = (#insert b);
+    (#insert b) = t;
+}
 
 
 

@@ -58,6 +58,7 @@ solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorTy
 
 // TODO clarify, does this work with sllta(L, x, *x) ?
 // TODO it seems, that the inner loop only traverses already updated data, so it should be possible
+// ? The diagonals L_ii = 1, but they are never used since j < i at all times!
 
 sllta :: solve_linear_left_triangular;
 solve_linear_left_triangular :: inline (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {    
@@ -104,6 +105,7 @@ solve_linear_left_triangular_default :: (L: $A/MatrixType, b: $B/VectorType, x: 
 // TODO clarify, does this work with sllta(L, x, *x) ?
 // TODO It seems, that the inner loop only traverses already updated data, so it should be possible.
 // TODO Note the reversed order!
+// ? The diagonals R_ii = 0, but they are never used since j > i at all times!
 
 slrta :: solve_linear_right_triangular;
 solve_linear_right_triangular :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
@@ -511,37 +513,49 @@ solve_linear_gaussian_factorization_no_pivot_default :: (a: *$A/MatrixType, b: $
 // ? Springer
 // ? Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
 gf_fp :: gaussian_factorization_full_pivot;
-gaussian_factorization_full_pivot :: (m: $A/MatrixType)
- -> A #must, 
-    rows: [A.N]int #must, 
-    cols: [A.M]int #must, 
-    row_permutations: int, 
-    col_permutations: int 
-{
+gaussian_factorization_full_pivot :: inline (m: *$A/MatrixType, rows: *$B/VectorType, cols: *$C/VectorType) -> row_permutations: int, col_permutations: int {
+    return gaussian_factorization_full_pivot_default(m,rows,cols);
+}
+
+#scope_file
+gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows: *$B/VectorType, cols: *$C/VectorType) -> row_permutations: int, col_permutations: int {
+// gaussian_factorization_full_pivot :: (m: $A/MatrixType)
+//  -> A #must, 
+//     rows: [A.N]int #must, 
+//     cols: [A.M]int #must, 
+//     row_permutations: int, 
+//     col_permutations: int 
+// {
     // println("gaussian_factorization_full_pivot");
-    a := copy(m);
-    rows : [A.N]int;
-    cols : [A.M]int;
+
+    #if CHECKS {
+        assert(rows(m) == dim(rows), "dimensions mismatch m(%,%), rows(%)\n", rows(m), cols(m), dim(rows));
+        assert(cols(m) == dim(cols), "dimensions mismatch m(%,%), cols(%)\n", rows(m), cols(m), dim(cols));
+    }
+
+    mr := rows(m);
+    mc := cols(m);
+
     row_permutations := 0;
     col_permutations := 0;
 
-    for 0..A.N-1 {
-        rows[it] = it;
+    for rows {
+        set(*rows, it_index, it_index);
     }
-    for 0..A.M-1 {
-        cols[it] = it;
+    for cols {
+        set(*cols, it_index, it_index);
     }
 
     // println("    entering for k");
-    for k: 0..min(A.N,A.M)-1 {
+    for k: 0..min(mr, mc)-1 {
         ii := k;
         jj := k;
-        rho := abs(get(a,k,k));
+        rho := abs(get(m,k,k));
 
         // println("    setting ii, jj");
-        for j: k..A.M-1 {
-            for i: k..A.N-1 {
-                tmp := abs(get(a,i,j));
+        for j: k..mc-1 {
+            for i: k..mr-1 {
+                tmp := abs(get(m,i,j));
                 if tmp > rho {
                     ii = i;
                     jj = j;
@@ -553,46 +567,53 @@ gaussian_factorization_full_pivot :: (m: $A/MatrixType)
         assert(rho != 0.0, "\nCannot perform Gaussain factorization due to 0 in diagonal.");
 
         // instead of swapping, use the permutation arrays rows and cols to access the 
-        // entries of a. Should be faster?
+        // entries of m. Should be faster?
         // println("    permute rows");
         if ii > k {
             // println("        swap_rows");
-            swap_rows(*a, k, ii);
+            swap_rows(*m, k, ii);
             // println("        swap row array entries");
-            rows[k], rows[ii] = swap(rows[k], rows[ii]);
+            swap(*rows, k, ii);
             row_permutations += 1;
         }
         // println("    permute columns");
         if jj > k {
-            swap_columns(*a, k, jj);
-            cols[k], cols[jj] = swap(cols[k], cols[jj]);
+            swap_columns(*m, k, jj);
+            swap(*cols, k, jj);
             col_permutations += 1;
         }
 
         // if k == min(A.N, A.M)-1 then break;
 
         // println("    updating matrix");
-        for i: k+1..A.N-1 {
-            set(*a,i,k, get(a,i,k)/get(a,k,k));
+        for i: k+1..mr-1 {
+            set(*m,i,k, get(m,i,k)/get(m,k,k));
         }
         // println("    updating matrix 2");
-        for j: k+1..A.M-1 {
-            for i: k+1..A.N-1 {
-                set(*a,i,j, get(a,i,j) - get(a,i,k) * get(a,k,j));
+        for j: k+1..mc-1 {
+            for i: k+1..mr-1 {
+                set(*m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
             }
         }
     }
 
     // println("    returning results");
-    return a, rows, cols, row_permutations, col_permutations;
+    return row_permutations, col_permutations;
 }
+#scope_export
 
 
 
 
 
 
-
+//  ######  ##        ######   ########         ######## ########
+// ##    ## ##       ##    ##  ##               ##       ##     ##
+// ##       ##       ##        ##               ##       ##     ##
+//  ######  ##       ##   #### ######           ######   ########
+//       ## ##       ##    ##  ##               ##       ##
+// ##    ## ##       ##    ##  ##               ##       ##
+//  ######  ########  ######   ##       ####### ##       ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18

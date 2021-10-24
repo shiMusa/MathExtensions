@@ -522,7 +522,7 @@ permute_default :: (v: *$V/VectorType, order: ..int) {
 // ##    ## ##  ##  ## ##     ## ##
 //  ######   ###  ###  ##     ## ##
 
-swap :: (v: *$V/VectorType, i: int, j: int) {
+swap :: inline (v: *$V/VectorType, i: int, j: int) {
     inline swap_default(v,i,j);
 }
 
