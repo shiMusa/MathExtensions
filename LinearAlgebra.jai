@@ -626,7 +626,7 @@ solve_linear_gaussian_factorization_full_pivot :: inline (
     x: *$C/VectorType, 
     rows_perm: *$D/VectorType, 
     cols_perm: *$E/VectorType
-) -> num_row_perm: int, num_col_perm: int {
+) -> num_rows_perm: int, num_cols_perm: int {
     return solve_linear_gaussian_factorization_full_pivot_default(a,b,x,rows_perm,cols_perm);
 }
 
@@ -637,19 +637,19 @@ solve_linear_gaussian_factorization_full_pivot_default :: (
     x: *$C/VectorType, 
     rows_perm: *$D/VectorType, 
     cols_perm: *$E/VectorType
-) -> num_row_perm: int, num_col_perm: int {
+) -> num_rows_perm: int, num_cols_perm: int {
     #if CHECKS {
         assert(rows(a) == dim(rows_perm));
         assert(cols(a) == dim(cols_perm));
     }
 
-    num_row_perm, num_col_perm := gaussian_factorization_full_pivot(a, rows_perm, cols_perm);
+    num_rows_perm, num_cols_perm := gaussian_factorization_full_pivot(a, rows_perm, cols_perm);
     permute(b, rows_perm);
     solve_linear_left_trapezoidal( <<a, <<b, x);
     solve_linear_right_trapezoidal(<<a, <<x, x);
     permute(x, cols_perm);
 
-    return num_row_perm, num_col_perm
+    return num_rows_perm, num_cols_perm
 }
 #scope_export
 
@@ -739,39 +739,80 @@ gaussian_factorization_row_pivot_default :: (m: *$A/MatrixType, rows: *$B/Vector
 slgf_rp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LRrp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LUrp :: solve_linear_gaussian_factorization_row_pivot;
-solve_linear_gaussian_factorization_row_pivot :: (a: $A/MatrixType, b: $B/VectorType) -> VectorHelper(A,B,A.N).T {
-    M, rows := gaussian_factorization_row_pivot(a);
-    L, R := decompose_LR(M);
-
-    y := solve_linear_left_trapezoidal(L, permute(b, ..rows));
-    return solve_linear_right_trapezoidal(R, y);
+solve_linear_gaussian_factorization_row_pivot :: inline (
+    a: *$A/MatrixType, 
+    b: *$B/VectorType, 
+    x: *$C/VectorType, 
+    rows_perm: *$D/VectorType
+) -> num_rows_perm: int {
+    return solve_linear_gaussian_factorization_row_pivot_default(a,b,x,rows_perm);
 }
 
+#scope_file
+solve_linear_gaussian_factorization_row_pivot_default :: (
+    a: *$A/MatrixType, 
+    b: *$B/VectorType, 
+    x: *$C/VectorType, 
+    rows_perm: *$D/VectorType
+) -> num_rows_perm: int {
+    #if CHECKS {
+        assert(rows(a) == dim(rows_perm));
+    }
+
+    num_rows_perm := gaussian_factorization_row_pivot(a, rows_perm);
+    permute(b, rows_perm);
+    solve_linear_left_trapezoidal( <<a, <<b, x);
+    solve_linear_right_trapezoidal(<<a, <<b, x);
+
+    return num_rows_perm;
+}
+#scope_export
 
 
 
 
+// #### ##    ## ##     ## ######## ########   ######  ########
+//  ##  ###   ## ##     ## ##       ##     ## ##    ## ##
+//  ##  ####  ## ##     ## ##       ##     ## ##       ##
+//  ##  ## ## ## ##     ## ######   ########   ######  ######
+//  ##  ##  ####  ##   ##  ##       ##   ##         ## ##
+//  ##  ##   ###   ## ##   ##       ##    ##  ##    ## ##
+// #### ##    ##    ###    ######## ##     ##  ######  ########
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? Algorithm 3.10.1 Matrix Inverse, page 261
-inverse :: (a: $A/MatrixType) -> A {
-    M, rows := gaussian_factorization_row_pivot(a);
-    L, R := decompose_LR(M);
-
-    id : A;
-    mat_init_unit(*id);
-
-    Y := solve_linear_left_trapezoidal(L, id);
-    X := solve_linear_right_trapezoidal(R, Y);
-
-    return permute_columns(X, ..rows);
+inv :: inverse;
+inverse :: inline (a: $A/MatrixType, ainv: *A) {
+    inverse_default(a,ainv);
 }
 
+#scope_file
+inverse_default :: (a: $A/MatrixType, ainv: *A) {
+    rows := dhvec(A.data_type, rows(a), false); // ! alloc
+    defer free(rows);
+
+    gaussian_factorization_row_pivot(*a, *rows);
+
+    mat_init_unit(ainv);
+
+    solve_linear_left_trapezoidal( a, <<ainv, ainv);
+    solve_linear_right_trapezoidal(a, <<ainv, ainv);
+
+    permute_cols(ainv, rows);
+}
+#scope_export
 
 
 
+// ########  ######## ######## ######## ########  ##     ## #### ##    ##    ###    ##    ## ########
+// ##     ## ##          ##    ##       ##     ## ###   ###  ##  ###   ##   ## ##   ###   ##    ##
+// ##     ## ##          ##    ##       ##     ## #### ####  ##  ####  ##  ##   ##  ####  ##    ##
+// ##     ## ######      ##    ######   ########  ## ### ##  ##  ## ## ## ##     ## ## ## ##    ##
+// ##     ## ##          ##    ##       ##   ##   ##     ##  ##  ##  #### ######### ##  ####    ##
+// ##     ## ##          ##    ##       ##    ##  ##     ##  ##  ##   ### ##     ## ##   ###    ##
+// ########  ########    ##    ######## ##     ## ##     ## #### ##    ## ##     ## ##    ##    ##
 
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
@@ -780,20 +821,27 @@ inverse :: (a: $A/MatrixType) -> A {
 // ?
 // ? it is not recommended to calculate the dterminant of large matrices
 det :: determinant;
-determinant :: (a: $A/MatrixType) -> A.data_type {
+determinant :: inline (a: *$A/MatrixType) -> A.data_type {
+    return determinant_default(a);
+}
+
+#scope_file
+determinant_default :: (a: *$A/MatrixType) -> A.data_type {
     #if CHECKS {
-        #run assert(A.N == A.M, "matrix not quadratic!\n (%,%)", A.N, A.M);
+        assert(rows(a) == cols(a), "matrix not quadratic!\n (%,%)", rows(a), cols(a));
     }
     // TODO implement optimized formula for 3x3 matrix
-    #if A.N == 2 {
+    if rows(a) == 2 {
         return get(a,0,0)*get(a,1,1) - get(a,0,1)*get(a,1,0);
     } else {    
-        M, rows, permutations := gaussian_factorization_row_pivot(a);
-        L, R := decompose_LR(M);
+        rows := dhvec(A.data_type, rows(a), false); // ! alloc
+        defer free(rows);
+
+        permutations := gaussian_factorization_row_pivot(a, *rows);
     
         p := one(A.data_type);
-        for 0..R.N-1 {
-            p *= get(R,it,it);
+        for 0..rows(a)-1 {
+            p *= get(a,it,it);
         }
 
         // +1 for even, -1 for odd num of permutations
@@ -802,6 +850,7 @@ determinant :: (a: $A/MatrixType) -> A.data_type {
         return s * p;
     }
 }
+#scope_export
 
 
 

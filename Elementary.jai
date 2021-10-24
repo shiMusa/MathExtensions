@@ -40,8 +40,8 @@ factorial :: (n: int, $T: Type) -> T {
 }
 
 
-
-inv :: inline (n: $T) -> T #modify {
+inv :: inverse;
+inverse :: inline (n: $T) -> T #modify {
     if !is_number(T) {T = null; return;}
 } {
     #if #run is_quaternion_number(T) {
