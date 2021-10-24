@@ -918,39 +918,49 @@ test_linear_algebra :: () {
         assert(x == sol);
     }
 
-    // {
-    //     println_push("test 2", color = .FG_GREEN);
+    {
+        println_push("test 2", color = .FG_GREEN);
 
-    //     L : DenseMatrix(C64, 3, 3) = ---;
-    //     mat_init(*L,
-    //         R, C_ZERO, C_ZERO,
-    //         3.0*R, R, C_ZERO,
-    //         I, R+I, R
-    //     );
-    //     b : DenseVector(C64, 3) = ---;
-    //     vec_init(*b, 3.0*R, -I, R-2.0*I);
-    //     res := solve_linear_left_triangular(L, b);
-    //     println("% = % ?", pstr(L * res), pstr(b));
-    //     assert(L * res == b);
-    // }
+        L := dmat(C64, 3, 3,
+            R, C_ZERO, C_ZERO,
+            3.0*R, R, C_ZERO,
+            I, R+I, R
+        );
+        b := dvec(C64, 3, 3.0*R, -I, R-2.0*I);
+        res : DenseVector(C64, 3) = ---;
 
-    // {
-    //     println_push("test 3", color = .FG_GREEN);
+        solve_linear_left_triangular(L, b, *res);
 
-    //     M := dmat(3,3,
-    //         2.0*R, I, R-2.0*I,
-    //         C_ZERO, R, 3.0*I,
-    //         C_ZERO, C_ZERO, -3.0*R
-    //     );
-    //     b := dvec(3, 3.0*R, -I, R-2.0*I);
-    //     res := solve_linear_right_triangular(M, b);
-    //     println("res %", pstr(res));
+        sol : DenseVector(C64, 3);
+        mat_mul_vec(L, res, *sol);
 
-    //     test := norm_2(M * res - b);
-    //     println("%", pstr(M * res - b));
-    //     println("test = %", test); 
-    //     assert(test < 1.0e-8, "res = %, M * res = % =? b = %", res, M*res, b);
-    // }
+        println("% = % ?", pstr(sol), pstr(b));
+        assert(sol == b);
+    }
+
+    {
+        println_push("test 3", color = .FG_GREEN);
+
+        M := dmat(3,3,
+            2.0*R, I, R-2.0*I,
+            C_ZERO, R, 3.0*I,
+            C_ZERO, C_ZERO, -3.0*R
+        );
+        b := dvec(3, 3.0*R, -I, R-2.0*I);
+        res : DenseVector(C64, 3) = ---;
+        solve_linear_right_triangular(M, b, *res);
+        println("res %", pstr(res));
+
+        sol : DenseVector(C64, 3) = ---;
+        tmp : DenseVector(C64, 3) = ---;
+        mat_mul_vec(M, res, *sol);
+        copy(*tmp, sol);
+        sub(*sol, b);
+        sol_norm := norm_2(sol);
+        println("%", pstr(sol));
+        println("sol_norm = %", sol_norm); 
+        assert(sol_norm < 1.0e-8, "res = %, M * res = % =? b = %", res, tmp, b);
+    }
 
     // {
     //     println_push("test 4", color = .FG_GREEN);
