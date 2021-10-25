@@ -76,8 +76,10 @@ solve_linear_left_triangular_default :: (L: $A/MatrixType, b: $B/VectorType, x: 
         assert(rows(L) == cols(L), "L is not quadratic L(%,%)\n", rows(L), cols(L));
         assert(rows(L) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(L), cols(L), dim(b));
         assert(cols(L) == dim(x), "dimensions mismatch L(%,%), x(%)\n", rows(L), cols(L), dim(x));
-        assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1\n");
-        assert(is_left_triangular(L), "L is not left-triangular\n");
+
+        // ? not necessary, since these entries are not used anyways
+        // assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1\n");
+        // assert(is_left_triangular(L), "L is not left-triangular\n");
     }
 
     // println_push("solve_linear_left_triangular_default");
@@ -125,7 +127,9 @@ solve_linear_right_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x:
         assert(rows(R) == cols(R), "L is not quadratic L(%,%)\n", rows(R), cols(R));
         assert(rows(R) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(R), cols(R), dim(b));
         assert(cols(R) == dim(x), "dimensions mismatch L(%,%), x(%)\n", rows(R), cols(R), dim(x));
-        assert(is_right_triangular(R), "R is not right-triangular\n");
+
+        // ? not necessary, since these entries are not used anyways
+        // assert(is_right_triangular(R), "R is not right-triangular\n");
     }
 
     i : int;
@@ -466,11 +470,11 @@ gaussian_factorization_no_pivot_default :: (m: *$A/MatrixType) {
         assert(abs(get(m,k,k)) != zero(A.data_type), "\nCannot perform Gaussain factorization due to 0 in diagonal.");
 
         for i: k+1..r-1 {
-            set(*m,i,k, get(m,i,k)/get(m,k,k));
+            set(m,i,k, get(m,i,k)/get(m,k,k));
         }
         for j: k+1..c-1 {
             for i: k+1..r-1 {
-                set(*m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
+                set(m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
             }
         }
     }
@@ -503,7 +507,7 @@ solve_linear_gaussian_factorization_no_pivot :: inline (a: *$A/MatrixType, b: $B
 solve_linear_gaussian_factorization_no_pivot_default :: (a: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     gaussian_factorization_no_pivot(a);
     solve_linear_left_trapezoidal( <<a, b, x); // ? this should be possible, see function implementations!
-    solve_linear_right_trapezoidal(<<a, x, x); // ? this should be possible, see function implementations!
+    solve_linear_right_trapezoidal(<<a, <<x, x); // ? this should be possible, see function implementations!
 }
 #scope_export
 
@@ -1047,38 +1051,37 @@ test_linear_algebra :: () {
         println("slrt: %", pstr(res));
         assert( approx(sol, b) );
     }
-    // {
-    //     println_push("test 7", color = .FG_GREEN);
+    {
+        println_push("test 7", color = .FG_GREEN);
 
-    //     M   : DenseMatrix(C64, 2, 2) = ---;
-    //     res : DenseMatrix(C64, 2, 2) = ---;
-    //     mat_init(*M,
-    //         2*R, 3*R,
-    //         -2*R, R
-    //     );
-    //     mat_init(*res,
-    //         2*R, 3*R,
-    //         -1*R, 4*R
-    //     );
-    //     A := gaussian_factorization_no_pivot(M);
-    //     println("gaussian factorization: %", pstr(M));
-    //     println("-> %", pstr(A));
-    //     assert( A == res , "%\n != %\n!", str(A), str(res));
-    // }
+        M := dmat(C64, 2, 2,
+            2*R, 3*R,
+            -2*R, R
+        );
+        println("M = %", pstr(M));
+        res := dmat(C64, 2, 2,
+            2*R, 3*R,
+            -1*R, 4*R
+        );
+        gaussian_factorization_no_pivot(*M);
+        println("gaussian factorization: %", pstr(M));
+        assert( M == res , "%\n != %\n!", str(M), str(res));
+    }
 
-    // {
-    //     println_push("test 8", color = .FG_GREEN);
+    {
+        println_push("test 8", color = .FG_GREEN);
 
-    //     M := dmat(2,2,
-    //         R, I,
-    //         -3*R, 2.0 - I
-    //     );
-    //     b := dvec(2, 4*R, 6*I);
+        M := dmat(2,2,
+            R, I,
+            -3*R, 2.0 - I
+        );
+        b := dvec(2, 4*R, 6*I);
+        x : DenseVector(C64, 2) = ---;
 
-    //     res := solve_LRnp(M, b);
-    //     println("solve linear system via Gaussian factorization (no pivoting): %", pstr(res));
-    //     assert(res == dvec(2, 2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
-    // }
+        slgf_np(*M, b, *x);
+        println("solve linear system via Gaussian factorization (no pivoting): %", pstr(x));
+        assert(x == dvec(2, 2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
+    }
 
     // {
     //     println_push("test 9", color = .FG_GREEN);

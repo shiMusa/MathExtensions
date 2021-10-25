@@ -81,20 +81,20 @@ MatrixType :: struct(
 ){}
 
 
-get :: inline (v: *$M/MatrixType, i: int, j: int) -> M.data_type {
-    return get(<<v, i, j);
+get :: inline (m: *$M/MatrixType, i: int, j: int) -> M.data_type {
+    return get(<<m, i, j);
 }
-get_lin :: inline (v: *$M/MatrixType, i: int) -> M.data_type {
-    return get_lin(<<v, i);
+get_lin :: inline (m: *$M/MatrixType, i: int) -> M.data_type {
+    return get_lin(<<m, i);
 }
-get_raw :: inline (v: *$M/MatrixType, i: int) -> M.data_type {
-    return get_raw(<<v, i);
+get_raw :: inline (m: *$M/MatrixType, i: int) -> M.data_type {
+    return get_raw(<<m, i);
 }
-rows :: inline (v: *$M/MatrixType) -> int {
-    return rows(<<v);
+rows :: inline (m: *$M/MatrixType) -> int {
+    return rows(<<m);
 }
-cols :: inline (v: *$M/MatrixType) -> int {
-    return cols(<<v);
+cols :: inline (m: *$M/MatrixType) -> int {
+    return cols(<<m);
 }
 
 from_raw_index :: inline (m: *$M/MatrixType, i: int) -> int, int {
