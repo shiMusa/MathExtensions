@@ -1035,13 +1035,13 @@ test_linear_algebra :: () {
             C_ZERO, R, C_ZERO 
         );
         b := dvec(C64, 2, 4*R, 6*R);
-        res : DenseVector(C64, 2);
+        res : DenseVector(C64, 3);
 
         solve_linear_right_trapezoidal(M, b, *res);
         
         // * check solution
         sol : DenseVector(C64, 2) = ---;
-        copy(*sol, res);
+        // copy(*sol, res);
         mat_mul_vec(M, res, *sol);
         
         println("slrt: %", pstr(res));
