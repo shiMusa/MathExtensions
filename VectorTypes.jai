@@ -395,7 +395,7 @@ from_raw_index :: inline (v: VectorView, i: int) -> int {
 // ##     ## ##       ##     ## ##             ## ##    ##  ##       ##  ##  ##
 // ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
 
-HeapVectorView :: struct(V: Type) {
+VectorHeapView :: struct(V: Type) {
     using _v: VectorType(V.data_type, VECTOR_FLAGS.VIEW & V.flags);
     dims: int;
     start_index: int = 0;
@@ -404,11 +404,11 @@ HeapVectorView :: struct(V: Type) {
 }
 
 
-vec_heap_view :: inline(vec: *$V/VectorType, num_elements: int, start_index: int = 0, stride: int = 1) -> HeapVectorView(V) {
+vec_heap_view :: inline(vec: *$V/VectorType, num_elements: int, start_index: int = 0, stride: int = 1) -> VectorHeapView(V) {
     #if CHECKS {
         assert(start_index + (num_elements-1) * stride <= dim(vec));
     }
-    res : HeapVectorView(V);
+    res : VectorHeapView(V);
     res.dims = num_elements;
     res.start_index = start_index;
     res.stride = stride;
@@ -417,61 +417,27 @@ vec_heap_view :: inline(vec: *$V/VectorType, num_elements: int, start_index: int
 }
 
 
-dim :: inline (v: HeapVectorView) -> int {
+dim :: inline (v: VectorHeapView) -> int {
     return v.dims;
 }
-get :: inline (v: HeapVectorView, i: int) -> v.data_type {
+get :: inline (v: VectorHeapView, i: int) -> v.data_type {
     return get(v.vec, v.start_index + v.stride * i);
 }
-set :: inline (v: *HeapVectorView($T), i: int, value: v.data_type) {
+set :: inline (v: *VectorHeapView($T), i: int, value: v.data_type) {
     set(v.vec, v.start_index + v.stride * i, value);
 }
-get_raw :: inline (v: HeapVectorView, i: int) -> v.data_type {
+get_raw :: inline (v: VectorHeapView, i: int) -> v.data_type {
     return get(v.vec, v.start_index + v.stride * i);
 }
-set_raw :: inline (v: *HeapVectorView($T), i: int, value: v.data_type) {
+set_raw :: inline (v: *VectorHeapView($T), i: int, value: v.data_type) {
     set(v.vec, v.start_index + v.stride * i, value);
 }
-n_raw :: inline (v: HeapVectorView) -> int {
+n_raw :: inline (v: VectorHeapView) -> int {
     return v.dims;
 }
-from_raw_index :: inline (v: HeapVectorView, i: int) -> int {
+from_raw_index :: inline (v: VectorHeapView, i: int) -> int {
     return i;
 }
-
-
-// TODO flags for array views?
-// //    ###    ########  ########     ###    ##    ##    ##     ## #### ######## ##      ##
-// //   ## ##   ##     ## ##     ##   ## ##    ##  ##     ##     ##  ##  ##       ##  ##  ##
-// //  ##   ##  ##     ## ##     ##  ##   ##    ####      ##     ##  ##  ##       ##  ##  ##
-// // ##     ## ########  ########  ##     ##    ##       ##     ##  ##  ######   ##  ##  ##
-// // ######### ##   ##   ##   ##   #########    ##        ##   ##   ##  ##       ##  ##  ##
-// // ##     ## ##    ##  ##    ##  ##     ##    ##         ## ##    ##  ##       ##  ##  ##
-// // ##     ## ##     ## ##     ## ##     ##    ##          ###    #### ########  ###  ###
-
-// dim :: inline (v: []$T) -> int {
-//     return v.count;
-// }
-
-// get :: inline (v: []$T, i: int) -> T {
-//     return v[i];
-// }
-// set :: inline (v: *[]$T, i: int, value: T) {
-//     v[i] = value;
-// }
-
-// get_raw :: inline (v: []$T, i: int) -> T {
-//     return v[i];
-// }
-// set_raw :: inline (v: *[]$T, i: int, value: T) {
-//     v[i] = value;
-// }
-// n_raw :: inline (v: []$T) -> int {
-//     return v.count;
-// }
-// from_raw_index :: inline (v: []$T, i: int) -> int {
-//     return i;
-// }
 
 
 // ########  ######## ##    ##  ######  ########

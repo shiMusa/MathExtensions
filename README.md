@@ -3,29 +3,28 @@
 ## Advanced Math functions for Jai
 
 The goal of this project is to progressively write a comprehensive
-mathematical library for Jai, similar to the Gnu Scientific Library or Java Apache Math.
+mathematical library for Jai, similar to [BLAS](http://www.netlib.org/blas/), the Gnu Scientific Library, or [Hipparchus](https://hipparchus.org/) (former Java Apache Math).
 
 The focus lies in providing the functionality first, performance
-second. 
+second, but no unnecessary performance costs if possible.
 
 Feel free to add functionality and performance upgrades.
 
 ## Current thoughts
 
-- I have to rethink the focus of the implementations: 
-  1. remove all operators and all functions that return a concrete type
-  2. remove all automatic casting in the remaining functions
-  3. write default implementations (slow, but they work)
-  4. specialize to optimize later
-  5. generate functions with return parameters maybe with compile-time code generation
-  6. use the latter for operator overloading
+There was a major rewite. Now, almost all functions do **not** allocate, but rather the results are stored in arguments of the functions themselves. This improves some of the linear algebra functions drastically.
+It's basically the old-school way of doing things, and there was a reason to do so.
+The new (old-style) system is more general and performant. 
 
+To enable future optimizations, every funtion is basically just a relay to specialized functions, so `foo(...)` will actually call `foo_default(...)`, `foo_dense(...)`, etc. Currently, most functions have a default implementation for `$V/VectorType` or `$M/MatrixType`. It should be ease to extend the system with specialized, high-performance functions for special matrix/vector types (e.g. sparse, triagonal, hermitian, ...).
 
+Almost all operator overloads were removed in that process.
+The next step is, to re-write the operator overloads for special matrix and vector types. In these specialized functions, allocation can be handeled efficiently.
+
+Generally:
 - Current work focuses on making everything as generic as possible to enable different types of matrices/vector, heap/stack allocated, various number types.
 - I'm going through [2] now to improve the algorithms since that book is actually considering special properties of matrices early on and also writes out EVERY algorithm used.
-- Implement _views_ for vectors and matrices which themselves behave like vectors and matrices (they implement `VectorType` and `MatrixType`).
-- When generalizing the `MatrixType` and `VectorType` such that the dimensions are run-time variables (usefull for lots of applications), we cannot use helper types for the return parameters. Therefore, the operators `+ - / *` etc. have to be individually overloaded while the functions `add sub mul div` etc. can be kept general since the result is stored in one of the arguments.
-- I'll probably also use the [BLAS](http://www.netlib.org/blas/) naming convention and functions
+(- I might use some [BLAS](http://www.netlib.org/blas/) naming conventions and functions)
 (- maybe add `Octonion($T)` etc. later)
 
 There are more thoughts written down in [the document outlining some of my thoughts](https://github.com/shiMusa/MathExtensions/blob/flags-and-other-matrix-types/Thoughts.md).
@@ -65,9 +64,20 @@ Many functions specialize during compile-time on the real, complex, or quaternio
     - `polynom(x, ..a)` = a[0] x^n + a[1] x^{n-1} + ... + a[n] x^0, with a,x ∈ ℝ,ℂ
     - `synthetic_division`
     - `repeated_synthetic_division`
-- vector: `VectorType`; real or complex vector with
+- vector: `VectorType`; real or complex vector
 
-    `VectorType` is a generic interface/trate that is implemented by any concrete vector struct, e.g. `DenseVector($Type, $Dimensions)`.
+    The following types are implemented:
+    - `DenseVector(Type, int)`
+    - `DenseHeapVector(Type)`
+    - `VectorView(Type, int)` (behaves like `DenseVector`)
+    - `VectorHeapView(Type)` (behaves like `DenseHeapVector`)
+    - `MatrixRowView(Type, int)` (behvaes like `DenseVector`)
+    - `MatrixRowHeapView(Type)` (behvaes like `DenseHeapVector`)
+    - `MatrixColumnView(Type, int)` (behaves like `DenseVector`)
+    - `MatrixColumnHeapView(Type)` (behaves like `DenseHeapVector`)
+    
+
+    The following functions are implemented:
     - `str`; for pretty printing
     - operators `[]`, `==`, `+`, `-`, `*`, `/`
     - in-place functions add, sub, neg, mul, div
@@ -80,9 +90,17 @@ Many functions specialize during compile-time on the real, complex, or quaternio
     - `angle`
     - `permute`
     - `swap`
+
+    
 - matrix: `MatrixType` ; real or complex
 
-    `MatrixType` is a generic interface/trate that is implemented by any concrete matrix struct, e.g. `DenseMatrix($Type, $Columns, $Rows)`.
+    The following types are implemented:
+    - `DenseMatrix(Type, int, int)`
+    - `DenseHeapMatrix(Type)`
+    - `MatrixView(Type, int, int)` (behaves like `DenseMatrix`)
+    - `MatrixHeapView(Type)` (behaves like `DenseHeapMatrix`)
+
+    The following functions are implemented:
     - `pstr`, `str` for pretty printing
     - operators `[]`, `[][]`, `==`, `+`, `-`, `*`, `/`
     - `row`, `column`

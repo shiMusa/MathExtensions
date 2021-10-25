@@ -270,7 +270,7 @@ from_raw_index :: inline(m: MatrixView, i: int) -> int {
 // ##     ## ##       ##     ## ##             ## ##    ##  ##       ##  ##  ##
 // ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
 
-HeapMatrixView :: struct(V: Type) {
+MatrixHeapView :: struct(V: Type) {
     using _m: MatrixType(V.data_type, MATRIX_FLAGS.VIEW & V.flags);
     rows: int;
     cols : int;
@@ -282,12 +282,12 @@ HeapMatrixView :: struct(V: Type) {
 }
 
 
-mat_heap_view :: (mat: *$M/MatrixType, num_rows: int, num_cols: int, start_row: int = 0, start_col: int = 0, stride_row: int = 1, stride_col: int = 1) -> HeapMatrixView(M) {
+mat_heap_view :: (mat: *$M/MatrixType, num_rows: int, num_cols: int, start_row: int = 0, start_col: int = 0, stride_row: int = 1, stride_col: int = 1) -> MatrixHeapView(M) {
     #if CHECKS {
         assert(start_row + (num_rows-1)*stride_row <=  rows(mat));
         assert(start_col + (num_cols-1)*stride_col <=  cols(mat));
     }
-    res : HeapMatrixView(M);
+    res : MatrixHeapView(M);
     res.rows = num_rows;
     res.cols = num_cols;
     res.start_row = start_row;
@@ -299,41 +299,41 @@ mat_heap_view :: (mat: *$M/MatrixType, num_rows: int, num_cols: int, start_row: 
 }
 
 
-rows :: inline (m: HeapMatrixView) -> int {
+rows :: inline (m: MatrixHeapView) -> int {
     return m.rows;
 }
-cols :: inline (m: HeapMatrixView) -> int {
+cols :: inline (m: MatrixHeapView) -> int {
     return m.cols;
 }
 
-get :: inline (m: HeapMatrixView, i: int, j: int) -> m.data_type {
+get :: inline (m: MatrixHeapView, i: int, j: int) -> m.data_type {
     return get(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col);
 }
-set :: inline (m: *HeapMatrixView, i: int, j: int, val: m.data_type) {
+set :: inline (m: *MatrixHeapView, i: int, j: int, val: m.data_type) {
     set(m.mat, m.start_row + i * m.stride_row, m.start_col + j * m.stride_col, val);
 }
 
-get_lin :: inline (m: HeapMatrixView, i: int) -> m.data_type {
+get_lin :: inline (m: MatrixHeapView, i: int) -> m.data_type {
     r, c := from_lin_index(m, i);
     return get(m, r, c);
 }
-set_lin :: inline (m: *HeapMatrixView, i: int, val: m.data_type) {
+set_lin :: inline (m: *MatrixHeapView, i: int, val: m.data_type) {
     r, c := from_lin_index(m, i);
     set(m, r, c, val);
 }
 
-get_raw :: inline (m: HeapMatrixView, i: int) -> m.data_type {
+get_raw :: inline (m: MatrixHeapView, i: int) -> m.data_type {
     r, c := from_lin_index(m, i);
     return get(m, r, c);
 }
-set_raw :: inline (m: *HeapMatrixView, i: int, val: m.data_type) {
+set_raw :: inline (m: *MatrixHeapView, i: int, val: m.data_type) {
     r, c := from_lin_index(m, i);
     set(m, r, c, val);
 }
-n_raw :: inline (m: HeapMatrixView) -> int {
+n_raw :: inline (m: MatrixHeapView) -> int {
     return m.rows * m.cols;
 }
-from_raw_index :: inline(m: HeapMatrixView, i: int) -> int {
+from_raw_index :: inline(m: MatrixHeapView, i: int) -> int {
     return i;
 }
 
