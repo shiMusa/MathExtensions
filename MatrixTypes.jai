@@ -140,7 +140,7 @@ for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
         `it_index := i;
         `it := get_lin(<<m, i);
         `it_row, `it_column := from_lin_index(<<m, i);
-        #insert body;
+        #insert (continue={i += 1; continue;}, break={break;}) body;
         i += 1;
     }
 }
@@ -173,7 +173,7 @@ for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) 
         `it_index := from_raw_index(m, i);
         `it := get_raw(m, i);
         `it_row, `it_column := from_lin_index(m, from_raw_index(m, i));
-        #insert body;
+        #insert (continue={i += 1; continue;}, break={break;}) body;
         i += 1;
     }
 }

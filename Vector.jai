@@ -497,7 +497,7 @@ permute_default :: (v: *$V/VectorType, order: ..int) {
 
     for v {
         if order[it_index] <= it_index then continue;
-        inline swap(v, it_index, order[it_index]);
+        swap(v, it_index, order[it_index]);
     }
 
     // example:
@@ -528,8 +528,13 @@ permute_default :: (v: *$V/VectorType, order: $O/VectorType) {
     }
 
     for v {
+
+        // if get(order, it_index) > it_index {
+        //     swap(v, it_index, get(order, it_index));
+        // }
+
         if get(order,it_index) <= it_index then continue;
-        inline swap(v, it_index, get(order,it_index));
+        swap(v, it_index, get(order,it_index));
     }
 
     // example:
