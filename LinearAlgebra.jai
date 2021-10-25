@@ -79,6 +79,8 @@ solve_linear_left_triangular_default :: (L: $A/MatrixType, b: $B/VectorType, x: 
         assert(is_diagonal_unit(L), "L is not unit: Diagonal entries are not 1\n");
         assert(is_left_triangular(L), "L is not left-triangular\n");
     }
+
+    // println_push("solve_linear_left_triangular_default");
     
     for i: 0..dim(b)-1 {
         sum := zero(C.data_type);
@@ -296,7 +298,7 @@ solve_linear_successive_orthogonal_projection_default :: (Q: $A/MatrixType, b: *
 slltz :: solve_linear_left_trapezoidal;
 
 solve_linear_left_trapezoidal :: inline (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_left_trapezoidal(L,b,x);
+    solve_linear_left_trapezoidal_default(L,b,x);
 }
 
 #scope_file
@@ -308,6 +310,8 @@ solve_linear_left_trapezoidal_default :: (L: $A/MatrixType, b: $B/VectorType, x:
         // ? this test should be disabled since `solve_linear_left_triangular` works with any matrix and prevents unnecessary allocations
         // assert(is_left_trapezoidal(L)); // more rows than columns N >= M
     }
+
+    // println_push("solve_linear_left_trapezoidal_default");
 
     L2 := mat_heap_view(*L, cols(L), cols(L));
     b2 := vec_heap_view(*b, cols(L));
@@ -1009,32 +1013,40 @@ test_linear_algebra :: () {
             -R, -R
         );
         b := dvec(C64, 3, R, 2.0*R, -4.0*R);
-        res : DenseVector(C64, 3) = ---;
+        res : DenseVector(C64, 2);
 
+        println("calling solve_linear_left_trapezoidal...");
         solve_linear_left_trapezoidal(M, b, *res);
         println("sllt: %", pstr(res));
 
         // * check solution
         sol : DenseVector(C64, 3);
         mat_mul_vec(M, res, *sol);
+        println("sol = %", sol);
+        println("b = %", b);
         assert( approx(sol, b) );
     }
 
-    // {
-    //     println_push("test 6", color = .FG_GREEN);
+    {
+        println_push("test 6", color = .FG_GREEN);
 
-    //     M : DenseMatrix(C64, 2, 3) = ---;
-    //     mat_init(*M, 
-    //         R, R, C_ZERO, 
-    //         C_ZERO, R, C_ZERO 
-    //     );
-    //     b : DenseVector(C64, 2) = ---;
-    //     vec_init(*b,4*R, 6*R);
+        M := dmat(C64, 2, 3, 
+            R, R, C_ZERO, 
+            C_ZERO, R, C_ZERO 
+        );
+        b := dvec(C64, 2, 4*R, 6*R);
+        res : DenseVector(C64, 2);
 
-    //     res := solve_linear_right_trapezoidal(M, b);
-    //     println("slrt: %", pstr(res));
-    //     assert( approx(M*res, b) );
-    // }
+        solve_linear_right_trapezoidal(M, b, *res);
+        
+        // * check solution
+        sol : DenseVector(C64, 2) = ---;
+        copy(*sol, res);
+        mat_mul_vec(M, res, *sol);
+        
+        println("slrt: %", pstr(res));
+        assert( approx(sol, b) );
+    }
     // {
     //     println_push("test 7", color = .FG_GREEN);
 

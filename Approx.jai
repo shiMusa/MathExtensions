@@ -8,7 +8,7 @@ approx :: inline (a: $A/VectorType, b: $B/VectorType) -> bool {
 
     sum : float64 = 0.0;
     for a {
-        sum += abs(it * get(b, it_index));
+        sum += abs(it - get(b, it_index));
     }
     return sqrt(sum, float64) < DELTA;
 }
