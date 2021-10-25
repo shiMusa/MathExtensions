@@ -1,11 +1,30 @@
-DELTA :: 1.0e-6;
+DELTA : float64 : 1.0e-6;
 
+// ? L2 norm
 approx :: inline (a: $A/VectorType, b: $B/VectorType) -> bool {
-    return norm_2(a - b) < DELTA;
+    #if CHECKS {
+        assert(dim(a) == dim(b));
+    }
+
+    sum : float64 = 0.0;
+    for a {
+        sum += abs(it * get(b, it_index));
+    }
+    return sqrt(sum, float64) < DELTA;
 }
 
+
+// ? Frobenius norm
 approx :: inline (a: $A/MatrixType, b: $B/MatrixType) -> bool {
-    return norm_frobenius(a - b) < DELTA;
+    #if CHECKS {
+        assert(rows(a) == rows(b) && cols(a) == cols(b));
+    }
+    
+    sum : float64 = 0.0;
+    for a {
+        sum += abs_sq(it - get(b, it_row, it_column));
+    }
+    return sqrt(sum) < DELTA;
 }
 
 approx :: inline (a: $T, b: $U) -> bool #modify {

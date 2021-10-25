@@ -1000,22 +1000,25 @@ test_linear_algebra :: () {
         assert(norm_2(sol) < 1.0e-8);
     }
 
-    // {
-    //     println_push("test 5", color = .FG_GREEN);
+    {
+        println_push("test 5", color = .FG_GREEN);
 
-    //     M : DenseMatrix(C64, 3, 2) = ---;
-    //     mat_init(*M, 
-    //         R, C_ZERO, 
-    //         -R, R, 
-    //         -R, -R
-    //     );
-    //     b : DenseVector(C64, 3) = ---;
-    //     vec_init(*b, R, 2.0*R, -4.0*R);
+        M := dmat(C64, 3, 2, 
+            R, C_ZERO, 
+            -R, R, 
+            -R, -R
+        );
+        b := dvec(C64, 3, R, 2.0*R, -4.0*R);
+        res : DenseVector(C64, 3) = ---;
 
-    //     res := solve_linear_left_trapezoidal(M, b);
-    //     println("sllt: %", pstr(res));
-    //     assert( approx(M*res, b) );
-    // }
+        solve_linear_left_trapezoidal(M, b, *res);
+        println("sllt: %", pstr(res));
+
+        // * check solution
+        sol : DenseVector(C64, 3);
+        mat_mul_vec(M, res, *sol);
+        assert( approx(sol, b) );
+    }
 
     // {
     //     println_push("test 6", color = .FG_GREEN);
