@@ -850,10 +850,10 @@ determinant_default :: (a: *$A/MatrixType) -> A.data_type {
     if rows(a) == 2 {
         return get(a,0,0)*get(a,1,1) - get(a,0,1)*get(a,1,0);
     } else {    
-        rows := dhvec(A.data_type, rows(a), false); // ! alloc
-        defer free(rows);
+        row_perms := dhvec(A.data_type, rows(a), false); // ! alloc
+        defer free(row_perms);
 
-        permutations := gaussian_factorization_row_pivot(a, *rows);
+        permutations := gaussian_factorization_row_pivot(a, *row_perms);
     
         p := one(A.data_type);
         for 0..rows(a)-1 {
@@ -1221,16 +1221,16 @@ test_linear_algebra :: () {
         )));
     }
 
-    // {
-    //     println_push("test 16", color = .FG_GREEN);
+    {
+        println_push("test 16", color = .FG_GREEN);
 
-    //     M := dmat(3, 3,
-    //         2*R, I, -2*R,
-    //         C_ZERO, -I, 2*I,
-    //         R, C_ZERO, R+I
-    //     );
-    //     d := determinant(M);
-    //     println("det(M) = %", str(d));
-    //     assert(d == -4*I);
-    // }
+        M := dmat(3, 3,
+            2*R, I, -2*R,
+            C_ZERO, -I, 2*I,
+            R, C_ZERO, R+I
+        );
+        d := determinant(*M);
+        println("det(M) = %", str(d));
+        assert(d == -4*I);
+    }
 }
