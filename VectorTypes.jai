@@ -64,11 +64,12 @@ from_raw_index :: inline (v: *$V/VectorType, i: int) -> int {
 
 // * linear for expansion over all elements
 for_expansion :: (v: *$V/VectorType, body: Code, flags: For_Flags) #expand {
+    #assert(flags == 0);
     i := 0;
     while i < dim(v) {
         `it_index := i;
         `it := get(v, i);
-        #insert body;
+        #insert (continue={i += 1; continue;}) body;
         i += 1;
     }
 }
@@ -97,7 +98,7 @@ for_expansion :: (ve: *VectorRawForExpansion($V), body: Code, flags: For_Flags) 
         `it_index := from_raw_index(v, i);
         `it := get_raw(v, i);
         `it_raw_index := i;
-        #insert body;
+        #insert (continue={i += 1; continue;}) body;
         i += 1;
     }
 }

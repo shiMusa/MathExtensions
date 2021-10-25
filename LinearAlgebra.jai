@@ -642,7 +642,8 @@ solve_linear_gaussian_factorization_full_pivot :: inline (
     rows_perm: *$D/VectorType, 
     cols_perm: *$E/VectorType
 ) -> num_rows_perm: int, num_cols_perm: int {
-    return solve_linear_gaussian_factorization_full_pivot_default(a,b,x,rows_perm,cols_perm);
+    rp, cp := solve_linear_gaussian_factorization_full_pivot_default(a,b,x,rows_perm,cols_perm);
+    return rp, cp;
 }
 
 #scope_file
@@ -659,10 +660,10 @@ solve_linear_gaussian_factorization_full_pivot_default :: (
     }
 
     num_rows_perm, num_cols_perm := gaussian_factorization_full_pivot(a, rows_perm, cols_perm);
-    permute(b, rows_perm);
+    permute(b, <<rows_perm);
     solve_linear_left_trapezoidal( <<a, <<b, x);
     solve_linear_right_trapezoidal(<<a, <<x, x);
-    permute(x, cols_perm);
+    permute(x, <<cols_perm);
 
     return num_rows_perm, num_cols_perm;
 }
@@ -1104,40 +1105,41 @@ test_linear_algebra :: () {
         println("rps %, cps %", rps, cps);
     }
 
-    // {
-    //     println_push("test 10", color = .FG_GREEN);
+    {
+        println_push("test 10", color = .FG_GREEN);
 
-    //     M : DenseMatrix(C64, 3, 3) = ---;
-    //     mat_init(*M,
-    //         C_ZERO, 4*R, -3*R,
-    //         2*R, C_ZERO, 4*R,
-    //         3*R, -5*R, 3*R
-    //     );
+        M := dmat(C64, 3, 3,
+            C_ZERO, 4*R, -3*R,
+            2*R, C_ZERO, 4*R,
+            3*R, -5*R, 3*R
+        );
+        rows : DenseVector(u8, 3) = ---;
+        cols : DenseVector(u8, 3) = ---;
 
-    //     A, rows, cols := gaussian_factorization_full_pivot(M);
-    //     L, R := decompose_LR(A);
+        rp, cp := gaussian_factorization_full_pivot(*M, *rows, *cols);
 
-    //     println("L = %", pstr(L));
-    //     println("R = %", pstr(R));
-    // }
+        println("M = %", pstr(M));
+    }
 
-    // {
-    //     println_push("test 11", color = .FG_GREEN);
+    {
+        println_push("test 11", color = .FG_GREEN);
 
-    //     M : DenseMatrix(C64, 2, 2) = ---;
-    //     mat_init(*M,
-    //         R, I,
-    //         -3*R, 2.0 - I
-    //     );
-    //     b : DenseVector(C64, 2) = ---;
-    //     vec_init(*b, 4*R, 6*I);
+        M := dmat(2, 2,
+            R, I,
+            -3*R, 2.0 - I
+        );
+        b := dvec(2, 4*R, 6*I);
+        res : DenseVector(C64, 2) = ---;
 
-    //     res := solve_LRfp(M, b);
-    //     println("solve linear system via Gaussian factorization (full pivoting): %", pstr(res));
-    //     sol : DenseVector(C64, 2) = ---;
-    //     vec_init(*sol, 2.5-4.5*I, 4.5-1.5*I);
-    //     assert(approx(res, sol), "\nCould not solve linear system via Gaussain factorization!");
-    // }
+        rperm : DenseVector(u8, 2) = ---;
+        cperm : DenseVector(u8, 2) = ---;
+
+        println("solving lin sys via gf_fp...");
+        rps, cps := slgf_fp(*M, *b, *res, *rperm, *cperm);
+        println("solution: %", pstr(res));
+        sol := dvec(2, 2.5-4.5*I, 4.5-1.5*I);
+        assert(approx(res, sol), "\nCould not solve linear system via Gaussain factorization!");
+    }
 
     // {
     //     println_push("test 12", color = .FG_GREEN);
