@@ -331,7 +331,7 @@ solve_linear_left_trapezoidal :: inline (l: $A/MatrixType, m: $B/MatrixType, x: 
 #scope_file
 solve_linear_left_trapezoidal_default :: (l: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
     #if CHECKS {
-        assert(rows(l) == rows(m), "dimensions mismatch l(%,%), m(%,%)\n", rows(l), cols(l), rows(b), cols(b));
+        assert(rows(l) == rows(m), "dimensions mismatch l(%,%), m(%,%)\n", rows(l), cols(l), rows(m), cols(m));
         assert(cols(l) == rows(x), "dimensions mismatch l(%,%), x(%,%)\n", rows(l), cols(l), rows(x), cols(x));
         assert(cols(m) == cols(x), "dimensions mismatch m(%,%), x(%,%)\n", rows(m), cols(m), rows(x), cols(x));
     }
@@ -1157,24 +1157,28 @@ test_linear_algebra :: () {
         assert(approx(res, dvec(2, 2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
 
-    // {
-    //     println_push("test 13", color = .FG_GREEN);
+    {
+        println_push("test 13", color = .FG_GREEN);
 
-    //     L := dmat(3,3,
-    //         R, C_ZERO, C_ZERO,
-    //         I, R, C_ZERO,
-    //         2*R, 3+I, R
-    //     );
-    //     one : DenseMatrix(C64, 3, 3);
-    //     mat_init_unit(*one);
-    //     res := solve_linear_left_trapezoidal(L,one);
-    //     println("K = %", pstr(res));
-    //     assert(approx(res, dmat(3,3,
-    //         R, C_ZERO, C_ZERO,
-    //         -I, R, C_ZERO, 
-    //         -3+3*I, -3-I, R
-    //     )));
-    // }
+        L := dmat(3,3,
+            R, C_ZERO, C_ZERO,
+            I, R, C_ZERO,
+            2*R, 3+I, R
+        );
+        one : DenseMatrix(C64, 3, 3);
+        mat_init_unit(*one);
+
+        res : DenseMatrix(C64, 3, 3) = ---;
+
+        solve_linear_left_trapezoidal(L,one, *res);
+        
+        println("K = %", pstr(res));
+        assert(approx(res, dmat(3,3,
+            R, C_ZERO, C_ZERO,
+            -I, R, C_ZERO, 
+            -3+3*I, -3-I, R
+        )));
+    }
 
     // {
     //     println_push("test 14", color = .FG_GREEN);

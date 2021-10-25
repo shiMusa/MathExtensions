@@ -243,7 +243,7 @@ MatrixRowHeapView :: struct(M: Type) {
 mat_row_heap_view :: (mat: *$M/MatrixType, row: int, num_elements: int, start_index: int = 0, stride: int = 1) -> MatrixRowHeapView(M) {
     #if CHECKS {
         assert(row >= 0 && row < rows(mat));
-        assert(start_index + (num_elements-1) * stride <= dim(vec));
+        assert(start_index + (num_elements-1) * stride <= cols(mat));
     }
     res : MatrixRowHeapView(M);
     res.row = row;
@@ -300,9 +300,9 @@ MatrixColumnHeapView :: struct(M: Type) {
 mat_col_heap_view :: (mat: *$M/MatrixType, col: int, num_elements: int, start_index: int = 0, stride: int = 1) -> MatrixColumnHeapView(M) {
     #if CHECKS {
         assert(col >= 0 && col < cols(mat));
-        assert(start_index + (num_elements-1) * stride <= dim(vec));
+        assert(start_index + (num_elements-1) * stride <= rows(mat));
     }
-    res : MatrixColumnHeapView(M, num_elements);
+    res : MatrixColumnHeapView(M);
     res.col = col;
     res.rows = num_elements;
     res.start_index = start_index;

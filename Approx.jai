@@ -24,7 +24,7 @@ approx :: inline (a: $A/MatrixType, b: $B/MatrixType) -> bool {
     for a {
         sum += abs_sq(it - get(b, it_row, it_column));
     }
-    return sqrt(sum) < DELTA;
+    return sqrt(sum, float64) < DELTA;
 }
 
 approx :: inline (a: $T, b: $U) -> bool #modify {
