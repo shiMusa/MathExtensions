@@ -1180,24 +1180,27 @@ test_linear_algebra :: () {
         )));
     }
 
-    // {
-    //     println_push("test 14", color = .FG_GREEN);
+    {
+        println_push("test 14", color = .FG_GREEN);
 
-    //     M := dmat(3,3,
-    //         2*R, I, -2*R,
-    //         C_ZERO, -I, C_ZERO,
-    //         C_ZERO, C_ZERO, 1+I
-    //     );
-    //     one : DenseMatrix(C64, 3, 3);
-    //     mat_init_unit(*one);
-    //     res := solve_linear_right_trapezoidal(M,one);
-    //     println("K = %", pstr(res));
-    //     assert(approx(res, dmat(3,3,
-    //         0.5*R, 0.5*R, 0.5-0.5*I,
-    //         C_ZERO, I, C_ZERO,
-    //         C_ZERO, C_ZERO, 0.5-0.5*I
-    //     )));
-    // }
+        M := dmat(3,3,
+            2*R, I, -2*R,
+            C_ZERO, -I, C_ZERO,
+            C_ZERO, C_ZERO, 1+I
+        );
+        one : DenseMatrix(C64, 3, 3);
+        mat_init_unit(*one);
+
+        res : DenseMatrix(C64, 3, 3) = ---;
+
+        solve_linear_right_trapezoidal(M,one,*res);
+        println("K = %", pstr(res));
+        assert(approx(res, dmat(3,3,
+            0.5*R, 0.5*R, 0.5-0.5*I,
+            C_ZERO, I, C_ZERO,
+            C_ZERO, C_ZERO, 0.5-0.5*I
+        )));
+    }
 
     // {
     //     println_push("test 15", color = .FG_GREEN);
