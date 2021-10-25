@@ -687,19 +687,19 @@ solve_linear_gaussian_factorization_full_pivot_default :: (
 // ? Springer
 // ? Algorithm 3.7. Gaussian Factorization with Partial Pivoting, page 210
 gf_rp :: gaussian_factorization_row_pivot;
-gaussian_factorization_row_pivot :: inline (m: *$A/MatrixType, rows: *$B/VectorType) -> permutations: int {
-    return gaussian_factorization_row_pivot_default(a,rows);
+gaussian_factorization_row_pivot :: inline (m: *$A/MatrixType, row_perms: *$B/VectorType) -> permutations: int {
+    return gaussian_factorization_row_pivot_default(m,row_perms);
 }
 
 #scope_file
-gaussian_factorization_row_pivot_default :: (m: *$A/MatrixType, rows: *$B/VectorType) -> permutations: int {
+gaussian_factorization_row_pivot_default :: (m: *$A/MatrixType, row_perms: *$B/VectorType) -> permutations: int {
     #if CHECKS {
-        assert(rows(m) == dim(rows));
+        assert(rows(m) == dim(row_perms));
     }
     permutations := 0;
 
-    for rows {
-        set(*rows, it_index, it_index);
+    for row_perms {
+        set(row_perms, it_index, ncast(B.data_type, it_index));
     }
 
     mr := rows(m);
@@ -720,17 +720,17 @@ gaussian_factorization_row_pivot_default :: (m: *$A/MatrixType, rows: *$B/Vector
         assert(rho != 0.0, "\nCannot perform Gaussain factorization due to 0 in diagonal.");
 
         if ii > k {
-            swap_rows(*m, k, ii);
-            swap(*rows, k, ii);
+            swap_rows(m, k, ii);
+            swap(row_perms, k, ii);
             permutations += 1;
         }
 
         for i: k+1..mr-1 {
-            set(*m,i,k, get(m,i,k)/get(m,k,k));
+            set(m,i,k, get(m,i,k)/get(m,k,k));
         }
         for j: k+1..mc-1 {
             for i: k+1..mr-1 {
-                set(*m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
+                set(m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
             }
         }
     }
@@ -776,9 +776,9 @@ solve_linear_gaussian_factorization_row_pivot_default :: (
     }
 
     num_rows_perm := gaussian_factorization_row_pivot(a, rows_perm);
-    permute(b, rows_perm);
+    permute(b, <<rows_perm);
     solve_linear_left_trapezoidal( <<a, <<b, x);
-    solve_linear_right_trapezoidal(<<a, <<b, x);
+    solve_linear_right_trapezoidal(<<a, <<x, x);
 
     return num_rows_perm;
 }
@@ -1141,19 +1141,21 @@ test_linear_algebra :: () {
         assert(approx(res, sol), "\nCould not solve linear system via Gaussain factorization!");
     }
 
-    // {
-    //     println_push("test 12", color = .FG_GREEN);
+    {
+        println_push("test 12", color = .FG_GREEN);
 
-    //     M := dmat(2,2,
-    //         R, I,
-    //         -3*R, 2.0 - I
-    //     );
-    //     b := dvec(2,   4*R, 6*I);
+        M := dmat(2,2,
+            R, I,
+            -3*R, 2.0 - I
+        );
+        b := dvec(2,   4*R, 6*I);
+        res : DenseVector(C64, 2);
+        rowp : DenseVector(u8, 2) = ---;
 
-    //     res := solve_LRrp(M, b);
-    //     println("solve linear system via Gaussian factorization (row pivoting): %", pstr(res));
-    //     assert(approx(res, dvec(2, 2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
-    // }
+        nrowp := slgf_rp(*M, *b, *res, *rowp);
+        println("solve linear system via Gaussian factorization (row pivoting): %", pstr(res));
+        assert(approx(res, dvec(2, 2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
+    }
 
     // {
     //     println_push("test 13", color = .FG_GREEN);
