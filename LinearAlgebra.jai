@@ -806,17 +806,17 @@ inverse :: inline (a: $A/MatrixType, ainv: *A) {
 
 #scope_file
 inverse_default :: (a: $A/MatrixType, ainv: *A) {
-    rows := dhvec(A.data_type, rows(a), false); // ! alloc
-    defer free(rows);
+    row_perms := dhvec(u32, rows(a), false); // ! alloc, u32 limitation?
+    defer free(row_perms);
 
-    gaussian_factorization_row_pivot(*a, *rows);
+    gaussian_factorization_row_pivot(*a, *row_perms);
 
     mat_init_unit(ainv);
 
     solve_linear_left_trapezoidal( a, <<ainv, ainv);
     solve_linear_right_trapezoidal(a, <<ainv, ainv);
 
-    permute_cols(ainv, rows);
+    permute_cols(ainv, row_perms);
 }
 #scope_export
 
@@ -1202,22 +1202,24 @@ test_linear_algebra :: () {
         )));
     }
 
-    // {
-    //     println_push("test 15", color = .FG_GREEN);
+    {
+        println_push("test 15", color = .FG_GREEN);
 
-    //     M := dmat(3, 3,
-    //         2*R, I, -2*R,
-    //         C_ZERO, -I, 2*I,
-    //         R, C_ZERO, R+I
-    //     );
-    //     iM := inverse(M);
-    //     println("iM = %", pstr(iM));
-    //     assert(approx(iM, dmat(3,3,
-    //         0.25*R + 0.25*I, 0.25*R+0.25*I, 0.5*R-0.5*I,
-    //         -0.5*R, -0.5*R+I, R,
-    //         -0.25*R, -0.25*R, 0.5*R
-    //     )));
-    // }
+        M := dmat(3, 3,
+            2*R, I, -2*R,
+            C_ZERO, -I, 2*I,
+            R, C_ZERO, R+I
+        );
+        iM : DenseMatrix(C64, 3, 3) = ---;
+        inverse(M, *iM);
+        
+        println("iM = %", pstr(iM));
+        assert(approx(iM, dmat(3,3,
+            0.25*R + 0.25*I, 0.25*R+0.25*I, 0.5*R-0.5*I,
+            -0.5*R, -0.5*R+I, R,
+            -0.25*R, -0.25*R, 0.5*R
+        )));
+    }
 
     // {
     //     println_push("test 16", color = .FG_GREEN);

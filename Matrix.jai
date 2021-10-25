@@ -854,6 +854,48 @@ permute_cols_default :: (m: *$M/MatrixType, order: ..int) {
 }
 #scope_export
 
+
+
+
+// there are faster ways of doing this.
+// check for compatible matrix types: e.g. this is not possible with triangular matrices
+permute_rows :: inline (m: *$M/MatrixType, order: $O/VectorType) {
+    permute_rows_default(m, order);
+}
+
+#scope_file
+permute_rows_default :: (m: *$M/MatrixType, order: $O/VectorType) {
+    #if CHECKS {
+        // #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
+        assert(dim(order) == rows(m));
+    }
+
+    for 0..rows(m)-1 {
+        if get(order, it) <= it then continue;
+        inline swap_rows(m, it, get(order,it));
+    }
+}
+#scope_export
+
+permute_cols :: inline (m: *$M/MatrixType, order: $O/VectorType) {
+    permute_cols_default(m, order);
+}
+
+#scope_file
+permute_cols_default :: (m: *$M/MatrixType, order: $O/VectorType) {
+    #if CHECKS {
+        // #run assert(M.flags == .DENSE || M.flags == .DENSE_HEAP, "not a compatible matrix type (not dense)\n");
+        assert(dim(order) == cols(m));
+    }
+
+    for 0..cols(m)-1 {
+        if get(order,it) <= it then continue;
+        swap_cols(m, it, get(order,it));
+    }
+}
+#scope_export
+
+
 //  ######  ##      ##    ###    ########
 // ##    ## ##  ##  ##   ## ##   ##     ##
 // ##       ##  ##  ##  ##   ##  ##     ##
