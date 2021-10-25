@@ -527,24 +527,25 @@ solve_linear_gaussian_factorization_no_pivot_default :: (a: *$A/MatrixType, b: $
 // ? Springer
 // ? Algorithm 3.7.3 Gaussian Factorization with Full Pivoting, page 204
 gf_fp :: gaussian_factorization_full_pivot;
-gaussian_factorization_full_pivot :: inline (m: *$A/MatrixType, rows: *$B/VectorType, cols: *$C/VectorType) -> row_permutations: int, col_permutations: int {
-    return gaussian_factorization_full_pivot_default(m,rows,cols);
+gaussian_factorization_full_pivot :: inline (m: *$A/MatrixType, rows_perm: *$B/VectorType, cols_perm: *$C/VectorType) -> row_permutations: int, col_permutations: int {
+    rp, cp := gaussian_factorization_full_pivot_default(m,rows_perm,cols_perm);
+    return rp, cp;
 }
 
 #scope_file
-gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows: *$B/VectorType, cols: *$C/VectorType) -> row_permutations: int, col_permutations: int {
+gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows_perm: *$B/VectorType, cols_perm: *$C/VectorType) -> row_permutations: int, col_permutations: int {
 // gaussian_factorization_full_pivot :: (m: $A/MatrixType)
 //  -> A #must, 
-//     rows: [A.N]int #must, 
-//     cols: [A.M]int #must, 
+//     rows_perm: [A.N]int #must, 
+//     cols_perm: [A.M]int #must, 
 //     row_permutations: int, 
 //     col_permutations: int 
 // {
     // println("gaussian_factorization_full_pivot");
 
     #if CHECKS {
-        assert(rows(m) == dim(rows), "dimensions mismatch m(%,%), rows(%)\n", rows(m), cols(m), dim(rows));
-        assert(cols(m) == dim(cols), "dimensions mismatch m(%,%), cols(%)\n", rows(m), cols(m), dim(cols));
+        assert(rows(m) == dim(rows_perm), "dimensions mismatch m(%,%), rows(%)\n", rows(m), cols(m), dim(rows_perm));
+        assert(cols(m) == dim(cols_perm), "dimensions mismatch m(%,%), cols(%)\n", rows(m), cols(m), dim(cols_perm));
     }
 
     mr := rows(m);
@@ -553,11 +554,11 @@ gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows: *$B/Vecto
     row_permutations := 0;
     col_permutations := 0;
 
-    for rows {
-        set(*rows, it_index, it_index);
+    for rows_perm {
+        set(rows_perm, it_index, ncast(rows_perm.data_type, it_index));
     }
-    for cols {
-        set(*cols, it_index, it_index);
+    for cols_perm {
+        set(cols_perm, it_index, ncast(cols_perm.data_type, it_index));
     }
 
     // println("    entering for k");
@@ -585,15 +586,15 @@ gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows: *$B/Vecto
         // println("    permute rows");
         if ii > k {
             // println("        swap_rows");
-            swap_rows(*m, k, ii);
+            swap_rows(m, k, ii);
             // println("        swap row array entries");
-            swap(*rows, k, ii);
+            swap(rows_perm, k, ii);
             row_permutations += 1;
         }
         // println("    permute columns");
         if jj > k {
-            swap_columns(*m, k, jj);
-            swap(*cols, k, jj);
+            swap_cols(m, k, jj);
+            swap(cols_perm, k, jj);
             col_permutations += 1;
         }
 
@@ -601,12 +602,12 @@ gaussian_factorization_full_pivot_default :: (m: *$A/MatrixType, rows: *$B/Vecto
 
         // println("    updating matrix");
         for i: k+1..mr-1 {
-            set(*m,i,k, get(m,i,k)/get(m,k,k));
+            set(m,i,k, get(m,i,k)/get(m,k,k));
         }
         // println("    updating matrix 2");
         for j: k+1..mc-1 {
             for i: k+1..mr-1 {
-                set(*m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
+                set(m,i,j, get(m,i,j) - get(m,i,k) * get(m,k,j));
             }
         }
     }
@@ -1083,20 +1084,25 @@ test_linear_algebra :: () {
         assert(x == dvec(2, 2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
     }
 
-    // {
-    //     println_push("test 9", color = .FG_GREEN);
+    {
+        println_push("test 9", color = .FG_GREEN);
 
-    //     M : DenseMatrix(C64, 3, 3) = ---;
-    //     mat_init(*M,
-    //         C_ZERO, 4*R, -3*R,
-    //         2*R, C_ZERO, 4*R,
-    //         3*R, -5*R, 3*R
-    //     );
-    //     println("M %", pstr(M));
+        M := dmat(C64, 3, 3,
+            C_ZERO, 4*R, -3*R,
+            2*R, C_ZERO, 4*R,
+            3*R, -5*R, 3*R
+        );
+        println("M %", pstr(M));
 
-    //     A, rows, cols := gaussian_factorization_full_pivot(M);
-    //     println("A = %", pstr(A));
-    // }
+        rows : DenseVector(u8, 3) = ---;
+        cols : DenseVector(u8, 3) = ---;
+
+        rps, cps := gaussian_factorization_full_pivot(*M, *rows, *cols);
+        println("M = %", pstr(M));
+        println("rows = %", pstr(rows));
+        println("cols = %", pstr(cols));
+        println("rps %, cps %", rps, cps);
+    }
 
     // {
     //     println_push("test 10", color = .FG_GREEN);
