@@ -13,12 +13,12 @@
 // ? Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // ? solves the system `a x = b` with 2x2 matrix `a` and vectors `x`, `b`
 sl2 :: solve_linear_2x2;
-solve_linear_2x2 :: inline (a: *$A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
+solve_linear_2x2 :: inline (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     solve_linear_2x2_default(a,b,x);
 }
 
 #scope_file
-solve_linear_2x2_default :: (a: *$A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
+solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
     #if CHECKS {
         assert(rows(a) == 2, "dimension mismatch: 2 != A.N = %\n", rows(a));
         assert(cols(a) == 2, "dimension mismatch: 2 != A.M = %\n", cols(a));
@@ -26,12 +26,19 @@ solve_linear_2x2_default :: (a: *$A/MatrixType, b: *$B/VectorType, x: *$C/Vector
         assert(dim(x) == 2, "dimension mismatch: 2 != C.N = %\n", dim(x));
     }
 
+    // TODO remove unnecesary allocations!
+
     sigma := max(abs(get(a,0,0)), abs(get(a,0,1)), abs(get(a,1,0)), abs(get(a,1,1)));
-    div(a, sigma);
-    det := get(a,0,0) * get(a,1,1) - get(a,0,1) * get(a,1,0);
-    div(b, sigma*det);
-    m := dmat(2,2, get(a,1,1), -get(a,0,1), -get(a,1,0), get(a,0,0));
-    mat_mul_vec(m, <<b, x);
+    mu : DenseMatrix(A.data_type, 2, 2) = ---;
+    copy(*mu, a);
+    div(*mu, sigma);
+    det := get(mu,0,0) * get(mu,1,1) - get(mu,0,1) * get(mu,1,0);
+
+    g : DenseVector(B.data_type, 2) = ---;
+    copy(*g, b);
+    div(*g, sigma*det);
+    m := dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0));
+    mat_mul_vec(m, g, x);
 }
 #scope_export
 
@@ -120,10 +127,11 @@ solve_linear_right_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x:
     }
 
     i : int;
-    for 0..dim(b)-1 {
-        i = dim(b)-1 - it; // ? reverse order!
+    d := dim(b);
+    for 0..d-1 {
+        i = d-1 - it; // ? reverse order!
         sum := zero(x.data_type);
-        for j: i+1..dim(b)-1 {
+        for j: i+1..d-1 {
             sum += get(R,i,j)*get(x,j);
         }
         set(x,i, (get(b,i) - sum)/get(R,i,i));
@@ -186,7 +194,7 @@ solve_linear_right_quasi_triangular_default :: (R: $A/MatrixType, b: $B/VectorTy
                 sum2 += get(R,i,j) * get(x,j);
             }
             c := dvec(2, get(b,i-1)-sum1, get(b,i)-sum2);
-            tmp : DenseVector(U, 2, 2);
+            tmp : DenseVector(U, 2);
             solve_linear_2x2(a, c, *tmp);
             set(x, i-1, get(tmp,0));
             set(x, i,   get(tmp,1));
@@ -908,7 +916,7 @@ test_linear_algebra :: () {
 
         x : DenseVector(C64, 2);
 
-        solve_linear_2x2(*A, *b, *x);
+        solve_linear_2x2(A, b, *x);
         println("result: %", pstr(x));
 
         sol := dvec(2,  // ? this is the correct answer
@@ -951,7 +959,7 @@ test_linear_algebra :: () {
         solve_linear_right_triangular(M, b, *res);
         println("res %", pstr(res));
 
-        sol : DenseVector(C64, 3) = ---;
+        sol : DenseVector(C64, 3);
         tmp : DenseVector(C64, 3) = ---;
         mat_mul_vec(M, res, *sol);
         copy(*tmp, sol);
@@ -962,31 +970,35 @@ test_linear_algebra :: () {
         assert(sol_norm < 1.0e-8, "res = %, M * res = % =? b = %", res, tmp, b);
     }
 
-    // {
-    //     println_push("test 4", color = .FG_GREEN);
+    {
+        println_push("test 4", color = .FG_GREEN);
 
-    //     m : DenseMatrix(int, 4, 4) = ---;
-    //     mat_init(*m,
-    //         1, 3, 4, 5,
-    //         0, 2, 3, 4,
-    //         0, 1, 2, 3,
-    //         0, 0, 0, 2
-    //     );
-    //     cm := mat_cast(C64, m);
+        m := dmat(int, 4, 4,
+            1, 3, 4, 5,
+            0, 2, 3, 4,
+            0, 1, 2, 3,
+            0, 0, 0, 2
+        );
+        cm : DenseMatrix(C64, 4, 4) = ---;
+        cast_to(*cm, m);
         
-    //     b : DenseVector(float64, 4) = ---;
-    //     vec_init(*b, 2,3,4,5);
-    //     cb := vec_cast(C64, b);
+        b := dvec(float64, 4, 2,3,4,5);
+        cb : DenseVector(C64, 4) = ---;
+        cast_to(*cb, b);
 
-    //     println("cm %", pstr(cm));
-    //     println("cb %", pstr(cb));
+        println("cm %", pstr(cm));
+        println("cb %", pstr(cb));
 
-    //     res := solve_linear_right_quasi_triangular(cm,cb);
-    //     println("res = %", pstr(res));
+        res : DenseVector(C64, 4) = ---;
+        solve_linear_right_quasi_triangular(cm,cb, *res);
+        println("res = %", pstr(res));
 
-    //     test := norm_2(cm * res - cb);
-    //     assert(test < 1.0e-8);
-    // }
+        // * check result
+        sol : DenseVector(C64, 4);
+        mat_mul_vec(cm, res, *sol);
+        sub(*sol, cb);
+        assert(norm_2(sol) < 1.0e-8);
+    }
 
     // {
     //     println_push("test 5", color = .FG_GREEN);
