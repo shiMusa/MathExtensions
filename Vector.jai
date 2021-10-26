@@ -115,8 +115,13 @@ copy :: (to: *$V/VectorType, from: V) {
 
 copy :: (v: DenseVector($T, $N)) -> DenseVector(T,N) {
     res : DenseVector(T, N) = ---;
-    copy(*res, v);
+    inline copy(*res, v);
     return res;
+}
+copy :: (v: DenseHeapVector($T)) -> DenseHeapVector(T) {
+    res := dhvec(T, dim(v), false); // ! alloc
+    inline copy(*res, v);
+    return v;
 }
 
 // ########  #######  ##     ##    ###    ##        ######
@@ -127,16 +132,16 @@ copy :: (v: DenseVector($T, $N)) -> DenseVector(T,N) {
 // ##       ##    ##  ##     ## ##     ## ##       ##    ##
 // ########  ##### ##  #######  ##     ## ########  ######
 
-operator == :: inline (a: $V/VectorType, b: $B/VectorType) -> bool {
-    return equals(a,b);
+operator == :: (a: $V/VectorType, b: $B/VectorType) -> bool {
+    return inline equals(a,b);
 }
 
 equals :: inline (a: $A/VectorType, b: $B/VectorType) -> bool {
     #if A.flags == .DENSE && B.flags == .DENSE {
-        return equals_dense_dense(a,b);
+        return inline equals_dense_dense(a,b);
     } else {
         // * default implementation
-        return equals_default(a,b);
+        return inline equals_default(a,b);
     }
 }
 
@@ -174,16 +179,16 @@ equals_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> bool {
 
 // ? by default, the left vector will be conjugated, 
 // ? like `⟨ψ|φ⟩ = ∑ₙ conjugate(ψₙ) φₙ` in quantum mechanics
-operator * :: inline (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
-    return dot(a,b);
+operator * :: (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
+    return inline dot(a,b);
 }
 
 dot :: inline (a: $A/VectorType, b: $B/VectorType, $conjugate: bool = true) -> UpCast(A.data_type,B.data_type).T {
     #if A.flags == .DENSE && B.flags == .DENSE {
-        return dot_dense_dense(a,b,conjugate);
+        return inline dot_dense_dense(a,b,conjugate);
     } else {
         // * default implementation
-        return dot_default(a,b,conjugate);
+        return inline dot_default(a,b,conjugate);
     }
 }
 #scope_file
@@ -225,22 +230,28 @@ dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, N), $conjugate: b
 //  ######   ######  ##     ## ########    ##     ##  #######  ########
 
 
-operator * :: inline (a: DenseVector($T, $N), b: $B) -> DenseVector(UpCast(T,B).T, N) #modify {
+operator * :: (a: DenseVector($T, $N), b: $B) -> DenseVector(UpCast(T,B).T, N) #modify {
     if !is_number(B) {B = null; return;}    
 } #symmetric {
-    #if CHECKS {
-        #assert(is_minor_number_type(T,B));
-    }
     res : DenseVector(UpCast(T,B).T,N) = ---;
-    mul(*res, b);
+    inline copy(*res, a);
+    inline mul(*res, b);
+    return res;
+}
+operator * :: (a: DenseHeapVector($T), b: $B) -> DenseHeapVector(UpCast(T,B).T) #modify {
+    if !is_number(B) {B = null; return;}    
+} #symmetric {
+    res := dhvec(UpCast(T,B).T, dim(a), false); // ! alloc
+    inline copy(*res, a);
+    inline mul(*res, b);
     return res;
 }
 
 
-mul :: inline (a: *$A/VectorType, b: $B) #modify {
+mul :: (a: *$A/VectorType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
-    mul_default(a,b);
+    inline mul_default(a,b);
 }
 
 #scope_file
@@ -264,19 +275,25 @@ mul_default :: (a: *$A/VectorType, b: $B) #modify {
 operator / :: inline (a: DenseVector($T, $N), b: $B) -> DenseVector(UpCast(T,B).T, N) #modify {
     if !is_number(B) {B = null; return;}    
 } {
-    #if CHECKS {
-        #assert(is_minor_number_type(T,B));
-    }
     res : DenseVector(UpCast(T,B).T,N) = ---;
-    div(*res, b);
+    inline copy(*res, a);
+    inline div(*res, b);
+    return res;
+}
+operator / :: inline (a: DenseHeapVector($T), b: $B) -> DenseHeapVector(UpCast(T,B).T) #modify {
+    if !is_number(B) {B = null; return;}    
+} {
+    res := dhvec(UpCast(T,B).T, dim(a), false); // ! alloc
+    inline copy(*res, a);
+    inline div(*res, b);
     return res;
 }
 
 
-div :: inline (a: *$A/VectorType, b: $B) #modify {
+div :: (a: *$A/VectorType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
-    div_default(a,b);
+    inline div_default(a,b);
 }
 
 #scope_file
@@ -299,13 +316,18 @@ div_default :: (a: *$A/VectorType, b: $B) #modify {
 
 operator / :: (a: DenseVector($A, $NA), b: DenseVector($B, $NB)) -> DenseMatrix(UpCast(A,B).T, NA, NB) {
     res : DenseMatrix(UpCast(A,B).T, NA, NB) = ---;
-    outer_product(a,b,*res);
+    inline outer_product(a,b,*res);
+    return res;
+}
+operator / :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, dim(a), dim(b), false);
+    inline outer_product(a,b,*res);
     return res;
 }
 
 
-outer_product :: inline (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
-    outer_product_default(a,b,res);
+outer_product :: (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
+    inline outer_product_default(a,b,res);
 }
 
 #scope_file
@@ -333,8 +355,14 @@ outer_product_default :: inline (a: $A/VectorType, b: $B/VectorType, res: *$C/Ma
 
 operator + :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
     res : DenseVector(UpCast(A,B).T, N) = ---;
-    cast_to(*res, a);
-    add(*res, b);
+    inline cast_to(*res, a);
+    inline add(*res, b);
+    return res;
+}
+operator + :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
+    res := dhvec(UpCast(A,B).T, N, false);
+    inline cast_to(*res, a);
+    inline add(*res, b);
     return res;
 }
 
@@ -361,8 +389,14 @@ add_default :: (a: *$A/VectorType, b: $B/VectorType) {
 
 operator - :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
     res : DenseVector(UpCast(A,B).T, N) = ---;
-    cast_to(*res, a);
-    sub(*res, b);
+    inline cast_to(*res, a);
+    inline sub(*res, b);
+    return res;
+}
+operator - :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
+    res := dhvec(UpCast(A,B).T, N, false);
+    inline cast_to(*res, a);
+    inline sub(*res, b);
     return res;
 }
 
@@ -396,7 +430,12 @@ sub_default :: (a: *$A/VectorType, b: $B/VectorType) {
 
 operator - :: (a: DenseVector($T, $N)) -> DenseVector(T,N) {
     res := copy(a);
-    neg(*res);
+    inline neg(*res);
+    return res;
+}
+operator - :: (a: DenseHeapVector($T)) -> DenseHeapVector(T) {
+    res := copy(a);
+    inline neg(*res);
     return res;
 }
 
@@ -424,7 +463,12 @@ neg_default :: (a: *$A/VectorType) {
 
 cross :: (a: DenseVector($A, 3), b: DenseVector($B, 3)) -> DenseVector(UpCast(A,B).T, 3) {
     res : DenseVector(UpCast(A,B).T, 3);
-    cross(a,b,*res);
+    inline cross(a,b,*res);
+    return res;
+}
+cross :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
+    res := dhvec(UpCast(A,B).T, 3, false);
+    inline cross(a,b,*res);
     return res;
 }
 
@@ -564,8 +608,8 @@ gaxpy_default :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
 // }
 
 // TODO: check, if this in-place permutation is correct!
-permute :: inline (v: *$V/VectorType, order: ..int) {
-    permute_default(v, ..order);
+permute :: (v: *$V/VectorType, order: ..int) {
+    inline permute_default(v, ..order);
 }
 
 
@@ -597,8 +641,8 @@ permute_default :: (v: *$V/VectorType, order: ..int) {
 #scope_export
 
 
-permute :: inline (v: *$V/VectorType, order: $O/VectorType) {
-    permute_default(v,order);
+permute :: (v: *$V/VectorType, order: $O/VectorType) {
+    inline permute_default(v,order);
 }
 
 #scope_file
@@ -668,6 +712,17 @@ swap_default :: (v: *$V/VectorType, i: int, j: int) {
 // ##       ##     ## ##  #### ##    ## ##     ## ##    ##  #########    ##    ##
 // ##    ## ##     ## ##   ### ##    ## ##     ## ##    ##  ##     ##    ##    ##
 //  ######   #######  ##    ##  ######   #######   ######   ##     ##    ##    ########
+
+conjugate :: (v: DenseVector($T, $N)) -> DenseVector(T, N) {
+    res := copy(v);
+    inline conjugate(*res);
+    return res;
+}
+conjugate :: (v: DenseHeapVector($T)) -> DenseHeapVector(T) {
+    res := copy(v);
+    inline conjugate(*res);
+    return res;
+}
 
 conjugate :: (v: *$V/VectorType) {
     inline conjugate_default(v);

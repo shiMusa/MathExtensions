@@ -114,7 +114,12 @@ copy :: inline (to: *$M/MatrixType, from: M) {
 
 copy :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T,N,M) {
     res : DenseMatrix(T,N,M) = ---;
-    copy(*res, m);
+    inline copy(*res, m);
+    return res;
+}
+copy :: (m: DenseHeapMatrix($T)) -> DenseHeapMatrix(T) {
+    res := dhmat(T,N,M, false); // ! alloc
+    inline copy(*res, m);
     return res;
 }
 
@@ -140,8 +145,8 @@ cast_to :: inline (to: *$M/MatrixType, from: $K/MatrixType) {
 //  ##  ##   ###  ##     ##
 // #### ##    ## ####    ##
 
-mat_init :: inline (m: *$M/MatrixType, vals: ..$T) {
-    mat_init_default(m, ..vals);
+mat_init :: (m: *$M/MatrixType, vals: ..$T) {
+    inline mat_init_default(m, ..vals);
 }
 
 #scope_file
@@ -159,8 +164,8 @@ mat_init_default :: (m: *$M/MatrixType, vals: ..$T) {
 
 
 
-mat_init_all :: inline (m: *$M/MatrixType, value: $T) {
-    mat_init_all_default(m, value);
+mat_init_all :: (m: *$M/MatrixType, value: $T) {
+    inline mat_init_all_default(m, value);
 }
 
 #scope_file
@@ -174,8 +179,8 @@ mat_init_all_default :: (m: *$M/MatrixType, value: $T) {
 
 
 
-mat_init_unit :: inline (m: *$M/MatrixType, $init_zeroes: bool = true) {
-    mat_init_unit_default(m, init_zeroes);
+mat_init_unit :: (m: *$M/MatrixType, $init_zeroes: bool = true) {
+    inline mat_init_unit_default(m, init_zeroes);
 }
 
 #scope_file
@@ -201,8 +206,8 @@ mat_init_unit_default :: (m: *$M/MatrixType, $init_zeroes: bool = true) {
 
 
 
-mat_init_diag :: inline (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = true) {
-    mat_init_diag_default(m,..values,init_zeroes);
+mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = true) {
+    inline mat_init_diag_default(m,..values,init_zeroes);
 }
 
 #scope_file
@@ -230,8 +235,8 @@ mat_init_diag :: (m: *$M/MatrixType, values: ..$T, $init_zeroes: bool = true) {
 
 
 
-mat_init_hadamard_2 :: inline (m: *$M/MatrixType) {
-    mat_init_hadamard_2_default(m);
+mat_init_hadamard_2 :: (m: *$M/MatrixType) {
+    inline mat_init_hadamard_2_default(m);
 }
 
 #scope_file
@@ -247,8 +252,8 @@ mat_init_hadamard_2_default :: inline (m: *$M/MatrixType) {
 
 
 
-mat_init_hadamard :: inline (m: *$M/MatrixType, nestings: int = 0) {
-    mat_init_hadamard_default(m, nestings);
+mat_init_hadamard :: (m: *$M/MatrixType, nestings: int = 0) {
+    inline mat_init_hadamard_default(m, nestings);
 }
 
 #scope_file
@@ -280,8 +285,8 @@ mat_init_hadamard_default :: (m: *$M/MatrixType, nestings: int = 0) {
 #scope_export
 
 
-mat_init_reflector :: inline (m: *$M/MatrixType, normal: $V/VectorType) {
-    mat_init_reflector_default(m,normal);
+mat_init_reflector :: (m: *$M/MatrixType, normal: $V/VectorType) {
+    inline mat_init_reflector_default(m,normal);
 }
 
 #scope_file
@@ -321,7 +326,7 @@ mat_init_reflector_default :: (m: *$M/MatrixType, normal: $V/VectorType) {
 //  ######   #######  ########  ##     ## ##     ##    ##    ##     ## #### ##     ##
 
 // inclusive first bound, exclusive last bound
-mat_submatrix :: inline (
+mat_submatrix :: (
     sm: *$SM/MatrixType,
     m: $M/MatrixType, 
     row_from: int, 
@@ -329,7 +334,7 @@ mat_submatrix :: inline (
     column_from: int, 
     column_to: int
 ) {
-    mat_submatrix_default(sm, m, row_from, row_to, column_from, column_to);
+    inline mat_submatrix_default(sm, m, row_from, row_to, column_from, column_to);
 }
 
 #scope_file
@@ -379,8 +384,8 @@ mat_submatrix_default :: (
 */
 
 
-row :: inline (v: *$V/VectorType, m: $M/MatrixType, i: int) {
-    row_default(v,m,i);
+row :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
+    inline row_default(v,m,i);
 }
 
 #scope_file
@@ -397,7 +402,7 @@ row_default :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
 #scope_export
 
 column :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
-    column_default(v,m,i);
+    inline column_default(v,m,i);
 }
 
 #scope_file
@@ -430,10 +435,10 @@ column_default :: (v: *$V/VectorType, m: $M/MatrixType, i: int) {
 
 
 operator == :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
-    return equals(a,b);
+    return inline equals(a,b);
 }
 
-equals :: inline (a: $A/MatrixType, b: $B/MatrixType) -> bool {
+equals :: (a: $A/MatrixType, b: $B/MatrixType) -> bool {
     #if A.flags == .DENSE && B.flags == .DENSE {
         return equals_dense_dense(a,b);
     } else {
@@ -490,15 +495,20 @@ equals_dense_dense :: (a: DenseMatrix($AT, $AN, $AM), b: DenseMatrix($BT, $BN, $
 
 operator * :: (a: DenseMatrix($A, $AN, $M), b: DenseMatrix($B, M, $BM)) -> DenseMatrix(UpCast(A,B).T, AN, BM) {
     res : DenseMatrix(UpCast(A,B).T, AN, BM);
-    mat_mul_mat(a,b,*res);
+    inline mat_mul_mat(a,b,*res);
+    return res;
+}
+operator * :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a), cols(b), false); // ! alloc
+    inline mat_mul_mat(a,b,*res);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mat_mul_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
-    mat_mul_mat_default(a,b,res);
+mat_mul_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    inline mat_mul_mat_default(a,b,res);
 }
 
 #scope_file
@@ -532,15 +542,20 @@ mat_mul_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
 
 operator * :: (a: DenseMatrix($A, $N, $M), b: DenseVector($B, M)) -> DenseVector(UpCast(A,B).T, N) {
     res : DenseVector(UpCast(A,B).T, N);
-    mat_mul_vec(a,b,*res);
+    inline mat_mul_vec(a,b,*res);
+    return res;
+}
+operator * :: (a: DenseHeapMatrix($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
+    res : DenseVector(UpCast(A,B).T, rows(a)); // ! alloc
+    inline mat_mul_vec(a,b,*res);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mat_mul_vec :: inline (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
-    mat_mul_vec_default(a,b,res);
+mat_mul_vec :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
+    inline mat_mul_vec_default(a,b,res);
 }
 
 #scope_file
@@ -567,15 +582,20 @@ mat_mul_vec_default :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType)
 
 operator * :: (a: DenseVector($A, $N), b: DenseMatrix($B, N, $M)) -> DenseVector(UpCast(A,B).T, M) {
     res : DenseVector(UpCast(A,B).T, M);
-    vec_mul_mat(a,b,*res);
+    inline vec_mul_mat(a,b,*res);
+    return res;
+}
+operator * :: (a: DenseHeapVector($A), b: DenseHeapMatrix($B)) -> DenseHeapVector(UpCast(A,B).T) {
+    res := dhvec(UpCast(A,B).T, cols(a)); // ! alloc
+    inline vec_mul_mat(a,b,*res);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-vec_mul_mat :: inline (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
-    vec_mul_mat_default(a,b,res);
+vec_mul_mat :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
+    inline vec_mul_mat_default(a,b,res);
 }
 
 #scope_file
@@ -607,7 +627,14 @@ operator * :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, 
     if !is_number(B) {B = null; return;}
 } #symmetric {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
-    mul(a, b, *res);
+    inline mul(a, b, *res);
+    return res;
+}
+operator * :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) #modify {
+    if !is_number(B) {B = null; return;}
+} #symmetric {
+    res := dhmat(UpCast(T,B).T, rows(a), cols(a), false); // ! alloc
+    inline mul(a, b, *res);
     return res;
 }
 
@@ -673,7 +700,14 @@ operator / :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, 
     if !is_number(B) {B = null; return;}
 } {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
-    div(a, b, *res);
+    inline div(a, b, *res);
+    return res;
+}
+operator / :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) #modify {
+    if !is_number(B) {B = null; return;}
+} {
+    res := dhmat(UpCast(T,B).T, rows(a), cols(a), false); // ! alloc
+    inline div(a, b, *res);
     return res;
 }
 
@@ -718,13 +752,18 @@ div :: (a: *$A/MatrixType, b: $B) #modify {
 
 operator + :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
     res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
-    matt_add_mat(a,b,*res);
+    inline mat_add_mat(a,b,*res);
+    return res;
+}
+operator + :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
+    inline mat_add_mat(a,b,*res);
     return res;
 }
 
 
-mat_add_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
-    mat_add_mat_default(a,b,res);
+mat_add_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    inline mat_add_mat_default(a,b,res);
 }
 
 #scope_file
@@ -745,7 +784,7 @@ mat_add_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
 #scope_export
 
 add :: (a: *$A/MatrixType, b: $B/MatrixType) {
-    add_default(a,b);
+    inline add_default(a,b);
 }
 
 #scope_file
@@ -776,9 +815,14 @@ operator - :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMat
     matt_sub_mat(a,b,*res);
     return res;
 }
+operator + :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
+    inline mat_sub_mat(a,b,*res);
+    return res;
+}
 
-mat_sub_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
-    mat_sub_mat_default(a,b,res);
+mat_sub_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    inline mat_sub_mat_default(a,b,res);
 }
 
 #scope_file
@@ -799,7 +843,7 @@ mat_sub_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
 #scope_export
 
 sub :: (a: *$A/MatrixType, b: $B/MatrixType) {
-    sub_default(a,b);
+    inline sub_default(a,b);
 }
 
 #scope_file
@@ -830,6 +874,11 @@ operator - :: (a: DenseMatrix($T, $N, $M)) -> DenseMatrix(T,N,M) {
     inline neg(*res);
     return res;
 }
+operator - :: (a: DenseHeapMatrix($T)) -> DenseHeapMatrix(T) {
+    res := copy(a); // ! alloc
+    inline neg(*res);
+    return res;
+}
 
 // ? by iterating through the raw data, there is no double-negation issue!
 neg :: (a: *$A/MatrixType) {
@@ -852,8 +901,8 @@ neg :: (a: *$A/MatrixType) {
 // ? Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
 // ? Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
 // ? C = C + A * B
-saxpy :: inline (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
-    saxpy_default(c,a,b);
+saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    inline saxpy_default(c,a,b);
 }
 
 #scope_file
@@ -888,8 +937,8 @@ saxpy_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
 
 // there are faster ways of doing this.
 // check for compatible matrix types: e.g. this is not possible with triangular matrices
-permute_rows :: inline (m: *$M/MatrixType, order: ..int) {
-    permute_rows_default(m, ..order);
+permute_rows :: (m: *$M/MatrixType, order: ..int) {
+    inline permute_rows_default(m, ..order);
 }
 
 #scope_file
@@ -906,8 +955,8 @@ permute_rows_default :: (m: *$M/MatrixType, order: ..int) {
 }
 #scope_export
 
-permute_cols :: inline (m: *$M/MatrixType, order: ..int) {
-    permute_cols_default(m, ..order);
+permute_cols :: (m: *$M/MatrixType, order: ..int) {
+    inline permute_cols_default(m, ..order);
 }
 
 #scope_file
@@ -929,8 +978,8 @@ permute_cols_default :: (m: *$M/MatrixType, order: ..int) {
 
 // there are faster ways of doing this.
 // check for compatible matrix types: e.g. this is not possible with triangular matrices
-permute_rows :: inline (m: *$M/MatrixType, order: $O/VectorType) {
-    permute_rows_default(m, order);
+permute_rows :: (m: *$M/MatrixType, order: $O/VectorType) {
+    inline permute_rows_default(m, order);
 }
 
 #scope_file
@@ -947,8 +996,8 @@ permute_rows_default :: (m: *$M/MatrixType, order: $O/VectorType) {
 }
 #scope_export
 
-permute_cols :: inline (m: *$M/MatrixType, order: $O/VectorType) {
-    permute_cols_default(m, order);
+permute_cols :: (m: *$M/MatrixType, order: $O/VectorType) {
+    inline permute_cols_default(m, order);
 }
 
 #scope_file
@@ -974,8 +1023,37 @@ permute_cols_default :: (m: *$M/MatrixType, order: $O/VectorType) {
 // ##    ## ##  ##  ## ##     ## ##
 //  ######   ###  ###  ##     ## ##
 
-swap_cols :: inline (m: *$M/MatrixType, i: int, j: int) {
-    swap_cols_default(m,i,j);
+
+swap_lin :: (m: *$M/MatrixType, i: int, j: int) {
+    inline swap_lin_default(m,i,j);
+}
+
+#scope_file
+swap_lin_default :: (m: *$M/MatrixType, i: int, j: int) {
+    tmp := get_lin(m, i);
+    set_lin(m, i, get_lin(m, j));
+    set_lin(m, j, tmp);
+}
+#scope_export
+
+
+
+swap :: (m: *$M/MatrixType, from_r: int, from_c: int, to_r: int, to_c: int) {
+    inline swap_default(m, from_r, from_c, to_r, to_c);
+}
+
+#scope_file
+swap_default :: (m: *$M/MatrixType, from_r: int, from_c: int, to_r: int, to_c: int) {
+    tmp := get(m, from_r, from_c);
+    set(m, from_r, from_c, get(m, to_r, to_c));
+    set(m, to_r, to_c, tmp);
+}
+#scope_export
+
+
+
+swap_cols :: (m: *$M/MatrixType, i: int, j: int) {
+    inline swap_cols_default(m,i,j);
 }
 
 #scope_file
@@ -996,8 +1074,8 @@ swap_cols_default :: (m: *$M/MatrixType, i: int, j: int) {
 }
 #scope_export
 
-swap_rows :: inline (m: *$M/MatrixType, i: int, j: int) {
-    swap_rows_default(m,i,j);
+swap_rows :: (m: *$M/MatrixType, i: int, j: int) {
+    inline swap_rows_default(m,i,j);
 }
 
 #scope_file
@@ -1032,6 +1110,11 @@ transpose :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T, N, M) {
     inline transpose(*res);
     return res;
 }
+transpose :: (m: DenseHeapMatrix($T)) -> DenseHeapMatrix(T) {
+    res := copy(m); // ! alloc
+    inline transpose(*res);
+    return res;
+}
 
 
 transpose :: (m: *$M/MatrixType) {
@@ -1048,9 +1131,7 @@ transpose :: (m: *$M/MatrixType) {
 transpose_dense :: (m: *DenseMatrix($T, $N, N)) {
     for i: 0..N-1 {
         for j: i+1..N-1 {
-            tmp := get(m, i, j);
-            set(m, i, j, get(m, j, i));
-            set(m, j, i, tmp);
+            inline swap(m, i, j, j, i);
         }
     }
 }
@@ -1060,9 +1141,7 @@ transpose_dense_heap :: (m: *DenseHeapMatrix) {
     if rows(m) == cols(m) {
         for i: 0..rows(m)-1 {
             for j: i+1..cols(m)-1 {
-                tmp := get(m, i, j);
-                set(m, i, j, get(m, j, i));
-                set(m, j, i, tmp);
+                inline swap(m, i, j, j, i);
             }
         }
     } else {
@@ -1080,10 +1159,7 @@ transpose_dense_heap :: (m: *DenseHeapMatrix) {
         for m {
             pi := ifx it_index == r*c-1 then r*c-1 else (r*it_index) % (r*c-1);
             if pi <= it_index then continue; // ! this is my tweak. I hope it works?!
-
-            tmp := get_lin(m, pi);
-            set_lin(m, pi, it);
-            set_lin(m, it_index, tmp);
+            inline swap_lin(m, pi, it_index);
         }
         m.rows = c;
         m.cols = r;
@@ -1104,6 +1180,11 @@ transpose_dense_heap :: (m: *DenseHeapMatrix) {
 
 conjugate :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T, N, M) {
     res := copy(m);
+    inline conjugate(*res);
+    return res;
+}
+conjugate :: (m: DenseHeapMatrix($T)) -> DenseHeapMatrix(T) {
+    res := copy(m); // ! alloc
     inline conjugate(*res);
     return res;
 }
@@ -1136,6 +1217,11 @@ conjugate_transpose :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T, N, M) {
     inline conjugate_transpose(*res);
     return res;
 }
+conjugate_transpose :: (m: DenseHeapMatrix($T)) -> DenseHeapMatrix(T) {
+    res := copy(m); // ! alloc
+    inline conjugate_transpose(*res);
+    return res;
+}
 
 conjugate_transpose :: (m: *$M/MatrixType) {
     inline transpose(m);
@@ -1158,7 +1244,11 @@ tensor :: (a: DenseMatrix($A, $AN, $AM), b: DenseMatrix($B, $BN, $BM)) -> DenseM
     inline tensor(a,b, *res);
     return res;
 }
-
+tensor :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a)*rows(b), cols(a)*cols(b), false);
+    inline tensor(a,b, *res);
+    return res;
+}
 
 // https://www.wikiwand.com/en/Tensor_product
 tensor :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
