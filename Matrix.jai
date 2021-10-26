@@ -131,6 +131,26 @@ copy :: inline (to: *$M/MatrixType, from: M) {
     }
 }
 
+copy :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T,N,M) {
+    res : DenseMatrix(T,N,M) = ---;
+    copy(*res, m);
+    return res;
+}
+
+//  ######     ###     ######  ########         ########  #######
+// ##    ##   ## ##   ##    ##    ##               ##    ##     ##
+// ##        ##   ##  ##          ##               ##    ##     ##
+// ##       ##     ##  ######     ##               ##    ##     ##
+// ##       #########       ##    ##               ##    ##     ##
+// ##    ## ##     ## ##    ##    ##               ##    ##     ##
+//  ######  ##     ##  ######     ##    #######    ##     #######
+
+cast_to :: inline (to: *$M/MatrixType, from: $K/MatrixType) {
+    for raw(from) {
+        set_lin(to, it_index, ncast(M.data_type, it));
+    }
+}
+
 // #### ##    ## #### ########
 //  ##  ###   ##  ##     ##
 //  ##  ####  ##  ##     ##
@@ -485,9 +505,17 @@ equals_dense_dense :: (a: DenseMatrix($AT, $AN, $AM), b: DenseMatrix($BT, $BN, $
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.5 ijk Matrix Multiplication, page 8
 
+
+
+operator * :: (a: DenseMatrix($A, $AN, $M), b: DenseMatrix($B, M, $BM)) -> DenseMatrix(UpCast(A,B).T, AN, BM) {
+    res : DenseMatrix(UpCast(A,B).T, AN, BM);
+    mat_mul_mat(a,b,*res);
+    return res;
+}
+
+
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-
 mat_mul_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     mat_mul_mat_default(a,b,res);
 }
@@ -519,9 +547,17 @@ mat_mul_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
 // ##     ## ##     ##    ##        ##   ##       ## ##   ##       ##    ##
 // ##     ## ##     ##    ##                       ###    ########  ######
 
+
+
+operator * :: (a: DenseMatrix($A, $N, $M), b: DenseVector($B, M)) -> DenseVector(UpCast(A,B).T, N) {
+    res : DenseVector(UpCast(A,B).T, N);
+    mat_mul_vec(a,b,*res);
+    return res;
+}
+
+
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-
 mat_mul_vec :: inline (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
     mat_mul_vec_default(a,b,res);
 }
@@ -546,6 +582,14 @@ mat_mul_vec_default :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType)
 //  ##   ##  ##       ##            ## ##      ##     ## #########    ##
 //   ## ##   ##       ##    ##     ##   ##     ##     ## ##     ##    ##
 //    ###    ########  ######                  ##     ## ##     ##    ##
+
+
+operator * :: (a: DenseVector($A, $N), b: DenseMatrix($B, N, $M)) -> DenseVector(UpCast(A,B).T, M) {
+    res : DenseVector(UpCast(A,B).T, M);
+    vec_mul_mat(a,b,*res);
+    return res;
+}
+
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
@@ -577,13 +621,24 @@ vec_mul_mat_default :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType)
 // ##     ## ##     ##    ##        ##   ##     ##    ## ##    ## ##     ## ##
 // ##     ## ##     ##    ##                     ######   ######  ##     ## ########
 
-// * User has to know, what type the result has to be!
+
+operator * :: (a: DenseMatrix($T, $N, $M), b: $B) #modify {
+    if !is_number(B) {B = null; return;}
+} -> DenseMatrix(UpCast(T,B).T, N, M) #symmetric {
+    res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
+    mul(a, b, *res);
+    return res;
+}
+
+
 mul :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
     if !is_number(B) {B = null; return;}
 } {
     #if CHECKS {
         assert(rows(a) == rows(c), "Dimensions mismatch: a.rows  = %, res.rows  = %", rows(a), rows(c));
         assert(cols(a) == cols(c), "Dimensions mismatch: a.cols  = %, res.cols  = %", cols(a), cols(c));
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B));
     }
 
     for raw(a) {
@@ -633,13 +688,24 @@ mul :: (a: *$A/MatrixType, b: $B) #modify {
 // ##     ## ##     ##    ##        ##         ##    ## ##    ## ##     ## ##
 // ##     ## ##     ##    ##       ##           ######   ######  ##     ## ########
 
-// * User has to know, what type the result has to be!
+operator / :: (a: DenseMatrix($T, $N, $M), b: $B) #modify {
+    if !is_number(B) {B = null; return;}
+} -> DenseMatrix(UpCast(T,B).T, N, M) {
+    res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
+    div(a, b, *res);
+    return res;
+}
+
+
+
 div :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
     if !is_number(B) { B = null; return; }
 } {
     #if CHECKS {
         assert(rows(a) == rows(c), "Dimensions mismatch: a.rows  = %, res.rows  = %", rows(a), rows(c));
         assert(cols(a) == cols(c), "Dimensions mismatch: a.cols  = %, res.cols  = %", cols(a), cols(c));
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B));
     }
 
     for raw(a) {
@@ -668,7 +734,14 @@ div :: (a: *$A/MatrixType, b: $B) #modify {
 // ##     ## ##     ##    ##         ##      ##     ## ##     ##    ##
 // ##     ## ##     ##    ##                 ##     ## ##     ##    ##
 
-// * User has to know, what type the result has to be!
+
+operator + :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
+    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
+    matt_add_mat(a,b,*res);
+    return res;
+}
+
+
 mat_add_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     mat_add_mat_default(a,b,res);
 }
@@ -680,6 +753,8 @@ mat_add_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
         assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(res));
         assert(cols(a) == cols(b)  , "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(b)  );
         assert(cols(a) == cols(res), "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(res));
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B.data_type));
     }
 
     for a {
@@ -715,7 +790,12 @@ add_default :: (a: *$A/MatrixType, b: $B/MatrixType) {
 // ##     ## ##     ##    ##                  ##     ## ##     ##    ##
 
 
-// * User has to know, what type the result has to be!
+operator - :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
+    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
+    matt_sub_mat(a,b,*res);
+    return res;
+}
+
 mat_sub_mat :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     mat_sub_mat_default(a,b,res);
 }
@@ -727,6 +807,8 @@ mat_sub_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
         assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(res));
         assert(cols(a) == cols(b)  , "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(b)  );
         assert(cols(a) == cols(res), "Matrix dimensions don't match: a.cols = %, c.cols = %", cols(a), cols(res));
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B.data_type));
     }
 
     for a {
@@ -760,6 +842,13 @@ sub_default :: (a: *$A/MatrixType, b: $B/MatrixType) {
 // ##  #### ##       ##    ##
 // ##   ### ##       ##    ##
 // ##    ## ########  ######
+
+
+operator - :: (a: DenseMatrix($T, $N, $M)) -> DenseMatrix(T,N,M) {
+    res := copy(a);
+    inline neg(*res);
+    return res;
+}
 
 // ? by iterating through the raw data, there is no double-negation issue!
 neg :: (a: *$A/MatrixType) {
@@ -956,11 +1045,19 @@ swap_rows_default :: (m: *$M/MatrixType, i: int, j: int) {
 //    ##    ##    ##  ##     ## ##   ### ##    ## ##        ##     ## ##    ## ##
 //    ##    ##     ## ##     ## ##    ##  ######  ##         #######   ######  ########
 
-transpose :: inline (m: *$M/MatrixType) {
+
+transpose :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T, N, M) {
+    res := copy(m);
+    inline transpose(*res);
+    return res;
+}
+
+
+transpose :: (m: *$M/MatrixType) {
     #if M.flags == .DENSE {
-        transpose_dense(m);
+        inline transpose_dense(m);
     } else if M.flags == MATRIX_FLAGS.DENSE & MATRIX_FLAGS.HEAP {
-        transpose_dense_heap(m);
+        inline transpose_dense_heap(m);
     }
 }
 
@@ -1024,7 +1121,13 @@ transpose_dense_heap :: (m: *DenseHeapMatrix) {
 // ##    ## ##     ## ##   ### ##    ## ##     ## ##    ##  ##     ##    ##    ##
 //  ######   #######  ##    ##  ######   #######   ######   ##     ##    ##    ########
 
-conjugate :: inline (m: *$M/MatrixType) {
+conjugate :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T, N, M) {
+    res := copy(m);
+    inline conjugate(*res);
+    return res;
+}
+
+conjugate :: (m: *$M/MatrixType) {
     #if #run !is_non_real_number(M.data_type) {
         return;
     } else {
@@ -1047,9 +1150,15 @@ dagger :: conjugate_transpose;
 hermitian_conjugate :: conjugate_transpose;
 hermitian_transpose :: conjugate_transpose;
 
-conjugate_transpose :: inline (m: *$M/MatrixType) {
-    transpose(m);
-    conjugate(m);
+conjugate_transpose :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T, N, M) {
+    res := copy(m);
+    inline conjugate_transpose(*res);
+    return res;
+}
+
+conjugate_transpose :: (m: *$M/MatrixType) {
+    inline transpose(m);
+    inline conjugate(m);
 }
 
 
@@ -1062,9 +1171,17 @@ conjugate_transpose :: inline (m: *$M/MatrixType) {
 //    ##    ##       ##   ### ##    ## ##     ## ##    ##
 //    ##    ######## ##    ##  ######   #######  ##     ##
 
+
+tensor :: (a: DenseMatrix($A, $AN, $AM), b: DenseMatrix($B, $BN, $BM)) -> DenseMatrix(UpCast(A,B).T, AN*BN, AM*BM) {
+    res : DenseMatrix(UpCast(A,B).T, AN*BN, AM*BM) = ---;
+    inline tensor(a,b, *res);
+    return res;
+}
+
+
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: inline (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
-    tensor_default(a,b,res);
+tensor :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+    inline tensor_default(a,b,res);
 }
 
 #scope_file

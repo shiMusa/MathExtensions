@@ -835,7 +835,7 @@ inverse_default :: (a: $A/MatrixType, ainv: *A) {
 // ? Springer
 // ? 3.11 Determinants, page 263
 // ?
-// ? it is not recommended to calculate the dterminant of large matrices
+// ? it is not recommended to calculate the determinant of large matrices
 det :: determinant;
 determinant :: inline (a: *$A/MatrixType) -> A.data_type {
     return determinant_default(a);
@@ -861,7 +861,7 @@ determinant_default :: (a: *$A/MatrixType) -> A.data_type {
         }
 
         // +1 for even, -1 for odd num of permutations
-        s : float64 = 2.0 * cast(float64)(permutations % 2 == 0) - 1.0;
+        s : float64 = 2.0 * cast(float64)(permutations % 2 == 0) - 1.0; // ! this will give the wrong return type at some point
     
         return s * p;
     }

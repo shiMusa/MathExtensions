@@ -453,6 +453,8 @@ DenseVector :: struct(_T: Type, _N: int) {
     data: [_N]_T;
 }
 
+
+
 dvec :: inline($N: int, values: ..$T) -> DenseVector(T,N) {
     #if CHECKS {
         assert(values.count <= N);

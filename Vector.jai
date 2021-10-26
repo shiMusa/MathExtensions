@@ -92,7 +92,7 @@ str :: (
 // * Assuming `to` is initialized to zeroes.
 // * User has to know, what type the result has to be!
 cast_to :: (to: *$T/VectorType, from: $F/VectorType) {
-    for raw(*from) {
+    for raw(from) {
         set(to, it_index, ncast(T.data_type, it));
     }
 }
@@ -108,12 +108,16 @@ cast_to :: (to: *$T/VectorType, from: $F/VectorType) {
 // * Assuming `to` is initialized to zeroes.
 // * User has to know, what type the result has to be!
 copy :: (to: *$V/VectorType, from: V) {
-    for raw(*from) {
+    for raw(from) {
         set(to, it_index, it);
     }
 }
 
-
+copy :: (v: DenseVector($T, $N)) -> DenseVector(T,N) {
+    res : DenseVector(T, N) = ---;
+    copy(*res, v);
+    return res;
+}
 
 // ########  #######  ##     ##    ###    ##        ######
 // ##       ##     ## ##     ##   ## ##   ##       ##    ##
@@ -219,6 +223,19 @@ dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, N), $conjugate: b
 // ##    ## ##    ## ##     ## ##          ##     ## ##     ## ##
 //  ######   ######  ##     ## ########    ##     ##  #######  ########
 
+
+operator * :: inline (a: DenseVector($T, $N), b: $B) #modify {
+    if !is_number(B) {B = null; return;}    
+} -> DenseVector(UpCast(T,B).T, N) #symmetric {
+    #if CHECKS {
+        #assert(is_minor_number_type(T,B));
+    }
+    res : DenseVector(UpCast(T,B).T,N) = ---;
+    mul(*res, b);
+    return res;
+}
+
+
 mul :: inline (a: *$A/VectorType, b: $B) #modify {
     if !is_number(B) {B = null; return;}    
 } {
@@ -237,6 +254,22 @@ mul_default :: (a: *$A/VectorType, b: $B) #modify {
     }
 }
 #scope_export
+
+
+
+
+
+
+operator / :: inline (a: DenseVector($T, $N), b: $B) #modify {
+    if !is_number(B) {B = null; return;}    
+} -> DenseVector(UpCast(T,B).T, N) {
+    #if CHECKS {
+        #assert(is_minor_number_type(T,B));
+    }
+    res : DenseVector(UpCast(T,B).T,N) = ---;
+    div(*res, b);
+    return res;
+}
 
 
 div :: inline (a: *$A/VectorType, b: $B) #modify {
@@ -261,15 +294,26 @@ div_default :: (a: *$A/VectorType, b: $B) #modify {
 // ##     ## ##     ##    ##    ##       ##   ##
 // ##     ## ##     ##    ##    ##       ##    ##
 //  #######   #######     ##    ######## ##     ##
-outer_product :: (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
-    inline outer_product_default(a,b,res);
+
+
+operator / :: (a: DenseVector($A, $NA), b: DenseVector($B, $NB)) -> DenseMatrix(UpCast(A,B).T, NA, NB) {
+    res : DenseMatrix(UpCast(A,B).T, NA, NB) = ---;
+    outer_product(a,b,*res);
+    return res;
+}
+
+
+outer_product :: inline (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
+    outer_product_default(a,b,res);
 }
 
 #scope_file
-outer_product_default :: (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
+outer_product_default :: inline (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
     #if CHECKS {
         #run assert(is_minor_number_type(C.data_type, A.data_type));
         #run assert(is_minor_number_type(C.data_type, B.data_type));
+        assert(rows(res) == dim(a));
+        assert(cols(res) == dim(b));
     }
     for res {
         set(*res, it_row, it_column, get(a, it_row) * get(b, it_column));
@@ -284,6 +328,15 @@ outer_product_default :: (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixTyp
 // ######### ##     ## ##     ##          ## ##     ## ##     ##
 // ##     ## ##     ## ##     ##    ##    ## ##     ## ##     ##
 // ##     ## ########  ########      ######   #######  ########
+
+
+operator + :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
+    res : DenseVector(UpCast(A,B).T, N) = ---;
+    cast_to(*res, a);
+    add(*res, b);
+    return res;
+}
+
 
 add :: (a: *$A/VectorType, b: $B/VectorType) {
     inline add_default(a,b);
@@ -302,6 +355,15 @@ add_default :: (a: *$A/VectorType, b: $B/VectorType) {
 }
 #scope_export
 
+
+
+
+operator - :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
+    res : DenseVector(UpCast(A,B).T, N) = ---;
+    cast_to(*res, a);
+    sub(*res, b);
+    return res;
+}
 
 
 sub :: (a: *$A/VectorType, b: $B/VectorType) {
@@ -329,6 +391,14 @@ sub_default :: (a: *$A/VectorType, b: $B/VectorType) {
 // ##  #### ##       ##    ##
 // ##   ### ##       ##    ##
 // ##    ## ########  ######
+
+
+operator - :: (a: DenseVector($T, $N)) -> DenseVector(T,N) {
+    res := copy(a);
+    neg(*res);
+    return res;
+}
+
 neg :: (a: *$A/VectorType) {
     inline neg_default(a);
 }
@@ -349,6 +419,15 @@ neg_default :: (a: *$A/VectorType) {
 // ##       ##   ##   ##     ##       ##       ##
 // ##    ## ##    ##  ##     ## ##    ## ##    ##
 //  ######  ##     ##  #######   ######   ######
+
+
+cross :: (a: DenseVector($A, 3), b: DenseVector($B, 3)) -> DenseVector(UpCast(A,B).T, 3) {
+    res : DenseVector(UpCast(A,B).T, 3);
+    cross(a,b,*res);
+    return res;
+}
+
+
 cross :: (a: $A/VectorType, b: $B/VectorType, res: *$C/VectorType) {
     inline cross_default(a,b,res);
 }
