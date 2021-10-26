@@ -18,8 +18,7 @@ The new (old-style) system is more general and performant.
 
 To enable future optimizations, every funtion is basically just a relay to specialized functions, so `foo(...)` will actually call `foo_default(...)`, `foo_dense(...)`, etc. Currently, most functions have a default implementation for `$V/VectorType` or `$M/MatrixType`. It should be ease to extend the system with specialized, high-performance functions for special matrix/vector types (e.g. sparse, triagonal, hermitian, ...).
 
-Almost all operator overloads were removed in that process.
-The next step is, to re-write the operator overloads for special matrix and vector types. In these specialized functions, allocation can be handeled efficiently.
+Almost all operator overloads were removed in that process and afterwards rewritten for `Dense***`/`DenseHeap***`.
 
 Generally:
 - Current work focuses on making everything as generic as possible to enable different types of matrices/vector, heap/stack allocated, various number types.
@@ -79,7 +78,7 @@ Many functions specialize during compile-time on the real, complex, or quaternio
 
     The following functions are implemented:
     - `str`; for pretty printing
-    - operators `[]`, `==`, `+`, `-`, `*`, `/`
+    - operators `==`, `+`, `-`, `*`, `/`
     - in-place functions add, sub, neg, mul, div
     - multiple initialization functions (ones, basis, varargs, etc.)
     - `conjugate`
@@ -102,7 +101,7 @@ Many functions specialize during compile-time on the real, complex, or quaternio
 
     The following functions are implemented:
     - `pstr`, `str` for pretty printing
-    - operators `[]`, `[][]`, `==`, `+`, `-`, `*`, `/`
+    - operators `==`, `+`, `-`, `*`, `/`
     - `row`, `column`
     - in-place functions `add`, `sub`, `neg`, `mul`, `div`
     - multiple initialization functions (1, ones, hadamard, varargs, etc.)
