@@ -98,25 +98,6 @@ str :: (
 }
 
 
-
-/*
-#### ##    ## #### ######## ####    ###    ##       #### ######## ########
- ##  ###   ##  ##     ##     ##    ## ##   ##        ##       ##  ##
- ##  ####  ##  ##     ##     ##   ##   ##  ##        ##      ##   ##
- ##  ## ## ##  ##     ##     ##  ##     ## ##        ##     ##    ######
- ##  ##  ####  ##     ##     ##  ######### ##        ##    ##     ##
- ##  ##   ###  ##     ##     ##  ##     ## ##        ##   ##      ##
-#### ##    ## ####    ##    #### ##     ## ######## #### ######## ########
-*/
-
-// * Assuming to is initialized to zeroes.
-// * User has to know, what type the result has to be!
-cast_to :: (to: *$T/MatrixType, from: $F/MatrixType) {
-    for raw(from) {
-        set(to, it_row, it_column, ncast(T.data_type, it));
-    }
-}
-
 //  ######   #######  ########  ##    ##
 // ##    ## ##     ## ##     ##  ##  ##
 // ##       ##     ## ##     ##   ####
@@ -622,9 +603,9 @@ vec_mul_mat_default :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType)
 // ##     ## ##     ##    ##                     ######   ######  ##     ## ########
 
 
-operator * :: (a: DenseMatrix($T, $N, $M), b: $B) #modify {
+operator * :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, N, M) #modify {
     if !is_number(B) {B = null; return;}
-} -> DenseMatrix(UpCast(T,B).T, N, M) #symmetric {
+} #symmetric {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
     mul(a, b, *res);
     return res;
@@ -688,9 +669,9 @@ mul :: (a: *$A/MatrixType, b: $B) #modify {
 // ##     ## ##     ##    ##        ##         ##    ## ##    ## ##     ## ##
 // ##     ## ##     ##    ##       ##           ######   ######  ##     ## ########
 
-operator / :: (a: DenseMatrix($T, $N, $M), b: $B) #modify {
+operator / :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, N, M) #modify {
     if !is_number(B) {B = null; return;}
-} -> DenseMatrix(UpCast(T,B).T, N, M) {
+} {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
     div(a, b, *res);
     return res;

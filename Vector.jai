@@ -177,6 +177,7 @@ equals_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> bool {
 operator * :: inline (a: $A/VectorType, b: $B/VectorType) -> UpCast(A.data_type,B.data_type).T {
     return dot(a,b);
 }
+
 dot :: inline (a: $A/VectorType, b: $B/VectorType, $conjugate: bool = true) -> UpCast(A.data_type,B.data_type).T {
     #if A.flags == .DENSE && B.flags == .DENSE {
         return dot_dense_dense(a,b,conjugate);
@@ -224,9 +225,9 @@ dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, N), $conjugate: b
 //  ######   ######  ##     ## ########    ##     ##  #######  ########
 
 
-operator * :: inline (a: DenseVector($T, $N), b: $B) #modify {
+operator * :: inline (a: DenseVector($T, $N), b: $B) -> DenseVector(UpCast(T,B).T, N) #modify {
     if !is_number(B) {B = null; return;}    
-} -> DenseVector(UpCast(T,B).T, N) #symmetric {
+} #symmetric {
     #if CHECKS {
         #assert(is_minor_number_type(T,B));
     }
@@ -260,9 +261,9 @@ mul_default :: (a: *$A/VectorType, b: $B) #modify {
 
 
 
-operator / :: inline (a: DenseVector($T, $N), b: $B) #modify {
+operator / :: inline (a: DenseVector($T, $N), b: $B) -> DenseVector(UpCast(T,B).T, N) #modify {
     if !is_number(B) {B = null; return;}    
-} -> DenseVector(UpCast(T,B).T, N) {
+} {
     #if CHECKS {
         #assert(is_minor_number_type(T,B));
     }
