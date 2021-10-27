@@ -167,6 +167,83 @@ equals_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> bool {
 }
 #scope_export
 
+// ##     ## ########  ######                      ##     ## ########  ######
+// ##     ## ##       ##    ##         ##   ##     ##     ## ##       ##    ##
+// ##     ## ##       ##                ## ##      ##     ## ##       ##
+// ##     ## ######   ##              #########    ##     ## ######   ##
+//  ##   ##  ##       ##                ## ##       ##   ##  ##       ##
+//   ## ##   ##       ##    ##    ###  ##   ##       ## ##   ##       ##    ##
+//    ###    ########  ######     ###                 ###    ########  ######
+
+
+mul_el :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
+    res : DenseVector(UpCast(A,B).T, N) = ---;
+    inline mul_el(a,b,*res);
+    return res;
+}
+mul_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
+    res := dhvec(UpCast(A,B).T, dim(a), false); // ! alloc
+    inline mul_el(a,b,*res);
+    return res;
+}
+
+
+mul_el :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
+    inline mul_el_default(a,b,c);
+}
+
+#scope_file
+mul_el_default :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
+    #if CHECKS {
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B.data_type));
+        assert(dim(a) == dim(c));
+        assert(dim(b) == dim(c));
+    }
+    for a {
+        set_lin(c, it_index, it * get_lin(b, it_index));
+    }
+}
+#scope_export
+
+
+// ##     ## ########  ######               ##    ##     ## ########  ######
+// ##     ## ##       ##    ##             ##     ##     ## ##       ##    ##
+// ##     ## ##       ##                  ##      ##     ## ##       ##
+// ##     ## ######   ##                 ##       ##     ## ######   ##
+//  ##   ##  ##       ##                ##         ##   ##  ##       ##
+//   ## ##   ##       ##    ##    ###  ##           ## ##   ##       ##    ##
+//    ###    ########  ######     ### ##             ###    ########  ######
+
+div_el :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
+    res : DenseVector(UpCast(A,B).T, N) = ---;
+    inline div_el(a,b,*res);
+    return res;
+}
+div_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
+    res := dhvec(UpCast(A,B).T, dim(a), false); // ! alloc
+    inline div_el(a,b,*res);
+    return res;
+}
+
+
+div_el :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
+    inline div_el_default(a,b,c);
+}
+
+#scope_file
+div_el_default :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
+    #if CHECKS {
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B.data_type));
+        assert(dim(a) == dim(c));
+        assert(dim(b) == dim(c));
+    }
+    for a {
+        set_lin(c, it_index, it / get_lin(b, it_index));
+    }
+}
+#scope_export
 
 
 // ########   #######  ########

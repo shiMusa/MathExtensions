@@ -469,6 +469,84 @@ equals_dense_dense :: (a: DenseMatrix($AT, $AN, $AM), b: DenseMatrix($BT, $BN, $
 }
 #scope_export
 
+// ##     ##    ###    ########                     ##     ##    ###    ########
+// ###   ###   ## ##      ##            ##   ##     ###   ###   ## ##      ##
+// #### ####  ##   ##     ##             ## ##      #### ####  ##   ##     ##
+// ## ### ## ##     ##    ##           #########    ## ### ## ##     ##    ##
+// ##     ## #########    ##             ## ##      ##     ## #########    ##
+// ##     ## ##     ##    ##       ###  ##   ##     ##     ## ##     ##    ##
+// ##     ## ##     ##    ##       ###              ##     ## ##     ##    ##
+
+
+div_el :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
+    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
+    inline div_el(a,b,*res);
+    return res;
+}
+div_el :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
+    inline div_el(a,b,*res);
+    return res;
+}
+
+
+div_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+    inline div_el_default(a,b,c);
+}
+
+#scope_file
+div_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+    #if CHECKS {
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B.data_type));
+        assert(rows(a) == rows(c) && cols(a) == cols(c));
+        assert(rows(b) == rows(c) && cols(b) == cols(c));
+    }
+    for a {
+        set_lin(c, it_index, it / get_lin(b, it_index));
+    }
+}
+#scope_export
+
+
+
+// ##     ##    ###    ########              ##    ##     ##    ###    ########
+// ###   ###   ## ##      ##                ##     ###   ###   ## ##      ##
+// #### ####  ##   ##     ##               ##      #### ####  ##   ##     ##
+// ## ### ## ##     ##    ##              ##       ## ### ## ##     ##    ##
+// ##     ## #########    ##             ##        ##     ## #########    ##
+// ##     ## ##     ##    ##       ###  ##         ##     ## ##     ##    ##
+// ##     ## ##     ##    ##       ### ##          ##     ## ##     ##    ##
+
+mul_el :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
+    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
+    inline mul_el(a,b,*res);
+    return res;
+}
+mul_el :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
+    inline mul_el(a,b,*res);
+    return res;
+}
+
+
+mul_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+    inline mul_el_default(a,b,c);
+}
+
+#scope_file
+mul_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+    #if CHECKS {
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B.data_type));
+        assert(rows(a) == rows(c) && cols(a) == cols(c));
+        assert(rows(b) == rows(c) && cols(b) == cols(c));
+    }
+    for a {
+        set_lin(c, it_index, it * get_lin(b, it_index));
+    }
+}
+#scope_export
 
 
 // ##     ##    ###    ########                 ##     ##    ###    ########
@@ -495,19 +573,19 @@ equals_dense_dense :: (a: DenseMatrix($AT, $AN, $AM), b: DenseMatrix($BT, $BN, $
 
 operator * :: (a: DenseMatrix($A, $AN, $M), b: DenseMatrix($B, M, $BM)) -> DenseMatrix(UpCast(A,B).T, AN, BM) {
     res : DenseMatrix(UpCast(A,B).T, AN, BM);
-    inline mat_mul_mat(a,b,*res);
+    inline mul(a,b,*res);
     return res;
 }
 operator * :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
     res := dhmat(UpCast(A,B).T, rows(a), cols(b), false); // ! alloc
-    inline mat_mul_mat(a,b,*res);
+    inline mul(a,b,*res);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mat_mul_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+mul :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     inline mat_mul_mat_default(a,b,res);
 }
 
@@ -542,19 +620,19 @@ mat_mul_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
 
 operator * :: (a: DenseMatrix($A, $N, $M), b: DenseVector($B, M)) -> DenseVector(UpCast(A,B).T, N) {
     res : DenseVector(UpCast(A,B).T, N);
-    inline mat_mul_vec(a,b,*res);
+    inline mul(a,b,*res);
     return res;
 }
 operator * :: (a: DenseHeapMatrix($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
     res : DenseVector(UpCast(A,B).T, rows(a)); // ! alloc
-    inline mat_mul_vec(a,b,*res);
+    inline mul(a,b,*res);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mat_mul_vec :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
+mul :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
     inline mat_mul_vec_default(a,b,res);
 }
 
@@ -582,19 +660,19 @@ mat_mul_vec_default :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType)
 
 operator * :: (a: DenseVector($A, $N), b: DenseMatrix($B, N, $M)) -> DenseVector(UpCast(A,B).T, M) {
     res : DenseVector(UpCast(A,B).T, M);
-    inline vec_mul_mat(a,b,*res);
+    inline mul(a,b,*res);
     return res;
 }
 operator * :: (a: DenseHeapVector($A), b: DenseHeapMatrix($B)) -> DenseHeapVector(UpCast(A,B).T) {
     res := dhvec(UpCast(A,B).T, cols(a)); // ! alloc
-    inline vec_mul_mat(a,b,*res);
+    inline mul(a,b,*res);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-vec_mul_mat :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
+mul :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
     inline vec_mul_mat_default(a,b,res);
 }
 
@@ -752,17 +830,17 @@ div :: (a: *$A/MatrixType, b: $B) #modify {
 
 operator + :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
     res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
-    inline mat_add_mat(a,b,*res);
+    inline add(a,b,*res);
     return res;
 }
 operator + :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
     res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
-    inline mat_add_mat(a,b,*res);
+    inline add(a,b,*res);
     return res;
 }
 
 
-mat_add_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+add :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     inline mat_add_mat_default(a,b,res);
 }
 
@@ -817,11 +895,11 @@ operator - :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMat
 }
 operator + :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
     res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
-    inline mat_sub_mat(a,b,*res);
+    inline sub(a,b,*res);
     return res;
 }
 
-mat_sub_mat :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+sub :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
     inline mat_sub_mat_default(a,b,res);
 }
 
@@ -1471,7 +1549,7 @@ test_matrix :: () {
             mat_init(*m, R, 2*R, 3*R, 4*R);
             println("m = %", pstr(m));
             res : DenseMatrix(C64, 2, 2);
-            mat_mul_mat(m, m, *res);
+            mul(m, m, *res);
             println("res = %", pstr(res));
         }
         {
@@ -1479,7 +1557,7 @@ test_matrix :: () {
             mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
             println("m = %", pstr(m));
             res : DenseMatrix(C64, 2, 2);
-            mat_mul_mat(m, m, *res);
+            mul(m, m, *res);
             println("res = %", pstr(res));
         }
         // {
@@ -1642,7 +1720,7 @@ test_matrix :: () {
             println("m = %", pstr(m));
             res := dhmat(C64, 2, 2);
             defer free(res);
-            mat_mul_mat(m, m, *res);
+            mul(m, m, *res);
             println("res = %", pstr(res));
         }
         {
@@ -1653,7 +1731,7 @@ test_matrix :: () {
             println("m = %", pstr(m));
             res := dhmat(C64, 2, 2);
             defer free(res);
-            mat_mul_mat(m, m, *res);
+            mul(m, m, *res);
             println("res = %", pstr(res));
         }
         {

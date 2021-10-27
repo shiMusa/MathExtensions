@@ -93,7 +93,7 @@ is_unitary :: (m: $M/MatrixType) -> bool {
     dagger(*d);
     dmm := dhmat(M.data_type, cols(m), cols(m));
     defer free(dmm);
-    mat_mul_mat(dm, m, *dmm);
+    mul(dm, m, *dmm);
     return is_quadratic(m) && is_diagonal_unit(dmm);
 }
 

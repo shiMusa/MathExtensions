@@ -38,7 +38,7 @@ solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorTy
     copy(*g, b);
     div(*g, sigma*det);
     m := dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0));
-    mat_mul_vec(m, g, x);
+    mul(m, g, x);
 }
 #scope_export
 
@@ -239,7 +239,7 @@ solve_linear_orthogonal_projection_default :: (Q: *$A/MatrixType, b: $B/VectorTy
         assert(is_unitary(Q));
     }
     dagger(Q);
-    mat_mul_vec(<<Q, b, x);
+    mul(<<Q, b, x);
 }
 #scope_export
 
@@ -869,46 +869,75 @@ determinant_default :: (a: *$A/MatrixType) -> A.data_type {
 #scope_export
 
 
+//  ######  ##     ##  #######  ##       ########  ######  ##    ## ##    ##
+// ##    ## ##     ## ##     ## ##       ##       ##    ## ##   ##   ##  ##
+// ##       ##     ## ##     ## ##       ##       ##       ##  ##     ####
+// ##       ######### ##     ## ##       ######    ######  #####       ##
+// ##       ##     ## ##     ## ##       ##             ## ##  ##      ##
+// ##    ## ##     ## ##     ## ##       ##       ##    ## ##   ##     ##
+//  ######  ##     ##  #######  ######## ########  ######  ##    ##    ##
+
+// * only works for symmetric/hermitian matrices!
+cf :: cholesky_factorization;
+cholesky_factorization :: (m: *$M/MatrixType) {
+    inline cholesky_factorization_default(m);
+}
+
+
+#scope_file
+// ? Scientific Computing, Vol I: Linear and nonlinear equations
+// ? Texts in computational science and engineering 18
+// ? Springer
+// ? 3.13.2 Cholesky Factorization, page 277
+// ?
+// ? "Matrix Computations" write a drastically simpler algorithm making use of gaxpy, but it's apparently twice as slow???
+// ? -> Algorithm 4.2.1 Gaxpy Cholesky, page 164
+cholesky_factorization_default :: (m: *$M/MatrixType) {
+    #if CHECKS {
+        assert(rows(m) == cols(m), "matrix is not square: %,%", rows(a), cols(a));
+    }
+    N := rows(a);
+    M := cols(a);
+    for k: 0..N-1 {
+        sum := zero(M.data_type);
+        for j: 0..k-1 {
+            sum += abs_sq(get(m,k,j));
+        }
+        set(m,k,k, get(m,k,k) - sum);
+        if get(m,k,k) <= zero(M.data_type) then break;
+        
+        set(m, k, k, sqrt(get(m,k,k), M.data_type));
+
+        for i: k+1..N-1 {
+            sum2 := zero(M.data_type);
+            for j: 0..k-1 {
+                sum2 += get(m,i,j)*conjugate(get(m,k,j));
+            }
+            set(m, i, k, get(m, i, k) - sum2);
+        }
+
+        for i: k+1..N-1 {
+            set(m, i, k, get(m, i, k)/get(m,k,k));
+        }
+    }
+}
+#scope_export
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//* //////////////////////////////////////////////////////////////////////////////////////
-/*
-      ######## ########  ######  ########  ######
-           ##    ##       ##    ##    ##    ##    ##
-           ##    ##       ##          ##    ##
-           ##    ######    ######     ##     ######
-           ##    ##             ##    ##          ##
-           ##    ##       ##    ##    ##    ##    ##
-           ##    ########  ######     ##     ######
-*/
-//* //////////////////////////////////////////////////////////////////////////////////////
+// * //////////////////////////////////////////////////////////////////////////////////////
+// *
+// * ######## ########  ######  ########  ######
+// *    ##    ##       ##    ##    ##    ##    ##
+// *    ##    ##       ##          ##    ##
+// *    ##    ######    ######     ##     ######
+// *    ##    ##             ##    ##          ##
+// *    ##    ##       ##    ##    ##    ##    ##
+// *    ##    ########  ######     ##     ######
+// *
+// * //////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -950,7 +979,7 @@ test_linear_algebra :: () {
         solve_linear_left_triangular(L, b, *res);
 
         sol : DenseVector(C64, 3);
-        mat_mul_vec(L, res, *sol);
+        mul(L, res, *sol);
 
         println("% = % ?", pstr(sol), pstr(b));
         assert(sol == b);
@@ -971,7 +1000,7 @@ test_linear_algebra :: () {
 
         sol : DenseVector(C64, 3);
         tmp : DenseVector(C64, 3) = ---;
-        mat_mul_vec(M, res, *sol);
+        mul(M, res, *sol);
         copy(*tmp, sol);
         sub(*sol, b);
         sol_norm := norm_2(sol);
@@ -1005,7 +1034,7 @@ test_linear_algebra :: () {
 
         // * check result
         sol : DenseVector(C64, 4);
-        mat_mul_vec(cm, res, *sol);
+        mul(cm, res, *sol);
         sub(*sol, cb);
         assert(norm_2(sol) < 1.0e-8);
     }
@@ -1027,7 +1056,7 @@ test_linear_algebra :: () {
 
         // * check solution
         sol : DenseVector(C64, 3);
-        mat_mul_vec(M, res, *sol);
+        mul(M, res, *sol);
         println("sol = %", sol);
         println("b = %", b);
         assert( approx(sol, b) );
@@ -1048,7 +1077,7 @@ test_linear_algebra :: () {
         // * check solution
         sol : DenseVector(C64, 2) = ---;
         // copy(*sol, res);
-        mat_mul_vec(M, res, *sol);
+        mul(M, res, *sol);
         
         println("slrt: %", pstr(res));
         assert( approx(sol, b) );
