@@ -192,6 +192,10 @@ mul_el :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
     inline mul_el_default(a,b,c);
 }
 
+mul_el :: (a: *$A/VectorType, b: $B/VectorType) {
+    inline mul_el_default(<<a, b, a);
+}
+
 #scope_file
 mul_el_default :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
     #if CHECKS {
@@ -229,6 +233,10 @@ div_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(Up
 
 div_el :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
     inline div_el_default(a,b,c);
+}
+
+div_el :: (a: *$A/VectorType, b: $B/VectorType) {
+    inline div_el_default(<<a, b, a);
 }
 
 #scope_file

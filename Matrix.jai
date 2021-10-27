@@ -478,46 +478,6 @@ equals_dense_dense :: (a: DenseMatrix($AT, $AN, $AM), b: DenseMatrix($BT, $BN, $
 // ##     ## ##     ##    ##       ###              ##     ## ##     ##    ##
 
 
-div_el :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
-    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
-    inline div_el(a,b,*res);
-    return res;
-}
-div_el :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
-    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
-    inline div_el(a,b,*res);
-    return res;
-}
-
-
-div_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
-    inline div_el_default(a,b,c);
-}
-
-#scope_file
-div_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
-    #if CHECKS {
-        #assert(is_minor_number_type(C.data_type, A.data_type));
-        #assert(is_minor_number_type(C.data_type, B.data_type));
-        assert(rows(a) == rows(c) && cols(a) == cols(c));
-        assert(rows(b) == rows(c) && cols(b) == cols(c));
-    }
-    for a {
-        set_lin(c, it_index, it / get_lin(b, it_index));
-    }
-}
-#scope_export
-
-
-
-// ##     ##    ###    ########              ##    ##     ##    ###    ########
-// ###   ###   ## ##      ##                ##     ###   ###   ## ##      ##
-// #### ####  ##   ##     ##               ##      #### ####  ##   ##     ##
-// ## ### ## ##     ##    ##              ##       ## ### ## ##     ##    ##
-// ##     ## #########    ##             ##        ##     ## #########    ##
-// ##     ## ##     ##    ##       ###  ##         ##     ## ##     ##    ##
-// ##     ## ##     ##    ##       ### ##          ##     ## ##     ##    ##
-
 mul_el :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
     res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
     inline mul_el(a,b,*res);
@@ -534,6 +494,10 @@ mul_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
     inline mul_el_default(a,b,c);
 }
 
+mul_el :: (a: *$A/MatrixType, b: $B/MatrixType) {
+    inline mul_el_default(<<a, b, a);
+}
+
 #scope_file
 mul_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
     #if CHECKS {
@@ -548,6 +512,49 @@ mul_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
 }
 #scope_export
 
+// ##     ##    ###    ########              ##    ##     ##    ###    ########
+// ###   ###   ## ##      ##                ##     ###   ###   ## ##      ##
+// #### ####  ##   ##     ##               ##      #### ####  ##   ##     ##
+// ## ### ## ##     ##    ##              ##       ## ### ## ##     ##    ##
+// ##     ## #########    ##             ##        ##     ## #########    ##
+// ##     ## ##     ##    ##       ###  ##         ##     ## ##     ##    ##
+// ##     ## ##     ##    ##       ### ##          ##     ## ##     ##    ##
+
+
+div_el :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
+    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
+    inline div_el(a,b,*res);
+    return res;
+}
+div_el :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
+    inline div_el(a,b,*res);
+    return res;
+}
+
+
+div_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+    inline div_el_default(a,b,c);
+}
+
+div_el :: (a: *$A/MatrixType, b: $B/MatrixType) {
+    inline div_el_default(<<a,b,a);
+}
+
+
+#scope_file
+div_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+    #if CHECKS {
+        #assert(is_minor_number_type(C.data_type, A.data_type));
+        #assert(is_minor_number_type(C.data_type, B.data_type));
+        assert(rows(a) == rows(c) && cols(a) == cols(c));
+        assert(rows(b) == rows(c) && cols(b) == cols(c));
+    }
+    for a {
+        set_lin(c, it_index, it / get_lin(b, it_index));
+    }
+}
+#scope_export
 
 // ##     ##    ###    ########                 ##     ##    ###    ########
 // ###   ###   ## ##      ##        ##   ##     ###   ###   ## ##      ##
