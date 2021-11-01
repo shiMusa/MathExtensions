@@ -13,12 +13,12 @@
 // ? Algorithm 3.4.1 2x2 Linear System Solve, page 153
 // ? solves the system `a x = b` with 2x2 matrix `a` and vectors `x`, `b`
 sl2 :: solve_linear_2x2;
-solve_linear_2x2 :: inline (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_2x2_default(a,b,x);
+solve_linear_2x2 :: inline (x: *$C/VectorType, a: $A/MatrixType, b: $B/VectorType) {
+    solve_linear_2x2_default(x,a,b);
 }
 
 #scope_file
-solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_2x2_default :: (x: *$C/VectorType, a: $A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(rows(a) == 2, "dimension mismatch: 2 != A.N = %\n", rows(a));
         assert(cols(a) == 2, "dimension mismatch: 2 != A.M = %\n", cols(a));
@@ -38,7 +38,7 @@ solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorTy
     copy(*g, b);
     div(*g, sigma*det);
     m := dmat(2,2, get(mu,1,1), -get(mu,0,1), -get(mu,1,0), get(mu,0,0));
-    mul(m, g, x);
+    mul(x, m, g);
 }
 #scope_export
 
@@ -66,12 +66,12 @@ solve_linear_2x2_default :: (a: $A/MatrixType, b: $B/VectorType, x: *$C/VectorTy
 // ? The diagonals L_ii = 1, but they are never used since j < i at all times!
 
 sllta :: solve_linear_left_triangular;
-solve_linear_left_triangular :: inline (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {    
-    solve_linear_left_triangular_default(L,b,x);
+solve_linear_left_triangular :: inline (x: *$C/VectorType, L: $A/MatrixType, b: $B/VectorType) {    
+    solve_linear_left_triangular_default(x,L,b);
 }
 
 #scope_file
-solve_linear_left_triangular_default :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_left_triangular_default :: (x: *$C/VectorType, L: $A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(rows(L) == cols(L), "L is not quadratic L(%,%)\n", rows(L), cols(L));
         assert(rows(L) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(L), cols(L), dim(b));
@@ -117,12 +117,12 @@ solve_linear_left_triangular_default :: (L: $A/MatrixType, b: $B/VectorType, x: 
 // ? The diagonals R_ii = 0, but they are never used since j > i at all times!
 
 slrta :: solve_linear_right_triangular;
-solve_linear_right_triangular :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_right_triangular_default(R,b,x);
+solve_linear_right_triangular :: inline (x: *$C/VectorType, R: $A/MatrixType, b: $B/VectorType) {
+    solve_linear_right_triangular_default(x,R,b);
 }
 
 #scope_file
-solve_linear_right_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_right_triangular_default :: (x: *$C/VectorType, R: $A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(rows(R) == cols(R), "L is not quadratic L(%,%)\n", rows(R), cols(R));
         assert(rows(R) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(R), cols(R), dim(b));
@@ -162,12 +162,12 @@ solve_linear_right_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x:
 // ? Algorithm 3.4.6 Solve Right Quasi-Triangular System, page 164
 // ? solve the system `Rx=b` where `R` is a right(upper) quasi-triangular matrix and `x`, `b` are vectors.
 slrqta :: solve_linear_right_quasi_triangular;
-solve_linear_right_quasi_triangular :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_right_quasi_triangular_default(R,b,x);
+solve_linear_right_quasi_triangular :: inline (x: *$C/VectorType, R: $A/MatrixType, b: $B/VectorType) {
+    solve_linear_right_quasi_triangular_default(x,R,b);
 }
 
 #scope_file
-solve_linear_right_quasi_triangular_default :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_right_quasi_triangular_default :: (x: *$C/VectorType, R: $A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(rows(R) == cols(R), "L is not quadratic L(%,%)\n", rows(R), cols(R));
         assert(rows(R) == dim(b), "dimensions mismatch L(%,%), b(%)\n", rows(R), cols(R), dim(b));
@@ -201,7 +201,7 @@ solve_linear_right_quasi_triangular_default :: (R: $A/MatrixType, b: $B/VectorTy
             }
             c := dvec(2, get(b,i-1)-sum1, get(b,i)-sum2);
             tmp : DenseVector(U, 2);
-            solve_linear_2x2(a, c, *tmp);
+            solve_linear_2x2(*tmp, a, c);
             set(x, i-1, get(tmp,0));
             set(x, i,   get(tmp,1));
             i -= 2;
@@ -227,19 +227,19 @@ solve_linear_right_quasi_triangular_default :: (R: $A/MatrixType, b: $B/VectorTy
 // ? Algorithm 3.4.8 Orthogonal Projection, page 167
 solve_linear_unitary :: solve_linear_orthogonal_projection;
 slop                 :: solve_linear_orthogonal_projection;
-solve_linear_orthogonal_projection :: inline (Q: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_orthogonal_projection_default(Q,b,x);
+solve_linear_orthogonal_projection :: inline (x: *$C/VectorType, Q: *$A/MatrixType, b: $B/VectorType) {
+    solve_linear_orthogonal_projection_default(x,Q,b);
 }
 
 #scope_file
-solve_linear_orthogonal_projection_default :: (Q: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_orthogonal_projection_default :: (x: *$C/VectorType, Q: *$A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(cols(Q) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(b));
         assert(cols(Q) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(x));
         assert(is_unitary(Q));
     }
     dagger(Q);
-    mul(<<Q, b, x);
+    mul(x, <<Q, b);
 }
 #scope_export
 
@@ -259,12 +259,12 @@ solve_linear_orthogonal_projection_default :: (Q: *$A/MatrixType, b: $B/VectorTy
 // ? Algorithm 3.4.9 Successive Orthogonal Projection, page 168
 // ? not sure if this algo is useful. seems to be slower than the previous one.
 slsop :: solve_linear_successive_orthogonal_projection;
-solve_linear_successive_orthogonal_projection :: inline (Q: $A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
-    solve_linear_successive_orthogonal_projection(Q,b,x);
+solve_linear_successive_orthogonal_projection :: inline (x: *$C/VectorType, Q: $A/MatrixType, b: *$B/VectorType) {
+    solve_linear_successive_orthogonal_projection(x,Q,b);
 }
 
 #scope_file
-solve_linear_successive_orthogonal_projection_default :: (Q: $A/MatrixType, b: *$B/VectorType, x: *$C/VectorType) {
+solve_linear_successive_orthogonal_projection_default :: (x: *$C/VectorType, Q: $A/MatrixType, b: *$B/VectorType) {
     #if CHECKS {
         assert(cols(Q) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(b));
         assert(cols(Q) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(Q), cols(Q), dim(x));
@@ -301,12 +301,12 @@ solve_linear_successive_orthogonal_projection_default :: (Q: $A/MatrixType, b: *
 // ? 3.4.5.1 Left Trapezoidal, page 159
 slltz :: solve_linear_left_trapezoidal;
 
-solve_linear_left_trapezoidal :: inline (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_left_trapezoidal_default(L,b,x);
+solve_linear_left_trapezoidal :: inline (x: *$C/VectorType, L: $A/MatrixType, b: $B/VectorType) {
+    solve_linear_left_trapezoidal_default(x,L,b);
 }
 
 #scope_file
-solve_linear_left_trapezoidal_default :: (L: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_left_trapezoidal_default :: (x: *$C/VectorType, L: $A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(rows(L) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(L), cols(L), dim(b));
         assert(cols(L) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(L), cols(L), dim(x));
@@ -319,17 +319,17 @@ solve_linear_left_trapezoidal_default :: (L: $A/MatrixType, b: $B/VectorType, x:
 
     L2 := mat_heap_view(*L, cols(L), cols(L));
     b2 := vec_heap_view(*b, cols(L));
-    solve_linear_left_triangular(L2, b2, x);
+    solve_linear_left_triangular(x, L2, b2);
 }
 #scope_export
 
 
-solve_linear_left_trapezoidal :: inline (l: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
-    solve_linear_left_trapezoidal_default(l,m,x);
+solve_linear_left_trapezoidal :: inline (x: *$C/MatrixType, l: $A/MatrixType, m: $B/MatrixType) {
+    solve_linear_left_trapezoidal_default(x,l,m);
 }
 
 #scope_file
-solve_linear_left_trapezoidal_default :: (l: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
+solve_linear_left_trapezoidal_default :: (x: *$C/MatrixType, l: $A/MatrixType, m: $B/MatrixType) {
     #if CHECKS {
         assert(rows(l) == rows(m), "dimensions mismatch l(%,%), m(%,%)\n", rows(l), cols(l), rows(m), cols(m));
         assert(cols(l) == rows(x), "dimensions mismatch l(%,%), x(%,%)\n", rows(l), cols(l), rows(x), cols(x));
@@ -339,7 +339,7 @@ solve_linear_left_trapezoidal_default :: (l: $A/MatrixType, m: $B/MatrixType, x:
     for j: 0..cols(m)-1 {
         b := mat_col_heap_view(*m, j, rows(m));
         y := mat_col_heap_view( x, j, rows(x));
-        solve_linear_left_trapezoidal(l, b, *y);
+        solve_linear_left_trapezoidal(*y, l, b);
     }
 }
 #scope_export
@@ -359,12 +359,12 @@ solve_linear_left_trapezoidal_default :: (l: $A/MatrixType, m: $B/MatrixType, x:
 // ? 3.4.5.2 Right Trapezoidal, page 160
 // ? There are degrees of freedom left. These are set to 0 here.
 slrtz :: solve_linear_right_trapezoidal;
-solve_linear_right_trapezoidal :: inline (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_right_trapezoidal_default(R,b,x);
+solve_linear_right_trapezoidal :: inline (x: *$C/VectorType, R: $A/MatrixType, b: $B/VectorType) {
+    solve_linear_right_trapezoidal_default(x,R,b);
 }
 
 #scope_file
-solve_linear_right_trapezoidal_default :: (R: $A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_right_trapezoidal_default :: (x: *$C/VectorType, R: $A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(rows(R) == dim(b), "dimensions mismatch (%,%), (%)\n", rows(R), cols(R), dim(b));
         assert(cols(R) == dim(x), "dimensions mismatch (%,%), (%)\n", rows(R), cols(R), dim(x));
@@ -376,17 +376,17 @@ solve_linear_right_trapezoidal_default :: (R: $A/MatrixType, b: $B/VectorType, x
     R2 := mat_heap_view(*R, rows(R), rows(R));
     b2 := vec_heap_view(*b, rows(R));
     x2 := vec_heap_view(x, rows(R));
-    solve_linear_right_triangular(R2,b2,*x2);
+    solve_linear_right_triangular(*x2,R2,b2);
 }
 #scope_export
 
 
-solve_linear_right_trapezoidal :: inline (r: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
-    solve_linear_right_trapezoidal_default(r,m,x);
+solve_linear_right_trapezoidal :: inline (x: *$C/MatrixType, r: $A/MatrixType, m: $B/MatrixType) {
+    solve_linear_right_trapezoidal_default(x,r,m);
 }
 
 #scope_file
-solve_linear_right_trapezoidal_default :: (r: $A/MatrixType, m: $B/MatrixType, x: *$C/MatrixType) {
+solve_linear_right_trapezoidal_default :: (x: *$C/MatrixType, r: $A/MatrixType, m: $B/MatrixType) {
     #if CHECKS {
         assert(rows(r) == rows(m), "dimensions mismatch (%,%), (%,%)\n", rows(r), cols(r), rows(m), cols(m));
         assert(cols(r) == rows(x), "dimensions mismatch (%,%), (%,%)\n", rows(r), cols(r), rows(x), cols(x));
@@ -397,7 +397,7 @@ solve_linear_right_trapezoidal_default :: (r: $A/MatrixType, m: $B/MatrixType, x
     for j: 0..cols(m)-1 {
         b := mat_col_heap_view(*m, j, rows(m));
         y := mat_col_heap_view( x, j, rows(x));
-        solve_linear_right_trapezoidal(r, b, *y);
+        solve_linear_right_trapezoidal(*y, r, b);
     }
 }
 #scope_export
@@ -417,12 +417,12 @@ solve_linear_right_trapezoidal_default :: (r: $A/MatrixType, m: $B/MatrixType, x
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? Algorithm 3.7.1 Gaussian Factorization - No Pivoting, page 199
-decompose_LR :: inline (m: $A/MatrixType, L: *$B/MatrixType, R: *$C/MatrixType) {
-    decompose_LR_default(m,L,R);
+decompose_LR :: inline (L: *$B/MatrixType, R: *$C/MatrixType, m: $A/MatrixType) {
+    decompose_LR_default(L,R,m);
 }
 
 #scope_file
-decompose_LR_default :: (m: $A/MatrixType, L: *$B/MatrixType, R: *$C/MatrixType) {
+decompose_LR_default :: (L: *$B/MatrixType, R: *$C/MatrixType, m: $A/MatrixType) {
     #if CHECKS {
         assert(rows(m) == rows(L) && cols(m) == cols(L), "dimension mismatch: m(%,%), L(%,%)\n", rows(m), cols(m), rows(L), cols(L));
         assert(rows(m) == rows(R) && cols(m) == cols(R), "dimension mismatch: m(%,%), R(%,%)\n", rows(m), cols(m), rows(R), cols(R));
@@ -499,15 +499,15 @@ gaussian_factorization_no_pivot_default :: (m: *$A/MatrixType) {
 slgf_np :: solve_linear_gaussian_factorization_no_pivot;
 solve_LRnp :: solve_linear_gaussian_factorization_no_pivot;
 solve_LUnp :: solve_linear_gaussian_factorization_no_pivot;
-solve_linear_gaussian_factorization_no_pivot :: inline (a: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
-    solve_linear_gaussian_factorization_no_pivot_default(a,b,x);
+solve_linear_gaussian_factorization_no_pivot :: inline (x: *$C/VectorType, a: *$A/MatrixType, b: $B/VectorType) {
+    solve_linear_gaussian_factorization_no_pivot_default(x,a,b);
 }
 
 #scope_file
-solve_linear_gaussian_factorization_no_pivot_default :: (a: *$A/MatrixType, b: $B/VectorType, x: *$C/VectorType) {
+solve_linear_gaussian_factorization_no_pivot_default :: (x: *$C/VectorType, a: *$A/MatrixType, b: $B/VectorType) {
     gaussian_factorization_no_pivot(a);
-    solve_linear_left_trapezoidal( <<a, b, x); // ? this should be possible, see function implementations!
-    solve_linear_right_trapezoidal(<<a, <<x, x); // ? this should be possible, see function implementations!
+    solve_linear_left_trapezoidal(x, <<a, b); // ? this should be possible, see function implementations!
+    solve_linear_right_trapezoidal(x, <<a, <<x); // ? this should be possible, see function implementations!
 }
 #scope_export
 
@@ -636,21 +636,21 @@ solve_LRfp :: solve_linear_gaussian_factorization_full_pivot;
 solve_LUfp :: solve_linear_gaussian_factorization_full_pivot;
 
 solve_linear_gaussian_factorization_full_pivot :: inline (
+    x: *$C/VectorType, 
     a: *$A/MatrixType, 
     b: *$B/VectorType, 
-    x: *$C/VectorType, 
     rows_perm: *$D/VectorType, 
     cols_perm: *$E/VectorType
 ) -> num_rows_perm: int, num_cols_perm: int {
-    rp, cp := solve_linear_gaussian_factorization_full_pivot_default(a,b,x,rows_perm,cols_perm);
+    rp, cp := solve_linear_gaussian_factorization_full_pivot_default(x,a,b,rows_perm,cols_perm);
     return rp, cp;
 }
 
 #scope_file
 solve_linear_gaussian_factorization_full_pivot_default :: (
+    x: *$C/VectorType, 
     a: *$A/MatrixType, 
     b: *$B/VectorType,
-    x: *$C/VectorType, 
     rows_perm: *$D/VectorType, 
     cols_perm: *$E/VectorType
 ) -> num_rows_perm: int, num_cols_perm: int {
@@ -661,8 +661,8 @@ solve_linear_gaussian_factorization_full_pivot_default :: (
 
     num_rows_perm, num_cols_perm := gaussian_factorization_full_pivot(a, rows_perm, cols_perm);
     permute(b, <<rows_perm);
-    solve_linear_left_trapezoidal( <<a, <<b, x);
-    solve_linear_right_trapezoidal(<<a, <<x, x);
+    solve_linear_left_trapezoidal( x, <<a, <<b);
+    solve_linear_right_trapezoidal(x, <<a, <<x);
     permute(x, <<cols_perm);
 
     return num_rows_perm, num_cols_perm;
@@ -756,19 +756,19 @@ slgf_rp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LRrp :: solve_linear_gaussian_factorization_row_pivot;
 solve_LUrp :: solve_linear_gaussian_factorization_row_pivot;
 solve_linear_gaussian_factorization_row_pivot :: inline (
+    x: *$C/VectorType, 
     a: *$A/MatrixType, 
     b: *$B/VectorType, 
-    x: *$C/VectorType, 
     rows_perm: *$D/VectorType
 ) -> num_rows_perm: int {
-    return solve_linear_gaussian_factorization_row_pivot_default(a,b,x,rows_perm);
+    return solve_linear_gaussian_factorization_row_pivot_default(x,a,b,rows_perm);
 }
 
 #scope_file
 solve_linear_gaussian_factorization_row_pivot_default :: (
+    x: *$C/VectorType, 
     a: *$A/MatrixType, 
     b: *$B/VectorType, 
-    x: *$C/VectorType, 
     rows_perm: *$D/VectorType
 ) -> num_rows_perm: int {
     #if CHECKS {
@@ -777,8 +777,8 @@ solve_linear_gaussian_factorization_row_pivot_default :: (
 
     num_rows_perm := gaussian_factorization_row_pivot(a, rows_perm);
     permute(b, <<rows_perm);
-    solve_linear_left_trapezoidal( <<a, <<b, x);
-    solve_linear_right_trapezoidal(<<a, <<x, x);
+    solve_linear_left_trapezoidal( x, <<a, <<b);
+    solve_linear_right_trapezoidal(x, <<a, <<x);
 
     return num_rows_perm;
 }
@@ -800,12 +800,12 @@ solve_linear_gaussian_factorization_row_pivot_default :: (
 // ? Springer
 // ? Algorithm 3.10.1 Matrix Inverse, page 261
 inv :: inverse;
-inverse :: inline (a: $A/MatrixType, ainv: *A) {
-    inverse_default(a,ainv);
+inverse :: inline (ainv: *A, a: $A/MatrixType) {
+    inverse_default(ainv, a);
 }
 
 #scope_file
-inverse_default :: (a: $A/MatrixType, ainv: *A) {
+inverse_default :: (ainv: *A, a: $A/MatrixType) {
     row_perms := dhvec(u32, rows(a), false); // ! alloc, u32 limitation?
     defer free(row_perms);
 
@@ -813,8 +813,8 @@ inverse_default :: (a: $A/MatrixType, ainv: *A) {
 
     mat_init_unit(ainv);
 
-    solve_linear_left_trapezoidal( a, <<ainv, ainv);
-    solve_linear_right_trapezoidal(a, <<ainv, ainv);
+    solve_linear_left_trapezoidal( ainv, a, <<ainv);
+    solve_linear_right_trapezoidal(ainv, a, <<ainv);
 
     permute_cols(ainv, row_perms);
 }
@@ -955,7 +955,7 @@ test_linear_algebra :: () {
 
         x : DenseVector(C64, 2);
 
-        solve_linear_2x2(A, b, *x);
+        solve_linear_2x2(*x, A, b);
         println("result: %", pstr(x));
 
         sol := dvec(2,  // ? this is the correct answer
@@ -976,10 +976,10 @@ test_linear_algebra :: () {
         b := dvec(C64, 3, 3.0*R, -I, R-2.0*I);
         res : DenseVector(C64, 3) = ---;
 
-        solve_linear_left_triangular(L, b, *res);
+        solve_linear_left_triangular(*res, L, b);
 
         sol : DenseVector(C64, 3);
-        mul(L, res, *sol);
+        mul(*sol, L, res);
 
         println("% = % ?", pstr(sol), pstr(b));
         assert(sol == b);
@@ -995,12 +995,12 @@ test_linear_algebra :: () {
         );
         b := dvec(3, 3.0*R, -I, R-2.0*I);
         res : DenseVector(C64, 3) = ---;
-        solve_linear_right_triangular(M, b, *res);
+        solve_linear_right_triangular(*res, M, b);
         println("res %", pstr(res));
 
         sol : DenseVector(C64, 3);
         tmp : DenseVector(C64, 3) = ---;
-        mul(M, res, *sol);
+        mul(*sol, M, res);
         copy(*tmp, sol);
         sub(*sol, b);
         sol_norm := norm_2(sol);
@@ -1029,12 +1029,12 @@ test_linear_algebra :: () {
         println("cb %", pstr(cb));
 
         res : DenseVector(C64, 4) = ---;
-        solve_linear_right_quasi_triangular(cm,cb, *res);
+        solve_linear_right_quasi_triangular(*res, cm,cb);
         println("res = %", pstr(res));
 
         // * check result
         sol : DenseVector(C64, 4);
-        mul(cm, res, *sol);
+        mul(*sol, cm, res);
         sub(*sol, cb);
         assert(norm_2(sol) < 1.0e-8);
     }
@@ -1051,12 +1051,12 @@ test_linear_algebra :: () {
         res : DenseVector(C64, 2);
 
         println("calling solve_linear_left_trapezoidal...");
-        solve_linear_left_trapezoidal(M, b, *res);
+        solve_linear_left_trapezoidal(*res, M, b);
         println("sllt: %", pstr(res));
 
         // * check solution
         sol : DenseVector(C64, 3);
-        mul(M, res, *sol);
+        mul(*sol, M, res);
         println("sol = %", sol);
         println("b = %", b);
         assert( approx(sol, b) );
@@ -1072,12 +1072,12 @@ test_linear_algebra :: () {
         b := dvec(C64, 2, 4*R, 6*R);
         res : DenseVector(C64, 3);
 
-        solve_linear_right_trapezoidal(M, b, *res);
+        solve_linear_right_trapezoidal(*res, M, b);
         
         // * check solution
         sol : DenseVector(C64, 2) = ---;
         // copy(*sol, res);
-        mul(M, res, *sol);
+        mul(*sol, M, res);
         
         println("slrt: %", pstr(res));
         assert( approx(sol, b) );
@@ -1109,7 +1109,7 @@ test_linear_algebra :: () {
         b := dvec(2, 4*R, 6*I);
         x : DenseVector(C64, 2) = ---;
 
-        slgf_np(*M, b, *x);
+        slgf_np(*x, *M, b);
         println("solve linear system via Gaussian factorization (no pivoting): %", pstr(x));
         assert(x == dvec(2, 2.5-4.5*I, 4.5-1.5*I), "\nCould not solve linear system via Gaussain factorization!");
     }
@@ -1164,7 +1164,7 @@ test_linear_algebra :: () {
         cperm : DenseVector(u8, 2) = ---;
 
         println("solving lin sys via gf_fp...");
-        rps, cps := slgf_fp(*M, *b, *res, *rperm, *cperm);
+        rps, cps := slgf_fp(*res, *M, *b, *rperm, *cperm);
         println("solution: %", pstr(res));
         sol := dvec(2, 2.5-4.5*I, 4.5-1.5*I);
         assert(approx(res, sol), "\nCould not solve linear system via Gaussain factorization!");
@@ -1181,7 +1181,7 @@ test_linear_algebra :: () {
         res : DenseVector(C64, 2);
         rowp : DenseVector(u8, 2) = ---;
 
-        nrowp := slgf_rp(*M, *b, *res, *rowp);
+        nrowp := slgf_rp(*res, *M, *b, *rowp);
         println("solve linear system via Gaussian factorization (row pivoting): %", pstr(res));
         assert(approx(res, dvec(2, 2.5-4.5*I, 4.5-1.5*I)), "\nCould not solve linear system via Gaussain factorization!");
     }
@@ -1199,7 +1199,7 @@ test_linear_algebra :: () {
 
         res : DenseMatrix(C64, 3, 3) = ---;
 
-        solve_linear_left_trapezoidal(L,one, *res);
+        solve_linear_left_trapezoidal(*res, L,one);
         
         println("K = %", pstr(res));
         assert(approx(res, dmat(3,3,
@@ -1222,7 +1222,7 @@ test_linear_algebra :: () {
 
         res : DenseMatrix(C64, 3, 3) = ---;
 
-        solve_linear_right_trapezoidal(M,one,*res);
+        solve_linear_right_trapezoidal(*res, M,one);
         println("K = %", pstr(res));
         assert(approx(res, dmat(3,3,
             0.5*R, 0.5*R, 0.5-0.5*I,
@@ -1240,7 +1240,7 @@ test_linear_algebra :: () {
             R, C_ZERO, R+I
         );
         iM : DenseMatrix(C64, 3, 3) = ---;
-        inverse(M, *iM);
+        inverse(*iM, M);
         
         println("iM = %", pstr(iM));
         assert(approx(iM, dmat(3,3,

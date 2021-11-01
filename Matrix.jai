@@ -593,7 +593,7 @@ operator * :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatri
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
 mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
-    inline mat_mul_mat_default(a,b,res);
+    inline mat_mul_mat_default(res,a,b);
 }
 
 #scope_file
@@ -1555,7 +1555,7 @@ test_matrix :: () {
             mat_init(*m, R, 2*R, 3*R, 4*R);
             println("m = %", pstr(m));
             res : DenseMatrix(C64, 2, 2);
-            mul(m, m, *res);
+            mul(*res, m, m);
             println("res = %", pstr(res));
         }
         {
@@ -1563,7 +1563,7 @@ test_matrix :: () {
             mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
             println("m = %", pstr(m));
             res : DenseMatrix(C64, 2, 2);
-            mul(m, m, *res);
+            mul(*res, m, m);
             println("res = %", pstr(res));
         }
         // {
@@ -1591,7 +1591,7 @@ test_matrix :: () {
             mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
             println("m = %", pstr(m));
             t1 : DenseMatrix(C64, 4, 4);
-            tensor(m, m, *t1);
+            tensor(*t1, m, m);
             println("t1 = %", pstr(t1));
             t2 : DenseMatrix(C64, 4, 4);
             mat_init(*t2,
@@ -1726,7 +1726,7 @@ test_matrix :: () {
             println("m = %", pstr(m));
             res := dhmat(C64, 2, 2);
             defer free(res);
-            mul(m, m, *res);
+            mul(*res, m, m);
             println("res = %", pstr(res));
         }
         {
@@ -1737,7 +1737,7 @@ test_matrix :: () {
             println("m = %", pstr(m));
             res := dhmat(C64, 2, 2);
             defer free(res);
-            mul(m, m, *res);
+            mul(*res, m, m);
             println("res = %", pstr(res));
         }
         {
@@ -1764,7 +1764,7 @@ test_matrix :: () {
             mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
             println("m = %", pstr(m));
             t1 := dhmat(C64, 4, 4);
-            tensor(m, m, *t1);
+            tensor(*t1, m, m);
             println("t1 = %", pstr(t1));
             t2 := dhmat(C64, 4, 4);
             mat_init(*t2,
