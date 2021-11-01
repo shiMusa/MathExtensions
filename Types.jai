@@ -38,7 +38,6 @@ is_intrinsic_number :: ($T: Type) -> bool {
     }
     return false;
 }
-
 is_intrinsic_number :: (T: *Type_Info) -> bool {
     return T.type == .FLOAT
         || T.type == .INTEGER
@@ -106,6 +105,16 @@ is_quaternion_number :: (N: *Type_Info) -> bool {
     if S.name == "Quaternion" then return true;
 
     return false;
+}
+
+
+
+// ? include Octonions later
+is_commuting :: ($T: Type) -> bool {
+    return !is_quaternion_number(T);
+}
+is_commuting :: (T: *Type_Info) -> bool {
+    return !is_quaternion_number(T);
 }
 
 

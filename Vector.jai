@@ -177,35 +177,35 @@ equals_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> bool {
 
 
 mul_el :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
-    res : DenseVector(UpCast(A,B).T, N) = ---;
-    inline mul_el(a,b,*res);
+    res : DenseVector(UpCast(A,B).T, N);
+    inline mul_el(*res,a,b);
     return res;
 }
 mul_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
-    res := dhvec(UpCast(A,B).T, dim(a), false); // ! alloc
-    inline mul_el(a,b,*res);
+    res := dhvec(UpCast(A,B).T, dim(a)); // ! alloc
+    inline mul_el(*res,a,b);
     return res;
 }
 
 
-mul_el :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
-    inline mul_el_default(a,b,c);
+mul_el :: (c: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
+    inline mul_el_default(c,a,b);
 }
 
 mul_el :: (a: *$A/VectorType, b: $B/VectorType) {
-    inline mul_el_default(<<a, b, a);
+    inline mul_el_default(a,<<a, b);
 }
 
 #scope_file
-mul_el_default :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
+mul_el_default :: (c: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
     #if CHECKS {
         #assert(is_minor_number_type(C.data_type, A.data_type));
         #assert(is_minor_number_type(C.data_type, B.data_type));
         assert(dim(a) == dim(c));
         assert(dim(b) == dim(c));
     }
-    for a {
-        set_lin(c, it_index, it * get_lin(b, it_index));
+    for c {
+        set(c, it_index, it + get(a, it_index) * get(b, it_index));
     }
 }
 #scope_export
@@ -220,35 +220,35 @@ mul_el_default :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
 //    ###    ########  ######     ### ##             ###    ########  ######
 
 div_el :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
-    res : DenseVector(UpCast(A,B).T, N) = ---;
-    inline div_el(a,b,*res);
+    res : DenseVector(UpCast(A,B).T, N);
+    inline div_el(*res,a,b);
     return res;
 }
 div_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
-    res := dhvec(UpCast(A,B).T, dim(a), false); // ! alloc
-    inline div_el(a,b,*res);
+    res := dhvec(UpCast(A,B).T, dim(a)); // ! alloc
+    inline div_el(*res,a,b);
     return res;
 }
 
 
-div_el :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
-    inline div_el_default(a,b,c);
+div_el :: (c: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
+    inline div_el_default(c,a,b);
 }
 
 div_el :: (a: *$A/VectorType, b: $B/VectorType) {
-    inline div_el_default(<<a, b, a);
+    inline div_el_default(a,<<a, b);
 }
 
 #scope_file
-div_el_default :: (a: $A/VectorType, b: $B/VectorType, c: *$C/VectorType) {
+div_el_default :: (c: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
     #if CHECKS {
         #assert(is_minor_number_type(C.data_type, A.data_type));
         #assert(is_minor_number_type(C.data_type, B.data_type));
         assert(dim(a) == dim(c));
         assert(dim(b) == dim(c));
     }
-    for a {
-        set_lin(c, it_index, it / get_lin(b, it_index));
+    for c {
+        set(c, it_index, it + get(a, it_index) / get(b, it_index));
     }
 }
 #scope_export
@@ -400,31 +400,34 @@ div_default :: (a: *$A/VectorType, b: $B) #modify {
 
 
 operator / :: (a: DenseVector($A, $NA), b: DenseVector($B, $NB)) -> DenseMatrix(UpCast(A,B).T, NA, NB) {
-    res : DenseMatrix(UpCast(A,B).T, NA, NB) = ---;
-    inline outer_product(a,b,*res);
+    res : DenseMatrix(UpCast(A,B).T, NA, NB);
+    inline outer_product(*res,a,b);
     return res;
 }
 operator / :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
-    res := dhmat(UpCast(A,B).T, dim(a), dim(b), false);
-    inline outer_product(a,b,*res);
+    res := dhmat(UpCast(A,B).T, dim(a), dim(b));
+    inline outer_product(*res,a,b);
     return res;
 }
 
-
-outer_product :: (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
-    inline outer_product_default(a,b,res);
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? 1.1.9 The Outer Product Update, p.7
+// ? calculates M = M + a*bᵀ 
+outer_product :: (M: *$C/MatrixType, a: $A/VectorType, b: $B/VectorType) {
+    inline outer_product_default(a,b,M);
 }
 
 #scope_file
-outer_product_default :: inline (a: $A/VectorType, b: $B/VectorType, res: *$C/MatrixType) {
+outer_product_default :: inline (M: *$C/MatrixType, a: $A/VectorType, b: $B/VectorType) {
     #if CHECKS {
         #run assert(is_minor_number_type(C.data_type, A.data_type));
         #run assert(is_minor_number_type(C.data_type, B.data_type));
-        assert(rows(res) == dim(a));
-        assert(cols(res) == dim(b));
+        assert(rows(M) == dim(a));
+        assert(cols(M) == dim(b));
     }
-    for res {
-        set(*res, it_row, it_column, get(a, it_row) * get(b, it_column));
+    for M {
+        set(*M, it_row, it_column, it + get(a, it_row) * conjugate(get(b, it_column)));
     }
 }
 #scope_export
@@ -548,22 +551,22 @@ neg_default :: (a: *$A/VectorType) {
 
 cross :: (a: DenseVector($A, 3), b: DenseVector($B, 3)) -> DenseVector(UpCast(A,B).T, 3) {
     res : DenseVector(UpCast(A,B).T, 3);
-    inline cross(a,b,*res);
+    inline cross(*res,a,b);
     return res;
 }
 cross :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
     res := dhvec(UpCast(A,B).T, 3, false);
-    inline cross(a,b,*res);
+    inline cross(*res,a,b);
     return res;
 }
 
-
-cross :: (a: $A/VectorType, b: $B/VectorType, res: *$C/VectorType) {
-    inline cross_default(a,b,res);
+// ! is this correct for complex vectors, or am I missing a conjugate somewhere?
+cross :: (res: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
+    inline cross_default(res,a,b);
 }
 
 #scope_file
-cross_default :: (a: $A/VectorType, b: $B/VectorType, res: *$C/VectorType) {
+cross_default :: (res: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
     #if CHECKS {
         #run assert(is_minor_number_type(C.data_type, A.data_type));
         #run assert(is_minor_number_type(C.data_type, B.data_type));
@@ -587,26 +590,22 @@ cross_default :: (a: $A/VectorType, b: $B/VectorType, res: *$C/VectorType) {
 // ##     ## ######## ##       ######## ########  ######     ##
 
 // * default implementation
-reflect :: (vec: $A/VectorType, normal: $B/VectorType, res: *$C/VectorType) {
-    inline reflect_default(vec, normal, res);
+reflect :: (res: *$C/VectorType, vec: $A/VectorType, normal: $B/VectorType) {
+    inline reflect_default(res, vec, normal);
 }
 
 #scope_file
-reflect_default :: (vec: $A/VectorType, normal: $B/VectorType, res: *$C/VectorType) {
+reflect_default :: (res: *$C/VectorType, vec: $A/VectorType, normal: $B/VectorType) {
     #if CHECKS {
         #run assert(is_minor_number_type(C.data_type, A.data_type));
         #run assert(is_minor_number_type(C.data_type, B.data_type));
-        #run assert(dim(a) == dim(b) && dim(a) == dim(res), "vectors not of same dimensions (%, %, %)\n", dim(a), dim(b), dim(res));
-    }
-    cn = conjugate(normal);
-    #if B.flags & .HEAP {
-        defer free(cn);
+        assert(dim(a) == dim(b) && dim(a) == dim(res), "vectors not of same dimensions (%, %, %)\n", dim(a), dim(b), dim(res));
     }
 
-    tau := 2 / (cn * normal);
-    alpha := tau * (cn * vec);
+    tau := 2 / norm_2(normal, true); // ? norm_2(normal, squared=true) = ⟨normal|normal⟩
+    alpha := tau * (normal * vec);
 
-    copy(res, vec);
+    add(res, vec);
     saxpy(res, normal, -alpha);
 }
 #scope_export
@@ -627,23 +626,23 @@ reflect_default :: (vec: $A/VectorType, normal: $B/VectorType, res: *$C/VectorTy
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.2 Saxpy, page 4
 // ? y = a * x + y
-saxpy :: (y: *$A/VectorType, a: $B/VectorType, x: $C) #modify {
+saxpy :: (y: *$A/VectorType, x: $B/VectorType, a: $C) #modify {
     if !is_number(C) {C = null; return;}    
 } {
-    inline saxpy_default(y, a, x);
+    inline saxpy_default(y, x, a);
 }
 
 #scope_file
-saxpy_default :: (y: *$A/VectorType, a: $B/VectorType, x: $C) #modify {
+saxpy_default :: (y: *$A/VectorType, x: $B/VectorType, a: $C) #modify {
     if !is_number(C) {C = null; return;}    
 } {
     #if CHECKS {
-        #run assert(A.N == B.N, "vectors not of same dimensions (%, %)\n", A.N, B.N);
+        assert(dim(y) == dim(x), "vectors not of same dimensions (%, %)\n", dim(y), dim(x));
         #assert(is_minor_number_type(A.data_type, B) && is_minor_number_type(A.data_type, C));
     }
 
     for y {
-        set(y, it_index, it + x * get(a, it_index));
+        set(y, it_index, it + a * get(x, it_index));
     }
 }
 #scope_export
@@ -661,8 +660,8 @@ gaxpy :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
 #scope_file
 gaxpy_default :: (y: *$Y/VectorType, A: $M/MatrixType, x: $X/VectorType) {
     #if CHECKS {
-        #run assert(Y.N == M.N, "dimensions do not match (%, %)\n", Y.N, M.N);
-        #run assert(X.N == M.M, "dimensions do not match (%, %)\n", X.N, M.M);
+        assert(dim(y) == rows(A), "dimensions do not match (%, %)\n", dim(y), rows(A));
+        assert(dim(x) == cols(A), "dimensions do not match (%, %)\n", dim(x), cols(A));
         #assert(is_minor_number_type(Y.data_type, M.data_type) && is_minor_number_type(Y.data_type, X.data_type));
     }
 
@@ -841,13 +840,13 @@ conjugate_default :: (v: *$V/VectorType) {
 norm :: (v: $V/VectorType, $$l: float64 = 2.0) -> float64 {
     #if is_constant(l) {
         #if l == Math.FLOAT64_INFINITY {
-            return norm_inf(v);
+            return inline norm_inf(v);
         } else #if l == 1.0 {
-            return norm_1(v);
+            return inline norm_1(v);
         } else #if l == 2.0 {
-            return norm_2(v);
+            return inline norm_2(v);
         } else {
-            return norm_l(v, l);
+            return inline norm_l(v, l);
         }
     } else {
         if l == Math.FLOAT64_INFINITY {
@@ -857,12 +856,12 @@ norm :: (v: $V/VectorType, $$l: float64 = 2.0) -> float64 {
         } else if l == 2.0 {
             return inline norm_2(v);
         }
-        return norm_l(v, l);
+        return inline norm_l(v, l);
     }
 }
 
-norm_l :: inline (v: $V/VectorType, l: float64) -> float64 {
-    return norm_l_default(v, l);
+norm_l :: (v: $V/VectorType, l: float64) -> float64 {
+    return inline norm_l_default(v, l);
 }
 #scope_file
 norm_l_default :: (v: $V/VectorType, l: float64) -> float64 {
@@ -875,21 +874,25 @@ norm_l_default :: (v: $V/VectorType, l: float64) -> float64 {
 #scope_export
 
 
-norm_2 :: inline (v: $V/VectorType) -> float64 {
-    return norm_2_default(v);
+norm_2 :: (v: $V/VectorType, $squared: bool = false) -> float64 {
+    return inline norm_2_default(v, squared);
 }
 #scope_file
-norm_2_default :: (v: $V/VectorType) -> float64 {
+norm_2_default :: (v: $V/VectorType, $squared: bool = false) -> float64 {
     res : float64 = 0.0;
     for v {
         res += abs_sq(it);
     }
-    return sqrt(res, float64);
+    #if squared {
+        return res;
+    } else {
+        return sqrt(res, float64);
+    }
 }
 #scope_export
 
-norm_1 :: inline (v: $V/VectorType) -> float64 {
-    return norm_1_default(v);
+norm_1 :: (v: $V/VectorType) -> float64 {
+    return inline norm_1_default(v);
 }
 #scope_file
 norm_1_default :: (v: $V/VectorType) -> float64 {
@@ -901,8 +904,8 @@ norm_1_default :: (v: $V/VectorType) -> float64 {
 }
 #scope_export
 
-norm_inf :: inline (v: $V/VectorType) -> float64 {
-    return norm_inf_default(v);
+norm_inf :: (v: $V/VectorType) -> float64 {
+    return inline norm_inf_default(v);
 }
 #scope_file
 norm_inf_default :: (v: $V/VectorType) -> float64 {
@@ -934,11 +937,7 @@ angle_default :: (a: $A/VectorType, b: $B/VectorType) -> float64 {
     #if CHECKS {
         #run assert(dim(a) == dim(b), "vectors not of same dimensions (%, %)\n", dim(a), dim(b));
     }
-    dot : float64 = 0.0;
-    for a {
-        dot += conjugate(it) * get(b, it_index);
-    }
-    return acos( abs(dot) / (norm_2(a) * norm_2(b)) );
+    return acos( (a*b) / (norm_2(a) * norm_2(b)) );
 }
 #scope_export
 

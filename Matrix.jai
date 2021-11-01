@@ -479,35 +479,35 @@ equals_dense_dense :: (a: DenseMatrix($AT, $AN, $AM), b: DenseMatrix($BT, $BN, $
 
 
 mul_el :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
-    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
-    inline mul_el(a,b,*res);
+    res : DenseMatrix(UpCast(A,B).T, N, M);
+    inline mul_el(*res,a,b);
     return res;
 }
 mul_el :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
-    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
-    inline mul_el(a,b,*res);
+    res := dhmat(UpCast(A,B).T, rows(a), cols(a)); // ! alloc
+    inline mul_el(*res,a,b);
     return res;
 }
 
 
-mul_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
-    inline mul_el_default(a,b,c);
+mul_el :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    inline mul_el_default(c,a,b);
 }
 
 mul_el :: (a: *$A/MatrixType, b: $B/MatrixType) {
-    inline mul_el_default(<<a, b, a);
+    inline mul_el_default(a, <<a, b);
 }
 
 #scope_file
-mul_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+mul_el_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #assert(is_minor_number_type(C.data_type, A.data_type));
         #assert(is_minor_number_type(C.data_type, B.data_type));
         assert(rows(a) == rows(c) && cols(a) == cols(c));
         assert(rows(b) == rows(c) && cols(b) == cols(c));
     }
-    for a {
-        set_lin(c, it_index, it * get_lin(b, it_index));
+    for c {
+        set_lin(c, it_index, it +  get_lin(a, it_index) * get_lin(b, it_index));
     }
 }
 #scope_export
@@ -522,36 +522,36 @@ mul_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
 
 
 div_el :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
-    res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
-    inline div_el(a,b,*res);
+    res : DenseMatrix(UpCast(A,B).T, N, M);
+    inline div_el(*res,a,b);
     return res;
 }
 div_el :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
-    res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
-    inline div_el(a,b,*res);
+    res := dhmat(UpCast(A,B).T, rows(a), cols(a)); // ! alloc
+    inline div_el(*res,a,b);
     return res;
 }
 
 
 div_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
-    inline div_el_default(a,b,c);
+    inline div_el_default(c,a,b);
 }
 
 div_el :: (a: *$A/MatrixType, b: $B/MatrixType) {
-    inline div_el_default(<<a,b,a);
+    inline div_el_default(a,<<a,b);
 }
 
 
 #scope_file
-div_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
+div_el_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #assert(is_minor_number_type(C.data_type, A.data_type));
         #assert(is_minor_number_type(C.data_type, B.data_type));
         assert(rows(a) == rows(c) && cols(a) == cols(c));
         assert(rows(b) == rows(c) && cols(b) == cols(c));
     }
-    for a {
-        set_lin(c, it_index, it / get_lin(b, it_index));
+    for c {
+        set_lin(c, it_index, it + get_lin(a, it_index) / get_lin(b, it_index));
     }
 }
 #scope_export
@@ -576,28 +576,28 @@ div_el_default :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.5 ijk Matrix Multiplication, page 8
 
-
+// TODO this is the same as *axpy for matrices... can remove the latter and just make it an alias to this.
 
 operator * :: (a: DenseMatrix($A, $AN, $M), b: DenseMatrix($B, M, $BM)) -> DenseMatrix(UpCast(A,B).T, AN, BM) {
     res : DenseMatrix(UpCast(A,B).T, AN, BM);
-    inline mul(a,b,*res);
+    inline mul(*res,a,b);
     return res;
 }
 operator * :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
-    res := dhmat(UpCast(A,B).T, rows(a), cols(b), false); // ! alloc
-    inline mul(a,b,*res);
+    res := dhmat(UpCast(A,B).T, rows(a), cols(b)); // ! alloc
+    inline mul(*res,a,b);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mul :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     inline mat_mul_mat_default(a,b,res);
 }
 
 #scope_file
-mat_mul_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+mat_mul_mat_default :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         assert(cols(a) == rows(b)  , "Matrix dimensions don't match: a.cols = %, b.rows = %", cols(a), rows(b)  );
         assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, c.rows = %", rows(a), rows(res));
@@ -627,24 +627,24 @@ mat_mul_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType)
 
 operator * :: (a: DenseMatrix($A, $N, $M), b: DenseVector($B, M)) -> DenseVector(UpCast(A,B).T, N) {
     res : DenseVector(UpCast(A,B).T, N);
-    inline mul(a,b,*res);
+    inline mul(*res,a,b);
     return res;
 }
 operator * :: (a: DenseHeapMatrix($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
     res : DenseVector(UpCast(A,B).T, rows(a)); // ! alloc
-    inline mul(a,b,*res);
+    inline mul(*res,a,b);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mul :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
-    inline mat_mul_vec_default(a,b,res);
+mul :: (res: *$C/VectorType, a: $A/MatrixType, b: $B/VectorType) {
+    inline mat_mul_vec_default(res,a,b);
 }
 
 #scope_file
-mat_mul_vec_default :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType) {
+mat_mul_vec_default :: (res: *$C/VectorType, a: $A/MatrixType, b: $B/VectorType) {
     #if CHECKS {
         assert(cols(a) == dim(b) , "Dimensions mismatch: a.cols = %, b.dim   = %", cols(a), dim(b) );
         assert(rows(a) == dim(res), "Dimensions mismatch: a.rows = %, res.dim = %", rows(a), dim(res));
@@ -667,24 +667,24 @@ mat_mul_vec_default :: (a: $A/MatrixType, b: $B/VectorType, res: *$C/VectorType)
 
 operator * :: (a: DenseVector($A, $N), b: DenseMatrix($B, N, $M)) -> DenseVector(UpCast(A,B).T, M) {
     res : DenseVector(UpCast(A,B).T, M);
-    inline mul(a,b,*res);
+    inline mul(*res,a,b);
     return res;
 }
 operator * :: (a: DenseHeapVector($A), b: DenseHeapMatrix($B)) -> DenseHeapVector(UpCast(A,B).T) {
     res := dhvec(UpCast(A,B).T, cols(a)); // ! alloc
-    inline mul(a,b,*res);
+    inline mul(*res,a,b);
     return res;
 }
 
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
-mul :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
-    inline vec_mul_mat_default(a,b,res);
+mul :: (res: *$C/VectorType, a: $A/VectorType, b: $B/MatrixType) {
+    inline vec_mul_mat_default(res,a,b);
 }
 
 #scope_file
-vec_mul_mat_default :: (a: $A/VectorType, b: $B/MatrixType, res: *$C/VectorType) {
+vec_mul_mat_default :: (res: *$C/VectorType, a: $A/VectorType, b: $B/MatrixType) {
     #if CHECKS {
         assert(dim(a)  == rows(b), "Dimensions mismatch: a.dim  = %, b.rows  = %", dim(a) , rows(b));
         assert(cols(b) == dim(c) , "Dimensions mismatch: b.cols = %, res.dim = %", cols(b), dim(c) );
@@ -712,19 +712,19 @@ operator * :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, 
     if !is_number(B) {B = null; return;}
 } #symmetric {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
-    inline mul(a, b, *res);
+    inline mul(*res,a, b);
     return res;
 }
 operator * :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) #modify {
     if !is_number(B) {B = null; return;}
 } #symmetric {
     res := dhmat(UpCast(T,B).T, rows(a), cols(a), false); // ! alloc
-    inline mul(a, b, *res);
+    inline mul(*res,a, b);
     return res;
 }
 
 
-mul :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
+mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
     if !is_number(B) {B = null; return;}
 } {
     #if CHECKS {
@@ -785,20 +785,20 @@ operator / :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, 
     if !is_number(B) {B = null; return;}
 } {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
-    inline div(a, b, *res);
+    inline div(*res,a, b);
     return res;
 }
 operator / :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) #modify {
     if !is_number(B) {B = null; return;}
 } {
     res := dhmat(UpCast(T,B).T, rows(a), cols(a), false); // ! alloc
-    inline div(a, b, *res);
+    inline div(*res,a, b);
     return res;
 }
 
 
 
-div :: (a: $A/MatrixType, b: $B, res: *$C/MatrixType) #modify {
+div :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
     if !is_number(B) { B = null; return; }
 } {
     #if CHECKS {
@@ -837,22 +837,22 @@ div :: (a: *$A/MatrixType, b: $B) #modify {
 
 operator + :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
     res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
-    inline add(a,b,*res);
+    inline add(*res,a,b);
     return res;
 }
 operator + :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
     res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
-    inline add(a,b,*res);
+    inline add(*res,a,b);
     return res;
 }
 
 
-add :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
-    inline mat_add_mat_default(a,b,res);
+add :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    inline mat_add_mat_default(res,a,b);
 }
 
 #scope_file
-mat_add_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+mat_add_mat_default :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         assert(rows(a) == rows(b)  , "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(b)  );
         assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(res));
@@ -897,21 +897,21 @@ add_default :: (a: *$A/MatrixType, b: $B/MatrixType) {
 
 operator - :: (a: DenseMatrix($A, $N, $M), b: DenseMatrix($B, N, M)) -> DenseMatrix(UpCast(A,B).T, N, M) {
     res : DenseMatrix(UpCast(A,B).T, N, M) = ---;
-    matt_sub_mat(a,b,*res);
+    matt_sub_mat(*res,a,b);
     return res;
 }
 operator + :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
     res := dhmat(UpCast(A,B).T, rows(a), cols(a), false); // ! alloc
-    inline sub(a,b,*res);
+    inline sub(*res,a,b);
     return res;
 }
 
-sub :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
-    inline mat_sub_mat_default(a,b,res);
+sub :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    inline mat_sub_mat_default(res,a,b);
 }
 
 #scope_file
-mat_sub_mat_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+mat_sub_mat_default :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         assert(rows(a) == rows(b)  , "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(b)  );
         assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, b.rows = %", rows(a), rows(res));
@@ -1008,7 +1008,6 @@ saxpy_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     }
 }
 #scope_export
-
 
 
 // ########  ######## ########  ##     ## ##     ## ######## ########
@@ -1336,12 +1335,12 @@ tensor :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(Up
 }
 
 // https://www.wikiwand.com/en/Tensor_product
-tensor :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
-    inline tensor_default(a,b,res);
+tensor :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    inline tensor_default(res,a,b);
 }
 
 #scope_file
-tensor_default :: (a: $A/MatrixType, b: $B/MatrixType, res: *$C/MatrixType) {
+tensor_default :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
         #run assert(is_minor_number_type(C.data_type, A.data_type) && is_minor_number_type(C.data_type, B.data_type));
         assert(rows(res) == rows(a)*rows(b) && cols(res) == cols(a)*cols(b), "dimensions mismatch: needed (%,%), but res(%,%)", rows(a)*rows(b), cols(a)*cols(b), rows(res), cols(res));
