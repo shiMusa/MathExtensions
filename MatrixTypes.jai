@@ -531,24 +531,20 @@ from_raw_index :: inline (m: DenseHeapMatrix($T), i: int) -> int {
 
 // ? Matrix Computations, 4th edition
 // ? The Johns Hopkins University Press
-// ? 1.2.1 Band Matrices, page 15
+// ? 1.2.1 Band Matrices, page 15 & 17
 
 // ? Band matrices have entries in the diagonal, to the upper bandwidth `q` up from the diagonal, and `p` down from the diagonal.
 
-// ? * * *|*                * * *|*
-// ?   * *|* *                * *|* *
-// ?     *|a a a . . . .|       *|a a a . . . . . . . . . . . . . . . . .|
+// ?      |a a a . . . .|        |a a a . . . . . . . . . . . . . . . . .|
 // ?      |x x x x . . .|        |x x x x . . . . . . . . . . . . . . . .|
 // ?      |. x x x x . .|        |. x x x x . . . . . . . . . . . . . . .|
 // ?      |. . x x x x .|        |. . x x x x . . . . . . . . . . . . . .|
 // ?      |. . . x x x x|        |. . . x x x x . . . . . . . . . . . . .|
-// ?      |. . . . b b b|*
-// ?      |. . . . . b b|* *
-// ?      |. . . . . . b|* * *
-// ?      |. . . . . . .|* * * *
+// ?      |. . . . b b b| 
+// ?      |. . . . . b b|   
+// ?      |. . . . . . b|     
+// ?      |. . . . . . .|       
 // ? 
-// ? number of entries (N rows, M columns):
-// ? (q + p + 1)*min(N,M) - 
 
 // The only data that actually exists in memory during runtime is "data", the ONELY field of the struct.
 BandMatrix :: struct(_T: Type, _N: int, _M: int, lower_bw: int, upper_bw: int) {
