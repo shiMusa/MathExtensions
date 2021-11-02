@@ -40,6 +40,7 @@ MATRIX_FLAGS :: enum_flags u32 {
     VIEW  :: 0;
     DENSE :: (1 << 0);
     HEAP  :: (1 << 1);
+    Band  :: (1 << 2);
     // band
     // symmetric
     // hermitian
@@ -515,5 +516,107 @@ n_raw :: inline (m: DenseHeapMatrix($T)) -> int {
     return rows(m)*cols(m);
 }
 from_raw_index :: inline (m: DenseHeapMatrix($T), i: int) -> int {
+    return i;
+}
+
+
+
+// ########     ###    ##    ## ########
+// ##     ##   ## ##   ###   ## ##     ##
+// ##     ##  ##   ##  ####  ## ##     ##
+// ########  ##     ## ## ## ## ##     ##
+// ##     ## ######### ##  #### ##     ##
+// ##     ## ##     ## ##   ### ##     ##
+// ########  ##     ## ##    ## ########
+
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? 1.2.1 Band Matrices, page 15
+
+// ? Band matrices have entries in the diagonal, to the upper bandwidth `q` up from the diagonal, and `p` down from the diagonal.
+
+// ? * * *|*                * * *|*
+// ?   * *|* *                * *|* *
+// ?     *|a a a . . . .|       *|a a a . . . . . . . . . . . . . . . . .|
+// ?      |x x x x . . .|        |x x x x . . . . . . . . . . . . . . . .|
+// ?      |. x x x x . .|        |. x x x x . . . . . . . . . . . . . . .|
+// ?      |. . x x x x .|        |. . x x x x . . . . . . . . . . . . . .|
+// ?      |. . . x x x x|        |. . . x x x x . . . . . . . . . . . . .|
+// ?      |. . . . b b b|*
+// ?      |. . . . . b b|* *
+// ?      |. . . . . . b|* * *
+// ?      |. . . . . . .|* * * *
+// ? 
+// ? number of entries (N rows, M columns):
+// ? (q + p + 1)*min(N,M) - 
+
+// The only data that actually exists in memory during runtime is "data", the ONELY field of the struct.
+BandMatrix :: struct(_T: Type, _N: int, _M: int, lower_bw: int, upper_bw: int) {
+    using _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND); 
+    data: [_N*_M]_T;
+}
+
+dmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> BandMatrix(T,N,M) {
+    #if CHECKS {
+        #run assert(is_minor_number_type(T, U));
+        assert(values.count <= N*M);
+    }
+    res : BandMatrix(T, N, M) = ---;
+    for res {
+        if it_index < values.count {
+            set_lin(*res, it_index, ncast(T, values[it_index]));
+        } else {
+            set_lin(*res, it_index, zero(T));
+        }
+    }
+    return res;
+}
+
+dmat :: inline ($N: int, $M: int, values: ..$T) -> BandMatrix(T,N,M) {
+    #if CHECKS {
+        assert(values.count <= N*M);
+    }
+    res : BandMatrix(T, N, M) = ---;
+    for res {
+        if it_index < values.count {
+            set_lin(*res, it_index, values[it_index]);
+        } else {
+            set_lin(*res, it_index, zero(T));
+        }
+    }
+    return res;
+}
+
+rows :: inline (m: BandMatrix($T, $N, $M)) -> int {
+    return N;
+}
+cols :: inline (m: BandMatrix($T, $N, $M)) -> int {
+    return M;
+}
+
+get :: inline (m: BandMatrix($T, $N, $M), i: int, j: int) -> T {
+    return m.data[i*M + j];
+}
+set :: inline (m: *BandMatrix($T, $N, $M), i: int, j: int, value: T) {
+    m.data[i*M + j] = value;
+}
+
+get_lin :: inline (m: BandMatrix($T, $N, $M), i: int) -> T {
+    return m.data[i];
+}
+set_lin :: inline (m: *BandMatrix($T, $N, $M), i: int, value: T) {
+    m.data[i] = value;
+}
+
+get_raw :: inline (m: BandMatrix($T, $N, $M), i: int) -> T {
+    return m.data[i];
+}
+set_raw :: inline (m: *BandMatrix($T, $N, $M), i: int, value: T) {
+    m.data[i] = value;
+}
+n_raw :: inline (m: BandMatrix($T, $N, $M)) -> int {
+    return N*M;
+}
+from_raw_index :: inline (m: BandMatrix($T, $N, $M), i: int) -> int {
     return i;
 }
