@@ -37,6 +37,8 @@ run_all_tests :: () {
     test_polynomials();
     test_approximations();
     
+    test_MatrixTypes();
+
     test_vector();
     test_matrix();
 

@@ -40,7 +40,7 @@ MATRIX_FLAGS :: enum_flags u32 {
     VIEW  :: 0;
     DENSE :: (1 << 0);
     HEAP  :: (1 << 1);
-    Band  :: (1 << 2);
+    BAND  :: (1 << 2);
     // band
     // symmetric
     // hermitian
@@ -117,7 +117,8 @@ to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
     return i * cols(m) + j;
 }
 from_lin_index :: inline (m: *$M/MatrixType, i: int) -> int, int {
-    return from_lin_index(<<m, i);
+    r, c := from_lin_index(<<m, i);
+    return r, c;
 }
 to_lin_index :: inline (m: *$M/MatrixType, i: int, j: int) -> int {
     return to_lin_index(<<m, i, j);
@@ -439,7 +440,7 @@ DenseHeapMatrix :: struct(_T: Type) {
     data : []_T; // * heap-allocated data!
 }
 
-free :: inline (m: $M/DenseHeapMatrix) {
+free :: inline (m: DenseHeapMatrix) {
     array_free(m.data);
 }
 
@@ -546,18 +547,22 @@ from_raw_index :: inline (m: DenseHeapMatrix($T), i: int) -> int {
 // ?      |. . . . . . .|       
 // ? 
 
-// The only data that actually exists in memory during runtime is "data", the ONELY field of the struct.
-BandMatrix :: struct(_T: Type, _N: int, _M: int, lower_bw: int, upper_bw: int) {
+// ? P is the lower bandwidth
+// ? Q is the upper bandwidth
+BandMatrix :: struct(_T: Type, _N: int, _M: int, P: int, Q: int) {
     using _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND); 
-    data: [_N*_M]_T;
+    ROWS : int : P+Q+1; // ? the BandMatrix is of size ROWS × M
+    data: [ROWS*_M]_T;
 }
 
-dmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> BandMatrix(T,N,M) {
+bmat :: ($T: Type, $N: int, $M: int, $P: int, $Q: int, values: ..$U) -> BandMatrix(T,N,M,P,Q) {
     #if CHECKS {
         #run assert(is_minor_number_type(T, U));
-        assert(values.count <= N*M);
+        assert(N>=0 && M>=0 && P>=0 && Q>=0);
+        assert(values.count <= (P+Q+1)*M); // ! this is not the correct limit. See notes "Nov. 1st/2nd, 2021" (handwritten) for correct numbers
+        // TODO update above forumla with correct value!
     }
-    res : BandMatrix(T, N, M) = ---;
+    res : BandMatrix(T, N, M, P, Q) = ---;
     for res {
         if it_index < values.count {
             set_lin(*res, it_index, ncast(T, values[it_index]));
@@ -568,11 +573,14 @@ dmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> BandMatrix(T,N,M) {
     return res;
 }
 
-dmat :: inline ($N: int, $M: int, values: ..$T) -> BandMatrix(T,N,M) {
+bmat :: inline ($N: int, $M: int, $P: int, $Q: int, values: ..$T) -> BandMatrix(T,N,M,P,Q) {
     #if CHECKS {
         assert(values.count <= N*M);
+        assert(N>=0 && M>=0 && P>=0 && Q>=0);
+        assert(values.count <= (P+Q+1)*M); // ! this is not the correct limit. See notes "Nov. 1st/2nd, 2021" (handwritten) for correct numbers
+        // TODO update above forumla with correct value!
     }
-    res : BandMatrix(T, N, M) = ---;
+    res : BandMatrix(T, N, M, P, Q) = ---;
     for res {
         if it_index < values.count {
             set_lin(*res, it_index, values[it_index]);
@@ -583,36 +591,262 @@ dmat :: inline ($N: int, $M: int, values: ..$T) -> BandMatrix(T,N,M) {
     return res;
 }
 
-rows :: inline (m: BandMatrix($T, $N, $M)) -> int {
+// ? these are the numbers for rows and columns for the user.
+rows :: inline (m: BandMatrix($T, $N, $M, $P, $Q)) -> int {
     return N;
 }
-cols :: inline (m: BandMatrix($T, $N, $M)) -> int {
+cols :: inline (m: BandMatrix($T, $N, $M, $P, $Q)) -> int {
     return M;
 }
 
-get :: inline (m: BandMatrix($T, $N, $M), i: int, j: int) -> T {
+get :: inline (m: BandMatrix($T, $N, $M, $P, $Q), i: int, j: int) -> T {
+    if j < i-P || j > i+Q then return zero(T);
+    return get_internal(m, i-j+Q, j);
+}
+set :: inline (m: *BandMatrix($T, $N, $M, $P, $Q), i: int, j: int, value: T) {
+    #if CHECKS {
+        assert(j >= i-P && j <= i+Q);
+    }
+    if j < i-P || j > i+Q then return;
+    set_internal(m, i-j+Q, j, value);
+}
+
+
+// * specific to BandMatrix
+get_internal :: inline (m: BandMatrix($T, $N, $M, $P, $Q), i: int, j: int) -> T {
     return m.data[i*M + j];
 }
-set :: inline (m: *BandMatrix($T, $N, $M), i: int, j: int, value: T) {
+set_internal :: inline (m: *BandMatrix($T, $N, $M, $P, $Q), i: int, j: int, value: T) {
     m.data[i*M + j] = value;
 }
 
-get_lin :: inline (m: BandMatrix($T, $N, $M), i: int) -> T {
-    return m.data[i];
+
+// TODO there should be a better way to do this
+get_lin :: inline (m: BandMatrix($T, $N, $M, $P, $Q), i: int) -> T {
+    r, c := from_lin_index(m, i);
+    return get(m, r, c);
 }
-set_lin :: inline (m: *BandMatrix($T, $N, $M), i: int, value: T) {
-    m.data[i] = value;
+set_lin :: inline (m: *BandMatrix($T, $N, $M, $P, $Q), i: int, value: T) {
+    r, c := from_lin_index(m, i);
+    set(m, r, c, value);
 }
 
-get_raw :: inline (m: BandMatrix($T, $N, $M), i: int) -> T {
+get_raw :: inline (m: BandMatrix($T, $N, $M, $P, $Q), i: int) -> T {
+    r_int := i / M;
+    c_int := i % M;
+    r := r_int + c_int - Q;
+    c := c_int;
+    if c < r-P || c > r+Q then return zero(T);
     return m.data[i];
 }
-set_raw :: inline (m: *BandMatrix($T, $N, $M), i: int, value: T) {
+set_raw :: inline (m: *BandMatrix($T, $N, $M, $P, $Q), i: int, value: T) {
     m.data[i] = value;
 }
-n_raw :: inline (m: BandMatrix($T, $N, $M)) -> int {
-    return N*M;
+n_raw :: inline (m: BandMatrix($T, $N, $M, $P, $Q)) -> int {
+    return m.ROWS * M; // ! this is not the correct number!
 }
-from_raw_index :: inline (m: BandMatrix($T, $N, $M), i: int) -> int {
-    return i;
+from_raw_index :: inline (m: BandMatrix($T, $N, $M, $P, $Q), i: int) -> int {
+    r_int := i / M;
+    c_int := i % M;
+    r := r_int + c_int - Q;
+    c := c_int;
+    return to_lin_index(m, r, c);
+}
+
+
+test_BandMatrix :: () {
+    println_push("BandMatrix", color = .FG_GREEN);
+
+    {
+        println_push("test 1");
+        bm : BandMatrix(int, 15, 17, 1, 2) = ---;
+        for raw(bm) {
+            set_raw(*bm, it_raw_index, it_raw_index);
+        }
+        println(bm);
+        println(pstr(bm));
+    }
+
+    {
+        println_push("test 2");
+        bm : BandMatrix(int, 8, 5, 2, 0);
+        for raw(bm) {
+            set_raw(*bm, it_raw_index, it_raw_index);
+        }
+        set(*bm, 3, 3, -42);
+        set(*bm, 2, 1, 313);
+        println(pstr(bm));
+    }
+}
+
+
+
+
+// ########     ###    ##    ## ########     ##     ## ########    ###    ########
+// ##     ##   ## ##   ###   ## ##     ##    ##     ## ##         ## ##   ##     ##
+// ##     ##  ##   ##  ####  ## ##     ##    ##     ## ##        ##   ##  ##     ##
+// ########  ##     ## ## ## ## ##     ##    ######### ######   ##     ## ########
+// ##     ## ######### ##  #### ##     ##    ##     ## ##       ######### ##
+// ##     ## ##     ## ##   ### ##     ##    ##     ## ##       ##     ## ##
+// ########  ##     ## ##    ## ########     ##     ## ######## ##     ## ##
+
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? 1.2.1 Band Matrices, page 15 & 17
+
+// ? P is the lower bandwidth
+// ? Q is the upper bandwidth
+BandHeapMatrix :: struct(_T: Type) {
+    using _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND | MATRIX_FLAGS.HEAP); 
+    rows: int;
+    cols: int;
+    irows: int;
+    lower_bandwidth: int;
+    upper_bandwidth: int;
+    data: []_T;
+}
+
+free :: inline (m: BandHeapMatrix) {
+    array_free(m.data);
+}
+
+bhmat :: ($T: Type, N: int, M: int, P: int, Q: int, $init_zeroes: bool = true) -> BandHeapMatrix(T) {
+    res : BandHeapMatrix(T) = ---;
+    res.rows = N;
+    res.cols = M;
+    res.lower_bandwidth = p;
+    res.upper_bandwidth = q;
+    res.irows = p*q+1;
+    res.data = NewArray(res.irows * M, T, init_zeroes);
+    return res;
+}
+
+
+bhmat :: ($T: Type, N: int, M: int, P: int, Q: int, values: ..$U) -> BandHeapMatrix(T) {
+    #if CHECKS {
+        #run assert(is_minor_number_type(T, U));
+        assert(N>=0 && M>=0 && P>=0 && Q>=0);
+        assert(values.count <= (P+Q+1)*M); // ! this is not the correct limit. See notes "Nov. 1st/2nd, 2021" (handwritten) for correct numbers
+        // TODO update above forumla with correct value!
+    }
+    res := dhmat(T, N, M, P, Q);
+    for i: 0..values.count-1 {
+        set_lin(*res, i, ncast(T, values[i]));
+    }
+    return res;
+}
+
+bmat :: inline (N: int, M: int, P: int, Q: int, values: ..$T) -> BandHeapMatrix(T) {
+    #if CHECKS {
+        assert(values.count <= N*M);
+        assert(N>=0 && M>=0 && P>=0 && Q>=0);
+        assert(values.count <= (P+Q+1)*M); // ! this is not the correct limit. See notes "Nov. 1st/2nd, 2021" (handwritten) for correct numbers
+        // TODO update above forumla with correct value!
+    }
+    res := bhmat(T, N, M, P, Q);
+    for i: 0..values.count {
+        set_lin(*res, i, values[i]);
+    }
+    return res;
+}
+
+// ? these are the numbers for rows and columns for the user.
+rows :: inline (m: BandHeapMatrix) -> int {
+    return m.rows;
+}
+cols :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q)) -> int {
+    return M;
+}
+
+get :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int) -> T {
+    if j < i-P || j > i+Q then return zero(T);
+    return get_internal(m, i-j+Q, j);
+}
+set :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int, value: T) {
+    #if CHECKS {
+        assert(j >= i-P && j <= i+Q);
+    }
+    if j < i-P || j > i+Q then return;
+    set_internal(m, i-j+Q, j, value);
+}
+
+
+// * specific to BandHeapMatrix
+get_internal :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int) -> T {
+    return m.data[i*M + j];
+}
+set_internal :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int, value: T) {
+    m.data[i*M + j] = value;
+}
+
+
+// TODO there should be a better way to do this
+get_lin :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int) -> T {
+    r, c := from_lin_index(m, i);
+    return get(m, r, c);
+}
+set_lin :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, value: T) {
+    r, c := from_lin_index(m, i);
+    set(m, r, c, value);
+}
+
+get_raw :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int) -> T {
+    r_int := i / M;
+    c_int := i % M;
+    r := r_int + c_int - Q;
+    c := c_int;
+    if c < r-P || c > r+Q then return zero(T);
+    return m.data[i];
+}
+set_raw :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, value: T) {
+    m.data[i] = value;
+}
+n_raw :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q)) -> int {
+    return m.ROWS * M; // ! this is not the correct number!
+}
+from_raw_index :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int) -> int {
+    r_int := i / M;
+    c_int := i % M;
+    r := r_int + c_int - Q;
+    c := c_int;
+    return to_lin_index(m, r, c);
+}
+
+
+BandHeapMatrix :: () {
+    println_push("BandHeapMatrix", color = .FG_GREEN);
+
+    {
+        println_push("test 1");
+        bm : BandHeapMatrix(int, 15, 17, 1, 2) = ---;
+        for raw(bm) {
+            set_raw(*bm, it_raw_index, it_raw_index);
+        }
+        println(bm);
+        println(pstr(bm));
+    }
+
+    {
+        println_push("test 2");
+        bm : BandHeapMatrix(int, 8, 5, 2, 0);
+        for raw(bm) {
+            set_raw(*bm, it_raw_index, it_raw_index);
+        }
+        set(*bm, 3, 3, -42);
+        set(*bm, 2, 1, 313);
+        println(pstr(bm));
+    }
+}
+
+
+
+
+
+
+
+
+test_MatrixTypes :: () {
+    println_push("MatrixTypes", color = .FG_WHITE);
+    test_BandMatrix();
+    test_BandHeapMatrix();
 }
