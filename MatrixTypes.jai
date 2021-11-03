@@ -658,7 +658,7 @@ test_BandMatrix :: () {
     println_push("BandMatrix", color = .FG_GREEN);
 
     {
-        println_push("test 1");
+        println_push("test 1", color = .FG_YELLOW);
         bm : BandMatrix(int, 15, 17, 1, 2) = ---;
         for raw(bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
@@ -668,7 +668,7 @@ test_BandMatrix :: () {
     }
 
     {
-        println_push("test 2");
+        println_push("test 2", color = .FG_YELLOW);
         bm : BandMatrix(int, 8, 5, 2, 0);
         for raw(bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
@@ -714,9 +714,9 @@ bhmat :: ($T: Type, N: int, M: int, P: int, Q: int, $init_zeroes: bool = true) -
     res : BandHeapMatrix(T) = ---;
     res.rows = N;
     res.cols = M;
-    res.lower_bandwidth = p;
-    res.upper_bandwidth = q;
-    res.irows = p*q+1;
+    res.lower_bandwidth = P;
+    res.upper_bandwidth = Q;
+    res.irows = P+Q+1;
     res.data = NewArray(res.irows * M, T, init_zeroes);
     return res;
 }
@@ -744,7 +744,7 @@ bmat :: inline (N: int, M: int, P: int, Q: int, values: ..$T) -> BandHeapMatrix(
         // TODO update above forumla with correct value!
     }
     res := bhmat(T, N, M, P, Q);
-    for i: 0..values.count {
+    for i: 0..values.count-1 {
         set_lin(*res, i, values[i]);
     }
     return res;
@@ -754,15 +754,17 @@ bmat :: inline (N: int, M: int, P: int, Q: int, values: ..$T) -> BandHeapMatrix(
 rows :: inline (m: BandHeapMatrix) -> int {
     return m.rows;
 }
-cols :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q)) -> int {
-    return M;
+cols :: inline (m: BandHeapMatrix) -> int {
+    return m.cols;
 }
 
-get :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int) -> T {
-    if j < i-P || j > i+Q then return zero(T);
-    return get_internal(m, i-j+Q, j);
+get :: inline (m: BandHeapMatrix($T), i: int, j: int) -> T {
+    if j < i-m.lower_bandwidth || j > i+m.upper_bandwidth then return zero(T);
+    return get_internal(m, i-j+m.upper_bandwidth, j);
 }
-set :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int, value: T) {
+set :: inline (m: *BandHeapMatrix($T), i: int, j: int, value: T) {
+    P := m.lower_bandwidth;
+    Q := m.upper_bandwidth;
     #if CHECKS {
         assert(j >= i-P && j <= i+Q);
     }
@@ -772,53 +774,57 @@ set :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int, value: T)
 
 
 // * specific to BandHeapMatrix
-get_internal :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int) -> T {
-    return m.data[i*M + j];
+get_internal :: inline (m: BandHeapMatrix($T), i: int, j: int) -> T {
+    return m.data[i*m.cols + j];
 }
-set_internal :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, j: int, value: T) {
-    m.data[i*M + j] = value;
+set_internal :: inline (m: *BandHeapMatrix($T), i: int, j: int, value: T) {
+    m.data[i*m.cols + j] = value;
 }
 
 
 // TODO there should be a better way to do this
-get_lin :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int) -> T {
+get_lin :: inline (m: BandHeapMatrix($T), i: int) -> T {
     r, c := from_lin_index(m, i);
     return get(m, r, c);
 }
-set_lin :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, value: T) {
+set_lin :: inline (m: *BandHeapMatrix($T), i: int, value: T) {
     r, c := from_lin_index(m, i);
     set(m, r, c, value);
 }
 
-get_raw :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int) -> T {
-    r_int := i / M;
-    c_int := i % M;
+get_raw :: inline (m: BandHeapMatrix($T), i: int) -> T {
+    // TODO the whole indexing math can be skipped if you know, which values in the BandHeapMatrix are garbage.
+    r_int := i / m.cols;
+    c_int := i % m.cols;
+    P := m.lower_bandwidth;
+    Q := m.upper_bandwidth;
     r := r_int + c_int - Q;
     c := c_int;
     if c < r-P || c > r+Q then return zero(T);
     return m.data[i];
 }
-set_raw :: inline (m: *BandHeapMatrix($T, $N, $M, $P, $Q), i: int, value: T) {
+set_raw :: inline (m: *BandHeapMatrix($T), i: int, value: T) {
     m.data[i] = value;
 }
-n_raw :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q)) -> int {
-    return m.ROWS * M; // ! this is not the correct number!
+n_raw :: inline (m: BandHeapMatrix) -> int {
+    return m.irows * m.cols; // ! this is not the correct number!
 }
-from_raw_index :: inline (m: BandHeapMatrix($T, $N, $M, $P, $Q), i: int) -> int {
-    r_int := i / M;
-    c_int := i % M;
-    r := r_int + c_int - Q;
+from_raw_index :: inline (m: BandHeapMatrix, i: int) -> int {
+    r_int := i / m.cols;
+    c_int := i % m.cols;
+    r := r_int + c_int - m.upper_bandwidth;
     c := c_int;
     return to_lin_index(m, r, c);
 }
 
 
-BandHeapMatrix :: () {
+test_BandHeapMatrix :: () {
     println_push("BandHeapMatrix", color = .FG_GREEN);
 
     {
-        println_push("test 1");
-        bm : BandHeapMatrix(int, 15, 17, 1, 2) = ---;
+        println_push("test 1", color = .FG_YELLOW);
+        bm := bhmat(int, 15, 17, 1, 2, false);
+        defer free(bm);
         for raw(bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
         }
@@ -827,8 +833,9 @@ BandHeapMatrix :: () {
     }
 
     {
-        println_push("test 2");
-        bm : BandHeapMatrix(int, 8, 5, 2, 0);
+        println_push("test 2", color = .FG_YELLOW);
+        bm := bhmat(int, 8, 5, 2, 0, false);
+        defer free(bm);
         for raw(bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
         }
