@@ -41,6 +41,7 @@ MATRIX_FLAGS :: enum_flags u32 {
     DENSE :: (1 << 0);
     HEAP  :: (1 << 1);
     BAND  :: (1 << 2);
+    TRIANGULAR :: (1 << 3);
     // band
     // symmetric
     // hermitian
@@ -549,10 +550,10 @@ from_raw_index :: inline (m: DenseHeapMatrix($T), i: int) -> int {
 
 // ? P is the lower bandwidth
 // ? Q is the upper bandwidth
-BandMatrix :: struct(_T: Type, _N: int, _M: int, P: int, Q: int) {
+BandMatrix :: struct(_T: Type, N: int, M: int, P: int, Q: int) {
     using _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND); 
     ROWS : int : P+Q+1; // ? the BandMatrix is of size ROWS × M
-    data: [ROWS*_M]_T;
+    data: [ROWS*M]_T;
 }
 
 bmat :: ($T: Type, $N: int, $M: int, $P: int, $Q: int, values: ..$U) -> BandMatrix(T,N,M,P,Q) {
@@ -632,6 +633,7 @@ set_lin :: inline (m: *BandMatrix($T, $N, $M, $P, $Q), i: int, value: T) {
 }
 
 get_raw :: inline (m: BandMatrix($T, $N, $M, $P, $Q), i: int) -> T {
+    // ? this is necessary since some values in the data are nonsense!
     r_int := i / M;
     c_int := i % M;
     r := r_int + c_int - Q;
@@ -846,8 +848,155 @@ test_BandHeapMatrix :: () {
 }
 
 
+// ######## ########  ####    ###    ##    ##  ######   ##     ## ##          ###    ########
+//    ##    ##     ##  ##    ## ##   ###   ## ##    ##  ##     ## ##         ## ##   ##     ##
+//    ##    ##     ##  ##   ##   ##  ####  ## ##        ##     ## ##        ##   ##  ##     ##
+//    ##    ########   ##  ##     ## ## ## ## ##   #### ##     ## ##       ##     ## ########
+//    ##    ##   ##    ##  ######### ##  #### ##    ##  ##     ## ##       ######### ##   ##
+//    ##    ##    ##   ##  ##     ## ##   ### ##    ##  ##     ## ##       ##     ## ##    ##
+//    ##    ##     ## #### ##     ## ##    ##  ######    #######  ######## ##     ## ##     ##
+
+#scope_file
+triangluar_data_size :: (n: int, m: int) -> int {
+    if n >= m {
+        return ((m+1)*m)/2;
+    }
+    k := m-n;
+    return ((m+1)*m)/2 - ((k+1)*k)/2;
+}
+triangular_first_index_of_row :: inline (cols: int, i: int) -> int {
+    k := cols - i;
+    return ((cols+1)*cols)/2 - ((k+1)*k)/2;
+}
+#scope_export
+
+TriangularMatrix :: struct(_T: Type, N: int, M: int) {
+    using _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.TRIANGULAR);
+    transposed: bool = false;
+    data: [#run triangluar_data_size(N,M)]_T;
+}
+
+rows :: inline (m: TriangularMatrix($T, $N, $M)) -> int {
+    return ifx !m.transposed then N else M;
+}
+cols :: inline (m: TriangularMatrix($T, $N, $M)) -> int {
+    return ifx !m.transposed then M else N;
+}
+
+get :: inline (m: TriangularMatrix($T, $N, $M), i: int, j: int) -> T {
+    if m.transposed {
+        swap_code(i, j);
+    } 
+    if i > j then return zero(T);
+    return m.data[triangular_first_index_of_row(M, i) + (j-i)];
+}
+set :: inline (m: *TriangularMatrix($T, $N, $M), i: int, j: int, value: T) {
+    if m.transposed {
+        swap_code(i,j);
+    }
+    #if CHECKS {
+        assert( i <= j );
+    }
+    m.data[triangular_first_index_of_row(M,i)+(j-i)] = value;
+}
+
+get_lin :: inline (m: TriangularMatrix($T, $N, $M), i: int) -> T {
+    r, c := from_lin_index(m, i);
+    return get(m, r, c);
+}
+set_lin :: inline (m: *TriangularMatrix($T, $N, $M), i: int, value: T) {
+    r, c := from_lin_index(m, i);
+    set(m, r, c, value);
+}
+
+get_raw :: inline (m: TriangularMatrix($T, $N, $M), i: int) -> T {
+    return m.data[i];
+}
+set_raw :: inline (m: *TriangularMatrix($T, $N, $M), i: int, value: T) {
+    m.data[i] = value;
+}
+n_raw :: inline (m: TriangularMatrix) -> int {
+    return m.data.count;
+}
+from_raw_index :: inline (m: TriangularMatrix($T, $N, $M), i: int) -> int {
+    #if CHECKS {
+        assert(i >= 0 && i < m.data.count);
+    }
+    count := 0;
+    r := 0;
+    c := 0;
+    for 0..N-1 {
+        next := M - it;
+        if count + next > i {
+            r = it;
+            c = i - count;
+            break;
+        }
+    }
+    return to_lin_index(m,r,c);
+}
 
 
+
+
+test_TriangularMatrix :: () {
+    println_push("TriangularMatrix", color = .FG_GREEN);
+
+    {
+        println_push("test utils 1", color = .FG_YELLOW);
+        assert( triangular_first_index_of_row(4, 2) == 7 );
+        for 0..6-1 {
+            println("%: %", it, triangular_first_index_of_row(6, it));
+        }
+    }
+
+    {
+        println_push("test utils 2", color = .FG_YELLOW);
+        assert( triangluar_data_size(3, 5) == 12 );
+        assert( triangluar_data_size(5, 3) == 6);
+    }
+
+    {
+        println_push("test 1", color = .FG_YELLOW);
+        tm : TriangularMatrix(int, 8, 5) = ---;
+        for raw(tm) {
+            set_raw(*tm, it_raw_index, it_raw_index);
+        }
+        tm.transposed = false;
+        println("TriangularMatrix: %", pstr(tm));
+    }
+
+    {
+        println_push("test 2", color = .FG_YELLOW);
+        tm : TriangularMatrix(int, 8, 5) = ---;
+        for raw(tm) {
+            set_raw(*tm, it_raw_index, it_raw_index);
+        }
+        tm.transposed = true;
+        println("TriangularMatrixᵀ: %", pstr(tm));
+    }
+
+    {
+        println_push("test 3", color = .FG_YELLOW);
+        tm : TriangularMatrix(int, 8, 5);
+        set(*tm, 1, 3, -42);
+        set(*tm, 0, 4, 313);
+        println("TriangularMatrix: %", pstr(tm));
+        assert(get(tm, 1, 3) == -42);
+        assert(get(tm, 0, 4) == 313);
+    }
+
+    {
+        println_push("test 4", color = .FG_YELLOW);
+        tm : TriangularMatrix(int, 8, 5);
+        tm.transposed = true;
+        set(*tm, 3, 1, -42);
+        set(*tm, 4, 0, 313);
+        println("TriangularMatrixᵀ : %", pstr(tm));
+        assert(get(tm, 3, 1) == -42);
+        assert(get(tm, 4, 0) == 313);
+    }
+}
 
 
 
@@ -856,4 +1005,5 @@ test_MatrixTypes :: () {
     println_push("MatrixTypes", color = .FG_WHITE);
     test_BandMatrix();
     test_BandHeapMatrix();
+    test_TriangularMatrix();
 }
