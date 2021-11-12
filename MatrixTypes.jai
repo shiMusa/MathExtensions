@@ -559,7 +559,7 @@ BandMatrix :: struct(_T: Type, N: int, M: int, P: int, Q: int) {
 bmat :: ($T: Type, $N: int, $M: int, $P: int, $Q: int, values: ..$U) -> BandMatrix(T,N,M,P,Q) {
     #if CHECKS {
         #run assert(is_minor_number_type(T, U));
-        assert(N>=0 && M>=0 && P>=0 && Q>=0);
+        #run assert(N>=0 && M>=0 && P>=0 && Q>=0);
         assert(values.count <= (P+Q+1)*M); // ! this is not the correct limit. See notes "Nov. 1st/2nd, 2021" (handwritten) for correct numbers
         // TODO update above forumla with correct value!
     }
@@ -876,6 +876,34 @@ TriangularMatrix :: struct(_T: Type, N: int, M: int) {
     data: [#run triangluar_data_size(N,M)]_T;
 }
 
+
+
+tmat :: ($T: Type, $N: int, $M: int, values: ..$U) -> TriangularMatrix(T,N,M) {
+    #if CHECKS {
+        #run assert(is_minor_number_type(T, U));
+        #run assert(N >= 0 && M >= 0);
+        assert(values.count <= triangluar_data_size(N,M));
+    }
+    res : TriangularMatrix(T, N, M);
+    for values {
+        res.data[it_index] = ncast(T, it);
+    }
+    return res;
+}
+
+tmat :: ($N: int, $M: int, values: ..$T) -> TriangularMatrix(T,N,M) {
+    #if CHECKS {
+        #run assert(N >= 0 && M >= 0);
+        assert(values.count <= triangluar_data_size(N,M));
+    }
+    res : TriangularMatrix(T, N, M);
+    for values {
+        res.data[it_index] = it;
+    }
+    return res;
+}
+
+
 rows :: inline (m: TriangularMatrix($T, $N, $M), $check_transposed: bool = true) -> int {
     #if check_transposed {
         return ifx !m.transposed then N else M;
@@ -1039,6 +1067,31 @@ thmat :: ($T: Type, N: int, M: int, transposed: bool = false, $init_zeroes: bool
     res.cols = M;
     res.transposed = transposed;
     res.data = NewArray(triangluar_data_size(N, M), T, init_zeroes);
+    return res;
+}
+
+thmat :: ($T: Type, N: int, M: int, values: ..$U) -> TriangularHeapMatrix(T) {
+    #if CHECKS {
+        #run assert(is_minor_number_type(T, U));
+        assert(N >= 0 && M >= 0);
+        assert(values.count <= triangluar_data_size(N,M));
+    }
+    res := thmat(T, N, M);
+    for values {
+        res.data[it_index] = ncast(T, it);
+    }
+    return res;
+}
+
+thmat :: (N: int, M: int, values: ..$T) -> TriangularHeapMatrix(T) {
+    #if CHECKS {
+        assert(N >= 0 && M >= 0);
+        assert(values.count <= triangluar_data_size(N,M));
+    }
+    res := thmat(T,N,M);
+    for values {
+        res.data[it_index] = it;
+    }
     return res;
 }
 

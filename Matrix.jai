@@ -564,6 +564,42 @@ div_el_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
 // ##     ## ##     ##    ##        ##   ##     ##     ## ##     ##    ##
 // ##     ## ##     ##    ##                    ##     ## ##     ##    ##
 
+operator * :: (a: DenseMatrix($A, $AN, $M), b: DenseMatrix($B, M, $BM)) -> DenseMatrix(UpCast(A,B).T, AN, BM) {
+    res : DenseMatrix(UpCast(A,B).T, AN, BM);
+    inline mul(*res,a,b);
+    return res;
+}
+operator * :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
+    res := dhmat(UpCast(A,B).T, rows(a), cols(b)); // ! alloc
+    inline mul(*res,a,b);
+    return res;
+}
+
+// TODO implement operator overloads for other `MatrixType`s where it makes sense
+operator * :: (a: TriangularMatrix($A, $AN, $M), b: TriangularMatrix($B, M, $BM)) -> TriangularMatrix(UpCast(A,B).T, AN, BM) {
+    res : TriangularMatrix(UpCast(A,B).T, AN, BM);
+    inline mul(*res,a,b);
+    return res;
+}
+operator * :: (a: TriangularHeapMatrix($A), b: TriangularHeapMatrix($B)) -> TriangularHeapMatrix(UpCast(A,B).T) {
+    res := thmat(UpCast(A,B).T, rows(a), cols(b)); // ! alloc
+    inline mul(*res,a,b);
+    return res;
+}
+
+// * Assuming res is initialized to zeroes.
+// * User has to know, what type the result has to be!
+mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    #if C.flags & MATRIX_FLAGS.TRIANGULAR && 
+        A.flags & MATRIX_FLAGS.TRIANGULAR && 
+        B.flags & MATRIX_FLAGS.TRIANGULAR {
+        inline mat_mul_mat_triangular(res, a, b);
+    } else {
+        inline mat_mul_mat_default(res,a,b);
+    }
+}
+
+#scope_file
 // ? Scientific Computing, Vol I: Linear and nonlinear equations
 // ? Texts in computational science and engineering 18
 // ? Springer
@@ -576,42 +612,95 @@ div_el_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
 // ? The Johns Hopkins University Press
 // ? Algorithm 1.1.5 ijk Matrix Multiplication, page 8
 
-// TODO this is the same as *axpy for matrices... can remove the latter and just make it an alias to this.
-
-operator * :: (a: DenseMatrix($A, $AN, $M), b: DenseMatrix($B, M, $BM)) -> DenseMatrix(UpCast(A,B).T, AN, BM) {
-    res : DenseMatrix(UpCast(A,B).T, AN, BM);
-    inline mul(*res,a,b);
-    return res;
-}
-operator * :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
-    res := dhmat(UpCast(A,B).T, rows(a), cols(b)); // ! alloc
-    inline mul(*res,a,b);
-    return res;
-}
-
-
-// * Assuming res is initialized to zeroes.
-// * User has to know, what type the result has to be!
-mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
-    inline mat_mul_mat_default(res,a,b);
-}
-
-#scope_file
-mat_mul_mat_default :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+// ? saxpy ----------------------------------------------------------------------------
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
+// ? Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
+// ? C = C + A * B
+mat_mul_mat_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
     #if CHECKS {
+        #run assert(is_minor_number_type(C.data_type, A.data_type) && is_minor_number_type(C.data_type, B.data_type));
         assert(cols(a) == rows(b)  , "Matrix dimensions don't match: a.cols = %, b.rows = %", cols(a), rows(b)  );
-        assert(rows(a) == rows(res), "Matrix dimensions don't match: a.rows = %, c.rows = %", rows(a), rows(res));
-        assert(cols(b) == cols(res), "Matrix dimensions don't match: b.cols = %, c.cols = %", cols(b), cols(res));
+        assert(rows(a) == rows(c), "Matrix dimensions don't match: a.rows = %, c.rows = %", rows(a), rows(c));
+        assert(cols(b) == cols(c), "Matrix dimensions don't match: b.cols = %, c.cols = %", cols(b), cols(c));
     }
 
     for j: 0..cols(b)-1 {
         for k: 0..cols(a)-1 {
             tmp := get(b,k,j);
-            for i: 0..rows(a)-1 {
-                set(res,i,j, get(res,i,j) + get(a,i,k) * tmp);
+            for i: 0..rows(c)-1 {
+                set(c,i,j, get(c,i,j) + get(a,i,k) * tmp);
             }
         }
     }
+}
+
+// ? Matrix Computations, 4th edition
+// ? The Johns Hopkins University Press
+// ? Algorithm 1.2.1 Triangular Matrix Multiplication, page 16
+mat_mul_mat_triangular :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    #if CHECKS {
+        #run assert(is_minor_number_type(C.data_type, A.data_type) && is_minor_number_type(C.data_type, B.data_type));
+        assert(cols(a) == rows(b)  , "Matrix dimensions don't match: a.cols = %, b.rows = %", cols(a), rows(b)  );
+        assert(rows(a) == rows(c), "Matrix dimensions don't match: a.rows = %, c.rows = %", rows(a), rows(c));
+        assert(cols(b) == cols(c), "Matrix dimensions don't match: b.cols = %, c.cols = %", cols(b), cols(c));
+        assert(!c.transposed && !a.transposed && !b.transposed);
+    }
+
+    for i: 0..rows(a)-1 {
+        for j: i..cols(b)-1 {
+            for k: i..min(j, rows(b)-1) {
+                // println("(%, %), %", i, j, k);
+                set(c,i,j, get(c,i,j) + get(a,i,k) * get(b,k,j));
+            }
+        }
+    }
+}
+#scope_export
+
+#scope_file
+test_mat_mul_mat_triangular :: () {
+    println_push("mat_mul_mat_triangular", color = .FG_GREEN);
+
+    {
+        println_push("test 1", color = .FG_YELLOW);
+        a := tmat(int, 5, 3, 1,2,3,4,5,6);
+        b := tmat(int, 3, 4, 1,2,3,4,5,6,7,8,9);
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : TriangularMatrix(int, 5, 4);
+        mat_mul_mat_triangular(*c, a, b);
+        d := a * b;
+        println("c = %", pstr(c));
+        println("d = %", pstr(d));
+        res := tmat(int, 5, 4, 1,12,39,45,20,64,73,48,54);
+        println("res = %", pstr(res));
+        assert(c == res);
+        assert(d == res);
+    }
+
+    {
+        println_push("test 2", color = .FG_YELLOW);
+        a := tmat(int, 3, 5, 1,2,3,4,5,6,7,8,9,10,11,12);
+        b := tmat(int, 5, 4, 1,2,3,4,5,6,7,8,9,10);
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : TriangularMatrix(int, 3, 4);
+        mat_mul_mat_triangular(*c, a, b);
+        d := a * b;
+        println("c = %", pstr(c));
+        println("d = %", pstr(d));
+        res := tmat(int, 3, 4, 1,12,39,85,30,92,185,80,200);
+        println("res = %", pstr(res));
+        assert(c == res);
+        assert(d == res);
+    }
+} 
+
+test_mat_mul_mat :: () {
+    println_push("mat_mul_mat_...", color = .FG_WHITE);
+    test_mat_mul_mat_triangular();
 }
 #scope_export
 
@@ -981,33 +1070,11 @@ neg :: (a: *$A/MatrixType) {
 //  ##   ##  ##     ##  ##   ##  ##           ##
 //           ##     ## ##     ## ##           ##
 
-// ? Matrix Computations, 4th edition
-// ? The Johns Hopkins University Press
-// ? Algorithm 1.1.6 Dot Product Matrix Multiplication, page 10
-// ? Algorithm 1.1.7 Saxpy Matrix Multiplication, page 10
-// ? C = C + A * B
-saxpy :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
-    inline saxpy_default(c,a,b);
-}
 
-#scope_file
-saxpy_default :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
-    #if CHECKS {
-        #run assert(is_minor_number_type(C.data_type, A.data_type) && is_minor_number_type(C.data_type, B.data_type));
-        assert(rows(a) == rows(c));
-        assert(rows(b) == cols(a) && cols(b) == cols(c));
-    }
-
-    for j: 0..cols(c)-1 {
-        for k: 0..cols(a)-1 {
-            tmp := get(b,k,j);
-            for i: 0..rows(c)-1 {
-                set(c,i,j, get(c,i,j) + get(a,i,k) * tmp);
-            }
-        }
-    }
+// ? see `mul`
+saxpy :: inline (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
+    inline mul(c,a,b);
 }
-#scope_export
 
 
 // ########  ######## ########  ##     ## ##     ## ######## ########
@@ -1797,4 +1864,6 @@ test_matrix :: () {
             assert(S == res);
         }
     }
+
+    test_mat_mul_mat();
 }
