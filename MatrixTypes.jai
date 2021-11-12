@@ -876,23 +876,35 @@ TriangularMatrix :: struct(_T: Type, N: int, M: int) {
     data: [#run triangluar_data_size(N,M)]_T;
 }
 
-rows :: inline (m: TriangularMatrix($T, $N, $M)) -> int {
-    return ifx !m.transposed then N else M;
+rows :: inline (m: TriangularMatrix($T, $N, $M), $check_transposed: bool = true) -> int {
+    #if check_transposed {
+        return ifx !m.transposed then N else M;
+    } else {
+        return N;
+    }
 }
-cols :: inline (m: TriangularMatrix($T, $N, $M)) -> int {
-    return ifx !m.transposed then M else N;
+cols :: inline (m: TriangularMatrix($T, $N, $M), $check_transposed: bool = true) -> int {
+    #if check_transposed {
+        return ifx !m.transposed then M else N;
+    } else {
+        return M;
+    }
 }
 
-get :: inline (m: TriangularMatrix($T, $N, $M), i: int, j: int) -> T {
-    if m.transposed {
-        swap_code(i, j);
-    } 
+get :: inline (m: TriangularMatrix($T, $N, $M), i: int, j: int, $check_transposed: bool = true) -> T {
+    #if check_transposed {
+        if m.transposed {
+            swap_code(i, j);
+        } 
+    }
     if i > j then return zero(T);
     return m.data[triangular_first_index_of_row(M, i) + (j-i)];
 }
-set :: inline (m: *TriangularMatrix($T, $N, $M), i: int, j: int, value: T) {
-    if m.transposed {
-        swap_code(i,j);
+set :: inline (m: *TriangularMatrix($T, $N, $M), i: int, j: int, value: T, $check_transposed: bool = true) {
+    #if check_transposed {
+        if m.transposed {
+            swap_code(i,j);
+        }
     }
     #if CHECKS {
         assert( i <= j );
@@ -933,7 +945,7 @@ from_raw_index :: inline (m: TriangularMatrix($T, $N, $M), i: int) -> int {
             break;
         }
     }
-    return to_lin_index(m,r,c);
+    return ifx !m.transposed then to_lin_index(m,r,c) else to_lin_index(m,c,r);
 }
 
 
@@ -1000,10 +1012,164 @@ test_TriangularMatrix :: () {
 
 
 
+// ######## ########  ####    ##     ## ########    ###    ########
+//    ##    ##     ##  ##     ##     ## ##         ## ##   ##     ##
+//    ##    ##     ##  ##     ##     ## ##        ##   ##  ##     ##
+//    ##    ########   ##     ######### ######   ##     ## ########
+//    ##    ##   ##    ##     ##     ## ##       ######### ##
+//    ##    ##    ##   ##     ##     ## ##       ##     ## ##
+//    ##    ##     ## ####    ##     ## ######## ##     ## ##
+
+
+TriangularHeapMatrix :: struct(_T: Type) {
+    using _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.TRIANGULAR | MATRIX_FLAGS.HEAP);
+    transposed: bool = false;
+    rows: int;
+    cols: int;
+    data: []_T;
+}
+
+free :: inline (m: TriangularHeapMatrix) {
+    array_free(m.data);
+}
+
+thmat :: ($T: Type, N: int, M: int, transposed: bool = false, $init_zeroes: bool = true) -> TriangularHeapMatrix(T) {
+    res : TriangularHeapMatrix(T) = ---;
+    res.rows = N;
+    res.cols = M;
+    res.transposed = transposed;
+    res.data = NewArray(triangluar_data_size(N, M), T, init_zeroes);
+    return res;
+}
+
+rows :: inline (m: TriangularHeapMatrix, $check_transposed: bool = true) -> int {
+    #if check_transposed {
+        return ifx !m.transposed then m.rows else m.cols;
+    } else {
+        return m.rows;
+    }
+}
+cols :: inline (m: TriangularHeapMatrix, $check_transposed: bool = true) -> int {
+    #if check_transposed {
+        return ifx !m.transposed then m.cols else m.rows;
+    } else {
+        return m.cols;
+    }
+}
+
+get :: inline (m: TriangularHeapMatrix($T), i: int, j: int, $check_transposed: bool = true) -> T {
+    #if check_transposed {
+        if m.transposed {
+            swap_code(i, j);
+        } 
+    }
+    if i > j then return zero(T);
+    return m.data[triangular_first_index_of_row(m.cols, i) + (j-i)];
+}
+set :: inline (m: *TriangularHeapMatrix($T), i: int, j: int, value: T, $check_transposed: bool = true) {
+    #if check_transposed {
+        if m.transposed {
+            swap_code(i,j);
+        }
+    }
+    #if CHECKS {
+        assert( i <= j );
+    }
+    m.data[triangular_first_index_of_row(m.cols,i)+(j-i)] = value;
+}
+
+get_lin :: inline (m: TriangularHeapMatrix($T), i: int) -> T {
+    r, c := from_lin_index(m, i);
+    return get(m, r, c);
+}
+set_lin :: inline (m: *TriangularHeapMatrix($T), i: int, value: T) {
+    r, c := from_lin_index(m, i);
+    set(m, r, c, value);
+}
+
+get_raw :: inline (m: TriangularHeapMatrix($T), i: int) -> T {
+    return m.data[i];
+}
+set_raw :: inline (m: *TriangularHeapMatrix($T), i: int, value: T) {
+    m.data[i] = value;
+}
+n_raw :: inline (m: TriangularHeapMatrix) -> int {
+    return m.data.count;
+}
+from_raw_index :: inline (m: TriangularHeapMatrix, i: int) -> int {
+    #if CHECKS {
+        assert(i >= 0 && i < m.data.count);
+    }
+    count := 0;
+    r := 0;
+    c := 0;
+    for 0..m.rows-1 {
+        next := m.cols - it;
+        if count + next > i {
+            r = it;
+            c = i - count;
+            break;
+        }
+    }
+    return ifx !m.transposed then to_lin_index(m,r,c) else to_lin_index(m,c,r);
+}
+
+
+
+
+test_TriangularHeapMatrix :: () {
+    println_push("TriangularHeapMatrix", color = .FG_GREEN);
+
+    {
+        println_push("test 1", color = .FG_YELLOW);
+        tm := thmat(int, 8, 5);
+        defer free(tm);
+        for raw(tm) {
+            set_raw(*tm, it_raw_index, it_raw_index);
+        }
+        tm.transposed = false;
+        println("TriangularHeapMatrix: %", pstr(tm));
+    }
+
+    {
+        println_push("test 2", color = .FG_YELLOW);
+        tm := thmat(int, 8, 5);
+        defer free(tm);
+        for raw(tm) {
+            set_raw(*tm, it_raw_index, it_raw_index);
+        }
+        tm.transposed = true;
+        println("TriangularHeapMatrix: %", pstr(tm));
+    }
+
+    {
+        println_push("test 3", color = .FG_YELLOW);
+        tm := thmat(int, 8, 5);
+        defer free(tm);
+        set(*tm, 1, 3, -42);
+        set(*tm, 0, 4, 313);
+        println("TriangularHeapMatrix: %", pstr(tm));
+        assert(get(tm, 1, 3) == -42);
+        assert(get(tm, 0, 4) == 313);
+    }
+
+    {
+        println_push("test 4", color = .FG_YELLOW);
+        tm := thmat(int, 8, 5);
+        defer free(tm);
+        tm.transposed = true;
+        set(*tm, 3, 1, -42);
+        set(*tm, 4, 0, 313);
+        println("TriangularHeapMatrix : %", pstr(tm));
+        assert(get(tm, 3, 1) == -42);
+        assert(get(tm, 4, 0) == 313);
+    }
+}
 
 test_MatrixTypes :: () {
     println_push("MatrixTypes", color = .FG_WHITE);
     test_BandMatrix();
     test_BandHeapMatrix();
     test_TriangularMatrix();
+    test_TriangularHeapMatrix();
 }
