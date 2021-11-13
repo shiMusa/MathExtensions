@@ -1,6 +1,27 @@
 
 
 
+min :: (values: ..$T) -> T {
+    res := values[0];
+    for i: 1..values.count-1 {
+        if values[i] < res {
+            res = values[i];
+        }
+    }
+    return res;
+}
+
+max :: (values: ..$T) -> T {
+    res := values[0];
+    for i: 1..values.count-1 {
+        if values[i] > res {
+            res = values[i];
+        }
+    }
+    return res;
+}
+
+
 
 pool :: (code: Code) #expand {
     _pool: Pool.Pool;

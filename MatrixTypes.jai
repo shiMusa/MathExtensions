@@ -919,6 +919,9 @@ cols :: inline (m: TriangularMatrix($T, $N, $M), $check_transposed: bool = true)
     }
 }
 
+get :: inline (m: *TriangularMatrix($T, $N, $M), i: int, j: int, $check_transposed: bool = true) -> T {
+    return inline get(<<m, i, j, check_transposed);
+}
 get :: inline (m: TriangularMatrix($T, $N, $M), i: int, j: int, $check_transposed: bool = true) -> T {
     #if check_transposed {
         if m.transposed {
@@ -1110,6 +1113,9 @@ cols :: inline (m: TriangularHeapMatrix, $check_transposed: bool = true) -> int 
     }
 }
 
+get :: inline (m: *TriangularHeapMatrix($T), i: int, j: int, $check_transposed: bool = true) -> T {
+    return inline get(<<m, i, j, check_transposed);
+}
 get :: inline (m: TriangularHeapMatrix($T), i: int, j: int, $check_transposed: bool = true) -> T {
     #if check_transposed {
         if m.transposed {
@@ -1168,7 +1174,13 @@ from_raw_index :: inline (m: TriangularHeapMatrix, i: int) -> int {
 }
 
 
-
+// ######## ########  ######  ########  ######
+//    ##    ##       ##    ##    ##    ##    ##
+//    ##    ##       ##          ##    ##
+//    ##    ######    ######     ##     ######
+//    ##    ##             ##    ##          ##
+//    ##    ##       ##    ##    ##    ##    ##
+//    ##    ########  ######     ##     ######
 
 test_TriangularHeapMatrix :: () {
     println_push("TriangularHeapMatrix", color = .FG_GREEN);

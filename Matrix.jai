@@ -576,22 +576,12 @@ operator * :: (a: DenseHeapMatrix($A), b: DenseHeapMatrix($B)) -> DenseHeapMatri
 }
 
 // TODO implement operator overloads for other `MatrixType`s where it makes sense
-operator * :: (a: TriangularMatrix($A, $AN, $M), b: TriangularMatrix($B, M, $BM)) -> TriangularMatrix(UpCast(A,B).T, AN, BM) {
-    res : TriangularMatrix(UpCast(A,B).T, AN, BM);
-    inline mul(*res,a,b);
-    return res;
-}
-operator * :: (a: TriangularHeapMatrix($A), b: TriangularHeapMatrix($B)) -> TriangularHeapMatrix(UpCast(A,B).T) {
-    res := thmat(UpCast(A,B).T, rows(a), cols(b)); // ! alloc
-    inline mul(*res,a,b);
-    return res;
-}
+
 
 // * Assuming res is initialized to zeroes.
 // * User has to know, what type the result has to be!
 mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
-    #if C.flags & MATRIX_FLAGS.TRIANGULAR && 
-        A.flags & MATRIX_FLAGS.TRIANGULAR && 
+    #if A.flags & MATRIX_FLAGS.TRIANGULAR && 
         B.flags & MATRIX_FLAGS.TRIANGULAR {
         inline mat_mul_mat_triangular(res, a, b);
     } else {
@@ -645,21 +635,80 @@ mat_mul_mat_triangular :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType
         assert(cols(a) == rows(b)  , "Matrix dimensions don't match: a.cols = %, b.rows = %", cols(a), rows(b)  );
         assert(rows(a) == rows(c), "Matrix dimensions don't match: a.rows = %, c.rows = %", rows(a), rows(c));
         assert(cols(b) == cols(c), "Matrix dimensions don't match: b.cols = %, c.cols = %", cols(b), cols(c));
-        assert(!c.transposed && !a.transposed && !b.transposed);
     }
 
-    for i: 0..rows(a)-1 {
-        for j: i..cols(b)-1 {
-            for k: i..min(j, rows(b)-1) {
-                // println("(%, %), %", i, j, k);
-                set(c,i,j, get(c,i,j) + get(a,i,k) * get(b,k,j));
+    #if C.flags & MATRIX_FLAGS.TRIANGULAR {
+        if !a.transposed && !b.transposed {
+            #if CHECKS {
+                assert(!c.transposed);
+            }
+            for i: 0..rows(a)-1 {
+                for j: i..cols(b)-1 {
+                    for k: i..min(j, rows(b)-1) {
+                        set(c,i,j, get(c,i,j, false) + get(a,i,k, false) * get(b,k,j, false), false);
+                    }
+                }
+            }
+        } else if a.transposed && b.transposed {
+            #if CHECKS {
+                assert(c.transposed);
+            }
+            // ? just use C = A * B  =>  Cᵀ = Bᵀ * Aᵀ, so switch a and b, 
+            //? pretend they're not transposed, and disable all transposed related features (check_transposition = false).
+            for i: 0..rows(b, false)-1 {
+                for j: i..cols(a, false)-1 {
+                    for k: i..min(j, rows(a, false)-1) {
+                        set(c,i,j, get(c,i,j, false) + get(b,i,k, false) * get(a,k,j, false), false);
+                    }
+                }
+            }
+        }
+    } else {
+        if !a.transposed && !b.transposed {
+            for i: 0..rows(a)-1 {
+                for j: i..cols(b)-1 {
+                    for k: i..min(j, rows(b)-1) {
+                        set(c,i,j, get(c,i,j) + get(a,i,k, false) * get(b,k,j, false));
+                    }
+                }
+            }
+        } else if a.transposed && b.transposed {
+            // ? just use C = A * B  =>  Cᵀ = Bᵀ * Aᵀ, so switch a and b, 
+            //? pretend they're not transposed, and disable all transposed related features (check_transposition = false).
+            for i: 0..rows(b, false)-1 {
+                for j: i..cols(a, false)-1 {
+                    for k: i..min(j, rows(a, false)-1) {
+                        set(c,j,i, get(c,j,i) + get(b,i,k, false) * get(a,k,j, false));
+                    }
+                }
+            }
+        } else if a.transposed && !b.transposed {
+            n := rows(b, false);
+            for i: 0..rows(a)-1 {
+                for j: 0..cols(b)-1 {
+                    for k: 0..min(i,j,n-1) {
+                        set(c,i,j, get(c,i,j) + get(a,k,i,false) * get(b,k,j,false));
+                    }
+                }
+            }
+        } else if !a.transposed && b.transposed {
+            n := cols(a);
+            for i: 0..min(rows(a), n)-1 {
+                for j: 0..min(cols(b), n)-1 {
+                    for k: max(i,j)..n-1 {
+                        set(c,i,j, get(c,i,j) + get(a,i,k,false) * get(b,j,k,false));
+                    }
+                }
             }
         }
     }
 }
-#scope_export
 
-#scope_file
+
+
+
+
+
 test_mat_mul_mat_triangular :: () {
     println_push("mat_mul_mat_triangular", color = .FG_GREEN);
 
@@ -671,13 +720,10 @@ test_mat_mul_mat_triangular :: () {
         println("b = %", pstr(b));
         c : TriangularMatrix(int, 5, 4);
         mat_mul_mat_triangular(*c, a, b);
-        d := a * b;
         println("c = %", pstr(c));
-        println("d = %", pstr(d));
         res := tmat(int, 5, 4, 1,12,39,45,20,64,73,48,54);
         println("res = %", pstr(res));
         assert(c == res);
-        assert(d == res);
     }
 
     {
@@ -688,13 +734,167 @@ test_mat_mul_mat_triangular :: () {
         println("b = %", pstr(b));
         c : TriangularMatrix(int, 3, 4);
         mat_mul_mat_triangular(*c, a, b);
-        d := a * b;
         println("c = %", pstr(c));
-        println("d = %", pstr(d));
         res := tmat(int, 3, 4, 1,12,39,85,30,92,185,80,200);
         println("res = %", pstr(res));
         assert(c == res);
-        assert(d == res);
+    }
+
+    {
+        println_push("test 3: transposed", color = .FG_YELLOW);
+        a := tmat(int, 5, 3, 1,2,3,4,5,6);
+        a.transposed = true;
+        b := tmat(int, 3, 4, 1,2,3,4,5,6,7,8,9);
+        b.transposed = true;
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : TriangularMatrix(int, 5, 4);
+        c.transposed = true;
+        mat_mul_mat_triangular(*c, b, a);
+        println("c = %", pstr(c));
+        res := tmat(int, 5, 4, 1,12,39,45,20,64,73,48,54);
+        res.transposed = true;
+        println("res = %", pstr(res));
+        assert(c == res);
+    }
+
+    {
+        println_push("test 4: transposed", color = .FG_YELLOW);
+        a := tmat(int, 3, 5, 1,2,3,4,5,6,7,8,9,10,11,12);
+        a.transposed = true;
+        b := tmat(int, 5, 4, 1,2,3,4,5,6,7,8,9,10);
+        b.transposed = true;
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : TriangularMatrix(int, 3, 4);
+        c.transposed = true;
+        mat_mul_mat_triangular(*c, b, a);
+        println("c = %", pstr(c));
+        res := tmat(int, 3, 4, 1,12,39,85,30,92,185,80,200);
+        res.transposed = true;
+        println("res = %", pstr(res));
+        assert(c == res);
+    }
+
+    
+
+    {
+        println_push("test 5: dense result", color = .FG_YELLOW);
+        a := tmat(int, 5, 3, 1,2,3,4,5,6);
+        b := tmat(int, 3, 4, 1,2,3,4,5,6,7,8,9);
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : DenseMatrix(int, 5, 4);
+        mat_mul_mat_triangular(*c, a, b);
+        println("c = %", pstr(c));
+        res := tmat(int, 5, 4, 1,12,39,45,20,64,73,48,54);
+        println("res = %", pstr(res));
+        assert(c == res);
+    }
+
+    {
+        println_push("test 6: dense result", color = .FG_YELLOW);
+        a := tmat(int, 3, 5, 1,2,3,4,5,6,7,8,9,10,11,12);
+        b := tmat(int, 5, 4, 1,2,3,4,5,6,7,8,9,10);
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : DenseMatrix(int, 3, 4);
+        mat_mul_mat_triangular(*c, a, b);
+        println("c = %", pstr(c));
+        res := tmat(int, 3, 4, 1,12,39,85,30,92,185,80,200);
+        println("res = %", pstr(res));
+        assert(c == res);
+    }
+
+    {
+        println_push("test 7: transposed, dense result", color = .FG_YELLOW);
+        a := tmat(int, 5, 3, 1,2,3,4,5,6);
+        a.transposed = true;
+        b := tmat(int, 3, 4, 1,2,3,4,5,6,7,8,9);
+        b.transposed = true;
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : DenseMatrix(int, 4, 5);
+        mat_mul_mat_triangular(*c, b, a);
+        println("c = %", pstr(c));
+        res := tmat(int, 5, 4, 1,12,39,45,20,64,73,48,54);
+        res.transposed = true;
+        println("res = %", pstr(res));
+        assert(c == res);
+    }
+
+    {
+        println_push("test 8: transposed, dense result", color = .FG_YELLOW);
+        a := tmat(int, 3, 5, 1,2,3,4,5,6,7,8,9,10,11,12);
+        a.transposed = true;
+        b := tmat(int, 5, 4, 1,2,3,4,5,6,7,8,9,10);
+        b.transposed = true;
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : DenseMatrix(int, 4, 3);
+        mat_mul_mat_triangular(*c, b, a);
+        println("c = %", pstr(c));
+        res := tmat(int, 3, 4, 1,12,39,85,30,92,185,80,200);
+        res.transposed = true;
+        println("res = %", pstr(res));
+        assert(c == res);
+    }
+
+    {
+        println_push("test 9: opposite diagonals", color = .FG_YELLOW);
+        a := tmat(int, 3, 5, 
+            1, 2, 3, 4, 5,
+               6, 7, 8, 9,
+                 10,11,12
+        );
+        a.transposed = true;
+        b := tmat(int, 3, 4, 
+            1,2,3,4,
+              5,6,7,
+                8,9
+        );
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : DenseMatrix(int, 5, 4);
+        mat_mul_mat_triangular(*c, a, b);
+        println("c = %", pstr(c));
+        res := dmat(int, 5, 4, 
+            1,  2,  3,  4,
+            2, 34, 42, 50,
+            3, 41,131,151,
+            4, 48,148,171,
+            5, 55,165,191
+        );
+        println("res = %", pstr(res));
+        assert(c == res);
+    }
+    
+    {
+        println_push("test 10: opposite diagonals, tranposed", color = .FG_YELLOW);
+        a := tmat(int, 3, 4, 
+            1, 2, 3, 4,
+               5, 6, 7,
+                  8, 9
+        );
+        b := tmat(int, 5, 4,
+            1, 2, 4, 7,
+               3, 5, 8,
+                  6, 9,
+                    10
+        );
+        b.transposed = true;
+        println("a = %", pstr(a));
+        println("b = %", pstr(b));
+        c : DenseMatrix(int, 3, 5);
+        mat_mul_mat_triangular(*c, a, b);
+        println("c = %", pstr(c));
+        res := dmat(int, 3, 5,
+            45, 53, 54, 40, 0,
+            83,101, 99, 70, 0,
+            95,112,129, 90, 0
+        );
+        println("res = %", pstr(res));
+        assert(c == res);
     }
 } 
 
