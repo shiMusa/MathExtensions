@@ -665,9 +665,9 @@ mat_mul_mat_triangular :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType
         }
     } else {
         if !a.transposed && !b.transposed {
-            for i: 0..rows(a)-1 {
-                for j: i..cols(b)-1 {
-                    for k: i..min(j, rows(b)-1) {
+            for i: 0..rows(a, false)-1 {
+                for j: i..cols(b, false)-1 {
+                    for k: i..min(j, rows(b, false)-1) {
                         set(c,i,j, get(c,i,j) + get(a,i,k, false) * get(b,k,j, false));
                     }
                 }
