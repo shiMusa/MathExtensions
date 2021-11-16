@@ -35,5 +35,5 @@ _rot :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int, c:$U, s: U) #mod
 test_lapack_rot :: () {
     println_push("_rot", color = .FG_GREEN);
 
-    println("NOT YET IMPLEMENTED!", color = .FG_RED);
+    println("TEST NOT YET IMPLEMENTED!", color = .FG_RED);
 }

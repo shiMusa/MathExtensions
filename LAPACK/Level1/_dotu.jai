@@ -26,6 +26,51 @@ _dotu :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) -> T {
 }
 
 
+
+// ? http://www.netlib.org/lapack/explore-html/de/da4/group__double__blas__level1_ga32d6fccb43cb13feafc23825f2685ba0.html#ga32d6fccb43cb13feafc23825f2685ba0
+dsdot :: ($$n: int, cx: []float32, $$incx: int, cy: []float32, $$incy: int) -> float64 {
+    res := zero(float64);
+    if n < 0 then return res;
+    if incx == 1 && incy == 1 {
+        for i: 0..n-1 {
+            res += cast(float64)(cx[i])*cast(float64)(cy[i]);
+        }
+    } else {
+        ix := 0;
+        iy := 0;
+        if incx < 0 then ix = (-n+1)*incx;
+        if incy < 0 then iy = (-n+1)*incy;
+        for i: 0..n-1 {
+            res += cast(float64)(cx[ix])*cast(float64)(cy[iy]);
+            ix += incx;
+            iy += incy;
+        }
+    }
+    return res;
+}
+
+sdsdot :: ($$n: int, sb: float32, cx: []float32, $$incx: int, cy: []float32, $$incy: int) -> float32 {
+    res := cast(float64)sb;
+    if n < 0 then return cast(float32)res;
+    if incx == 1 && incy == 1 {
+        for i: 0..n-1 {
+            res += cast(float64)(cx[i])*cast(float64)(cy[i]);
+        }
+    } else {
+        ix := 0;
+        iy := 0;
+        if incx < 0 then ix = (-n+1)*incx;
+        if incy < 0 then iy = (-n+1)*incy;
+        for i: 0..n-1 {
+            res += cast(float64)(cx[ix])*cast(float64)(cy[iy]);
+            ix += incx;
+            iy += incy;
+        }
+    }
+    return cast(float32)res;
+}
+
+
 #scope_module
 test_lapack_dotu :: () {
     println_push("_dotu", color = .FG_GREEN);
