@@ -2,6 +2,14 @@
 // ? LAPACK *asum
 // ? http://www.netlib.org/lapack/explore-html/de/da4/group__double__blas__level1_ga7372361a44de0649813750b3280c58cc.html#ga7372361a44de0649813750b3280c58cc
 
+scasum :: sasum;
+sasum :: inline ($$n: int, x: []$T, $$incx: int) -> float32 {
+    return _asum(float32, n, x, incx);
+}
+dzasum :: dasum;
+dasum :: inline ($$n: int, x: []$T, $$incx: int) -> float64 {
+    return _asum(float64, n, x, incx);
+}
 _asum :: ($U: Type, $$n: int, x: []$T, $$incx: int) -> U {
     #assert(#run is_float_number(U) && is_intrinsic_number(U));
     sum := zero(U);

@@ -2,7 +2,8 @@
 // ? LAPACK *dotc
 // ? http://www.netlib.org/lapack/explore-html/da/df6/group__complex__blas__level1_ga0f02c96fa8498b4aa6b144deee725c0d.html#ga0f02c96fa8498b4aa6b144deee725c0d
 
-
+cdotu :: _dotu;
+zdotu :: _dotu;
 _dotu :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) -> T {
     res := zero(T);
     if n < 0 then return res;

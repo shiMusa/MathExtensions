@@ -3,6 +3,10 @@
 // ? LAPACK *swap
 // ? http://www.netlib.org/lapack/explore-html/da/df6/group__complex__blas__level1_gaa50b533bbd2eceac1f59dbc780d7a182.html#gaa50b533bbd2eceac1f59dbc780d7a182
 
+sswap :: _swap;
+dswap :: _swap;
+cswap :: _swap;
+zswap :: _swap;
 _swap :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) {
     if n <= 0 then return;
     if incx == 1 && incy == 1 {
