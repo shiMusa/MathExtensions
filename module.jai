@@ -18,7 +18,7 @@
 #load "Checks.jai";
 #load "LinearAlgebra.jai";
 
-
+#load "LAPACK/lapack.jai";
 
 #module_parameters(CHECKS := true);
 
@@ -44,6 +44,8 @@ run_all_tests :: () {
 
     test_checks();
     test_linear_algebra();
+
+    test_lapack();
 }
 
 

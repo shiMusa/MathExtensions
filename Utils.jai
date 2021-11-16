@@ -22,6 +22,26 @@ max :: (values: ..$T) -> T {
 }
 
 
+array :: ($N: int, values: ..$T) -> [N]T {
+    #if CHECKS {
+        assert(N == values.count);
+    }
+    res : [N]T = ---;
+    for values {
+        res[it_index] = it;
+    }
+    return res;
+}
+
+array_equals :: (x: []$T, y: []T) -> bool {
+    if x.count != y.count then return false;
+    for x {
+        if it != y[it_index] then return false;
+    }
+    return true;
+}
+
+
 
 pool :: (code: Code) #expand {
     _pool: Pool.Pool;

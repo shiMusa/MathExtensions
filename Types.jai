@@ -30,6 +30,10 @@ is_float_number :: inline ($T: Type) -> bool {
     } else return false;
 }
 
+is_float_number :: inline (T: *Type_Info) -> bool {
+    return T.type == .FLOAT;
+}
+
 
 
 is_intrinsic_number :: ($T: Type) -> bool {
@@ -244,6 +248,26 @@ is_minor_number_type :: inline ($major: Type, $minor: Type) -> bool {
 
 // * I don't need to use #modify since this is only used in terms of numbers anyways!?
 #scope_export
+icast :: inline ($T: Type, num: Quaternion($N)) -> Quaternion(T) {
+    res : Quaternion(T) = ---;
+    res.r = cast(T)num.r;
+    res.i = cast(T)num.i;
+    res.j = cast(T)num.j;
+    res.k = cast(T)num.k;
+    return res;
+}
+icast :: inline ($T: Type, num: Complex($N)) -> Complex(T) {
+    res : Complex(T) = ---;
+    res.real = cast(T)num.real;
+    res.imag = cast(T)num.imag;
+    return res;
+}
+icast :: inline ($T: Type, num: $N) -> T #modify {
+    if !is_intrinsic_number(N) {N = null; return;}
+} {
+    return cast(T)num;
+}
+
 ncast :: inline ($T: Type, num: $N) -> T {
     #if T == N {
 

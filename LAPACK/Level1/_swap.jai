@@ -1,18 +1,15 @@
 
-// ? LAPACK *axpy()
-// ? http://www.netlib.org/lapack/explore-html/da/df6/group__complex__blas__level1_ga9605cb98791e2038fd89aaef63a31be1.html#ga9605cb98791e2038fd89aaef63a31be1
 
-caxpy :: _axpy;
-zaxpy :: _axpy;
-daxpy :: _axpy;
-saxpy :: _axpy;
-_axpy :: ($$n: int, ca: $T, cx: []T, $$incx: int, cy: []T, $$incy: int) {
+// ? LAPACK *swap
+// ? http://www.netlib.org/lapack/explore-html/da/df6/group__complex__blas__level1_gaa50b533bbd2eceac1f59dbc780d7a182.html#gaa50b533bbd2eceac1f59dbc780d7a182
 
+_swap :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) {
     if n <= 0 then return;
-    if ca == zero(T) then return;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {
-            cy[i] += ca * cx[i];
+            tmp := cx[i];
+            cx[i] = cy[i];
+            cy[i] = tmp;
         }
     } else {
         ix := 0;
@@ -20,7 +17,9 @@ _axpy :: ($$n: int, ca: $T, cx: []T, $$incx: int, cy: []T, $$incy: int) {
         if incx < 0 then ix = (-n+1)*incx;
         if incy < 0 then iy = (-n+1)*incy;
         for i: 0..n-1 {
-            cy[iy] += ca*cx[ix];
+            tmp := cx[ix];
+            cx[ix] = cy[iy];
+            cy[iy] = tmp;
             ix += incx;
             iy += incy;
         }
@@ -28,17 +27,17 @@ _axpy :: ($$n: int, ca: $T, cx: []T, $$incx: int, cy: []T, $$incy: int) {
 }
 
 #scope_module
-test_lapack_axpy :: () {
-    println_push("_axpy", color = .FG_GREEN);
+test_lapack_swap :: () {
+    println_push("_swap", color = .FG_GREEN);
 
     {
         println_push("test 1", color = .FG_YELLOW);
         x := int.[1,2,3,4,5,6];
         y := int.[2,3,4,5,6,7];
         println("y = %", y);
-        _axpy(6, -2, x, 1, y, 1);
+        _swap(6, x, 1, y, 1);
         println("y = %", y);
-        assert(array_equals(y,int.[0,-1,-2,-3,-4,-5]));
+        assert(array_equals(y, int.[1,2,3,4,5,6]));
     }
 
     {
@@ -46,8 +45,8 @@ test_lapack_axpy :: () {
         x := int.[1,2,3,4,5,6];
         y := int.[2,3,4,5,6,7];
         println("y = %", y);
-        _axpy(3, -2, x, 2, y, 1);
+        _swap(3, x, 2, y, 1);
         println("y = %", y);
-        assert(array_equals(y,int.[0,-3,-6,5,6,7]));
+        assert(array_equals(y, int.[1,3,5,5,6,7]));
     }
 }

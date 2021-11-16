@@ -137,24 +137,59 @@ conjugate :: inline (n: $T) -> T #modify {
 
 
 // ? |z|²
+abs_sq :: inline ($U: Type, n: $T) -> U #modify {
+    if !is_number(T) {T = null; return;}
+} {
+    #assert(is_intrinsic_number(U));
+    #if #run is_quaternion_number(T) {
+        #if #run get_quaternion_inner_type(T) == U {
+            return n.r*n.r + n.i*n.i + n.j*n.j + n.k*n.k;
+        } else {
+            q := icast(U, n);
+            return q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k;
+        }
+    } else #if #run is_complex_number(T) {
+        #if #run get_complex_inner_type(T) == U {
+            return n.real * n.real + n.imag * n.imag;
+        } else {
+            c := icast(U, n);
+            return c.real * c.real + c.imag * c.imag;
+        }
+    } else {
+        #if T == U {
+            return n * n;
+        } else {
+            v := cast(U)n;
+            return v * v;
+        }
+    }
+}
+
 abs_sq :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
     U = get_number_inner_type(T);
 } {
-    #if #run is_quaternion_number(T) {
-        return n.r*n.r + n.i*n.i + n.j*n.j + n.k*n.k;
-    } else #if #run is_complex_number(T) {
-        return n.real * n.real + n.imag * n.imag;
+    return inline abs_sq(U, n);
+}
+
+abs :: inline ($U: Type, n: $T) -> U #modify {
+    if !is_number(T) {T = null; return;}
+} {
+    #assert(is_intrinsic_number(U));
+    #if #run is_intrinsic_number(T) {
+        return cast(U)Math.abs(n);
     } else {
-        return n * n;
+        return Math.sqrt(abs_sq(U,n));
     }
 }
 
 abs :: inline (a: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
-    U = get_number_inner_type(T);
+    X := get_number_inner_type(T);
+    if is_float_number(X) { U = X; }
+    else { U = type_info(float64); }
 } {
-    return Math.sqrt(abs_sq(a));
+    return inline abs(U, a);
 }
 
 
@@ -252,6 +287,9 @@ pow :: inline (n: $T, power: $U, $type: Type) -> type {
 // ? in the hopes sqrt is faster than pow
 // ? need to wait for compiler fix to get rid of `$type: Type`...
 // TODO ^ I might be able to do that now!
+sqrt :: inline (n: $T) -> T {
+    return inline sqrt(n, T);
+}
 sqrt :: inline(n: $T, $type: Type) -> type {
     #if #run is_quaternion_number(T) {
         return pow(n, 0.5, type);
