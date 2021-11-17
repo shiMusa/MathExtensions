@@ -183,11 +183,13 @@ conjugate :: inline (n: $T) -> T #modify {
 // ##     ## ##     ## ##    ##
 // ##     ## ########   ######
 
-abs1 :: (n: $T) -> $U #modify {
+abs1 :: inline (n: $T) -> $U #modify {
     if !is_number(T) {T = null; return;}
     X := get_number_inner_type(T);
     if is_intrinsic_number(X) { U = X; }
     else { U = type_info(float64); }
+} {
+    return inline abs1(U, n); 
 }
 
 abs1 :: inline ($U: Type, n: $T) -> U #modify {

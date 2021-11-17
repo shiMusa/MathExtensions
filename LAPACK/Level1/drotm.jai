@@ -26,7 +26,7 @@ drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dpar
         if dflag < 0.0 {
             dh11 := dparam[1];
             dh12 := dparam[3];
-            dh21 := dparam[2]'
+            dh21 := dparam[2];
             dh22 := dparam[4];
             ix := 0;
             for i:0..n-1 {

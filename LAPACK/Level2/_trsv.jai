@@ -1,0 +1,258 @@
+
+// ? LAPACK dtrsv
+// ? http://www.netlib.org/lapack/explore-html/de/da4/group__double__blas__level1_gad2a01dd62718b28e35b752dbad8474ab.html#gad2a01dd62718b28e35b752dbad8474ab
+
+// ? LAPACK ctrsv
+// ? http://www.netlib.org/lapack/explore-html/d6/dee/group__complex__blas__level2_ga38ae7f5a40e16fd315011faddf4412cc.html#ga38ae7f5a40e16fd315011faddf4412cc
+
+
+// ? Origianl comment ctrsv
+// CTRSV  solves one of the systems of equations
+//
+// A*x = b,   or   A**T*x = b, or A**H*x = b,
+//
+// where b and x are n element vectors and A is an n by n unit, or
+// non-unit, upper or lower triangular matrix.
+//
+// No test for singularity or near-singularity is included in this
+// routine. Such tests must be performed before calling this routine.
+
+
+// UPLO is CHARACTER*1
+// On entry, UPLO specifies whether the matrix is an upper or
+// lower triangular matrix as follows:
+//
+//     UPLO = 'U' or 'u'   A is an upper triangular matrix.
+//
+//     UPLO = 'L' or 'l'   A is a lower triangular matrix.
+
+// TRANS is CHARACTER*1
+// On entry, TRANS specifies the equations to be solved as
+// follows:
+//
+//     TRANS = 'N' or 'n'   A*x = b.
+//
+//     TRANS = 'T' or 't'   A**T*x = b.
+//
+//     TRANS = 'C' or 'c'   A**H*x = b.
+
+	
+// DIAG is CHARACTER*1
+// On entry, DIAG specifies whether or not A is unit
+// triangular as follows:
+//
+//     DIAG = 'U' or 'u'   A is assumed to be unit triangular.
+//
+//     DIAG = 'N' or 'n'   A is not assumed to be unit
+//                         triangular.
+
+	
+// N is INTEGER
+// On entry, N specifies the order of the matrix A.
+// N must be at least zero.
+
+// A is COMPLEX array, dimension ( LDA, N )
+//     Before entry with  UPLO = 'U' or 'u', the leading n by n
+//     upper triangular part of the array A must contain the upper
+//     triangular matrix and the strictly lower triangular part of
+//     A is not referenced.
+//     Before entry with UPLO = 'L' or 'l', the leading n by n
+//     lower triangular part of the array A must contain the lower
+//     triangular matrix and the strictly upper triangular part of
+//     A is not referenced.
+//     Note that when  DIAG = 'U' or 'u', the diagonal elements of
+//     A are not referenced either, but are assumed to be unity.
+
+// LDA is INTEGER
+//         On entry, LDA specifies the first dimension of A as declared
+//         in the calling (sub) program. LDA must be at least
+//         max( 1, n ).
+
+// X is COMPLEX array, dimension at least
+//         ( 1 + ( n - 1 )*abs( INCX ) ).
+//         Before entry, the incremented array X must contain the n
+//         element right-hand side vector b. On exit, X is overwritten
+//         with the solution vector x.
+
+// INCX is INTEGER
+// On entry, INCX specifies the increment for the elements of
+// X. INCX must not be zero.
+//
+
+// -- Written on 22-October-1986.
+// Jack Dongarra, Argonne National Lab.
+// Jeremy Du Croz, Nag Central Office.
+// Sven Hammarling, Nag Central Office.
+// Richard Hanson, Sandia National Labs.
+
+// * character is u8 in Jai, use it via e.g. #char "U"  - F. Fehse, 2021-11-17
+
+dtrsv :: _trsv;
+ctrsv :: _trsv;
+_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: [][]$T, $$lda: int, x: []T, $$incx: int) {
+    info := 0;
+    if !char_eq(uplot, #char "u", #char "l")              { info = 1; } 
+    else if !char_eq(trans, #char"n", #char"t", #char"c") { info = 2; }
+    else if !char_eq(diag, #char"u", #char"n")            { info = 3; }
+    else if n < 0                                         { info = 4; }
+    else if lda < max(1,n)                                { info = 6; }
+    else if incx == 0                                     { info = 8; }
+
+    assert(info != 0, "Error: _TRSV, %\n", info);
+
+    // Quick return if possible
+    if n == 0 then return;
+
+    noconj := char_eq(trans, #char"t");
+    nounit := char_eq(diag , #char"n");
+
+    // Set up the start point in X if the increment is not unity. This 
+    // will be (n-1)*incx too small for descending loops.
+    kx : int = ---;
+    if incx < 0 { kx = -(n-1)*incx; }
+    else if incx != 1 { kx = 0; }
+
+    tmp : T = ---;
+    jx : int = ---;
+    ix : int = ---;
+
+    // Start the operations. In this version the elements of A are 
+    // accessed sequentially with one pass through A.
+    if char_eq(trans, #char"n") {
+        // Form x := inv(A)*x.
+        if char_eq(uplo, #char"u") {
+            if incx == 1 {
+                for j: <n-1..0 {
+                    if x[j] != zero(T) {
+                        if nounit then x[j] /= a[j][j];
+                        tmp = x[j];
+                        for i: <j-1..0 {
+                            x[i] -= tmp * a[i][j];
+                        }
+                    }
+                }
+            } else {
+                jx = kx + (n-1)*incx;
+                for j: <n-1..0 {
+                    if x[jx] != zero(T) {
+                        if nounit then x[jx] /= a[j][j];
+                        tmp = x[jx];
+                        ix = jx;
+                        for i: <j-1..0 {
+                            ix -= incx;
+                            x[ix] -= tmp * a[i][j];
+                        }
+                    }
+                }
+            }
+        } else {
+            if incx == 1 {
+                for j: 0..n-1 {
+                    if x[j] != zero(T) {
+                        if nounit then x[j] /= a[j][j];
+                        tmp = x[j];
+                        for i: j+1..n-1 {
+                            x[i] -= tmp * a[i][j];
+                        }
+                    }
+                }
+            } else {
+                jx = kx;
+                for j: 0..n-1 {
+                    if x[jx] != zero(T) {
+                        if nounit then x[jx] /= a[j][j];
+                        tmp = x[jx];
+                        ix = jx;
+                        for i: j+1..n-1 {
+                            ix += incx;
+                            x[ix] -= tmp * a[i][j];
+                        }
+                    }
+                    jx += incx;
+                }
+            }
+        }
+    } else {
+        // Form x := inv( A**T )*x  or  x := inv( A**H )*x.
+        if char_eq(uplo, #char"u") {
+            if incx == 1 {
+                for j: 0..n-1 {
+                    tmp = x[j];
+                    if noconj {
+                        for i: 0..j-1 {
+                            tmp -= a[i][j]*x[i];
+                        }
+                        if nounit then tmp /= a[j][j];
+                    } else {
+                        for i: 0..j-1 {
+                            tmp -= conjugate(a[i][j])*x[i];
+                        }
+                        if nounit then tmp /= conjugate(a[i][j]);
+                    }
+                    x[j] = tmp;
+                }
+            } else {
+                jx = kx;
+                for j: 0..n-1 {
+                    ix = kx;
+                    tmp = x[jx];
+                    if noconj {
+                        for i: 0..j-1 {
+                            tmp -= a[i][j]*x[ix];
+                            ix += incx;
+                        }
+                        if nounit then tmp /= a[j][j];
+                    } else {
+                        for i: 0..j-1 {
+                            tmp -= conjugate(a[i][j])*x[ix];
+                            ix += incx;
+                        }
+                        if nounit then tmp /= conjugate(a[j][j]);
+                    }
+                    x[jx] = tmp;
+                    jx += incx;
+                }
+            }
+        } else {
+            if incx == 1 {
+                for j: <n-1..0 {
+                    tmp = x[j];
+                    if noconj {
+                        for i: <n-1..j+1 {
+                            tmp -= a[i][j]*x[i];
+                        }
+                        if nounit then tmp /= a[j][j];
+                    } else {
+                        for i: <n-1..j+1 {
+                            tmp -= conjugate(a[i][j])*x[i];
+                        }
+                        if nounit then tmp /= conjugate(a[j][j]);
+                    }
+                    x[j] = tmp;
+                }
+            } else {
+                kx += (n-1)*incx;
+                jx = kx;
+                for j: <n-1..0 {
+                    ix = kx;
+                    tmp = x[jx];
+                    if noconj {
+                        for i: <n-1..j+1 {
+                            tmp -= a[i][j]*x[ix];
+                            ix -= incx;
+                        }
+                        if nounit then tmp /= a[j][j];
+                    } else {
+                        for i: <n-1..j+1 {
+                            tmp -= conjugate(a[i][j])*x[ix];
+                            ix -= incx;
+                        }
+                        if nounit then tmp /= conjugate(a[j][j]);
+                    }
+                    x[jx] = tmp;
+                    jx -= incx;
+                }
+            }
+        }
+    }
+}

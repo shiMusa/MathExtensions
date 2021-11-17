@@ -12,9 +12,29 @@
 #load "Level1/drotm.jai";
 #load "Level1/drotmg.jai";
 
+#load "Level2/_trsv.jai";
+
+// ? tests if val equals any of lower_case_chars
+char_eq :: (val: s64, lower_case_chars: ..s64) -> bool {
+    for lower_case_chars {
+        if val == it || val == it-32 then return true;
+    }
+    return false;
+}
+
 
 test_lapack :: () {
     println_push("LAPACK", color = .FG_WHITE);
+
+    {
+        println_push("char_eq", color = .FG_GREEN);
+        val := #char "a";
+        VAL := #char "A";
+        println("a = %", val);
+        println("A = %", VAL);
+        println("\"a\" == \"a\" == \"A\": %, %", char_eq(val, #char"a"), char_eq(VAL, #char"a"));
+    }
+
     test_lapack_axpy();
     test_lapack_copy();
     test_lapack_dotc();
