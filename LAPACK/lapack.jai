@@ -8,6 +8,9 @@
 #load "Level1/_rot.jai";
 #load "Level1/_swap.jai";
 #load "Level1/_asum.jai";
+#load "Level1/_abs.jai";
+#load "Level1/drotm.jai";
+#load "Level1/drotmg.jai";
 
 
 test_lapack :: () {

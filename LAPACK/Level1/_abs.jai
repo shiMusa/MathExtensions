@@ -14,3 +14,10 @@ scabs1 :: inline (z: $T) -> float32 #modify {
 }
 
 _abs1 :: abs1;
+
+dabs :: inline (x: float64) -> float64 {
+    return Math.abs(x);
+}
+sabs :: inline (x: float32) -> float64 {
+    return Math.abs(x);
+}
