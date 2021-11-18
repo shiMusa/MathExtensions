@@ -6,15 +6,15 @@ srot :: _rot;
 drot :: _rot;
 csrot :: _rot;
 zdrot :: _rot;
-_rot :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int, c:$U, s: U) #modify {
+_rot :: ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int, c:$U, s: U) #modify {
     if !is_intrinsic_float_number(U) {U = null; return;}
 } {
     if n <= 0 then return;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {
-            tmp  := c * cx[i] + s * cy[i];
-            cy[i] = c * cy[i] - s * cx[i];
-            cx[i] = tmp;
+            tmp :=    c * get(cx,i) + s * get(cy,i);
+            set(cy,i, c * get(cy,i) - s * get(cx,i));
+            set(cx,i, tmp);
         }
     } else {
         ix := 0;
@@ -22,9 +22,9 @@ _rot :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int, c:$U, s: U) #mod
         if incx < 0 then ix = (-n+1)*incx;
         if incy < 0 then iy = (-n+1)*incy;
         for i: 0..n-1 {
-            tmp   := c * cx[ix] + s * cy[iy];
-            cy[iy] = c * cy[iy] - s * cx[ix];
-            cx[ix] = tmp;
+            tmp :=     c * get(cx,ix) + s * get(cy,iy);
+            set(cy,iy, c * get(cy,iy) - s * get(cx,ix));
+            set(cx,ix, tmp);
             ix += incx;
             iy += incy;
         }

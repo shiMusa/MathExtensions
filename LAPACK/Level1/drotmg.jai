@@ -22,8 +22,8 @@
 
 #scope_file
 gam    : float64 : 4096.0;
-gamsq  : float64 : 16777216.0;
-rgamsq : float64 : 5.9604645e-8;
+gamsq  : float64 : gam*gam;
+rgamsq : float64 : one(float64)/gamsq;
 #scope_export
 
 drotmg :: (dd1: *float64, dd2: *float64, dx1: *float64, dy1: float64, dparam: [5]float64) {

@@ -85,20 +85,17 @@
 // Sven Hammarling, Nag Central Office.
 // Richard Hanson, Sandia National Labs.
 
-// * character is u8 in Jai, use it via e.g. #char "U"  - F. Fehse, 2021-11-17
+// * character is u8 in Jai, use it via e.g. #char "c"  - F. Fehse, 2021-11-17
 
 dtrsv :: _trsv;
 ctrsv :: _trsv;
-_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: [][]$T, $$lda: int, x: []T, $$incx: int) {
-    info := 0;
-    if !char_eq(uplot, #char "u", #char "l")              { info = 1; } 
-    else if !char_eq(trans, #char"n", #char"t", #char"c") { info = 2; }
-    else if !char_eq(diag, #char"u", #char"n")            { info = 3; }
-    else if n < 0                                         { info = 4; }
-    else if lda < max(1,n)                                { info = 6; }
-    else if incx == 0                                     { info = 8; }
-
-    assert(info != 0, "Error: _TRSV, %\n", info);
+_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/Array2D, $$lda: int, x: $X/Array1D, $$incx: int) {
+    assert(char_eq(uplot, #char"u", #char"l"),           "Error: _TRSV, 1");
+    assert(char_eq(trans, #char"n", #char"t", #char"c"), "Error: _TRSV, 2");
+    assert(char_eq(diag, #char"u", #char"n"),            "Error: _TRSV, 3");
+    assert(n >= 0,                                       "Error: _TRSV, 4");
+    assert(lda >= max(1,n),                              "Error: _TRSV, 6");
+    assert(incx != 0,                                    "Error: _TRSV, 8");
 
     // Quick return if possible
     if n == 0 then return;
@@ -122,25 +119,25 @@ _trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: [][]$T, $$lda: int, 
         // Form x := inv(A)*x.
         if char_eq(uplo, #char"u") {
             if incx == 1 {
-                for j: <n-1..0 {
-                    if x[j] != zero(T) {
-                        if nounit then x[j] /= a[j][j];
-                        tmp = x[j];
-                        for i: <j-1..0 {
-                            x[i] -= tmp * a[i][j];
+                for <j: n-1..0 {
+                    if get(x, j)!= zero(T) {
+                        if nounit then set(x,j, get(x,j) / get(a,j,j));
+                        tmp = get(x,j);
+                        for <i: j-1..0 {
+                            set(x,i, get(x,i) - tmp * get(a,i,j));
                         }
                     }
                 }
             } else {
                 jx = kx + (n-1)*incx;
-                for j: <n-1..0 {
-                    if x[jx] != zero(T) {
-                        if nounit then x[jx] /= a[j][j];
-                        tmp = x[jx];
+                for <j: n-1..0 {
+                    if get(x, jx)!= zero(T) {
+                        if nounit then set(x,jx, get(x,jx) / get(a,j,j));
+                        tmp = get(x,jx);
                         ix = jx;
-                        for i: <j-1..0 {
+                        for <i: j-1..0 {
                             ix -= incx;
-                            x[ix] -= tmp * a[i][j];
+                            set(x,ix, get(x,ix) - tmp * get(a,i,j));
                         }
                     }
                 }
@@ -148,24 +145,24 @@ _trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: [][]$T, $$lda: int, 
         } else {
             if incx == 1 {
                 for j: 0..n-1 {
-                    if x[j] != zero(T) {
-                        if nounit then x[j] /= a[j][j];
-                        tmp = x[j];
+                    if get(x, j)!= zero(T) {
+                        if nounit then set(x,j, get(x,j) / get(a,j,j));
+                        tmp = get(x,j);
                         for i: j+1..n-1 {
-                            x[i] -= tmp * a[i][j];
+                            set(x,i, get(x,i) - tmp * get(a,i,j));
                         }
                     }
                 }
             } else {
                 jx = kx;
                 for j: 0..n-1 {
-                    if x[jx] != zero(T) {
-                        if nounit then x[jx] /= a[j][j];
-                        tmp = x[jx];
+                    if get(x, jx)!= zero(T) {
+                        if nounit then set(x,jx, get(x,jx) / get(a,j,j));
+                        tmp = get(x,jx);
                         ix = jx;
                         for i: j+1..n-1 {
                             ix += incx;
-                            x[ix] -= tmp * a[i][j];
+                            set(x,ix, get(x,ix - tmp * get(a,i,j)));
                         }
                     }
                     jx += incx;
@@ -177,79 +174,79 @@ _trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: [][]$T, $$lda: int, 
         if char_eq(uplo, #char"u") {
             if incx == 1 {
                 for j: 0..n-1 {
-                    tmp = x[j];
+                    tmp = get(x,j);
                     if noconj {
                         for i: 0..j-1 {
-                            tmp -= a[i][j]*x[i];
+                            tmp -= get(a,i,j)*get(x,i);
                         }
-                        if nounit then tmp /= a[j][j];
+                        if nounit then tmp /= get(a,j,j);
                     } else {
                         for i: 0..j-1 {
-                            tmp -= conjugate(a[i][j])*x[i];
+                            tmp -= conjugate(get(a,i,j))*get(x,i);
                         }
-                        if nounit then tmp /= conjugate(a[i][j]);
+                        if nounit then tmp /= conjugate(get(a,i,j));
                     }
-                    x[j] = tmp;
+                    set(x,j, tmp);
                 }
             } else {
                 jx = kx;
                 for j: 0..n-1 {
                     ix = kx;
-                    tmp = x[jx];
+                    tmp = get(x,jx)
                     if noconj {
                         for i: 0..j-1 {
-                            tmp -= a[i][j]*x[ix];
+                            tmp -= get(a,i,j)*get(x,ix);
                             ix += incx;
                         }
-                        if nounit then tmp /= a[j][j];
+                        if nounit then tmp /= get(a,j,j);
                     } else {
                         for i: 0..j-1 {
-                            tmp -= conjugate(a[i][j])*x[ix];
+                            tmp -= conjugate(get(a,i,j))*get(x,ix);
                             ix += incx;
                         }
-                        if nounit then tmp /= conjugate(a[j][j]);
+                        if nounit then tmp /= conjugate(get(a,j,j));
                     }
-                    x[jx] = tmp;
+                    set(x,jx, tmp);
                     jx += incx;
                 }
             }
         } else {
             if incx == 1 {
-                for j: <n-1..0 {
-                    tmp = x[j];
+                for <j: n-1..0 {
+                    tmp = get(x,j);
                     if noconj {
-                        for i: <n-1..j+1 {
-                            tmp -= a[i][j]*x[i];
+                        for <i: n-1..j+1 {
+                            tmp -= get(a,i,j)*get(x,i);
                         }
-                        if nounit then tmp /= a[j][j];
+                        if nounit then tmp /= get(a,j,j);
                     } else {
-                        for i: <n-1..j+1 {
-                            tmp -= conjugate(a[i][j])*x[i];
+                        for <i: n-1..j+1 {
+                            tmp -= conjugate(get(a,i,j))*get(x,i);
                         }
-                        if nounit then tmp /= conjugate(a[j][j]);
+                        if nounit then tmp /= conjugate(get(a,j,j));
                     }
-                    x[j] = tmp;
+                    set(x,j, tmp);
                 }
             } else {
                 kx += (n-1)*incx;
                 jx = kx;
-                for j: <n-1..0 {
+                for <j: n-1..0 {
                     ix = kx;
-                    tmp = x[jx];
+                    tmp = get(x,jx);
                     if noconj {
-                        for i: <n-1..j+1 {
-                            tmp -= a[i][j]*x[ix];
+                        for <i: n-1..j+1 {
+                            tmp -= get(a,i,j)*get(x,ix);
                             ix -= incx;
                         }
-                        if nounit then tmp /= a[j][j];
+                        if nounit then tmp /= get(a,j,j);
                     } else {
-                        for i: <n-1..j+1 {
-                            tmp -= conjugate(a[i][j])*x[ix];
+                        for <i: n-1..j+1 {
+                            tmp -= conjugate(get(a,i,j))*get(x,ix);
                             ix -= incx;
                         }
-                        if nounit then tmp /= conjugate(a[j][j]);
+                        if nounit then tmp /= conjugate(get(a,j,j));
                     }
-                    x[jx] = tmp;
+                    set(x,jx, tmp);
                     jx -= incx;
                 }
             }

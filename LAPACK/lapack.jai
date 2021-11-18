@@ -1,5 +1,5 @@
 
-
+#load "xerbla.jai";
 #load "Level1/_axpy.jai";
 #load "Level1/_copy.jai";
 #load "Level1/_dotc.jai";
@@ -15,11 +15,15 @@
 #load "Level2/_trsv.jai";
 
 // ? tests if val equals any of lower_case_chars
-char_eq :: (val: s64, lower_case_chars: ..s64) -> bool {
-    for lower_case_chars {
-        if val == it || val == it-32 then return true;
+char_eq :: (val: s64, $lower_case_chars: ..s64) -> bool {
+    #if lower_case_chars.count == 1 {
+        return val == it || val == it-32;
+    } else {
+        for lower_case_chars {
+            if val == it || val == it-32 then return true;
+        }
+        return false;
     }
-    return false;
 }
 
 

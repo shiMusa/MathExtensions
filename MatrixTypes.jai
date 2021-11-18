@@ -60,32 +60,50 @@ MATRIX_FLAGS :: enum_flags u32 {
 //    ##    ##    ##  ##     ##  ##     ##
 //    ##    ##     ## ##     ## ####    ##
 
+
 /*
-* All concrete types must implement the following functions:
+* All concrete types M(T) of Array2D(T) must implement the following functions:
+* get: (M(T), int, int) -> T
+* set: (*M(T), int, int, T)
+*/
+Array2D :: struct(data_type: Type){};
+
+get :: inline (a: *$A/Array2D, i: int, j: int) -> A.data_type {
+    return get(<<a, i, j);
+}
+
+// * implementation for actual arrays
+
+get :: inline (a: [][]$T, i: int, j: int) -> T {
+    return a[i][j];
+}
+set :: inline (a: [][]$T, i: int, j: int, val: T) {
+    return a[i][j] = val;
+}
+
+
+/*
+* All concrete types M(T) of MatrixType(T, flags) must implement the following functions:
 * 
-* rows: (m: matrix_type) -> int
-* cols: (m: matrix_type) -> int
+* rows: (m: M(T)) -> int
+* cols: (m: M(T)) -> int
 * 
-* get: (m: matrix_type, int, int) -> data_type
-* set: (m: *matrix_type, int, int, data_type) -> ()
+* get_lin: (m: M(T), int) -> T
+* set_lin: (m: *M(T), int, T) -> ()
 * 
-* get_lin: (m: matrix_type, int) -> data_type
-* set_lin: (m: *matrix_type, int, data_type) -> ()
-* 
-* n_raw : (m: matrix_type) -> int
-* get_raw : (m: matrix_type, int) -> data_type
-* set_raw: (m: *matrix_type, int, data_type) -> ()
-* from_raw_index: (m: matrix_type, int) -> int
+* n_raw : (m: M(T)) -> int
+* get_raw : (m: M(T), int) -> T
+* set_raw: (m: *M(T), int, T) -> ()
+* from_raw_index: (m: M(T), int) -> int
 */
 MatrixType :: struct(
-    data_type: Type,
+    _data_type: Type,
     flags: MATRIX_FLAGS
-){}
-
-
-get :: inline (m: *$M/MatrixType, i: int, j: int) -> M.data_type {
-    return get(<<m, i, j);
+){
+    using _a2d: Array2D(_data_type);
 }
+
+
 get_lin :: inline (m: *$M/MatrixType, i: int) -> M.data_type {
     return get_lin(<<m, i);
 }

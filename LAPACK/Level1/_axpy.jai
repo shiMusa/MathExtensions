@@ -6,13 +6,13 @@ caxpy :: _axpy;
 zaxpy :: _axpy;
 daxpy :: _axpy;
 saxpy :: _axpy;
-_axpy :: ($$n: int, ca: $T, cx: []T, $$incx: int, cy: []T, $$incy: int) {
+_axpy :: ($$n: int, ca: $T, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) {
 
     if n <= 0 then return;
     if ca == zero(T) then return;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {
-            cy[i] += ca * cx[i];
+            set(cy, i, ca * get(cx,i));
         }
     } else {
         ix := 0;
@@ -20,7 +20,7 @@ _axpy :: ($$n: int, ca: $T, cx: []T, $$incx: int, cy: []T, $$incy: int) {
         if incx < 0 then ix = (-n+1)*incx;
         if incy < 0 then iy = (-n+1)*incy;
         for i: 0..n-1 {
-            cy[iy] += ca*cx[ix];
+            set(cy, iy, get(cy,iy) + ca * get(cx,ix));
             ix += incx;
             iy += incy;
         }

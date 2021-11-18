@@ -6,12 +6,13 @@ cdotc :: _dotc;
 zdotc :: _dotc;
 ddot :: _dotc;
 sdot :: _dotc;
-_dotc :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) -> T {
+_dotc :: ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) -> UpCast(X.data_type,Y.data_type).T {
+    T :: UpCast(X.data_type, Y.data_type).T;
     res := zero(T);
     if n < 0 then return res;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {
-            res += conjugate(cx[i])*cy[i];
+            res += conjugate(get(cx,i)*get(cy,i));
         }
     } else {
         ix := 0;
@@ -19,7 +20,7 @@ _dotc :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) -> T {
         if incx < 0 then ix = (-n+1)*incx;
         if incy < 0 then iy = (-n+1)*incy;
         for i: 0..n-1 {
-            res += conjugate(cx[ix])*cy[iy];
+            res += conjugate(get(cx,ix) * get(cy,iy));
             ix += incx;
             iy += incy;
         }

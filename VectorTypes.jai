@@ -24,28 +24,53 @@ VECTOR_FLAGS :: enum_flags u8 {
 //    ##    ##    ##  ##     ##  ##     ##
 //    ##    ##     ## ##     ## ####    ##
 
+
 /*
-All concrete types of VectorType have to implement the following functions:
+* All concrete types A(T) of Array1D(T) have to implement the following functions:
+* get: (A(T), int) -> T
+* set: (*A(T), int, T)
+*/
+Array1D :: struct(data_type: Type){}
 
-dim: (v: vector_type) -> int
+get :: inline (a: *$A/Array1D, i: int) -> A.data_type {
+    return get(<<a, i);
+}
+// operator [] :: inline (a: $A/Array1D, i: int) -> A.data_type {
+//     return get(a, i);
+// }
+// operator [] :: inline (a: *$A/Array1D, i: int) -> A.data_type {
+//     return get(<<a, i);
+// }
 
-get: (v: vector_type, int) -> data_type
-set: (v: *vector_type, int, data_type) -> ()
+// * implementation for actual arrays
+get :: inline (a: []$T, i: int) -> T {
+    return a[i];
+}
+set :: inline (a: []$T, i: int, val: T) {
+    a[i] = T;
+}
 
-n_raw: (v: vector_type) -> int
-get_raw: (v: vector_type, int) -> data_type
-set_raw: (v: *vector_type, int, data_type) -> ()
-from_raw_index: (v: vector_type, int) -> int
 
+/*
+* All concrete types V(T) of VectorType(T,flags) have to implement the following functions:
+* 
+* dim: (V(T)) -> int
+* 
+* get: (V(T), int) -> T
+* set: (*V(T), int, T) -> ()
+* 
+* n_raw: (V(T)) -> int
+* get_raw: (V(T), int) -> T
+* set_raw: (*V(T), int, T) -> ()
+* from_raw_index: (V(T), int) -> int 
 */
 VectorType :: struct(
-    data_type: Type,
+    _data_type: Type,
     flags: VECTOR_FLAGS
-){}
-
-get :: inline (v: *$V/VectorType, i: int) -> V.data_type {
-    return get(<<v, i);
+){
+    using _a1d: Array1D(_data_type);
 }
+
 dim :: inline (v: *$V/VectorType) -> int {
     return dim(<<v);
 }

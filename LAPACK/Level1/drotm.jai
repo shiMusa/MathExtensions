@@ -19,7 +19,8 @@
 //   (DH21  DH22),   (DH21  1.D0),   (-1.D0 DH22),   (0.D0  1.D0).
 // SEE DROTMG FOR A DESCRIPTION OF DATA STORAGE IN DPARAM.
 
-drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dparam: [5]float64) {
+drotm :: ($$n: int, dx: $X/Array1D, $$incx: int, dy: $Y/Array1D, $$incy: int, dparam: [5]float64) {
+    #assert(X.data_type == float64 && Y.data_type == float64);
     dflag := dparam[0];
     if n <= 0 || dflag+2.0 == 0.0 then return;
     if incx == incy && incx > 0 {
@@ -30,10 +31,10 @@ drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dpar
             dh22 := dparam[4];
             ix := 0;
             for i:0..n-1 {
-                w := dx[ix];
-                z := dy[ix];
-                dx[ix] = w*dh11 + z*dh12;
-                dy[ix] = w*dh21 + z*dh22;
+                w := get(dx,ix)
+                z := get(dy,ix);
+                set(dx,ix, w*dh11 + z*dh12);
+                set(dy,ix, w*dh21 + z*dh22);
                 ix += incx;
             }
         } else if dflag == 0.0 {
@@ -41,10 +42,10 @@ drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dpar
             dh21 := dparam[2];
             ix := 0;
             for i: 0..n-1 {
-                w := dx[ix];
-                z := dy[ix];
-                dx[ix] = w + z*dh12;
-                dy[ix] = w*dh21 + z;
+                w := get(dx,ix);
+                z := get(dy,ix);
+                set(dx,ix, w + z*dh12);
+                set(dy,ix, w*dh21 + z);
                 ix += incx;
             }
         } else {
@@ -52,10 +53,10 @@ drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dpar
             dh22 := dparam[4];
             ix := 0;
             for i: 0..n-1 {
-                w := dx[ix];
-                z := dy[ix];
-                dx[ix] = w*dh11 + z;
-                dy[ix] = -w + dh22*z;
+                w := get(dx,ix);
+                z := get(dy,ix);
+                set(dx,ix,  w*dh11 + z);
+                set(dy,ix, -w + dh22*z);
             }
         }
     } else {
@@ -70,10 +71,10 @@ drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dpar
             dh21 := dparam[2];
             dh22 := dparam[4];
             for i: 0..n-1 {
-                w := dx[kx];
-                z := dy[ky];
-                dx[kx] = w*dh11 + z*dh12;
-                dy[ky] = w*dh21 +  z*dh22;
+                w := get(dx,kx);
+                z := get(dy,ky);
+                set(dx,kx, w*dh11 + z*dh12);
+                set(dy,ky, w*dh21 + z*dh22);
                 kx += incx;
                 ky += incy;
             }
@@ -81,10 +82,10 @@ drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dpar
             dh12 := dparam[3];
             dh21 := dparam[2];
             for i: 0..n-1 {
-                w := dx[kx];
-                z := dy[ky];
-                dx[kx] = w + z*dh12;
-                dy[ky] = w*dh21 + z;
+                w := get(dx,kx);
+                z := get(dy,ky);
+                set(dx,kx, w + z*dh12);
+                set(dy,ky, w*dh21 + z);
                 kx += incx;
                 ky += incy;
             }
@@ -92,10 +93,10 @@ drotm :: ($$n: int, dx: []float64, $$incx: int, dy: []float64, $$incy: int, dpar
             dh11 := dparam[1];
             dh22 := dparam[4];
             for i: 0..n-1 {
-                w := dx[kx];
-                z := dy[ky];
-                dx[kx] = w*dh11 + z;
-                dy[ky] = -w + dh22*z;
+                w := get(dx,kx);
+                z := get(dy,ky);
+                set(dx,kx,  w*dh11 + z);
+                set(dy,ky, -w + dh22*z);
                 kx += incx;
                 ky += incy;
             }

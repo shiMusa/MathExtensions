@@ -5,11 +5,11 @@ ccopy :: _copy;
 zcopy :: _copy;
 dcopy :: _copy;
 scopy :: _copy;
-_copy :: (n: int, cx: []$T, incx: int, cy: []T, incy: int) {
+_copy :: (n: int, cx: $X/Array1D, incx: int, cy: $Y/Array1D, incy: int) {
     if n <= 0 then return;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {
-            cy[i] = cx[i];
+            set(cy, i, get(cx, i));
         }
     } else {
         ix := 0;
@@ -17,7 +17,7 @@ _copy :: (n: int, cx: []$T, incx: int, cy: []T, incy: int) {
         if incx < 0 then ix = (-n+1)*incx + 1;
         if incy < 0 then iy = (-n+1)*incy + 1;
         for i: 0..n-1 {
-            cy[iy] = cx[ix];
+            set(cy, iy, get(cx, ix));
             ix += incx;
             iy += incy;
         }

@@ -7,13 +7,13 @@ sswap :: _swap;
 dswap :: _swap;
 cswap :: _swap;
 zswap :: _swap;
-_swap :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) {
+_swap :: ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) {
     if n <= 0 then return;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {
-            tmp := cx[i];
-            cx[i] = cy[i];
-            cy[i] = tmp;
+            tmp := get(cx,i);
+            set(cx,i, get(cy,i));
+            set(cy,i, tmp);
         }
     } else {
         ix := 0;
@@ -21,9 +21,9 @@ _swap :: ($$n: int, cx: []$T, $$incx: int, cy: []T, $$incy: int) {
         if incx < 0 then ix = (-n+1)*incx;
         if incy < 0 then iy = (-n+1)*incy;
         for i: 0..n-1 {
-            tmp := cx[ix];
-            cx[ix] = cy[iy];
-            cy[iy] = tmp;
+            tmp := get(cx,ix);
+            set(cx,ix, get(cy,iy));
+            set(cy,iy, tmp);
             ix += incx;
             iy += incy;
         }

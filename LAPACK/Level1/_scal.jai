@@ -9,19 +9,19 @@ cscal  :: _scal;
 csscal :: _scal;
 zscal  :: _scal;
 zdscal :: _scal;
-_scal :: ($$n: int, ca: $U, cx: []$T, $$incx: int) #modify {
+_scal :: ($$n: int, ca: $U, cx: $X/Array1D, $$incx: int) #modify {
     if !is_intrinsic_number(U) {U = null; return;}
 } {
     if n <= 0 then return;
     if incx == 1 {
         for i: 0..n-1 {
-            cx[i] *= ca;
+            set(cx,i, get(cx,i) * ca);
         }
     } else {
         ix := 0;
         if incx < 0 then ix = (-n+1)*incx;
         for i: 0..n-1 {
-            cx[ix] *= ca;
+            set(cx,ix, get(cx,ix) * ca);
             ix += incx;
         }
     }
