@@ -6,7 +6,7 @@ cdotc :: _dotc;
 zdotc :: _dotc;
 ddot :: _dotc;
 sdot :: _dotc;
-_dotc :: ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) -> UpCast(X.data_type,Y.data_type).T {
+_dotc :: ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int) -> UpCast(X.data_type,Y.data_type).T {
     T :: UpCast(X.data_type, Y.data_type).T;
     res := zero(T);
     if n < 0 then return res;

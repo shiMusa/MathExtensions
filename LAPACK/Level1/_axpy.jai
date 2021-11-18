@@ -6,7 +6,7 @@ caxpy :: _axpy;
 zaxpy :: _axpy;
 daxpy :: _axpy;
 saxpy :: _axpy;
-_axpy :: ($$n: int, ca: $T, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) {
+_axpy :: ($$n: int, ca: $T, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int) {
 
     if n <= 0 then return;
     if ca == zero(T) then return;

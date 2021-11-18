@@ -26,28 +26,37 @@ VECTOR_FLAGS :: enum_flags u8 {
 
 
 /*
-* All concrete types A(T) of Array1D(T) have to implement the following functions:
+* All concrete types A(T) of ArrayType1D(T) have to implement the following functions:
 * get: (A(T), int) -> T
 * set: (*A(T), int, T)
 */
-Array1D :: struct(data_type: Type){}
+ArrayType1D :: struct(data_type: Type){}
 
-get :: inline (a: *$A/Array1D, i: int) -> A.data_type {
+get :: inline (a: *$A/ArrayType1D, i: int) -> A.data_type {
     return get(<<a, i);
 }
-// operator [] :: inline (a: $A/Array1D, i: int) -> A.data_type {
+// operator [] :: inline (a: $A/ArrayType1D, i: int) -> A.data_type {
 //     return get(a, i);
 // }
-// operator [] :: inline (a: *$A/Array1D, i: int) -> A.data_type {
+// operator [] :: inline (a: *$A/ArrayType1D, i: int) -> A.data_type {
 //     return get(<<a, i);
 // }
 
-// * implementation for actual arrays
-get :: inline (a: []$T, i: int) -> T {
-    return a[i];
+// * implementation for simple arrays
+Array1D :: struct(_T: Type) {
+    using _a1d: ArrayType1D(_T);
+    data: []_T;
 }
-set :: inline (a: []$T, i: int, val: T) {
-    a[i] = T;
+array1d :: (vals: []$T) -> Array1D(T) {
+    res : Array1D(T) = ---;
+    res.data = vals;
+    return res;
+}
+get :: inline (a: Array1D($T), i: int) -> T {
+    return a.data[i];
+}
+set :: inline (a: Array1D($T), i: int, val: T) {
+    a.data[i] = T;
 }
 
 
@@ -68,7 +77,7 @@ VectorType :: struct(
     _data_type: Type,
     flags: VECTOR_FLAGS
 ){
-    using _a1d: Array1D(_data_type);
+    using _a1d: ArrayType1D(_data_type);
 }
 
 dim :: inline (v: *$V/VectorType) -> int {

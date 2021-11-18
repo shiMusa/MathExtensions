@@ -5,7 +5,7 @@ ccopy :: _copy;
 zcopy :: _copy;
 dcopy :: _copy;
 scopy :: _copy;
-_copy :: (n: int, cx: $X/Array1D, incx: int, cy: $Y/Array1D, incy: int) {
+_copy :: (n: int, cx: $X/ArrayType1D, incx: int, cy: $Y/ArrayType1D, incy: int) {
     if n <= 0 then return;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {

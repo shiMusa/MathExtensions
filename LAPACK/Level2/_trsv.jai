@@ -89,7 +89,7 @@
 
 dtrsv :: _trsv;
 ctrsv :: _trsv;
-_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/Array2D, $$lda: int, x: $X/Array1D, $$incx: int) {
+_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/ArrayType2D, $$lda: int, x: $X/ArrayType1D, $$incx: int) {
     assert(char_eq(uplot, #char"u", #char"l"),           "Error: _TRSV, 1");
     assert(char_eq(trans, #char"n", #char"t", #char"c"), "Error: _TRSV, 2");
     assert(char_eq(diag, #char"u", #char"n"),            "Error: _TRSV, 3");

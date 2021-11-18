@@ -62,23 +62,31 @@ MATRIX_FLAGS :: enum_flags u32 {
 
 
 /*
-* All concrete types M(T) of Array2D(T) must implement the following functions:
+* All concrete types M(T) of ArrayType2D(T) must implement the following functions:
 * get: (M(T), int, int) -> T
 * set: (*M(T), int, int, T)
 */
-Array2D :: struct(data_type: Type){};
+ArrayType2D :: struct(data_type: Type){};
 
-get :: inline (a: *$A/Array2D, i: int, j: int) -> A.data_type {
+get :: inline (a: *$A/ArrayType2D, i: int, j: int) -> A.data_type {
     return get(<<a, i, j);
 }
 
-// * implementation for actual arrays
-
-get :: inline (a: [][]$T, i: int, j: int) -> T {
-    return a[i][j];
+// * implementation for simple arrays
+Array2D :: struct(_T: Type) {
+    using _a2d: ArrayType2D(_T);
+    data: [][]_T;
 }
-set :: inline (a: [][]$T, i: int, j: int, val: T) {
-    return a[i][j] = val;
+array2d :: (values: [][]$T) -> Array2D(T) {
+    res : Array2D(T) = ---;
+    res.data = values;
+    return res;
+}
+get :: inline (a: Array2D($T), i: int, j: int) -> T {
+    return a.data[i][j];
+}
+set :: inline (a: Array2D($T), i: int, j: int, val: T) {
+    return a.data[i][j] = val;
 }
 
 
@@ -100,7 +108,7 @@ MatrixType :: struct(
     _data_type: Type,
     flags: MATRIX_FLAGS
 ){
-    using _a2d: Array2D(_data_type);
+    using _a2d: ArrayType2D(_data_type);
 }
 
 

@@ -4,10 +4,10 @@
 
 cdotu :: _dotu;
 zdotu :: _dotu;
-_dotu :: inline ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) -> UpCast(X.data_type, Y.data_type).T {
+_dotu :: inline ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int) -> UpCast(X.data_type, Y.data_type).T {
     return _dotu_T(n,cx,incx,cy,incy,UpCast(X.data_type, Y.data_type).T);
 }
-_dotu_T :: ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int, $T: Type) -> T {
+_dotu_T :: ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int, $T: Type) -> T {
     res := zero(T);
     if n < 0 then return res;
     if incx == 1 && incy == 1 {
@@ -31,12 +31,12 @@ _dotu_T :: ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int, 
 
 
 // ? http://www.netlib.org/lapack/explore-html/de/da4/group__double__blas__level1_ga32d6fccb43cb13feafc23825f2685ba0.html#ga32d6fccb43cb13feafc23825f2685ba0
-dsdot :: inline ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) -> float64 {
+dsdot :: inline ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int) -> float64 {
     #assert(X.data_type == float32 && Y.data_type == float32);
     return _dotu_T(n,cx,incx,cy,incy,float64);
 }
 
-sdsdot :: inline ($$n: int, cx: $X/Array1D, $$incx: int, cy: $Y/Array1D, $$incy: int) -> float32 {
+sdsdot :: inline ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int) -> float32 {
     #assert(X.data_type == float32 && Y.data_type == float32);
     return cast(float32)_dotu_T(n,cx,incx,cy,incy,float64);
 }
