@@ -36,21 +36,21 @@ test_lapack_swap :: () {
 
     {
         println_push("test 1", color = .FG_YELLOW);
-        x := array1d(1,2,3,4,5,6);
-        y := array1d(2,3,4,5,6,7);
+        x := array1d(6,  1,2,3,4,5,6);
+        y := array1d(6,  2,3,4,5,6,7);
         println("y = %", y);
         _swap(6, *x, 1, *y, 1);
         println("y = %", y);
-        assert(y == array1d(1,2,3,4,5,6));
+        assert(y == array1d(6,  1,2,3,4,5,6));
     }
 
     {
         println_push("test 2", color = .FG_YELLOW);
-        x := array1d(1,2,3,4,5,6);
-        y := array1d(2,3,4,5,6,7);
+        x := array1d(6,  1,2,3,4,5,6);
+        y := array1d(6,  2,3,4,5,6,7);
         println("y = %", y);
         _swap(3, *x, 2, *y, 1);
         println("y = %", y);
-        assert(y == array1d(1,3,5,5,6,7));
+        assert(y == array1d(6,  1,3,5,5,6,7));
     }
 }

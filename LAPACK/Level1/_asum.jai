@@ -46,13 +46,13 @@ test_lapack_asum :: () {
     println_push("_asum", color = .FG_GREEN);
     {
         println("test 1", color = .FG_YELLOW);
-        x := array1d(1,2,3,4);
+        x := array1d(4,  1,2,3,4);
         res := _asum(float64, 4, x, 1);
         assert(res == 10.0);
     }
     {
         println_push("test 2", color = .FG_YELLOW);
-        x := array1d(R,I,R+I);
+        x := array1d(3,  R,I,R+I);
         res := _asum(float64, 3, x, 1);
         println("res = %", res);
         assert( approx( res, 2.0+sqrt(2.0) ) );

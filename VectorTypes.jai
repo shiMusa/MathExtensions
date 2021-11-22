@@ -42,35 +42,85 @@ get :: inline (a: *$A/ArrayType1D, i: int) -> A.data_type {
 //     return get(<<a, i);
 // }
 
+//    ###    ########  ########     ###    ##    ##    ##   ########
+//   ## ##   ##     ## ##     ##   ## ##    ##  ##   ####   ##     ##
+//  ##   ##  ##     ## ##     ##  ##   ##    ####      ##   ##     ##
+// ##     ## ########  ########  ##     ##    ##       ##   ##     ##
+// ######### ##   ##   ##   ##   #########    ##       ##   ##     ##
+// ##     ## ##    ##  ##    ##  ##     ##    ##       ##   ##     ##
+// ##     ## ##     ## ##     ## ##     ##    ##     ###### ########
+
 // * implementation for simple arrays
-Array1D :: struct(_T: Type) {
+Array1D :: struct(N: int, _T: Type) {
     using _a1d: ArrayType1D(_T);
-    data: []_T;
+    data: [N]_T;
 }
-array1d :: (vals: []$T) -> Array1D(T) {
-    res : Array1D(T) = ---;
-    res.data = NewArray(vals.count, T, false);
+array1d :: (vals: [$N]$T) -> Array1D(N,T) {
+    res : Array1D(N,T) = ---;
     for vals {
         res.data[it_index] = it;
     }
     return res;
 }
-array1d :: (val: ..$T) -> Array1D(T) {
-    res : Array1D(T) = ---;
-    res.data = NewArray(val.count, T, false);
+array1d :: ($N: int, vals: ..$T) -> Array1D(N,T) {
+    res : Array1D(N,T) = ---;
+    for vals {
+        res.data[it_index] = it;
+    }
+    return res;
+}
+get :: inline (a: Array1D($N,$T), i: int) -> T {
+    return a.data[i];
+}
+set :: inline (a: *Array1D($N,$T), i: int, val: T) {
+    a.data[i] = val;
+}
+
+operator == :: (a: Array1D($N,$T), b: Array1D(N,$U)) -> bool {
+    for a.data {
+        if it != b.data[it_index] then return false;
+    }
+    return true;
+}
+
+
+// ##     ## ########    ###    ########     ###    ########  ########     ###    ##    ##    ##   ########
+// ##     ## ##         ## ##   ##     ##   ## ##   ##     ## ##     ##   ## ##    ##  ##   ####   ##     ##
+// ##     ## ##        ##   ##  ##     ##  ##   ##  ##     ## ##     ##  ##   ##    ####      ##   ##     ##
+// ######### ######   ##     ## ########  ##     ## ########  ########  ##     ##    ##       ##   ##     ##
+// ##     ## ##       ######### ##        ######### ##   ##   ##   ##   #########    ##       ##   ##     ##
+// ##     ## ##       ##     ## ##        ##     ## ##    ##  ##    ##  ##     ##    ##       ##   ##     ##
+// ##     ## ######## ##     ## ##        ##     ## ##     ## ##     ## ##     ##    ##     ###### ########
+
+// * implementation for simple arrays
+HeapArray1D :: struct(_T: Type) {
+    using _a1d: ArrayType1D(_T);
+    data: []_T;
+}
+harray1d :: (vals: []$T) -> HeapArray1D(T) {
+    res : HeapArray1D(T) = ---;
+    res.data = NewArray(vals.count, T, false); // ! alloc
+    for vals {
+        res.data[it_index] = it;
+    }
+    return res;
+}
+harray1d :: (val: ..$T) -> HeapArray1D(T) {
+    res : HeapArray1D(T) = ---;
+    res.data = NewArray(val.count, T, false); // ! alloc
     for val {
         res.data[it_index] = it;
     }
     return res;
 }
-get :: inline (a: Array1D($T), i: int) -> T {
+get :: inline (a: HeapArray1D($T), i: int) -> T {
     return a.data[i];
 }
-set :: inline (a: *Array1D($T), i: int, val: T) {
+set :: inline (a: *HeapArray1D($T), i: int, val: T) {
     a.data[i] = val;
 }
 
-operator == :: (a: Array1D($T), b: Array1D($U)) -> bool {
+operator == :: (a: HeapArray1D($T), b: HeapArray1D($U)) -> bool {
     if a.data.count != b.data.count then return false;
     for a.data {
         if it != b.data[it_index] then return false;

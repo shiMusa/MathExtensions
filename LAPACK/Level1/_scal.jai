@@ -33,15 +33,15 @@ test_lapack_scal :: () {
 
     {
         println("test 1", color = .FG_YELLOW);
-        y := array1d(1,2,3,4,5,6);
+        y := array1d(6,  1,2,3,4,5,6);
         _scal(6, 2, *y, 1);
-        assert(y == array1d(2,4,6,8,10,12));
+        assert(y == array1d(6,  2,4,6,8,10,12));
     }
 
     {
         println("test 2", color = .FG_YELLOW);
-        y := array1d(1,2,3,4,5,6);
+        y := array1d(6,  1,2,3,4,5,6);
         _scal(3, -2, *y, 2);
-        assert(y == array1d(-2,2,-6,4,-10,6));
+        assert(y == array1d(6,  -2,2,-6,4,-10,6));
     }
 }
