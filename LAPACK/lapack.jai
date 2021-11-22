@@ -17,7 +17,7 @@
 // ? tests if val equals any of lower_case_chars
 char_eq :: (val: s64, $lower_case_chars: ..s64) -> bool {
     #if lower_case_chars.count == 1 {
-        return val == it || val == it-32;
+        return val == lower_case_chars[0] || val == lower_case_chars[0]-32;
     } else {
         for lower_case_chars {
             if val == it || val == it-32 then return true;

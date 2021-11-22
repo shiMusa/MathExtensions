@@ -49,16 +49,34 @@ Array1D :: struct(_T: Type) {
 }
 array1d :: (vals: []$T) -> Array1D(T) {
     res : Array1D(T) = ---;
-    res.data = vals;
+    res.data = NewArray(vals.count, T, false);
+    for vals {
+        res.data[it_index] = it;
+    }
+    return res;
+}
+array1d :: (val: ..$T) -> Array1D(T) {
+    res : Array1D(T) = ---;
+    res.data = NewArray(val.count, T, false);
+    for val {
+        res.data[it_index] = it;
+    }
     return res;
 }
 get :: inline (a: Array1D($T), i: int) -> T {
     return a.data[i];
 }
-set :: inline (a: Array1D($T), i: int, val: T) {
-    a.data[i] = T;
+set :: inline (a: *Array1D($T), i: int, val: T) {
+    a.data[i] = val;
 }
 
+operator == :: (a: Array1D($T), b: Array1D($U)) -> bool {
+    if a.data.count != b.data.count then return false;
+    for a.data {
+        if it != b.data[it_index] then return false;
+    }
+    return true;
+}
 
 /*
 * All concrete types V(T) of VectorType(T,flags) have to implement the following functions:

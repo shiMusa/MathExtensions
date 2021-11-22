@@ -86,7 +86,7 @@ get :: inline (a: Array2D($T), i: int, j: int) -> T {
     return a.data[i][j];
 }
 set :: inline (a: Array2D($T), i: int, j: int, val: T) {
-    return a.data[i][j] = val;
+    a.data[i][j] = val;
 }
 
 

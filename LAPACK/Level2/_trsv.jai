@@ -89,7 +89,7 @@
 
 dtrsv :: _trsv;
 ctrsv :: _trsv;
-_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/ArrayType2D, $$lda: int, x: $X/ArrayType1D, $$incx: int) {
+_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/ArrayType2D, $$lda: int, x: *$X/ArrayType1D, $$incx: int) {
     assert(char_eq(uplot, #char"u", #char"l"),           "Error: _TRSV, 1");
     assert(char_eq(trans, #char"n", #char"t", #char"c"), "Error: _TRSV, 2");
     assert(char_eq(diag, #char"u", #char"n"),            "Error: _TRSV, 3");
@@ -192,7 +192,7 @@ _trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/ArrayType2D, $$ld
                 jx = kx;
                 for j: 0..n-1 {
                     ix = kx;
-                    tmp = get(x,jx)
+                    tmp = get(x,jx);
                     if noconj {
                         for i: 0..j-1 {
                             tmp -= get(a,i,j)*get(x,ix);
