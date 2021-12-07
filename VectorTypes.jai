@@ -32,7 +32,7 @@ VECTOR_FLAGS :: enum_flags u8 {
 */
 ArrayType1D :: struct(data_type: Type){}
 
-get :: inline (a: *$A/ArrayType1D, i: int) -> A.data_type {
+get :: inline (a: *$A/ArrayType1D, i: int) -> a.data_type {
     return get(<<a, i);
 }
 // operator [] :: inline (a: $A/ArrayType1D, i: int) -> A.data_type {
@@ -69,18 +69,22 @@ array1d :: ($N: int, vals: ..$T) -> Array1D(N,T) {
     }
     return res;
 }
-get :: inline (a: Array1D($N,$T), i: int) -> T {
+get :: inline (a: Array1D, i: int) -> a.T {
     return a.data[i];
 }
-set :: inline (a: *Array1D($N,$T), i: int, val: T) {
+set :: inline (a: *Array1D, i: int, val: a.T) {
     a.data[i] = val;
 }
 
-operator == :: (a: Array1D($N,$T), b: Array1D(N,$U)) -> bool {
-    for a.data {
-        if it != b.data[it_index] then return false;
+operator == :: (a: Array1D, b: Array1D) -> bool {
+    #if a.N != b.N { 
+        return false; 
+    } else {
+        for a.data {
+            if it != b.data[it_index] then return false;
+        }
+        return true;
     }
-    return true;
 }
 
 
@@ -113,14 +117,14 @@ harray1d :: (val: ..$T) -> HeapArray1D(T) {
     }
     return res;
 }
-get :: inline (a: HeapArray1D($T), i: int) -> T {
+get :: inline (a: HeapArray1D, i: int) -> a.T {
     return a.data[i];
 }
-set :: inline (a: *HeapArray1D($T), i: int, val: T) {
+set :: inline (a: *HeapArray1D, i: int, val: a.T) {
     a.data[i] = val;
 }
 
-operator == :: (a: HeapArray1D($T), b: HeapArray1D($U)) -> bool {
+operator == :: (a: HeapArray1D, b: HeapArray1D) -> bool {
     if a.data.count != b.data.count then return false;
     for a.data {
         if it != b.data[it_index] then return false;
@@ -193,7 +197,7 @@ VectorRawForExpansion :: struct(T: Type) {
 }
 #scope_export
 // * for expansion only over the really existing data
-for_expansion :: (ve: *VectorRawForExpansion($V), body: Code, flags: For_Flags) #expand {
+for_expansion :: (ve: *VectorRawForExpansion, body: Code, flags: For_Flags) #expand {
     v := <<(ve.vector);
     i := 0;
     while i < n_raw(v) {
@@ -245,8 +249,8 @@ mat_row_view :: (mat: *$M/MatrixType, row: int, $num_elements: int, start_index:
     return res;
 }
 
-dim :: inline (v: MatrixRowView($M, $N)) -> int {
-    return N;
+dim :: inline (v: MatrixRowView) -> int {
+    return v.N;
 }
 get :: inline (v: MatrixRowView, i: int) -> v.data_type {
     return get(v.mat, v.row, v.start_index + v.stride * i);
@@ -261,8 +265,8 @@ get_raw :: inline (v: MatrixRowView, i: int) -> v.data_type {
 set_raw :: inline (v: *MatrixRowView, i: int, value: v.data_type) {
     set(v.mat, v.row, v.start_index + v.stride * i, value);
 }
-n_raw :: inline (v: MatrixRowView($T, $N)) -> int {
-    return N; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
+n_raw :: inline (v: MatrixRowView) -> int {
+    return v.N; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
 }
 from_raw_index :: inline (v: MatrixRowView, i: int) -> int {
     return i;
@@ -299,8 +303,8 @@ mat_col_view :: (mat: *$M/MatrixType, col: int, $num_elements: int, start_index:
     return res;
 }
 
-dim :: inline (v: MatrixColumnView($M, $N)) -> int {
-    return N;
+dim :: inline (v: MatrixColumnView) -> int {
+    return v.N;
 }
 get :: inline (v: MatrixColumnView, i: int) -> v.data_type {
     return get(v.mat, v.start_index + v.stride * i, v.col);
@@ -315,8 +319,8 @@ get_raw :: inline (v: MatrixColumnView, i: int) -> v.data_type {
 set_raw :: inline (v: *MatrixColumnView, i: int, value: v.data_type) {
     set(v.mat, v.start_index + v.stride * i, value, v.col);
 }
-n_raw :: inline (v: MatrixColumnView($T, $N)) -> int {
-    return N; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
+n_raw :: inline (v: MatrixColumnView) -> int {
+    return v.N; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
 }
 from_raw_index :: inline (v: MatrixColumnView, i: int) -> int {
     return i;
@@ -464,8 +468,8 @@ vec_view :: (vec: *$V/VectorType, $num_elements: int, start_index: int = 0, stri
     return res;
 }
 
-dim :: inline (v: VectorView($V, $N)) -> int {
-    return N;
+dim :: inline (v: VectorView) -> int {
+    return v.N;
 }
 get :: inline (v: VectorView, i: int) -> v.data_type {
     return get(v.vec, v.start_index + v.stride * i);
@@ -480,8 +484,8 @@ get_raw :: inline (v: VectorView, i: int) -> v.data_type {
 set_raw :: inline (v: *VectorView, i: int, value: v.data_type) {
     set(v.vec, v.start_index + v.stride * i, value);
 }
-n_raw :: inline (v: VectorView($T, $N)) -> int {
-    return N; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
+n_raw :: inline (v: VectorView) -> int {
+    return v.N; // ! not correct since e.g. a view on a sparse vector probably has fewer elements
 }
 from_raw_index :: inline (v: VectorView, i: int) -> int {
     return i;
@@ -525,13 +529,13 @@ dim :: inline (v: VectorHeapView) -> int {
 get :: inline (v: VectorHeapView, i: int) -> v.data_type {
     return get(v.vec, v.start_index + v.stride * i);
 }
-set :: inline (v: *VectorHeapView($T), i: int, value: v.data_type) {
+set :: inline (v: *VectorHeapView, i: int, value: v.data_type) {
     set(v.vec, v.start_index + v.stride * i, value);
 }
 get_raw :: inline (v: VectorHeapView, i: int) -> v.data_type {
     return get(v.vec, v.start_index + v.stride * i);
 }
-set_raw :: inline (v: *VectorHeapView($T), i: int, value: v.data_type) {
+set_raw :: inline (v: *VectorHeapView, i: int, value: v.data_type) {
     set(v.vec, v.start_index + v.stride * i, value);
 }
 n_raw :: inline (v: VectorHeapView) -> int {
@@ -550,9 +554,9 @@ from_raw_index :: inline (v: VectorHeapView, i: int) -> int {
 // ##     ## ##       ##   ### ##    ## ##
 // ########  ######## ##    ##  ######  ########
 
-DenseVector :: struct(_T: Type, _N: int) {
+DenseVector :: struct(_T: Type, N: int) {
     using _v: VectorType(_T, VECTOR_FLAGS.DENSE);
-    data: [_N]_T;
+    data: [N]_T;
 }
 
 
@@ -580,25 +584,25 @@ dvec :: ($T: Type, $N: int, values: ..$U) -> DenseVector(T,N) {
     return res;
 }
 
-dim :: inline (v: DenseVector($T, $N)) -> int {
-    return N;
+dim :: inline (v: DenseVector) -> int {
+    return v.N;
 }
-get :: inline (v: DenseVector($T, $N), i: int) -> T {
+get :: inline (v: DenseVector, i: int) -> v.data_type {
     return v.data[i];
 }
-set :: inline (v: *DenseVector($T, $N), i: int, value: T) {
+set :: inline (v: *DenseVector, i: int, value: v.data_type) {
     v.data[i] = value;
 }
-get_raw :: inline (v: DenseVector($T, $N), i: int) -> T {
+get_raw :: inline (v: DenseVector, i: int) -> v.data_type {
     return v.data[i];
 }
-set_raw :: inline (v: *DenseVector($T, $N), i: int, value: T) {
+set_raw :: inline (v: *DenseVector, i: int, value: v.data_type) {
     v.data[i] = value;
 }
-n_raw :: inline (v: DenseVector($T, $N)) -> int {
-    return N;
+n_raw :: inline (v: DenseVector) -> int {
+    return v.N;
 }
-from_raw_index :: inline (v: DenseVector($T, $N), i: int) -> int {
+from_raw_index :: inline (v: DenseVector, i: int) -> int {
     return i;
 }
 
@@ -658,33 +662,33 @@ dhvec :: ($T: Type, N: int, values: ..$U) -> DenseHeapVector(T) {
     return res;
 }
 
-init :: inline (v: *DenseHeapVector($T), $initialize_variables: bool = true) {
-    v.data = NewArray(v.dims, T, false);
+init :: inline (v: *DenseHeapVector, $initialize_variables: bool = true) {
+    v.data = NewArray(v.dims, v.data_type, false);
     #if initialize_variables {
         for 0..v.dims-1 {
-            v.data[it] = zero(T);
+            v.data[it] = zero(v.data_type);
         }
     }
 }
 
-dim :: inline (v: DenseHeapVector($T)) -> int {
+dim :: inline (v: DenseHeapVector) -> int {
     return v.dims;
 }
-get :: inline (v: DenseHeapVector($T), i: int) -> T {
+get :: inline (v: DenseHeapVector, i: int) -> v.data_type {
     return v.data[i];
 }
-set :: inline (v: *DenseHeapVector($T), i: int, value: T) {
+set :: inline (v: *DenseHeapVector, i: int, value: v.data_type) {
     v.data[i] = value;
 }
-get_raw :: inline (v: DenseHeapVector($T), i: int) -> T {
+get_raw :: inline (v: DenseHeapVector, i: int) -> v.data_type {
     return v.data[i];
 }
-set_raw :: inline (v: *DenseHeapVector($T), i: int, value: T) {
+set_raw :: inline (v: *DenseHeapVector, i: int, value: v.data_type) {
     v.data[i] = value;
 }
-n_raw :: inline (v: DenseHeapVector($T)) -> int {
+n_raw :: inline (v: DenseHeapVector) -> int {
     return v.dims;
 }
-from_raw_index :: inline (v: DenseHeapVector($T), i: int) -> int {
+from_raw_index :: inline (v: DenseHeapVector, i: int) -> int {
     return i;
 }

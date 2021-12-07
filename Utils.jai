@@ -1,6 +1,11 @@
 
 
 
+clamp :: inline (mi: $T, val: T, ma: T) -> T {
+    return min(ma, max(mi, val));
+}
+
+
 min :: (values: ..$T) -> T {
     res := values[0];
     for i: 1..values.count-1 {

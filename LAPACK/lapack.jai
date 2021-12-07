@@ -1,18 +1,18 @@
 
-#load "xerbla.jai";
-#load "Level1/_axpy.jai";
-#load "Level1/_copy.jai";
-#load "Level1/_dotc.jai";
-#load "Level1/_dotu.jai";
-#load "Level1/_scal.jai";
-#load "Level1/_rot.jai";
-#load "Level1/_swap.jai";
-#load "Level1/_asum.jai";
-#load "Level1/_abs.jai";
-#load "Level1/drotm.jai";
-#load "Level1/drotmg.jai";
+// #load "xerbla.jai";
+// #load "Level1/_axpy.jai";
+// #load "Level1/_copy.jai";
+// #load "Level1/_dotc.jai";
+// #load "Level1/_dotu.jai";
+// #load "Level1/_scal.jai";
+// #load "Level1/_rot.jai";
+// #load "Level1/_swap.jai";
+// #load "Level1/_asum.jai";
+// #load "Level1/_abs.jai";
+// #load "Level1/drotm.jai";
+// #load "Level1/drotmg.jai";
 
-#load "Level2/_trsv.jai";
+// #load "Level2/_trsv.jai";
 
 // ? tests if val equals any of lower_case_chars
 char_eq :: (val: s64, $lower_case_chars: ..s64) -> bool {
@@ -25,6 +25,39 @@ char_eq :: (val: s64, $lower_case_chars: ..s64) -> bool {
         return false;
     }
 }
+
+// Anderson E. (2017)
+// Algorithm 978: Safe Scaling in the Level 1 BLAS
+// ACM Trans Math Softw 44:1--28
+// https://doi.org/10.1145/3061665
+EPS_32    : float32 : 0.5960464478E-07;
+ULP_32    : float32 : 0.1192092896E-06;
+SAFMIN_32 : float32 : 0.1175494351E-37;
+SAFMAX_32 : float32 : 0.8507059173E+38;
+SMLNUM_32 : float32 : 0.9860761315E-31;
+BIGNUM_32 : float32 : 0.1014120480E+32;
+RTMIN_32  : float32 : 0.3140184864E-15;
+RTMAX_32  : float32 : 0.3184525782E+16;
+// Blue's scaling constants
+TSML_32 : float32 : 0.1084202172E-18;
+TBIG_32 : float32 : 0.4503599627E+16;
+SSML_32 : float32 : 0.3777893186E+23;
+SBIG_32 : float32 : 0.1323488980E-22;
+// 64-bit
+EPS_64    : float64 : 0.11102230246251565404E-015;
+ULP_64    : float64 : 0.22204460492503130808E-015;
+SAFMIN_64 : float64 : 0.22250738585072013831E-307;
+SAFMAX_64 : float64 : 0.44942328371557897693E+308;
+SMLNUM_64 : float64 : 0.10020841800044863890E-291;
+BIGNUM_64 : float64 : 0.99792015476735990583E+292;
+RTMIN_64  : float64 : 0.10010415475915504622E-145;
+RTMAX_64  : float64 : 0.99895953610111751404E+146;
+// Blue's scaling constants
+TSML_64 : float64 : 0.14916681462400413487E-153;
+TBIG_64 : float64 : 0.19979190722022350281E+147;
+SSML_64 : float64 : 0.44989137945431963828E+162;
+SBIG_64 : float64 : 0.11113793747425387417E-161;
+
 
 
 test_lapack :: () {
@@ -39,12 +72,12 @@ test_lapack :: () {
         println("\"a\" == \"a\" == \"A\": %, %", char_eq(val, #char"a"), char_eq(VAL, #char"a"));
     }
 
-    test_lapack_axpy();
-    test_lapack_copy();
-    test_lapack_dotc();
-    test_lapack_dotu();
-    test_lapack_scal();
-    test_lapack_rot();
-    test_lapack_swap();
-    test_lapack_asum();
+    // test_lapack_axpy();
+    // test_lapack_copy();
+    // test_lapack_dotc();
+    // test_lapack_dotu();
+    // test_lapack_scal();
+    // test_lapack_rot();
+    // test_lapack_swap();
+    // test_lapack_asum();
 }

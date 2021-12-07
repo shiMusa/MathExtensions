@@ -18,7 +18,7 @@
 #load "Checks.jai";
 #load "LinearAlgebra.jai";
 
-#load "LAPACK/lapack.jai";
+// #load "LAPACK/lapack.jai";
 
 #module_parameters(CHECKS := true);
 
@@ -40,12 +40,12 @@ run_all_tests :: () {
     test_MatrixTypes();
 
     test_vector();
-    test_matrix();
+    // test_matrix();
 
-    test_checks();
-    test_linear_algebra();
+    // test_checks();
+    // test_linear_algebra();
 
-    test_lapack();
+    // test_lapack();
 }
 
 

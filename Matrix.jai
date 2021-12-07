@@ -112,13 +112,13 @@ copy :: inline (to: *$M/MatrixType, from: M) {
     }
 }
 
-copy :: (m: DenseMatrix($T, $N, $M)) -> DenseMatrix(T,N,M) {
-    res : DenseMatrix(T,N,M) = ---;
+copy :: (m: DenseMatrix($T, $N, $M)) -> type_of(m) {
+    res : type_of(m) = ---;
     inline copy(*res, m);
     return res;
 }
-copy :: (m: DenseHeapMatrix($T)) -> DenseHeapMatrix(T) {
-    res := dhmat(T,N,M, false); // ! alloc
+copy :: (m: DenseHeapMatrix) -> type_of(m) {
+    res := dhmat(m.data_type,m.rows,m.cols, false); // ! alloc
     inline copy(*res, m);
     return res;
 }

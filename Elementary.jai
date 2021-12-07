@@ -23,7 +23,16 @@
 // ##    ##  ##  ##    ##  ##   ###
 //  ######  ####  ######   ##    ##
 
-
+// ? Fortran transfer function
+// ? http://math.hawaii.edu/wordpress/fortran-4/#sign
+sign :: inline (x: $T, y: $U) -> $V #modify {
+    if !is_number(T) || is_non_real_number(U){V = null; return;}
+    X := get_number_inner_type(T);
+    if is_intrinsic_number(X) { V = X; }
+    else { V = type_info(float64); }
+} {
+    return ifx y >= 0 then abs(x) else -abs(x);
+}
 
 sign :: inline (x: $T) -> T #modify {
     if !is_number(T) {T = null; return;}    

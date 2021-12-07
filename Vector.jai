@@ -113,13 +113,13 @@ copy :: (to: *$V/VectorType, from: V) {
     }
 }
 
-copy :: (v: DenseVector($T, $N)) -> DenseVector(T,N) {
-    res : DenseVector(T, N) = ---;
+copy :: (v: DenseVector) -> type_of(v) {
+    res : type_of(v) = ---;
     inline copy(*res, v);
     return res;
 }
-copy :: (v: DenseHeapVector($T)) -> DenseHeapVector(T) {
-    res := dhvec(T, dim(v), false); // ! alloc
+copy :: (v: DenseHeapVector) -> type_of(v) {
+    res := dhvec(v.data_type, dim(v), false); // ! alloc
     inline copy(*res, v);
     return v;
 }
@@ -155,8 +155,8 @@ equals_default :: (a: $A/VectorType, b: $B/VectorType) -> bool {
 
     return true;
 }
-equals_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> bool {
-    #if N != M {
+equals_dense_dense :: (a: DenseVector, b: DenseVector) -> bool {
+    #if a.N != b.N {
         return false;
     } else {
         for a {
@@ -176,13 +176,14 @@ equals_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, $M)) -> bool {
 //    ###    ########  ######     ###                 ###    ########  ######
 
 
-mul_el :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
-    res : DenseVector(UpCast(A,B).T, N);
+mul_el :: (a: DenseVector, b: DenseVector) -> DenseVector(UpCast(a.data_type,b.data_type).T, a.N) {
+    #assert(a.N == b.N);
+    res : DenseVector(UpCast(a.data_type,b.data_type).T, N);
     inline mul_el(*res,a,b);
     return res;
 }
-mul_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
-    res := dhvec(UpCast(A,B).T, dim(a)); // ! alloc
+mul_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(a.data_type,b.data_type).T) {
+    res := dhvec(UpCast(a.data_type,b.data_type).T, dim(a)); // ! alloc
     inline mul_el(*res,a,b);
     return res;
 }
@@ -219,13 +220,17 @@ mul_el_default :: (c: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
 //   ## ##   ##       ##    ##    ###  ##           ## ##   ##       ##    ##
 //    ###    ########  ######     ### ##             ###    ########  ######
 
-div_el :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
-    res : DenseVector(UpCast(A,B).T, N);
+div_el :: (a: DenseVector, b: DenseVector) -> DenseVector(UpCast(a.data_type,b.data_type).T, a.N) {
+    #assert(a.N == b.N);
+    res : DenseVector(UpCast(a.data_type,b.data_type).T, a.N);
     inline div_el(*res,a,b);
     return res;
 }
-div_el :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
-    res := dhvec(UpCast(A,B).T, dim(a)); // ! alloc
+div_el :: (a: DenseHeapVector, b: DenseHeapVector) -> DenseHeapVector(UpCast(a.data_type,b.data_type).T) {
+    #if CHECKS {
+        assert(dim(a) == dim(b));
+    }
+    res := dhvec(UpCast(a.data_type,b.data_type).T, dim(a)); // ! alloc
     inline div_el(*res,a,b);
     return res;
 }
@@ -291,8 +296,9 @@ dot_default :: (a: $A/VectorType, b: $B/VectorType, $conjugate: bool = true) -> 
     }
     return res;
 }
-dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, N), $conjugate: bool = true) -> UpCast(T,U).T {
-    res := zero(UpCast(T,U).T);
+dot_dense_dense :: (a: DenseVector, b: DenseVector, $conjugate: bool = true) -> UpCast(a.data_type,b.data_type).T {
+    #assert(a.N == b.N);
+    res := zero(UpCast(a.data_type,b.data_type).T);
     for a {
         #if conjugate {
             res += conjugate(it) * get(b, it_index);
@@ -315,18 +321,18 @@ dot_dense_dense :: (a: DenseVector($T, $N), b: DenseVector($U, N), $conjugate: b
 //  ######   ######  ##     ## ########    ##     ##  #######  ########
 
 
-operator * :: (a: DenseVector($T, $N), b: $B) -> DenseVector(UpCast(T,B).T, N) #modify {
+operator * :: (a: DenseVector, b: $B) -> DenseVector(UpCast(a.data_type,B).T, a.N) #modify {
     if !is_number(B) {B = null; return;}    
 } #symmetric {
-    res : DenseVector(UpCast(T,B).T,N) = ---;
+    res : DenseVector(UpCast(a.data_type,B).T,a.N) = ---;
     inline copy(*res, a);
     inline mul(*res, b);
     return res;
 }
-operator * :: (a: DenseHeapVector($T), b: $B) -> DenseHeapVector(UpCast(T,B).T) #modify {
+operator * :: (a: DenseHeapVector, b: $B) -> DenseHeapVector(UpCast(a.data_type,B).T) #modify {
     if !is_number(B) {B = null; return;}    
 } #symmetric {
-    res := dhvec(UpCast(T,B).T, dim(a), false); // ! alloc
+    res := dhvec(UpCast(a.data_type,B).T, dim(a), false); // ! alloc
     inline copy(*res, a);
     inline mul(*res, b);
     return res;
@@ -357,18 +363,18 @@ mul_default :: (a: *$A/VectorType, b: $B) #modify {
 
 
 
-operator / :: inline (a: DenseVector($T, $N), b: $B) -> DenseVector(UpCast(T,B).T, N) #modify {
+operator / :: inline (a: DenseVector, b: $B) -> DenseVector(UpCast(a.data_type,B).T, a.N) #modify {
     if !is_number(B) {B = null; return;}    
 } {
-    res : DenseVector(UpCast(T,B).T,N) = ---;
+    res : DenseVector(UpCast(a.data_type,B).T,a.N) = ---;
     inline copy(*res, a);
     inline div(*res, b);
     return res;
 }
-operator / :: inline (a: DenseHeapVector($T), b: $B) -> DenseHeapVector(UpCast(T,B).T) #modify {
+operator / :: inline (a: DenseHeapVector, b: $B) -> DenseHeapVector(UpCast(a.data_type,B).T) #modify {
     if !is_number(B) {B = null; return;}    
 } {
-    res := dhvec(UpCast(T,B).T, dim(a), false); // ! alloc
+    res := dhvec(UpCast(a.data_type,B).T, dim(a), false); // ! alloc
     inline copy(*res, a);
     inline div(*res, b);
     return res;
@@ -399,13 +405,13 @@ div_default :: (a: *$A/VectorType, b: $B) #modify {
 //  #######   #######     ##    ######## ##     ##
 
 
-operator / :: (a: DenseVector($A, $NA), b: DenseVector($B, $NB)) -> DenseMatrix(UpCast(A,B).T, NA, NB) {
-    res : DenseMatrix(UpCast(A,B).T, NA, NB);
+operator / :: (a: DenseVector, b: DenseVector) -> DenseMatrix(UpCast(a.data_type,b.data_type).T, a.N, b.N) {
+    res : DenseMatrix(UpCast(a.data_type,b.data_type).T, a.N, b.N);
     inline outer_product(*res,a,b);
     return res;
 }
-operator / :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapMatrix(UpCast(A,B).T) {
-    res := dhmat(UpCast(A,B).T, dim(a), dim(b));
+operator / :: (a: DenseHeapVector, b: DenseHeapVector) -> DenseHeapMatrix(UpCast(a.data_type,b.data_type).T) {
+    res := dhmat(UpCast(a.data_type,b.data_type).T, dim(a), dim(b));
     inline outer_product(*res,a,b);
     return res;
 }
@@ -441,14 +447,15 @@ outer_product_default :: inline (M: *$C/MatrixType, a: $A/VectorType, b: $B/Vect
 // ##     ## ########  ########      ######   #######  ########
 
 
-operator + :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
-    res : DenseVector(UpCast(A,B).T, N) = ---;
+operator + :: (a: DenseVector, b: DenseVector) -> DenseVector(UpCast(a.data_type,b.data_type).T, a.N) {
+    #assert(a.N == b.N);
+    res : DenseVector(UpCast(a.data_type,b.data_type).T, a.N) = ---;
     inline cast_to(*res, a);
     inline add(*res, b);
     return res;
 }
-operator + :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
-    res := dhvec(UpCast(A,B).T, N, false);
+operator + :: (a: DenseHeapVector, b: DenseHeapVector) -> DenseHeapVector(UpCast(a.data_type,b.data_type).T) {
+    res := dhvec(UpCast(a.data_type,b.data_type).T, a.N, false);
     inline cast_to(*res, a);
     inline add(*res, b);
     return res;
@@ -475,14 +482,15 @@ add_default :: (a: *$A/VectorType, b: $B/VectorType) {
 
 
 
-operator - :: (a: DenseVector($A, $N), b: DenseVector($B, N)) -> DenseVector(UpCast(A,B).T, N) {
-    res : DenseVector(UpCast(A,B).T, N) = ---;
+operator - :: (a: DenseVector, b: DenseVector) -> DenseVector(UpCast(a.data_type,b.data_type).T, a.N) {
+    #assert(a.N == b.N);
+    res : DenseVector(UpCast(a.data_type,b.data_type).T, a.N) = ---;
     inline cast_to(*res, a);
     inline sub(*res, b);
     return res;
 }
-operator - :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
-    res := dhvec(UpCast(A,B).T, N, false);
+operator - :: (a: DenseHeapVector, b: DenseHeapVector) -> DenseHeapVector(UpCast(a.data_type,b.data_type).T) {
+    res := dhvec(UpCast(a.data_type,b.data_type).T, a.N, false);
     inline cast_to(*res, a);
     inline sub(*res, b);
     return res;
@@ -516,12 +524,12 @@ sub_default :: (a: *$A/VectorType, b: $B/VectorType) {
 // ##    ## ########  ######
 
 
-operator - :: (a: DenseVector($T, $N)) -> DenseVector(T,N) {
+operator - :: (a: DenseVector) -> type_of(a) {
     res := copy(a);
     inline neg(*res);
     return res;
 }
-operator - :: (a: DenseHeapVector($T)) -> DenseHeapVector(T) {
+operator - :: (a: DenseHeapVector) -> type_of(a) {
     res := copy(a);
     inline neg(*res);
     return res;
@@ -549,13 +557,14 @@ neg_default :: (a: *$A/VectorType) {
 //  ######  ##     ##  #######   ######   ######
 
 
-cross :: (a: DenseVector($A, 3), b: DenseVector($B, 3)) -> DenseVector(UpCast(A,B).T, 3) {
-    res : DenseVector(UpCast(A,B).T, 3);
+cross :: (a: DenseVector, b: DenseVector) -> DenseVector(UpCast(a.data_type,b.data_type).T, 3) {
+    #assert(a.N == 3 && b.N == 3);
+    res : DenseVector(UpCast(a.data_type,b.data_type).T, 3);
     inline cross(*res,a,b);
     return res;
 }
-cross :: (a: DenseHeapVector($A), b: DenseHeapVector($B)) -> DenseHeapVector(UpCast(A,B).T) {
-    res := dhvec(UpCast(A,B).T, 3, false);
+cross :: (a: DenseHeapVector, b: DenseHeapVector) -> DenseHeapVector(UpCast(a.data_type,b.data_type).T) {
+    res := dhvec(UpCast(a.data_type,b.data_type).T, 3, false);
     inline cross(*res,a,b);
     return res;
 }
@@ -797,12 +806,12 @@ swap_default :: (v: *$V/VectorType, i: int, j: int) {
 // ##    ## ##     ## ##   ### ##    ## ##     ## ##    ##  ##     ##    ##    ##
 //  ######   #######  ##    ##  ######   #######   ######   ##     ##    ##    ########
 
-conjugate :: (v: DenseVector($T, $N)) -> DenseVector(T, N) {
+conjugate :: (v: DenseVector) -> type_of(v) {
     res := copy(v);
     inline conjugate(*res);
     return res;
 }
-conjugate :: (v: DenseHeapVector($T)) -> DenseHeapVector(T) {
+conjugate :: (v: DenseHeapVector) -> type_of(v) {
     res := copy(v);
     inline conjugate(*res);
     return res;
