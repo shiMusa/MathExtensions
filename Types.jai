@@ -231,7 +231,11 @@ get_quaternion_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_In
 
 
 is_minor_number_type :: inline ($major: Type, $minor: Type) -> bool {
-    return upcast(major, minor) == major;
+    // print("is_minor_number_type(%,%)\n", major, minor);
+    T := upcast(major, minor);
+    // print("is_minor_number_type: T = %\n", T);
+    // print("T == major -> %\n", T == major);
+    return T == major;
 }
 
 
@@ -304,7 +308,7 @@ ncast :: inline ($T: Type, num: $N) -> T {
         #if #run is_quaternion_number(N) || is_complex_number(N) {
             assert(false, "cannot ncast % -> %", N, T);
         } else {
-
+            
             return cast(T)num;
 
         }
@@ -415,45 +419,54 @@ upcast :: (A: *Type_Info, B: *Type_Info) -> *Type_Info {
 
 
 upcast :: inline ($A: Type, $B: Type) -> Type {
-    is_A_quaternion :: #run is_quaternion_number(A);
-    is_B_quaternion :: #run is_quaternion_number(B);
-    is_A_complex    :: #run is_complex_number(A);
-    is_B_complex    :: #run is_complex_number(B);
-
-    #if is_A_quaternion && is_B_quaternion {
-        a :: #run get_number_inner_type(A);
-        b :: #run get_number_inner_type(B);
-        T :: #run upcast(a, b);
-        return Quaternion(T);
-    } else #if is_A_quaternion {
-        a :: #run get_number_inner_type(A);
-        T :: #run upcast(a, B);
-        return Quaternion(T);
-    } else #if is_B_quaternion {
-        b :: #run get_number_inner_type(B);
-        T :: #run upcast(A,b);
-        return Quaternion(T);
-
-    } else #if is_A_complex && is_B_complex {
-        a :: #run get_number_inner_type(A);
-        b :: #run get_number_inner_type(B);
-        T :: #run upcast(a, b);
-        return Complex(T);
-    } else #if is_A_complex {
-        a :: #run get_number_inner_type(A);
-        T :: #run upcast(a, B);
-        return Complex(T);
-    } else #if is_B_complex {
-        b :: #run get_number_inner_type(B);
-        T :: #run upcast(A,b);
-        return Complex(T);
-
+    // print("upcast(%,%)\n", A, B);
+    #if A == B {
+        return A;
     } else {
-        // ? the types in INTRINSIC_NUMBER_TYPES are sorted in order from mathematical superset to subset, e.g. ℂ > ℝ > ℤ > ℕ 
-        for INTRINSIC_NUMBER_TYPES {
-            if A == it || B == it then return it;
+        is_A_quaternion :: #run is_quaternion_number(A);
+        is_B_quaternion :: #run is_quaternion_number(B);
+        is_A_complex    :: #run is_complex_number(A);
+        is_B_complex    :: #run is_complex_number(B);
+
+        #if is_A_quaternion && is_B_quaternion {
+            a :: #run get_number_inner_type(A);
+            b :: #run get_number_inner_type(B);
+            T :: #run upcast(a, b);
+            return Quaternion(T);
+        } else #if is_A_quaternion {
+            a :: #run get_number_inner_type(A);
+            T :: #run upcast(a, B);
+            return Quaternion(T);
+        } else #if is_B_quaternion {
+            b :: #run get_number_inner_type(B);
+            T :: #run upcast(A,b);
+            return Quaternion(T);
+
+        } else #if is_A_complex && is_B_complex {
+            a :: #run get_number_inner_type(A);
+            b :: #run get_number_inner_type(B);
+            T :: #run upcast(a, b);
+            return Complex(T);
+        } else #if is_A_complex {
+            a :: #run get_number_inner_type(A);
+            T :: #run upcast(a, B);
+            return Complex(T);
+        } else #if is_B_complex {
+            b :: #run get_number_inner_type(B);
+            T :: #run upcast(A,b);
+            return Complex(T);
+
+        } else {
+            // ? the types in INTRINSIC_NUMBER_TYPES are sorted in order from mathematical superset to subset, e.g. ℂ > ℝ > ℤ > ℕ 
+            for INTRINSIC_NUMBER_TYPES {
+                // print("checking intrinsic type % against (%,%)\n", it, A, B);
+                if A == it || B == it {
+                    // print(" > found intrinsic %\n", it);
+                    return it;
+                }
+            }
+            assert(false, "cannot upcast % & %", A, B);
         }
-        assert(false, "cannot upcast % -> %", A, B);
     }
 }
 

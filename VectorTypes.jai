@@ -132,6 +132,16 @@ operator == :: (a: HeapArray1D, b: HeapArray1D) -> bool {
     return true;
 }
 
+
+// ##     ## ########  ######     ######## ##    ## ########  ########
+// ##     ## ##       ##    ##       ##     ##  ##  ##     ## ##
+// ##     ## ##       ##             ##      ####   ##     ## ##
+// ##     ## ######   ##             ##       ##    ########  ######
+//  ##   ##  ##       ##             ##       ##    ##        ##
+//   ## ##   ##       ##    ##       ##       ##    ##        ##
+//    ###    ########  ######        ##       ##    ##        ########
+
+
 /*
 * All concrete types V(T) of VectorType(T,flags) have to implement the following functions:
 * 
@@ -574,7 +584,7 @@ dvec :: inline($N: int, values: ..$T) -> DenseVector(T,N) {
 
 dvec :: ($T: Type, $N: int, values: ..$U) -> DenseVector(T,N) {
     #if CHECKS {
-        #run assert(is_minor_number_type(T, U));
+        #assert(is_minor_number_type(T, U));
         assert(values.count <= N);
     }
     res : DenseVector(T,N);

@@ -977,7 +977,7 @@ test_vector :: () {
         {
             v := dvec(float64, 5, 1, 2, 3, 4, 5);
             println("v = %", pstr(v));
-            // print("%, type_of(v) = %, Vector(T) = Vector(%)\n", v, T.vector_type, T.data_type);
+            print("%, type_of(v) = %\n", v, type_of(v));
 
             add(*v, v);
             println("v = %", pstr(v));
