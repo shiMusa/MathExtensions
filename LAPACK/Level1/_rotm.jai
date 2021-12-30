@@ -19,8 +19,10 @@
 //   (DH21  DH22),   (DH21  1.D0),   (-1.D0 DH22),   (0.D0  1.D0).
 // SEE DROTMG FOR A DESCRIPTION OF DATA STORAGE IN DPARAM.
 
-drotm :: ($$n: int, dx: *$X/ArrayType1D, $$incx: int, dy: *$Y/ArrayType1D, $$incy: int, dparam: [5]float64) {
-    #assert(X.data_type == float64 && Y.data_type == float64);
+drotm :: _rotm;
+srotm :: _rotm;
+_rotm :: ($$n: int, dx: *$X/ArrayType1D, $$incx: int, dy: *$Y/ArrayType1D, $$incy: int, dparam: [5]$T) {
+    #assert(X.data_type == T && Y.data_type == T);
     dflag := dparam[0];
     if n <= 0 || dflag+2.0 == 0.0 then return;
     if incx == incy && incx > 0 {

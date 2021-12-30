@@ -20,18 +20,23 @@
 // INEXACT.  THIS IS OK AS THEY ARE ONLY USED FOR TESTING THE SIZE
 // OF DD1 AND DD2.  ALL ACTUAL SCALING OF DATA IS DONE USING GAM.
 
-#scope_file
-gam    : float64 : 4096.0;
-gamsq  : float64 : gam*gam;
-rgamsq : float64 : #run one(float64)/gamsq;
-#scope_export
+srotmg :: _rotmg;
+drotmg :: _rotmg;
+_rotmg :: (dd1: *$T, dd2: *T, dx1: *T, dy1: T, dparam: [5]T) #modify {
+    if T != type_info(float32) || T != type_info(float64) {
+        T = null;
+        return;
+    }    
+} {
+    gam    : T : 4096.0;
+    gamsq  : T : gam*gam;
+    rgamsq : T : #run one(T)/gamsq;
 
-drotmg :: (dd1: *float64, dd2: *float64, dx1: *float64, dy1: float64, dparam: [5]float64) {
-    dflag : float64 = ---;
-    dh11  : float64 = ---;
-    dh12  : float64 = ---;
-    dh21  : float64 = ---;
-    dh22  : float64 = ---;
+    dflag : T = ---;
+    dh11  : T = ---;
+    dh12  : T = ---;
+    dh21  : T = ---;
+    dh22  : T = ---;
 
     if <<dd1 < 0.0 {
         // go zero-h-d-and-dx1..
