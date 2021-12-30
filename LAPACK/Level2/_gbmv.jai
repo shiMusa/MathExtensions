@@ -29,18 +29,18 @@ zgbmv :: _gbmv;
 
 _gbmv :: (
     $$trans: u8, 
-    m: int,             // rows of a
-    n: int,             // cols of a
-    kl: int,            // sub-diagonals of a, 0 <= kl
-    ku: int,            // super-diagonals of a, 0 <= ku
-    alpha: $T,          // scalar
+    $$m: int,             // rows of a
+    $$n: int,             // cols of a
+    $$kl: int,            // sub-diagonals of a, 0 <= kl
+    $$ku: int,            // super-diagonals of a, 0 <= ku
+    $$alpha: $T,          // scalar
     a: $A/ArrayType2D,  // matrix of dimension lda x n
-    lda: int,           // first dimensions of a, kl+ku+1 <= lda
+    $$lda: int,           // first dimensions of a, kl+ku+1 <= lda
     x: $X/ArrayType1D,  // vector
-    incx: int,          // increment of x, incx != 0
-    beta: T,            // scalar
+    $$incx: int,          // increment of x, incx != 0
+    $$beta: T,            // scalar
     y: *X,              // vector, will be overwritten 
-    incy: int           // increment of y, incy != 0
+    $$incy: int           // increment of y, incy != 0
 ) {
     #run {
         assert(T == get_number_inner_type(A));
@@ -63,14 +63,18 @@ _gbmv :: (
 
     temp: T = ---;
     ix, iy, jx, jy, k, kup1, kx, ky, lenx, leny: int = ---;
-    noconj: bool = ---;
+    
     zero :: #run zero(T);
     one  :: #run one(T);
 
     // quick return if possible
     if m == 0 || n == 0 || (alpha == zero && beta == one then return;
 
-    noconj = char_eq(trans, #char "T", #char "t");
+    #if is_consant(trans) {
+        noconj :: #run char_eq(trans, #char "T", #char "t");
+    } else {
+        noconj := char_eq(trans, #char "T", #char "t");
+    }
 
     // set lenx and leny, the lengts of the vectors x and y and set up the start points in x and y
     if char_eq(trans, #char "N", #char "n") {
