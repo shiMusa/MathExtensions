@@ -29,12 +29,17 @@ VECTOR_FLAGS :: enum_flags u8 {
 * All concrete types A(T) of ArrayType1D(T) have to implement the following functions:
 * get: (A(T), int) -> T
 * set: (*A(T), int, T)
+* dim: (A) -> int
 */
 ArrayType1D :: struct(data_type: Type){}
 
 get :: inline (a: *$A/ArrayType1D, i: int) -> a.data_type {
     return get(<<a, i);
 }
+dim :: inline (a: *$A/ArrayType1D) -> int {
+    return dim(<<a);
+}
+
 // operator [] :: inline (a: $A/ArrayType1D, i: int) -> A.data_type {
 //     return get(a, i);
 // }
@@ -162,9 +167,6 @@ VectorType :: struct(
     using _a1d: ArrayType1D(_data_type);
 }
 
-dim :: inline (v: *$V/VectorType) -> int {
-    return dim(<<v);
-}
 from_raw_index :: inline (v: *$V/VectorType, i: int) -> int {
     return from_raw_index(<<v, i);
 }
