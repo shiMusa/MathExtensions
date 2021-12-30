@@ -1,18 +1,19 @@
 
-// #load "xerbla.jai";
-// #load "Level1/_axpy.jai";
-// #load "Level1/_copy.jai";
-// #load "Level1/_dotc.jai";
-// #load "Level1/_dotu.jai";
-// #load "Level1/_scal.jai";
-// #load "Level1/_rot.jai";
-// #load "Level1/_swap.jai";
-// #load "Level1/_asum.jai";
-// #load "Level1/_abs.jai";
-// #load "Level1/drotm.jai";
-// #load "Level1/drotmg.jai";
+#load "xerbla.jai";
+#load "Level1/_axpy.jai";
+#load "Level1/_copy.jai";
+#load "Level1/_dotc.jai";
+#load "Level1/_dotu.jai";
+#load "Level1/_scal.jai";
+#load "Level1/_rot.jai";
+#load "Level1/_swap.jai";
+#load "Level1/_asum.jai";
+#load "Level1/_abs.jai";
+#load "Level1/drotm.jai";
+#load "Level1/drotmg.jai";
+#load "Level1/_nrm2.jai";
 
-// #load "Level2/_trsv.jai";
+#load "Level2/_trsv.jai";
 
 // ? tests if val equals any of lower_case_chars
 char_eq :: (val: s64, $lower_case_chars: ..s64) -> bool {

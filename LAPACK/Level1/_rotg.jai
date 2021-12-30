@@ -24,6 +24,7 @@
 // ACM Trans Math Softw 44:1--28
 // https://doi.org/10.1145/3061665
 
+crotg :: zrotg;
 zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
     // ? make sure the inner types are of same resolution
     if !is_complex_number(C) || is_non_real_number(R) || get_complex_inner_type(C) != R {
@@ -150,6 +151,7 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
 // ACM Trans Math Softw 44:1--28
 // https://doi.org/10.1145/3061665
 
+srotg :: drotg;
 drotg :: (a: *$R, b: *R, c: *R, s: *R) #modify {
     if is_non_real_number(R) { R = null; return; }
 } {

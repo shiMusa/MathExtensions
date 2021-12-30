@@ -1080,7 +1080,7 @@ test_linear_algebra :: () {
         mul(*sol, M, res);
         
         println("slrt: %", pstr(res));
-        assert( approx(sol, b) );
+        assert( approx(sol, b), "% != %", pstr(sol), pstr(b));
     }
     {
         println_push("test 7", color = .FG_GREEN);

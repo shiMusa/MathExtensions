@@ -69,10 +69,10 @@ array1d :: ($N: int, vals: ..$T) -> Array1D(N,T) {
     }
     return res;
 }
-get :: inline (a: Array1D, i: int) -> a.T {
+get :: inline (a: Array1D, i: int) -> a.data_type {
     return a.data[i];
 }
-set :: inline (a: *Array1D, i: int, val: a.T) {
+set :: inline (a: *Array1D, i: int, val: a.data_type) {
     a.data[i] = val;
 }
 
@@ -117,10 +117,10 @@ harray1d :: (val: ..$T) -> HeapArray1D(T) {
     }
     return res;
 }
-get :: inline (a: HeapArray1D, i: int) -> a.T {
+get :: inline (a: HeapArray1D, i: int) -> a.data_type {
     return a.data[i];
 }
-set :: inline (a: *HeapArray1D, i: int, val: a.T) {
+set :: inline (a: *HeapArray1D, i: int, val: a.data_type) {
     a.data[i] = val;
 }
 
