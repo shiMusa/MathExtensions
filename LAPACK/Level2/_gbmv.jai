@@ -45,8 +45,8 @@ _gbmv :: (
 ) {
     #if CHECKS {
         #run {
-            assert(T == get_number_inner_type(A.data_type));
-            assert(T == get_number_inner_type(X.data_type));
+            assert(T == A.data_type);
+            assert(T == X.data_type);
         }
         assert(m >= 0);
         assert(n >= 0);

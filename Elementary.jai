@@ -128,6 +128,29 @@ real :: inline (n: $T) -> $U #modify {
     }
 }
 
+quat_r_nc :: real_nc;
+real_nc :: inline (n: $T) -> T #modify {
+    if !is_number(T) {T = null; return;}
+} {
+    #if #run is_complex_number(T) {
+        U :: #run get_number_inner_type(T);
+        res : Complex(U) = ---;
+        res.real = n.real;
+        res.imag = zero(U);
+        return res;
+    } else #if #run is_quaternion_number(T) {
+        U :: #run get_number_inner_type(T);
+        res : Quaternion(U) = ---;
+        res.r = n.r;
+        res.i = zero(U);
+        res.j = zero(U);
+        res.k = zero(U);
+        return res;
+    } else {
+        return n;
+    }
+}
+
 quat_i :: imag;
 imag :: inline (n: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
@@ -137,6 +160,29 @@ imag :: inline (n: $T) -> $U #modify {
         return n.imag;
     } else #if #run is_quaternion_number(T) {
         return n.i;
+    } else {
+        return zero(U);
+    }
+}
+
+quat_i_nc :: imag_nc;
+imag_nc :: inline (n: $T) -> T #modify {
+    if !is_number(T) {T = null; return;}
+} {
+    #if #run is_complex_number(T) {
+        U :: #run get_number_inner_type(T);
+        res : Complex(U) = ---;
+        res.real = zero(U);
+        res.imag = n.imag;
+        return res;
+    } else #if #run is_quaternion_number(T) {
+        U :: #run get_number_inner_type(T);
+        res : Quaternion(U) = ---;
+        res.r = zero(U);
+        res.i = n.i;
+        res.j = zero(U);
+        res.k = zero(U);
+        return res;
     } else {
         return zero(T);
     }
@@ -149,6 +195,22 @@ quat_j :: inline (n: $T) -> $U #modify {
     #if #run is_quaternion_number(T) {
         return n.j;
     } else {
+        return zero(U);
+    }
+}
+
+quat_j_nc :: inline (n: $T) -> T #modify {
+    if !is_number(T) {U = null; return;}
+} {
+    #if #run is_quaternion_number(T) {
+        U :: #run get_number_inner_type(T);
+        res : Quaternion(U) = ---;
+        res.r = zero(U);
+        res.i = zero(U);
+        res.j = n.j;
+        res.k = zero(U);
+        return res;
+    } else {
         return zero(T);
     }
 }
@@ -159,6 +221,22 @@ quat_k :: inline (n: $T) -> $U #modify {
 } {
     #if #run is_quaternion_number(T) {
         return n.j;
+    } else {
+        return zero(U);
+    }
+}
+
+quat_k_nc :: inline (n: $T) -> T #modify {
+    if !is_number(T) {U = null; return;}
+} {
+    #if #run is_quaternion_number(T) {
+        U :: #run get_number_inner_type(T);
+        res : Quaternion(U) = ---;
+        res.r = zero(U);
+        res.i = zero(U);
+        res.j = zero(U);
+        res.k = n.k;
+        return res;
     } else {
         return zero(T);
     }

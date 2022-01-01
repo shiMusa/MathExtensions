@@ -44,8 +44,8 @@ _hemv :: (
 
     #if CHECKS {
         #run {
-            assert(T == get_number_inner_type(A.data_type));
-            assert(T == get_number_inner_type(X.data_type));
+            assert(T == A.data_type);
+            assert(T == X.data_type);
         }
         assert(char_eq(uplo, #char "u", #char "l"));
         assert(n >= 0);
