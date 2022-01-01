@@ -40,13 +40,14 @@ _gbmv :: (
     $$x: $X/ArrayType1D,  // vector
     $$incx: int,          // increment of x, incx != 0
     $$beta: T,            // scalar
-    $$y: *X,              // vector, will be overwritten 
+    $$y: *$Y/ArrayType1D, // vector, will be overwritten 
     $$incy: int           // increment of y, incy != 0
 ) {
     #if CHECKS {
         #run {
             assert(T == A.data_type);
             assert(T == X.data_type);
+            assert(T == Y.data_type);
         }
         assert(m >= 0);
         assert(n >= 0);

@@ -33,7 +33,7 @@ _hbmv :: (
     $$x: $X/ArrayType1D,
     $$incx: int,
     $$beta: T,
-    $$y: *X,
+    $$y: *$Y/ArrayType1D,
     $$incy: int
 ) {
     zero :: #run zero(T);
@@ -43,6 +43,7 @@ _hbmv :: (
         #run {
             assert(T == A.data_type);
             assert(T == X.data_type);
+            assert(T == Y.data_type);
         }
         assert(char_eq(uplo, #char "u", #char "l"));
         assert(n >= 0);

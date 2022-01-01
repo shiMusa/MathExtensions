@@ -28,11 +28,11 @@ _geru :: (
     $$m: int,
     $$n: int,
     $$alpha: $T,
-    x: $X/ArrayType1D,
+    $$x: $X/ArrayType1D,
     $$incx: int,
-    y: X,
+    $$y: $Y/ArrayType1D,
     $$incy: int,
-    a: *$A/ArrayType2D,
+    $$a: *$A/ArrayType2D,
     $$lda: int,
     $conjugate: bool
 ) {
@@ -41,8 +41,9 @@ _geru :: (
 
     #if CHECKS {
         #run {
-            assert(T == get_number_inner_type(A.data_type));
-            assert(T == get_number_inner_type(X.data_type));
+            assert(T == A.data_type);
+            assert(T == X.data_type);
+            assert(T == Y.data_type);
         }
         assert(m >= 0);
         assert(n >= 0);

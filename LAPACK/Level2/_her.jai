@@ -40,6 +40,7 @@ _her :: (
             assert(!is_non_real_number(T));
             assert(T == get_number_inner_type(A.data_type));
             assert(T == get_number_inner_type(X.data_type));
+            assert(A.data_type == X.data_type);
         }
         assert(char_eq(uplo, #char "u", #char "l"));
         assert(n >= 0);

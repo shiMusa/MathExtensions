@@ -28,7 +28,7 @@ _her2 :: (
     $$alpha: $T,
     $$x: $X/ArrayType1D,
     $$incx: int,
-    $$y: X,
+    $$y: $Y/ArrayType1D,
     $$incy: int,
     $$a: *$A/ArrayType2D,
     $$lda: int
@@ -40,6 +40,7 @@ _her2 :: (
     #if CHECKS {
         #run {
             assert(T == X.data_type);
+            assert(T == Y.data_type);
             assert(T == A.data_type);
         }
         assert(char_eq(uplo, #char "u", #char "l"));

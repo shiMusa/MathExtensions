@@ -36,7 +36,7 @@ _gemv :: (
     $$x: $X/ArrayType1D, // vector
     $$incx: int,         // increment of elements of x
     $$beta: T,           // scalar
-    $y: *X,              // vector
+    $y: *$Y/ArrayType1D, // vector
     $$incy: int          // increment of elements of y
 ) {
     one := one(T);
@@ -47,8 +47,9 @@ _gemv :: (
 
     #if CHECKS {
         #run {
-            assert(T == get_number_inner_type(A.data_type));
-            assert(T == get_number_inner_type(X.data_type));
+            assert(T == A.data_type);
+            assert(T == X.data_type);
+            assert(T == Y.data_type);
         }
         assert(char_eq(trans, #char "n", #char "t", #char "c"));
         assert(m >= 0);
