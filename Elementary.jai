@@ -77,7 +77,7 @@ inverse :: inline (n: $T) -> T #modify {
         return qtn_inv(n);
     } else #if #run is_complex_number(T) {
         return cpx_inv(n);
-    } else return 1/n;
+    } else return one(T)/n;
 }
 
 
