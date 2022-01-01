@@ -17,10 +17,12 @@
 //    Sven Hammarling, Nag Central Office.
 //    Richard Hanson, Sandia National Labs.
 
-cgeru :: _geru;
-zgeru :: _geru;
-sger  :: _geru;
-dger  :: _geru;
+cgerc :: #bake_constants _geru(conjugate=true);
+zgerc :: #bake_constants _geru(conjugate=true);
+cgeru :: #bake_constants _geru(conjugate=false);
+zgeru :: #bake_constants _geru(conjugate=false);
+sger  :: #bake_constants _geru(conjugate=false);
+dger  :: #bake_constants _geru(conjugate=false);
 
 _geru :: (
     $$m: int,
@@ -31,7 +33,8 @@ _geru :: (
     y: X,
     $$incy: int,
     a: *$A/ArrayType2D,
-    $$lda: int
+    $$lda: int,
+    $conjugate: bool
 ) {
     zero :: #run zero(T);
     one  :: #run one(T);
@@ -60,7 +63,11 @@ _geru :: (
     if incx == 1 {
         for j:0..n-1 {
             if get(y,iy) != zero {
-                temp = alpha * get(y,iy);
+                #if conjugate {
+                    temp = alpha * conjugate(get(y,iy));
+                } else {
+                    temp = alpha * get(y,iy);
+                }
                 for i:0..m-1 {
                     set(a,i,j, get(a,i,j) + get(x,i)*temp);
                 }
@@ -73,7 +80,11 @@ _geru :: (
 
         for j:0..n-1 {
             if get(y,iy) != zero {
-                temp = alpha * get(y,iy);
+                #if conjugate {
+                    temp = alpha * conjugate(get(y,iy));
+                } else {
+                    temp = alpha * get(y,iy);
+                }
                 ix = kx;
                 for i:0..m-1 {
                     set(a,i,j, get(a,i,j) + get(x,ix)*temp);
