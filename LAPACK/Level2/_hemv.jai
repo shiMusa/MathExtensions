@@ -1,13 +1,13 @@
-// ? LAPACK *hbmv() or *sbmv()
-// ? http://www.netlib.org/lapack/explore-html/d6/dee/group__complex__blas__level2_ga426c198e1c8863d9ecbdbe16efa0f6cf.html#ga426c198e1c8863d9ecbdbe16efa0f6cf
+// ? LAPACK *hemv() and *symv()
+// ? http://www.netlib.org/lapack/explore-html/d6/dee/group__complex__blas__level2_gac23d51cad7f51484371119bb6e3fb1f3.html#gac23d51cad7f51484371119bb6e3fb1f3
 
 // ? original comment
-// CHBMV  performs the matrix-vector  operation
+// CHEMV  performs the matrix-vector  operation
 //
 //    y := alpha*A*x + beta*y,
 //
 // where alpha and beta are scalars, x and y are n element vectors and
-// A is an n by n hermitian band matrix, with k super-diagonals.
+// A is an n by n hermitian matrix.
 
 // Level 2 Blas routine.
 // The vector and matrix arguments are not referenced when N = 0, or M = 0
@@ -18,15 +18,18 @@
 //    Sven Hammarling, Nag Central Office.
 //    Richard Hanson, Sandia National Labs.
 
-ssbmv :: _hbmv;
-dsbmv :: _hbmv;
-chbmv :: _hbmv;
-zhbmv :: _hbmv;
 
-_hbmv :: (
+// symv = symmetric matrix * vector
+// hemv = hermitian matrix * vector
+ssymv :: _hemv; // conjugate() has no effect on real numbers
+dsymv :: _hemv; // conjugate() has no effect on real numbers
+chemv :: _hemv;
+zhemv :: _hemv;
+
+
+_hemv :: (
     $$uplo: u8,
     $$n: int,
-    $$k: int,
     $$alpha: $T,
     $$a: $A/ArrayType2D,
     $$lda: int,
@@ -46,8 +49,7 @@ _hbmv :: (
         }
         assert(char_eq(uplo, #char "u", #char "l"));
         assert(n >= 0);
-        assert(k >= 0);
-        assert(lda >= k+1);
+        assert(lda >= max(1,n)); // 1 offset?
         assert(incx != 0);
         assert(incy != 0);
     }
@@ -55,15 +57,12 @@ _hbmv :: (
     // quick return if possible
     if n == 0 || (alpha == zero && beta == one) then return;
 
-    // set up the start points in x and y
+    // set up the start points in x and y.
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
     ky := ifx incy > 0 then 0 else (n-1)*(-incy);
 
-    temp1, temp2 : T = ---;
-    ix, iy, jx, jy, kplus1, l : int = ---;
-
-    // start the operations. in this version the elements of the array a
-    // are accessed sequentially with one pass through a.
+    // Start the operations. In this version the elements of A are
+    // accessed sequentially with one pass through the triangular part
 
     // first form  y := beta*y
     if beta != one {
@@ -74,7 +73,7 @@ _hbmv :: (
                 }
             } else {
                 for i:0..n-1 {
-                    set(y,i,beta*get(y,i));
+                    set(y,i, beta*get(y,i));
                 }
             }
         } else {
@@ -91,59 +90,50 @@ _hbmv :: (
                 }
             }
         }
-    }
-
+    }   
     if alpha == zero then return;
 
     if char_eq(uplo, #char "u") {
-        // Form  y  when upper triangle of A is stored.
-        kplus1 = k + 1;
+        // form  y  when A is stored in upper triangle.
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
-                temp1 = alpha*get(x,j);
+                temp1 = alpha*get(x,i);
                 temp2 = zero;
-                l = kplus1 - j;
-                for i:max(0,j-k)..j-1 {
-                    set(y,i, get(y,i) + temp1*get(a,l+i,j));
-                    temp2 += conjugate(get(a,l+i,j))*get(x,i);
+                for i:0..j-1 {
+                    set(y,i, get(y,i) + temp1*get(a,i,j));
+                    temp2 += conjugate(get(a,i,j))*get(x,i);
                 }
-                set(y,i, get(y,i) + temp1*real(get(a,kplus1,j)) + alpha*temp2);
+                set(y,j, get(y,j) + temp1*real(get(a,j,j)) + alpha*temp2;
             }
         } else {
             jx = kx;
             jy = ky;
             for j:0..n-1 {
-                temp1 = alpha * get(x,jx);
+                temp1 = alpha*get(x,jx);
                 temp2 = zero;
                 ix = kx;
                 iy = ky;
-                l = kplus1 - j;
-                for i:max(0,j-k)..j-1 {
-                    set(y,iy, get(y,iy) + temp1*get(a,l+i,j));
-                    temp2 += conjugate(get(a,l+i,j))*get(x,ix);
+                for i:0..j-1 {
+                    set(y,iy, get(y,iy) + temp1*get(a,i,j));
+                    temp2 += conjugate(get(a,i,j))*get(x,ix);
                     ix += incx;
                     iy += incy;
                 }
-                set(y,iy, get(y,iy) + temp1*real(get(a,kplus1,j)) + alpha*temp2);
+                set(y,jy, get(y,jy) + temp1*real(get(a,j,j)) + alpha*temp2);
                 jx += incx;
                 jy += incy;
-                if j > k {
-                    kx += incx;
-                    ky += incy;
-                }
             }
         }
     } else {
-        // Form  y  when lower triangle of A is stored.
+        // form  y  when A is stored in lower triangle.
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
                 temp2 = zero;
-                set(y,j, get(y,j) + temp1*real(get(a,1,j)));
-                l = 1 - j;
-                for i:j..min(n,j+k)-1 {
-                    set(y,i, get(y,i) + temp1*get(a,l+i,j));
-                    temp2 += conjugate(get(a,l+i,j))*get(x,i);
+                set(y,j, get(y,j) + temp1 * real(get(a,j,j)));
+                for i:j..n-1 {
+                    set(y,i, get(y,i) + temp1*get(a,i,j));
+                    temp2 += conjugate(get(a,i,j))*get(x,i);
                 }
                 set(y,j, get(y,j) + alpha*temp2);
             }
@@ -153,15 +143,14 @@ _hbmv :: (
             for j:0..n-1 {
                 temp1 = alpha*get(x,jx);
                 temp2 = zero;
-                set(y,iy, get(y,iy) + temp1*real(get(a,1,j)));
-                l = 1 - j;
+                set(y,jy, get(y,jy) + temp1*real(get(a,j,j)));
                 ix = jx;
                 iy = jy;
-                for i:j..min(n,j+k)-1 {
+                for j:0..n-1 {
                     ix += incx;
                     iy += incy;
-                    set(y,iy, get(y,iy) + temp1*get(a,l+i,j));
-                    temp2 += conjugate(get(a,l+i,,j))*get(x,ix);
+                    set(y,iy, get(y,iy) + temp1*get(a,i,j));
+                    temp2 += conjugate(get(a,i,j))*get(x,ix);
                 }
                 set(y,iy, get(y,iy) + alpha*temp2);
                 jx += incx;

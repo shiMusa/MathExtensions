@@ -27,17 +27,17 @@ cgemv :: _gemv;
 zgemv :: _gemv;
 
 _gemv :: (
-    $$trans: u8,       // normal (N), transposed (T), or hermitian conjugated (H)
-    $$m: int,          // rows of a
-    $$n: int,          // columns of a
-    $$alpha: $T,       // scalar
-    a: $A/ArrayType2D, // matrix A
-    $$lda: int,        // first dimension of A
-    x: $X/ArrayType1D, // vector
-    $$incx: int,       // increment of elements of x
-    $$beta: T,         // scalar
-    y: *X,             // vector
-    $$incy: int        // increment of elements of y
+    $$trans: u8,         // normal (N), transposed (T), or hermitian conjugated (H)
+    $$m: int,            // rows of a
+    $$n: int,            // columns of a
+    $$alpha: $T,         // scalar
+    $$a: $A/ArrayType2D, // matrix A
+    $$lda: int,          // first dimension of A
+    $$x: $X/ArrayType1D, // vector
+    $$incx: int,         // increment of elements of x
+    $$beta: T,           // scalar
+    $y: *X,              // vector
+    $$incy: int          // increment of elements of y
 ) {
     one := one(T);
     zero := zero(T);
