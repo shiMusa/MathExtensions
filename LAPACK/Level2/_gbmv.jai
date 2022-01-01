@@ -1,4 +1,4 @@
- // ? LAPACK *gbmv
+// ? LAPACK *gbmv
 // ? http://www.netlib.org/lapack/explore-html/d6/dee/group__complex__blas__level2_ga50fe7a70e7ae8f9ede50acd6747510d7.html#ga50fe7a70e7ae8f9ede50acd6747510d7
 
 
@@ -34,32 +34,34 @@ _gbmv :: (
     $$kl: int,            // sub-diagonals of a, 0 <= kl
     $$ku: int,            // super-diagonals of a, 0 <= ku
     $$alpha: $T,          // scalar
-    a: $A/ArrayType2D,  // matrix of dimension lda x n
+    a: $A/ArrayType2D,    // matrix of dimension lda x n
     $$lda: int,           // first dimensions of a, kl+ku+1 <= lda
-    x: $X/ArrayType1D,  // vector
+    x: $X/ArrayType1D,    // vector
     $$incx: int,          // increment of x, incx != 0
     $$beta: T,            // scalar
-    y: *X,              // vector, will be overwritten 
+    y: *X,                // vector, will be overwritten 
     $$incy: int           // increment of y, incy != 0
 ) {
-    #run {
-        assert(T == get_number_inner_type(A));
-        assert(T == get_number_inner_type(X));
+    #if CHECKS {
+        #run {
+            assert(T == get_number_inner_type(A.data_type));
+            assert(T == get_number_inner_type(X.data_type));
+        }
+        assert(m >= 0);
+        assert(n >= 0);
+        assert(kl >= 0);
+        assert(ku >= 0);
+        assert(lda >= kl+ku);
+        if char_eq(trans #char "n") {
+            assert((n-1)*abs(incx) >= dim(x));
+            assert((m-1)*abs(incy) >= dim(y));
+        } else {
+            assert((m-1)*abs(incx) >= dim(x));
+            assert((n-1)*abs(incy) >= dim(y));
+        }
+        assert(incx != 0);
+        assert(incy != 0);
     }
-    assert(m >= 0);
-    assert(n >= 0);
-    assert(kl >= 0);
-    assert(ku >= 0);
-    assert(lda >= kl+ku+1); // check for +1
-    if char_eq(trans, #char "N", #char "n") {
-        assert(1 + (n-1)*abs(incx) >= dim(x));
-        assert(1 + (m-1)*abs(incy) >= dim(y));
-    } else {
-        assert(1 + (m-1)*abs(incx) >= dim(x));
-        assert(1 + (n-1)*abs(incy) >= dim(y));
-    }
-    assert(incx != 0);
-    assert(incy != 0);
 
     temp: T = ---;
     ix, iy, jx, jy, k, kup1, kx, ky, lenx, leny: int = ---;
@@ -71,13 +73,13 @@ _gbmv :: (
     if m == 0 || n == 0 || (alpha == zero && beta == one then return;
 
     #if is_consant(trans) {
-        noconj :: #run char_eq(trans, #char "T", #char "t");
+        noconj :: #run char_eq(trans, #char "t");
     } else {
-        noconj := char_eq(trans, #char "T", #char "t");
+        noconj := char_eq(trans, #char "t");
     }
 
     // set lenx and leny, the lengts of the vectors x and y and set up the start points in x and y
-    if char_eq(trans, #char "N", #char "n") {
+    if char_eq(trans, #char "n") {
         lenx = n;
         leny = m;
     } else {
@@ -121,7 +123,7 @@ _gbmv :: (
 
     if alpha == zero then return;
     kyp1 = ku + 1;
-    if char_eq(trans, #char "N", #char "n") {
+    if char_eq(trans, #char "n") {
         // form y := alpha*A*x + y
 
         jx = kx;
