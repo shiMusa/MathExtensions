@@ -1,6 +1,7 @@
 // ? LAPACK *gbmv
 // ? http://www.netlib.org/lapack/explore-html/d6/dee/group__complex__blas__level2_ga50fe7a70e7ae8f9ede50acd6747510d7.html#ga50fe7a70e7ae8f9ede50acd6747510d7
 
+// "gbmv" = general band matrix * vector
 
 // ? original comment cgbmv()
 // CGBMV  performs one of the matrix-vector operations
@@ -34,7 +35,7 @@ _gbmv :: (
     $$kl: int,            // sub-diagonals of a, 0 <= kl
     $$ku: int,            // super-diagonals of a, 0 <= ku
     $$alpha: $T,          // scalar
-    a: $A/ArrayType2D,    // matrix of dimension lda x n
+    a: $A/ArrayType2D,    // band matrix of dimension lda x n
     $$lda: int,           // first dimensions of a, kl+ku+1 <= lda
     x: $X/ArrayType1D,    // vector
     $$incx: int,          // increment of x, incx != 0
