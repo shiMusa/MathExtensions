@@ -53,7 +53,7 @@ _gemv :: (
         assert(char_eq(trans, #char "n", #char "t", #char "c"));
         assert(m >= 0);
         assert(n >= 0);
-        assert(lda >= max(0,m));
+        assert(lda >= max(1,m)); // 1 ?
         assert(incx != 0);
         assert(incy != 0);
     }
