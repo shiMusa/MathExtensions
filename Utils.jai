@@ -100,7 +100,21 @@ swap_code :: (a: Code, b: Code) #expand {
 }
 
 
-
+_if :: ($$condition: bool, body_true: Code, body_false: Code = #code {}) #expand {
+    #if is_constant(condition) {
+        #if condition {
+            #insert body_true;
+        } else {
+            #insert body_false;
+        }
+    } else {
+        if condition {
+            #insert body_true;
+        } else {
+            #insert body_false;
+        }
+    }
+}
 
 
 test_utils :: () {
