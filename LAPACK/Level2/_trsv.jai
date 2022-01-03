@@ -87,15 +87,36 @@
 
 // * character is u8 in Jai, use it via e.g. #char "c"  - F. Fehse, 2021-11-17
 
+strsv :: _trsv;
 dtrsv :: _trsv;
 ctrsv :: _trsv;
-_trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/ArrayType2D, $$lda: int, x: *$X/ArrayType1D, $$incx: int) {
-    assert(char_eq(uplot, #char"u", #char"l"),           "Error: _TRSV, 1");
-    assert(char_eq(trans, #char"n", #char"t", #char"c"), "Error: _TRSV, 2");
-    assert(char_eq(diag, #char"u", #char"n"),            "Error: _TRSV, 3");
-    assert(n >= 0,                                       "Error: _TRSV, 4");
-    assert(lda >= max(1,n),                              "Error: _TRSV, 6");
-    assert(incx != 0,                                    "Error: _TRSV, 8");
+ztrsv :: _trsv;
+
+_trsv :: (
+    $$uplo: u8, 
+    $$trans: u8, 
+    $$diag: u8, 
+    $$n: int, 
+    $$a: $A/ArrayType2D, 
+    $$lda: int, 
+    $$x: *$X/ArrayType1D, 
+    $$incx: int
+) {
+    T :: A.data_type;
+    zero :: #run zero(T);
+    one  :: #run one(T);
+    
+    #if CHECKS {
+        #run {
+            assert(T == X.data_type);
+        }
+        assert(char_eq(uplo, #char "u", #char "l"));
+        assert(char_eq(trans, #char "n", #char "t", #char "c"));
+        assert(char_eq(diag, #char "u", #char "n"));
+        assert(n >= 0);
+        assert(lda >= max(1,n));
+        assert(incx != 0);
+    }
 
     // Quick return if possible
     if n == 0 then return;
@@ -105,13 +126,10 @@ _trsv :: ($$uplo: u8, $$trans: u8, $$diag: u8, $$n: int, a: $A/ArrayType2D, $$ld
 
     // Set up the start point in X if the increment is not unity. This 
     // will be (n-1)*incx too small for descending loops.
-    kx : int = ---;
-    if incx < 0 { kx = -(n-1)*incx; }
-    else if incx != 1 { kx = 0; }
+    kx := ifx incx > 0 then 0 else (n-1)*(-incx);
 
     tmp : T = ---;
-    jx : int = ---;
-    ix : int = ---;
+    ix, jx : int = ---;
 
     // Start the operations. In this version the elements of A are 
     // accessed sequentially with one pass through A.

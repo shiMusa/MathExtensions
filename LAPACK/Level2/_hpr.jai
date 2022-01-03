@@ -63,7 +63,7 @@ _hpr :: (
     // are accessed sequentially with one pass through AP.
 
     kk = 1;
-    if char_eq(uplo, #char 'u') {
+    if char_eq(uplo, #char "u") {
         // Form  A  when upper triangle is stored in AP.
         if incx == 1 {
             for j:0..n-1 {

@@ -200,7 +200,7 @@ quat_j :: inline (n: $T) -> $U #modify {
 }
 
 quat_j_nc :: inline (n: $T) -> T #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) {T = null; return;}
 } {
     #if #run is_quaternion_number(T) {
         U :: #run get_number_inner_type(T);
@@ -227,7 +227,7 @@ quat_k :: inline (n: $T) -> $U #modify {
 }
 
 quat_k_nc :: inline (n: $T) -> T #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) {T = null; return;}
 } {
     #if #run is_quaternion_number(T) {
         U :: #run get_number_inner_type(T);

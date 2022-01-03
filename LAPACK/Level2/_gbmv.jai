@@ -54,7 +54,7 @@ _gbmv :: (
         assert(kl >= 0);
         assert(ku >= 0);
         assert(lda >= kl+ku);
-        if char_eq(trans #char "n") {
+        if char_eq(trans, #char "n") {
             assert((n-1)*abs(incx) >= dim(x));
             assert((m-1)*abs(incy) >= dim(y));
         } else {
@@ -72,7 +72,7 @@ _gbmv :: (
     one  :: #run one(T);
 
     // quick return if possible
-    if m == 0 || n == 0 || (alpha == zero && beta == one then return;
+    if m == 0 || n == 0 || (alpha == zero && beta == one) then return;
 
     #if is_consant(trans) {
         noconj :: #run char_eq(trans, #char "t");

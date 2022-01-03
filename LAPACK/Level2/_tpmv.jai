@@ -72,7 +72,7 @@ _tpmv :: (
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
 
     temp : T = ---;
-    ix, jx, k, kk, kx : int = ---;
+    ix, jx, k, kk : int = ---;
 
     // Start the operations. In this version the elements of AP are
     // accessed sequentially with one pass through AP.

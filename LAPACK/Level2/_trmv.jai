@@ -23,7 +23,7 @@
 strvm :: _trmv;
 dtrmv :: _trmv;
 ctrmv :: _trmv;
-ztrmv :: _trvm;
+ztrmv :: _trmv;
 
 _trmv :: (
     $$uplo: u8,

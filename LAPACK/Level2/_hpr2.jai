@@ -34,7 +34,7 @@ _hpr2 :: (
     $$incx: int,
     $$y: $Y/ArrayType1D,
     $$incy: int,
-    $$ap: *$A/ArrayType1D,
+    $$ap: *$A/ArrayType1D
 ) {
     zero :: #run zero(T);
     one  :: #run one(T);
@@ -95,7 +95,7 @@ _hpr2 :: (
                     temp2 = conjugate(alpha*get(x,jx));
                     ix = kx;
                     iy = ky;
-                    for k:kk,kk+j-2 {
+                    for k:kk..kk+j-2 {
                         set(ap,k, get(ap,k) + get(x,ix)*temp1 + get(y,iy)*temp2);
                         ix += incx;
                         iy += incy;

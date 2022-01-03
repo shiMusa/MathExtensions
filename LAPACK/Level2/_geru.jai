@@ -17,12 +17,12 @@
 //    Sven Hammarling, Nag Central Office.
 //    Richard Hanson, Sandia National Labs.
 
-cgerc :: #bake_constants _geru(conjugate=true);
-zgerc :: #bake_constants _geru(conjugate=true);
-cgeru :: #bake_constants _geru(conjugate=false);
-zgeru :: #bake_constants _geru(conjugate=false);
-sger  :: #bake_constants _geru(conjugate=false);
-dger  :: #bake_constants _geru(conjugate=false);
+cgerc :: #bake_arguments _geru(conjugate=true);
+zgerc :: #bake_arguments _geru(conjugate=true);
+cgeru :: #bake_arguments _geru(conjugate=false);
+zgeru :: #bake_arguments _geru(conjugate=false);
+sger  :: #bake_arguments _geru(conjugate=false);
+dger  :: #bake_arguments _geru(conjugate=false);
 
 _geru :: (
     $$m: int,

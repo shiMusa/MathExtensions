@@ -104,7 +104,7 @@ _hemv :: (
                     set(y,i, get(y,i) + temp1*get(a,i,j));
                     temp2 += conjugate(get(a,i,j))*get(x,i);
                 }
-                set(y,j, get(y,j) + temp1*real(get(a,j,j)) + alpha*temp2;
+                set(y,j, get(y,j) + temp1*real(get(a,j,j)) + alpha*temp2);
             }
         } else {
             jx = kx;

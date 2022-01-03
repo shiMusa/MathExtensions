@@ -162,7 +162,7 @@ _hbmv :: (
                     ix += incx;
                     iy += incy;
                     set(y,iy, get(y,iy) + temp1*get(a,l+i,j));
-                    temp2 += conjugate(get(a,l+i,,j))*get(x,ix);
+                    temp2 += conjugate(get(a,l+i,j))*get(x,ix);
                 }
                 set(y,iy, get(y,iy) + alpha*temp2);
                 jx += incx;

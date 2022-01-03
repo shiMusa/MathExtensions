@@ -13,6 +13,21 @@
 #load "Level1/_rotmg.jai";
 #load "Level1/_nrm2.jai";
 
+#load "Level2/_gbmv.jai";
+#load "Level2/_gemv.jai";
+#load "Level2/_geru.jai";
+#load "Level2/_hbmv.jai";
+#load "Level2/_hemv.jai";
+#load "Level2/_her.jai";
+#load "Level2/_her2.jai";
+#load "Level2/_hpmv.jai";
+#load "Level2/_hpr.jai";
+#load "Level2/_hpr2.jai";
+#load "Level2/_tbmv.jai";
+#load "Level2/_tbsv.jai";
+#load "Level2/_tpmv.jai";
+#load "Level2/_tpsv.jai";
+#load "Level2/_trmv.jai";
 #load "Level2/_trsv.jai";
 
 // ? tests if val equals any of lower_case_chars

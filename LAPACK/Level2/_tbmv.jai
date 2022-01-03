@@ -162,7 +162,8 @@ _tbmv :: (
                     if noconj {
                         if nounit then temp *= get(a,kplus1,j);
                         for <i:j-1..max(0,j-k) {
-                            temp += et(a,l+i,j)*get(x,ix)logix -= incx;
+                            temp += get(a,l+i,j)*get(x,ix);
+                            ix -= incx;
                         }
                     } else {
                         if nounit then temp *= conjugate(get(a,kplus1,j));

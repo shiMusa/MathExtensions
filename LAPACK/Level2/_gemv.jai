@@ -63,7 +63,7 @@ _gemv :: (
 
     if m == 0 || n == 0 || (alpha == zero && beta == one) then return;
 
-    noconj := ifx char_eq(trans, #char "t");
+    noconj := char_eq(trans, #char "t");
 
     // set lenx and leny, the lengths of the vectors x and y, and set
     // up the start points in x and y.
