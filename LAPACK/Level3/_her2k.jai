@@ -27,10 +27,12 @@
 // -- Modified 8-Nov-93 to set C(J,J) to REAL( C(J,J) ) when BETA = 1.
 //    Ed Anderson, Cray Research Inc.
 
-ssyr2k :: _her2k;
-dsyr2k :: _her2k;
-cher2k :: _her2k;
-zher2k :: _her2k;
+ssyr2k :: #bake_arguments _her2k(hermitian=true);
+dsyr2k :: #bake_arguments _her2k(hermitian=true);
+cher2k :: #bake_arguments _her2k(hermitian=true);
+zher2k :: #bake_arguments _her2k(hermitian=true);
+csyr2k :: #bake_arguments _her2k(hermitian=false);
+zsyr2k :: #bake_arguments _her2k(hermitian=false);
 
 _her2k :: (
     $$uplo: u8,
@@ -44,12 +46,28 @@ _her2k :: (
     $$ldb: int,
     $$beta: $U,
     $$c: *$C/ArrayType2D,
-    $$ldc: int
+    $$ldc: int,
+    $hermitian: bool = true
 ) {
-    zero :: #run zero(T); // complex
-    one  :: #run one(T);  // complex
-    rzero :: #run zero(U);  // real
-    rone  :: #run one(U);  // real
+    zero :: #run zero(T);
+    one  :: #run one(T); 
+    zeroU :: #run zero(U); 
+    oneU  :: #run one(U);  
+
+    conj :: inline (val: T) -> T #expand {
+        #if hermitian {
+            return conjugate(val);
+        } else {
+            return val;
+        }
+    }
+    re :: inline (val: T) -> T #expand {
+        #if hermitian {
+            return real_nc(val);
+        } else {
+            return val;
+        }
+    }
 
     // Set nrowa as the number of rows of a.
     nrowa := ifx char_eq(trans, #char "n") then n else k;
@@ -61,7 +79,7 @@ _her2k :: (
             assert(T == A.data_type);
             assert(T == B.data_type);
             assert(T == C.data_type);
-            assert(U == get_number_inner_type(T));
+            assert((U == get_number_inner_type(T) && hermitian) || (U == T && !hermitian);
         }
         assert(upper || char_eq(uplo, #char "l"));
         assert(char_eq(trans, #char "n", #char "c"));
@@ -73,12 +91,12 @@ _her2k :: (
     }
 
     // Quick return if possible.
-    if n == 0 || ((alpha == zero || k == 0) && beta == rone) then return;
+    if n == 0 || ((alpha == zero || k == 0) && beta == oneU) then return;
 
     // And when  alpha == zero
     if alpha == zero {
         if upper {
-            if beta == rzero {
+            if beta == zeroU {
                 for j:0..n-1 {
                     for i:0..j {
                         set(c,i,j, zero);
@@ -89,11 +107,11 @@ _her2k :: (
                     for i:0..j-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                    set(c,j,j, beta*re(get(c,j,j)));
                 }
             }
         } else {
-            if beta == rzero {
+            if beta == zeroU {
                 for j:0..n-1 {
                     for i:j..n-1 {
                         set(c,i,j, zero);
@@ -101,7 +119,7 @@ _her2k :: (
                 }
             } else {
                 for j:0..n-1 {
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                    set(c,j,j, beta*re(get(c,j,j)));
                     for i:j+1..n-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
@@ -115,79 +133,79 @@ _her2k :: (
         // From  C := alpha*A*B**H + conjugate(alpha)*B*A**H + C.
         if upper {
             for j:0..n-1 {
-                if beta == rzero {
+                if beta == zeroU {
                     for i:0..j {
                         set(c,i,j, zero);
                     }
-                } else if beta == rone {
+                } else if beta == oneU {
                     for i:0..j-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                    set(c,j,j, beta*re(get(c,j,j)));
                 } else {
-                    set(c,j,j, real_nc(get(c,j,j)));
+                    set(c,j,j, re(get(c,j,j)));
                 }
                 for l:0..k {
                     if get(a,j,l) != zero || get(b,l) != zero {
-                        temp1 = alpha*conjugate(get(b,j,l));
-                        temp2 = conjugate(alpha*get(a,j,l));
+                        temp1 = alpha*conj(get(b,j,l));
+                        temp2 = conj(alpha*get(a,j,l));
                         for i:0..j-1 {
                             set(c,i,j, get(c,i,j) + get(a,i,l)*temp1 + get(b,i,l)*temp2);
                         }
-                        set(c,j,j, real_nc(get(c,j,j)) + 
-                            real_nc(get(a,j,l)*temp1 + get(b,j,l)*temp2));
+                        set(c,j,j, re(get(c,j,j)) + 
+                            re(get(a,j,l)*temp1 + get(b,j,l)*temp2));
                     }
                 }
             }
         } else {
             for j:0..n-1 {
-                if beta == rzero {
+                if beta == zeroU {
                     for i:j..n-1 {
                         set(c,i,j, zero);
                     }
-                } else if beta != rone {
+                } else if beta != oneU {
                     for i:j+1..n-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
                 } else {
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                    set(c,j,j, beta*re(get(c,j,j)));
                 }
                 for l:0..k {
                     if get(a,j,l) != zero || get(b,j,l) != zero {
-                        temp1 = alpha*conjugate(get(b,j,l));
-                        temp2 = conjugate(alpha*get(a,j,l));
+                        temp1 = alpha*conj(get(b,j,l));
+                        temp2 = conj(alpha*get(a,j,l));
                         for i:j+1..n-1 {
                             set(c,i,j, get(c,i,j) + get(a,i,l)*temp1 + get(b,i,l)*temp2);
                         }
-                        set(c,j,j, real_nc(get(c,j,j)) + 
-                            real_nc(get(a,j,l)*temp1 + get(b,j,l)*temp2));
+                        set(c,j,j, re(get(c,j,j)) + 
+                            re(get(a,j,l)*temp1 + get(b,j,l)*temp2));
                     }
                 }
             }
         }
     } else {
-        // Form  C := alpha*A**H*B + conjugate(alpha)*B**H*A + C.
+        // Form  C := alpha*A**H*B + conj(alpha)*B**H*A + C.
         if upper {
             for j:0..n-1 {
                 for i:0..j {
                     temp1 = zero;
                     temp2 = zero;
                     for l:0..k {
-                        temp1 += conjugate(get(a,l,i))*get(b,l,j);
-                        temp2 += conjugate(get(b,l,i))*get(a,l,j);
+                        temp1 += conj(get(a,l,i))*get(b,l,j);
+                        temp2 += conj(get(b,l,i))*get(a,l,j);
                     }
                     if i == j {
-                        if beta == rzero {
-                            set(c,j,j, real_nc( alpha*temp1 + conjugate(alpha)*temp2 ));
+                        if beta == zeroU {
+                            set(c,j,j, re( alpha*temp1 + conj(alpha)*temp2 ));
                         } else {
-                            set(c,j,j, beta*real_nc(get(c,j,j)) + 
-                                real_nc( alpha*temp1 + conjugate(alpha)*temp2 ));
+                            set(c,j,j, beta*re(get(c,j,j)) + 
+                                re( alpha*temp1 + conj(alpha)*temp2 ));
                         }
                     } else {
-                        if beta == rzero {
-                            set(c,i,j, alpha*temp1 + conjugate(alpha)*temp2);
+                        if beta == zeroU {
+                            set(c,i,j, alpha*temp1 + conj(alpha)*temp2);
                         } else {
-                            set(c,i,j, beta*get(c,i,j) + alpha*temp1 + conjugate(alpha)*temp2);
+                            set(c,i,j, beta*get(c,i,j) + alpha*temp1 + conj(alpha)*temp2);
                         }
                     }
                 }
@@ -198,21 +216,21 @@ _her2k :: (
                     temp1 = zero;
                     temp2 = zero;
                     for l:0..k {
-                        temp1 += conjugate(get(a,l,i))*get(b,l,j);
-                        temp2 += conjugate(get(b,l,i))*get(a,l,j);
+                        temp1 += conj(get(a,l,i))*get(b,l,j);
+                        temp2 += conj(get(b,l,i))*get(a,l,j);
                     }
                     if i == j {
-                        if beta == rzero {
-                            set(c,j,j, real_nc( alpha*temp1 + conjugate(alpha*temp2) ));
+                        if beta == zeroU {
+                            set(c,j,j, re( alpha*temp1 + conj(alpha*temp2) ));
                         } else {
-                            set(c,j,j, beta*real_nc(get(c,j,j)) + 
-                                real_nc( alpha*temp1 + conjugate(alpha)*temp2 ));
+                            set(c,j,j, beta*re(get(c,j,j)) + 
+                                re( alpha*temp1 + conj(alpha)*temp2 ));
                         }
                     } else {
-                        if beta == rzero {
-                            set(c,i,j, alpha*temp1 + conjugate(alpha)*temp2);
+                        if beta == zeroU {
+                            set(c,i,j, alpha*temp1 + conj(alpha)*temp2);
                         } else {
-                            set(c,i,j, beta*get(c,i,j) + alpha*temp1 + conjugate(alpha)*temp2);
+                            set(c,i,j, beta*get(c,i,j) + alpha*temp1 + conj(alpha)*temp2);
                         }
                     }
                 }

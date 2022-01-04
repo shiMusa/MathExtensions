@@ -49,14 +49,14 @@ _hemm :: (
     zero :: #run zero(T);
     one  :: #run one(T);
 
-    conj :: inline (val: T) -> T #export {
+    conj :: inline (val: T) -> T #expand {
         #if hermitian {
             return conjugate(val);
         } else {
             return val;
         }
     }
-    re :: inline (val: T) -> T #export {
+    re :: inline (val: T) -> T #expand {
         #if hermitian {
             return real_nc(val);
         } else {
