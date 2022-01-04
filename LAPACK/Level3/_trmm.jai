@@ -44,7 +44,7 @@ _trmm :: (
 
     // Set nrowa as the number of rows of a.
     lside := char_eq(side, "l");
-    nrowa := ifx lside then m else k;
+    nrowa := ifx lside then m else n;
     noconj := char_eq(transa, #char "t");
     nounit := char_eq(diag, #char "n");
     upper := char_eq(uplo, #char "u");
