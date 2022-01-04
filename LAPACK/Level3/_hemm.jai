@@ -47,7 +47,7 @@ _hemm :: (
     one  :: #run one(T);
 
     // Set nrowa as the number of rows of a.
-    nrowa := ifx nota then m else k;
+    nrowa := ifx char_eq(side, #char "l") then m else k;
     upper := char_eq(uplo, #char "u");
     
     // Test the input parameters.
