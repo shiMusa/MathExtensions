@@ -30,6 +30,13 @@
 #load "Level2/_trmv.jai";
 #load "Level2/_trsv.jai";
 
+#load "Level3/_gemm.jai";
+#load "Level3/_hemm.jai";
+#load "Level3/_her2k.jai";
+#load "Level3/_herk.jai";
+#load "Level3/_trmm.jai";
+#load "Level3/_trsm.jai";
+
 // ? tests if val equals any of lower_case_chars
 char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
     #if lower_case_chars.count == 1 {

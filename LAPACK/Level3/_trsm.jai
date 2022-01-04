@@ -110,7 +110,7 @@ _trsm :: (
                     }
                     for k:0..m-1 {
                         if get(b,k,j) != zero {
-                            if nounit then set(b,k,j, get(,k,j)/get(a,k,k));
+                            if nounit then set(b,k,j, get(b,k,j)/get(a,k,k));
                             for i:k+1..m-1 {
                                 set(b,i,j, get(b,i,j) - get(b,k,j)*get(a,i,k));
                             }

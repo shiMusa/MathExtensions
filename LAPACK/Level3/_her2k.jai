@@ -79,7 +79,7 @@ _her2k :: (
             assert(T == A.data_type);
             assert(T == B.data_type);
             assert(T == C.data_type);
-            assert((U == get_number_inner_type(T) && hermitian) || (U == T && !hermitian);
+            assert((U == get_number_inner_type(T) && hermitian) || (U == T && !hermitian));
         }
         assert(upper || char_eq(uplo, #char "l"));
         assert(char_eq(trans, #char "n", #char "c"));

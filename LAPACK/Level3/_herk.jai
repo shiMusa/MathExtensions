@@ -40,7 +40,7 @@ _herk :: (
     $$n: int,
     $$k: int,
     $$alpha: $U,
-    $$a: $A/ArrayTypedD,
+    $$a: $A/ArrayType2D,
     $$lda: int,
     $$beta: U,
     $$c: *$C/ArrayType2D,
@@ -78,7 +78,7 @@ _herk :: (
     #if CHECKS {
         #run {
             assert(T == C.data_type);
-            assert((U == get_number_inner_type(T) && hermitian) || (U == T && ! hermitian);
+            assert((U == get_number_inner_type(T) && hermitian) || (U == T && ! hermitian));
         }
         assert(upper || char_eq(uplo, #char "l"));
         assert(char_eq(trans, #char "n", #char "c"));

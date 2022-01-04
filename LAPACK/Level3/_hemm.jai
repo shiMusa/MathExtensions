@@ -24,12 +24,12 @@
 //    Jeremy Du Croz, Numerical Algorithms Group Ltd.
 //    Sven Hammarling, Numerical Algorithms Group Ltd.
 
-ssymm :: #bake_arguments _hemm(conjugate=true);
-dsymm :: #bake_arguments _hemm(conjugate=true);
-chemm :: #bake_arguments _hemm(conjugate=true);
-zhemm :: #bake_arguments _hemm(conjugate=true);
-csymm :: #bake_arguments _hemm(conjugate=false);
-zsymm :: #bake_arguments _hemm(conjugate=false);
+ssymm :: #bake_arguments _hemm(hermitian=true);
+dsymm :: #bake_arguments _hemm(hermitian=true);
+chemm :: #bake_arguments _hemm(hermitian=true);
+zhemm :: #bake_arguments _hemm(hermitian=true);
+csymm :: #bake_arguments _hemm(hermitian=false);
+zsymm :: #bake_arguments _hemm(hermitian=false);
 
 _hemm :: (
     $$side: u8,
