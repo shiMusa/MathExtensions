@@ -31,13 +31,13 @@
 #load "Level2/_trsv.jai";
 
 // ? tests if val equals any of lower_case_chars
-char_eq :: (val: s64, $lower_case_chars: ..s64) -> bool {
+char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
     #if lower_case_chars.count == 1 {
         return val == lower_case_chars[0] || val == lower_case_chars[0]-32;
     } else {
-        for lower_case_chars {
-            if val == it || val == it-32 then return true;
-        }
+        for_unroll(0, lower_case_chars.count-1, #code {
+            if lower_case_chars[it] == val || lower_case_chars[it] == val+32 then return true;
+        });
         return false;
     }
 }

@@ -116,6 +116,30 @@ _if :: ($$condition: bool, body_true: Code, body_false: Code = #code {}) #expand
     }
 }
 
+for_unroll :: (from: int, to: int, body: Code, reverse: bool = false) #expand {
+  #insert -> string {
+    builder: String_Builder;
+    init_string_builder(*builder);
+    defer free_buffers(*builder);
+
+    append(*builder, "{\n");
+    append(*builder, "    `it: int;\n");
+    if reverse {
+        for <i:a..b {
+          print_to_builder(*builder, "    it = %;\n", i);
+          append(*builder, "    #insert body;\n");
+        }
+    } else {
+        for a..b {
+          print_to_builder(*builder, "    it = %;\n", it);
+          append(*builder, "    #insert body;\n");
+        }
+    }
+    append(*builder, "}\n");
+    return builder_to_string(*builder);
+  }
+}
+
 
 test_utils :: () {
     println_push("Utils", color = .FG_WHITE);
