@@ -24,10 +24,12 @@
 //    Jeremy Du Croz, Numerical Algorithms Group Ltd.
 //    Sven Hammarling, Numerical Algorithms Group Ltd.
 
-ssymm :: _hemm;
-dsymm :: _hemm;
-chemm :: _hemm;
-zhemm :: _hemm;
+ssymm :: #bake_arguments _hemm(conjugate=true);
+dsymm :: #bake_arguments _hemm(conjugate=true);
+chemm :: #bake_arguments _hemm(conjugate=true);
+zhemm :: #bake_arguments _hemm(conjugate=true);
+csymm :: #bake_arguments _hemm(conjugate=false);
+zsymm :: #bake_arguments _hemm(conjugate=false);
 
 _hemm :: (
     $$side: u8,
@@ -41,10 +43,26 @@ _hemm :: (
     $$ldb: int,
     $$beta: T,
     $$c: *$C/ArrayType2D,
-    $$ldc: int
+    $$ldc: int,
+    $hermitian: bool = true
 ) {
     zero :: #run zero(T);
     one  :: #run one(T);
+
+    conj :: inline (val: T) -> T #export {
+        #if hermitian {
+            return conjugate(val);
+        } else {
+            return val;
+        }
+    }
+    re :: inline (val: T) -> T #export {
+        #if hermitian {
+            return real_nc(val);
+        } else {
+            return val;
+        }
+    }
 
     // Set nrowa as the number of rows of a.
     nrowa := ifx char_eq(side, #char "l") then m else k;
@@ -98,12 +116,12 @@ _hemm :: (
                     temp2 = zero;
                     for k:0..i-1 {
                         set(c,k,j, get(c,k,j) + temp1*get(a,k,i));
-                        temp2 += get(b,k,j)*conjugate(get(a,k,i));
+                        temp2 += get(b,k,j)*conj(get(a,k,i));
                     }
                     if beta == zero {
-                        set(c,i,j, temp1*real_nc(get(a,i,i)) + alpha*temp2);
+                        set(c,i,j, temp1*re(get(a,i,i)) + alpha*temp2);
                     } else {
-                        set(c,i,j, beta*get(c,i,j) + temp1*real_nc(get(a,i,j)) + alpha*temp2);
+                        set(c,i,j, beta*get(c,i,j) + temp1*re(get(a,i,j)) + alpha*temp2);
                     }
                 }
             }
@@ -114,12 +132,12 @@ _hemm :: (
                     temp2 = zero;
                     for k:i+1..m-1 {
                         set(c,k,j, get(c,k,j) + temp1*get(a,k,i));
-                        temp2 += get(b,k,j)*conjugate(get(a,k,i));
+                        temp2 += get(b,k,j)*conj(get(a,k,i));
                     }
                     if beta == zero {
-                        set(c,i,j, temp1*real_nc(get(a,i,i)) + alpha*temp2);
+                        set(c,i,j, temp1*re(get(a,i,i)) + alpha*temp2);
                     } else {
-                        set(c,i,j, beta*get(c,i,j) + temp1*real_nc(get(a,i,i)) + alpha*temp2);
+                        set(c,i,j, beta*get(c,i,j) + temp1*re(get(a,i,i)) + alpha*temp2);
                     }
                 }
             }
@@ -127,7 +145,7 @@ _hemm :: (
     } else {
         // Form  C := alpha*B*A + beta*C
         for j:0..n-1 {
-            temp1 = alpha*real_nc(get(a,j,j));
+            temp1 = alpha*re(get(a,j,j));
             if beta == zero {
                 for i:0..m-1 {
                     set(c,i,j, temp1*get(b,i,j));
@@ -138,13 +156,13 @@ _hemm :: (
                 }
             }
             for k:0..j-1 {
-                temp1 = ifx upper then alpha*get(a,k,j) else alpha*conjugate(get(a,j,k));
+                temp1 = ifx upper then alpha*get(a,k,j) else alpha*conj(get(a,j,k));
                 for i:0..m-1 {
                     set(c,i,j, get(c,i,j) + temp1*get(b,i,k));
                 }
             }
             for k:j+1..n-1 {
-                temp1 = ifx upper then alpha*conjugate(get(a,j,k)) else alpha*get(a,k,j);
+                temp1 = ifx upper then alpha*conj(get(a,j,k)) else alpha*get(a,k,j);
                 for i:0..m-1 {
                     set(c,i,j, get(c,i,j) + temp1*get(b,i,k));
                 }
