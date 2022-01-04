@@ -27,10 +27,12 @@
 // -- Modified 8-Nov-93 to set C(J,J) to REAL( C(J,J) ) when BETA = 1.
 //    Ed Anderson, Cray Research Inc.
 
-ssyrk :: _herk;
-dsyrk :: _herk;
-cherk :: _herk;
-zherk :: _herk;
+ssyrk :: #bake_arguments _herk(hermitian = true);
+dsyrk :: #bake_arguments _herk(hermitian = true);
+cherk :: #bake_arguments _herk(hermitian = true);
+zherk :: #bake_arguments _herk(hermitian = true);
+csyrk :: #bake_arguments _herk(hermitian = false);
+zsyrk :: #bake_arguments _herk(hermitian = false);
 
 _herk :: (
     $$uplo: u8,
@@ -42,15 +44,31 @@ _herk :: (
     $$lda: int,
     $$beta: U,
     $$c: *$C/ArrayType2D,
-    $$ldc: int
+    $$ldc: int,
+    $hermitian: bool = true
 ) #modify {
     if is_non_real_number(U) { U = null; return; }    
 } {
     T :: A.data_type;
-    zero :: #run zero(T); // complex
-    one  :: #run one(T);  // complex
-    rzero :: #run zero(U);  // real
-    rone  :: #run one(U);  // real
+    zero :: #run zero(T);
+    one  :: #run one(T); 
+    zeroU :: #run zero(U);
+    oneU  :: #run one(U); 
+
+    conj :: inline (val: $V) -> V #expand {
+        #if hermitian {
+            return conjugate(val);
+        } else {
+            return val;
+        }
+    }
+    re :: inline (val: $V) -> V #expand {
+        #if hermitian {
+            return real_nc(val);
+        } else {
+            return val;
+        }
+    }
 
     // Set nrowa as the number of rows of a.
     nrowa := ifx char_eq(trans, #char "n") then n else k;
@@ -60,7 +78,7 @@ _herk :: (
     #if CHECKS {
         #run {
             assert(T == C.data_type);
-            assert(U == get_number_inner_type(T));
+            assert((U == get_number_inner_type(T) && hermitian) || (U == T && ! hermitian);
         }
         assert(upper || char_eq(uplo, #char "l"));
         assert(char_eq(trans, #char "n", #char "c"));
@@ -71,12 +89,12 @@ _herk :: (
     }
 
     // Quick return if possible.
-    if n == 0 || ((alpha == rzero || k == 0) && beta == rone) then return;
+    if n == 0 || ((alpha == zeroU || k == 0) && beta == oneU) then return;
 
-    // And when  alpha == rzero
-    if alpha == rzero {
+    // And when  alpha == zeroU
+    if alpha == zeroU {
         if upper {
-            if beta == rzero {
+            if beta == zeroU {
                 for j:0..n-1 {
                     for i:0..j {
                         set(c,i,j, zero);
@@ -87,11 +105,11 @@ _herk :: (
                     for i:0..j-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                    set(c,j,j, beta*re(get(c,j,j)));
                 }
             }
         } else {
-            if beta == rzero {
+            if beta == zeroU {
                 for j:0..n-1 {
                     for i:j..n-1 {
                         set(c,i,j, zero);
@@ -99,7 +117,7 @@ _herk :: (
                 }
             } else {
                 for j:0..n-1 {
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                    set(c,j,j, beta*re(get(c,j,j)));
                     for i:j+1..n-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
@@ -116,46 +134,46 @@ _herk :: (
         // Form  C := alpha*A*A**H + beta*C.
         if upper {
             for j:0..n-1 {
-                if beta == rzero {
+                if beta == zeroU {
                     for i:0..j {
                         set(c,i,j, zero);
                     }
-                } else if beta != rone {
+                } else if beta != oneU {
                     for i:0..j-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                    set(c,j,j, beta*re(get(c,j,j)));
                 } else {
-                    set(c,j,j, real_nc(get(c,j,j)));
+                    set(c,j,j, re(get(c,j,j)));
                 }
                 for l:0..k {
                     if get(a,j,l) != zero {
-                        temp = alpha*conjugate(get(a,j,l));
+                        temp = alpha*conj(get(a,j,l));
                         for i:0..j-1 {
                             set(c,i,j, get(c,i,j) + temp*get(a,i,l));
                         }
-                        set(c,j,j, real_nc(get(c,j,j)) + real_nc(temp*get(a,i,l)));
+                        set(c,j,j, re(get(c,j,j)) + re(temp*get(a,i,l)));
                     }
                 }
             }
         } else {
             for j:0..n-1 {
-                if beta == rzero {
+                if beta == zeroU {
                     for i:j..n-1 {
                         set(c,i,j, zero);
                     }
-                } else if beta != rone {
-                    set(c,j,j, beta*real_nc(get(c,j,j)));
+                } else if beta != oneU {
+                    set(c,j,j, beta*re(get(c,j,j)));
                     for i:j+1..n-1 {
                         set(c,i,j, beta*get(c,i,j));
                     }
                 } else {
-                    set(c,j,j) = real_nc(get(c,j,j));
+                    set(c,j,j) = re(get(c,j,j));
                 }
                 for l:0..k {
                     if get(a,j,l) != zero {
-                        temp = alpha*conjugate(get(a,j,l));
-                        set(c,j,j, real_nc(get(c,j,j)) + real_nc(temp*get(a,j,l)));
+                        temp = alpha*conj(get(a,j,l));
+                        set(c,j,j, re(get(c,j,j)) + re(temp*get(a,j,l)));
                         for i:j+1..n-1 {
                             set(c,i,j, get(c,i,j) + temp*get(a,i,l));
                         }
@@ -170,41 +188,41 @@ _herk :: (
                 for i:0..j-1 {
                     temp = zero;
                     for l:0..k {
-                        temp += conjugate(get(a,l,i))*get(a,l,j);
+                        temp += conj(get(a,l,i))*get(a,l,j);
                     }
-                    if beta == rzero {
+                    if beta == zeroU {
                         set(c,i,j, alpha*temp);
                     } else {
                         set(c,i,j, alpha*temp + beta*get(c,i,j));
                     }
                 }
-                rtemp = rzero;
+                rtemp = zeroU;
                 for l:0..k {
-                    rtemp += real(conjugate(get(a,l,j))*get(a,l,j));
+                    rtemp += real(conj(get(a,l,j))*get(a,l,j));
                 }
-                if beta == rzero {
+                if beta == zeroU {
                     set(c,j,j, alpha*rtemp);
                 } else {
-                    set(c,j,j, alpha*rtemp + beta*real_nc(get(c,j,j)));
+                    set(c,j,j, alpha*rtemp + beta*re(get(c,j,j)));
                 }
             }
         } else {
             for j:0..n-1 {
-                rtemp = rzero;
+                rtemp = zeroU;
                 for l:0..k {
-                    rtemp += real(conjugate(get(a,l,j))*get(a,l,j));
+                    rtemp += real(conj(get(a,l,j))*get(a,l,j));
                 }
-                if beta == rzero {
+                if beta == zeroU {
                     set(c,j,j, alpha*rtemp);
                 } else {
-                    set(c,j,j, alpha*rtemp + beta*real_nc(get(c,j,j)));
+                    set(c,j,j, alpha*rtemp + beta*re(get(c,j,j)));
                 }
                 for i:j+1..n-1 {
                     temp = zero;
                     for l:0..k {
-                        temp += conjugate(get(a,l,i))*get(a,l,j);
+                        temp += conj(get(a,l,i))*get(a,l,j);
                     }
-                    if beta == rzero {
+                    if beta == zeroU {
                         set(c,i,j, alpha*temp);
                     } else {
                         set(c,i,j, alpha*temp + beta*get(c,i,j));
