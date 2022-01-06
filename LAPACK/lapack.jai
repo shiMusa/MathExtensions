@@ -1,5 +1,7 @@
 
 #load "xerbla.jai";
+#load "i_amax.jai";
+
 #load "Level1/_axpy.jai";
 #load "Level1/_copy.jai";
 #load "Level1/_dotc.jai";
@@ -47,6 +49,15 @@ char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
         });
         return false;
     }
+}
+
+err :: (msg: string, args: ..Any, $exit_program: bool=false) {
+    #if exit_program {
+        defer assert(false);
+    }
+    s := sprint("ERROR: %", msg);
+    defer free(s);
+    println(s, ..args, colo=.FG_RED);
 }
 
 // Anderson E. (2017)
