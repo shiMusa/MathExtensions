@@ -20,7 +20,7 @@ i_amax :: (
     T :: #run get_number_inner_type(C.data_type);
     smax : T = ---;
 
-    if n < 1 || incx < 0 then return -1;
+    if n < 1 || incx <= 0 then return -1;
     if n == 1 then return 0;
     
     res := 0;

@@ -7,35 +7,26 @@ sasum :: #bake_arguments _asum(U=float32);
 dzasum :: dasum;
 dasum :: #bake_arguments _asum(U=float64);
 
-_asum :: ($U: Type, $$n: int, x: $A/ArrayType1D, $$incx: int) -> U {
-    #assert(#run is_float_number(U) && is_intrinsic_number(U));
-    sum := zero(U);
+_asum :: ($U: Type, $$n: int, cx: $A/ArrayType1D, $$incx: int) -> U {
+    #run assert(U == get_number_inner_type(A.data_type));
+    res := zero(U);
     // * tmp not necessary
 
-    if n <= 0 then return sum; // * allow for negative stride as well - F. Fehse, 2021-11-16
+    if n <= 0 || incx < 0 then return res;
+
     if incx == 1 {
-        m := n % 6; // ! why blocks of 6 values?
-        if m != 0 {
-            for i: 0..m-1 {
-                sum += abs(U, get(x,i));
-            }
-            if n < 6 then return sum;
+        for i:0..n-1 {
+            res += abs1(get(cx,i));
         }
-        ix := m+1;
-        while ix < n {
-            sum += abs(U, get(x,ix  )) + abs(U, get(x,ix+1)) + abs(U, get(x,ix+2)) 
-                 + abs(U, get(x,ix+3)) + abs(U, get(x,ix+4)) + abs(U, get(x,ix+5));
-            ix += 6;
-        }
-        return sum;
     } else {
         ix := 0;
-        for i: 0..n-1 {
-            sum += abs(U, get(x,ix));
+        for i:0..n-1 {
+            res += abs1(get(cx,ix));
             ix += incx;
         }
-        return sum;
     }
+
+    return res;
 }
 
 #scope_module

@@ -19,9 +19,9 @@ icase, n, incx, incy : int = ---;
 
 cblat1 :: () -> bool {
     println_push("cblat1");
-
+    pass : bool = true;
     sfac: float32 : 9.765625e-4;
-    pass : bool = ---;
+
     for ic:1..10 {
         icase = ic;
         println("icase = %", icase);
@@ -322,12 +322,12 @@ check1 :: (sfac: $T) -> pass:bool #modify {
                 pass &= ctest(len,cx.data,ctrue6[incx-1][n], ctrue6[incx-1][n], sfac);
             case 10;
                 println("icamax");
-                itest(icamax(n,cx,incx),itrue3[n]);
+                itest(icamax(n,cx,incx),itrue3[n]-1); // ? -1 because indexing starts with 0 in Jai vs 1 in Fortran
                 for i:0..len-1 {
                     set(*cx,i, C32.{42.0, 43.0});
                 }
                 println("icamax");
-                pass &= itest(icamax(n,cx,incx), itruec[n]);
+                pass &= itest(icamax(n,cx,incx), itruec[n]-1); // ? -1 because indexing starts with 0 in Jai vs 1 in Fortran
             case;
                 assert(false, "WARNING: Shouldn't be here in check1.");
             }
@@ -340,7 +340,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
                 ix += incx;
             }
             println("icamax");
-            pass &= itest(icamax(n,cxr,incx), 3);
+            pass &= itest(icamax(n,cxr,incx), 3-1);  // ? -1 because indexing starts with 0 in Jai vs 1 in Fortran
         }
     }
 
@@ -352,7 +352,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
             set(*mwpct, i, zero(C32));
             set(*mwpcs, i, C32.{1.0, 1.0});
         }
-        print("cscal");
+        println("cscal");
         cscal(5, ca, *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
     } else if icase == 9 {
@@ -362,7 +362,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
             set(*mwpct, i, zero(C32));
             set(*mwpcs, i, C32.{1.0, 1.0});
         }
-        print("csscal");
+        println("csscal");
         csscal(5, c32(sa), *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
         // add a test for alpha equal to one.
@@ -371,7 +371,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
             set(*mwpct, i, get(cx,i));
             set(*mwpcs, i, get(cx,i));
         }
-        print("csscal");
+        println("csscal");
         csscal(5, c32(sa), *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
         // add a test for alpha equal to minus one.
@@ -380,7 +380,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
             set(*mwpct, i, -get(cx,i));
             set(*mwpcs, i, -get(cx,i));
         }
-        print("csscal");
+        println("csscal");
         csscal(5, c32(sa), *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
     }

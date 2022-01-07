@@ -184,14 +184,7 @@ test_lapack :: () {
 
     if !pass {
         err("LAPACK tests did not pass.");
+    } else {
+        println("SUCCESS: All LAPACK tests passed!", color=.FG_GREEN);
     }
-
-    // test_lapack_axpy();
-    // test_lapack_copy();
-    // test_lapack_dotc();
-    // test_lapack_dotu();
-    // test_lapack_scal();
-    // test_lapack_rot();
-    // test_lapack_swap();
-    // test_lapack_asum();
 }
