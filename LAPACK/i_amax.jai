@@ -15,7 +15,7 @@ izamax :: i_amax;
 i_amax :: (
     $$n: int,
     $$c: $C/ArrayType1D,
-    $$incx: int,
+    $$incx: int
 ) -> int {
     T :: #run get_number_inner_type(C.data_type);
     smax : T = ---;

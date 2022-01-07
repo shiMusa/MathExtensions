@@ -39,6 +39,13 @@
 #load "Level3/_trmm.jai";
 #load "Level3/_trsm.jai";
 
+#load "Testing/cblat1.jai";
+
+
+// Regex to replace Fortran comple syntax (a,b) with C32.{a,b}: 
+//                 \(([^\)]*)\)   ->   C32.{$1}
+
+
 // ? tests if val equals any of lower_case_chars
 char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
     #if lower_case_chars.count == 1 {
@@ -58,6 +65,62 @@ err :: (msg: string, args: ..Any, $exit_program: bool=false) {
     s := sprint("ERROR: %", msg);
     defer free(s);
     println(s, ..args, colo=.FG_RED);
+}
+
+data_array_2d :: ($T: Type, $d1: int, $d2: int, vals: ..$U, $row_major: bool=true) -> [d1][d2]T {
+    res : [d1][d2]T;
+    i1 := 0;
+    i2 := 0;
+    for vals {
+        res[i1][i2] = ncast(T,it);
+
+        #if row_major {
+            i2 += 1;
+            if i2 == d2 {
+                i2 = 0;
+                i1 += 1;
+            }
+        } else {
+            i1 += 1;
+            if i1 == d1 {
+                i1 = 0;
+                i2 += 1;
+            }
+        }
+    }
+    return res;
+}
+data_array_3d :: ($T: Type, $d1: int, $d2: int, $d3: int, vals: ..$U, $row_major: bool=true) -> [d1][d2][d3]T {
+    res : [d1][d2][d3]T;
+    i1 := 0;
+    i2 := 0;
+    i3 := 0;
+    for vals {
+        res[i1][i2][i3] = ncast(T,it);
+        
+        #if row_major {
+            i3 += 1;
+            if i3 == d3 {
+                i3 = 0;
+                i2 += 1;
+            }
+            if i2 == d2 {
+                i2 = 0;
+                i1 += 1;
+            }
+        } else {
+            i1 += 1;
+            if i1 == d1 {
+                i1 = 0;
+                i2 += 1;
+            }
+            if i2 == d2 {
+                i2 = 0;
+                i3 += 1;
+            }
+        }
+    }
+    return res;
 }
 
 // Anderson E. (2017)
