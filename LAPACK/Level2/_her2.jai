@@ -25,12 +25,12 @@ zher2 :: _her2;
 _her2 :: (
     $$uplo: u8,
     $$n: int,
-    $$alpha: $T,
-    $$x: $X/ArrayType1D,
+    alpha: $T,
+    x: $X/ArrayType1D,
     $$incx: int,
-    $$y: $Y/ArrayType1D,
+    y: $Y/ArrayType1D,
     $$incy: int,
-    $$a: *$A/ArrayType2D,
+    a: *$A/ArrayType2D,
     $$lda: int
 ) {
     zero :: #run zero(T);

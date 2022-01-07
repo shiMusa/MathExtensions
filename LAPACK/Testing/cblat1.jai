@@ -91,36 +91,42 @@ stest1 :: (scomp: $T, strue: T, ssize: T, sfac: T, $push_msg: bool=true) -> bool
 // ##    ##    ##    ##       ##    ##    ##
 //  ######     ##    ########  ######     ##
 
-ctest :: (len: int, ccomp: $T, ctrue: T, csize: T, sfac: $U) -> bool {
-    #run assert(U == get_number_inner_type(T));
+ctest1 :: (ccomp: $T, ctrue: T, csize: T, sfac: $U, $push_msg: bool=true) -> bool {
+    #run assert(U == get_number_inner_type(T), "types mismatch: T = %, U = %.\n", T, U);
+    #if push_msg println_push("ctest1");
 
+    scomp : [4]U = ---;
+    strue : [4]U = ---;
+    ssize : [4]U = ---;
+
+    scomp[0] = real(ccomp);
+    scomp[1] = imag(ccomp);
+    scomp[2] = quat_j(ccomp);
+    scomp[3] = quat_k(ccomp);
+
+    strue[0] = real(ctrue);
+    strue[1] = imag(ctrue);
+    strue[2] = quat_j(ctrue);
+    strue[3] = quat_k(ctrue);
+
+    ssize[0] = real(csize);
+    ssize[1] = imag(csize);
+    ssize[2] = quat_j(csize);
+    ssize[3] = quat_k(csize);
+
+    return stest(4, scomp, strue, ssize, sfac);
+}
+
+ctest :: (len: int, ccomp: []$T, ctrue: []T, csize: []T, sfac: $U) -> bool {
+    #run assert(U == get_number_inner_type(T), "types mismatch: T = %, U = %.\n", T, U);
     println_push("ctest");
 
-    scomp := NewArray(len*4, U, false);
-    defer array_free(scomp);
-    strue := NewArray(len*4, U, false);
-    defer array_free(strue);
-    ssize := NewArray(len*4, U, false);
-    defer array_free(ssize);
-
+    pass := true;
     for 0..len-1 {
-        scomp[it  ] = real(ccomp[i]);
-        scomp[it+1] = imag(ccomp[i]);
-        scomp[it+2] = quat_j(ccomp[i]);
-        scomp[it+3] = quat_k(ccomp[i]);
-
-        strue[it  ] = real(ctrue[i]);
-        strue[it+1] = imag(ctrue[i]);
-        strue[it+2] = quat_j(ctrue[i]);
-        strue[it+3] = quat_k(ctrue[i]);
-
-        ssize[it  ] = real(csize[i]);
-        ssize[it+1] = imag(csize[i]);
-        ssize[it+2] = quat_j(csize[i]);
-        ssize[it+3] = quat_k(csize[i]);
+        pass &= ctest1(ccomp[it], ctrue[it], csize[it], sfac, false);
     }
 
-    return stest(4*len, scomp, strue, ssize, sfac);
+    return pass;
 }
 
 // #### ######## ########  ######  ########
@@ -154,11 +160,10 @@ check1 :: (sfac: $T) -> pass:bool #modify {
 } {
     pass := true;
 
-
-    sa : float32 : 0.3;
-    ca : C32 : C32.{0.4, -0.7};
+    sa : float32 = 0.3;
+    ca := C32.{0.4, -0.7};
     
-    cv : [8][5][2]C32 : #run data_array_3d(C32, 8,5,2,
+    cv := data_array_3d(C32, 2,5,8,
         C32.{0.1e0,0.1e0},
         C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0},
         C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0},
@@ -188,7 +193,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
         C32.{7.0e0,2.0e0}, C32.{0.3e0,0.1e0}, C32.{5.0e0,8.0e0},
         C32.{0.5e0,0.0e0}, C32.{6.0e0,9.0e0}, C32.{0.0e0,0.5e0},
         C32.{8.0e0,3.0e0}, C32.{0.0e0,0.2e0}, C32.{9.0e0,4.0e0},
-    row_major=false);
+    row_major=true);
 
     cvr : [8]C32 : C32.[
         C32.{ 8.0,  8.0},
@@ -209,7 +214,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
         0.0, 0.7, 1.0, 1.3, 1.6
     ];
 
-    ctrue5 : [8][5][2]C32 : #run data_array_3d(C32, 8,5,2,
+    ctrue5 := data_array_3d(C32, 2,5,8,
         C32.{0.1e0,0.1e0},
         C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0},
         C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0},
@@ -243,9 +248,9 @@ check1 :: (sfac: $T) -> pass:bool #modify {
         C32.{0.20e0,-0.35e0}, C32.{6.0e0,9.0e0},
         C32.{0.35e0,0.20e0}, C32.{8.0e0,3.0e0},
         C32.{0.14e0,0.08e0}, C32.{9.0e0,4.0e0},
-    row_major=false);
+    row_major=true);
 
-    ctrue6 : [2][5][8]float32 : #run data_array_3d(float32, 8,5,2,
+    ctrue6 := data_array_3d(C32, 2,5,8,
         C32.{0.1e0,0.1e0},
         C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0},
         C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0}, C32.{1.0e0,2.0e0},
@@ -277,7 +282,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
         C32.{7.0e0,2.0e0}, C32.{0.09e0,0.03e0}, C32.{5.0e0,8.0e0},
         C32.{0.15e0,0.00e0}, C32.{6.0e0,9.0e0}, C32.{0.00e0,0.15e0},
         C32.{8.0e0,3.0e0}, C32.{0.00e0,0.06e0}, C32.{9.0e0,4.0e0},
-    row_major=false);
+    row_major=true);
 
     itrue3 : [5]int : int.[0,1,2,2,2];
     itruec : [5]int : int.[0,1,1,1,1];
@@ -286,6 +291,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
     cxr   : Array1D(15, C32) = ---;
     mwpcs : Array1D( 5, C32) = ---;
     mwpct : Array1D( 5, C32) = ---;
+    len : int = ---;
 
     // Executable Statements
     for incx:1..2 {
@@ -293,7 +299,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
             len = 2*max(n,1);
             // Set vector arguments
             for 0..len-1 {
-                set(*cx, it, cv[it][n][incx]);
+                set(*cx, it, cv[it][n][incx-1]);
             }
             if icase == {
             case 6;
@@ -302,28 +308,28 @@ check1 :: (sfac: $T) -> pass:bool #modify {
                 pass &= ctest1(scasum(n,cx,incx), strue4[n], strue4[n], sfac);
             case 8;
                 cscal(n,ca,*cx,incx);
-                pass &= ctest(len, cx, ctrue5[0][n][incx-1], ctrue5[0][n][incx-1], sfac);
+                pass &= ctest(len, cx.data, ctrue5[n][incx-1], ctrue5[n][incx-1], sfac);
             case 9;
-                csscal(n,sa,*cx,incx);
-                pass &= ctest(len,cx,ctrue6[0][n][incx-1], ctrue6[0][n][incx-1], sfac);
+                csscal(n,c32(sa),*cx,incx);
+                pass &= ctest(len,cx.data,ctrue6[n][incx-1], ctrue6[n][incx-1], sfac);
             case 10;
-                itest1(icamax(n,cx,incx),itrue3[n]);
+                itest(icamax(n,cx,incx),itrue3[n]);
                 for i:0..len-1 {
-                    set(cx,i, C32.{42.0, 43.0});
+                    set(*cx,i, C32.{42.0, 43.0});
                 }
-                pass &= itest1(icamax(n,cx,incx), itrue[n]);
+                pass &= itest(icamax(n,cx,incx), itruec[n]);
             case;
                 assert(false, "WARNING: Shouldn't be here in check1.");
             }
         }
         if icase == 10 {
             n = 8;
-            ix = 0;
+            ix := 0;
             for i:0..n-1 {
                 set(*cxr, ix, cvr[i]);
                 ix += incx;
             }
-            pass &= itest1(icamax(n,cxr,incx), 3);
+            pass &= itest(icamax(n,cxr,incx), 3);
         }
     }
 
@@ -336,7 +342,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
             set(*mwpcs, i, C32.{1.0, 1.0});
         }
         cscal(5, ca, *cx, incx);
-        pass &= ctest(5, cx, mwpct, mwpcs, sfac);
+        pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
     } else if icase == 9 {
         // Add a test for alpha equal zero.
         sa = 0.0;
@@ -344,24 +350,24 @@ check1 :: (sfac: $T) -> pass:bool #modify {
             set(*mwpct, i, zero(C32));
             set(*mwpcs, i, C32.{1.0, 1.0});
         }
-        csscal(5, sa, *cx, incx);
-        pass &= ctest(5, cx, mwpct, mwpcs, sfac);
+        csscal(5, c32(sa), *cx, incx);
+        pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
         // add a test for alpha equal to one.
         sa = 1.0;
         for i:0..5 {
             set(*mwpct, i, get(cx,i));
             set(*mwpcs, i, get(cx,i));
         }
-        csscal(5, sa, *cx, incx);
-        pass &= ctest(5, cx, mwpct, mwpcs, sfac);
+        csscal(5, c32(sa), *cx, incx);
+        pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
         // add a test for alpha equal to minus one.
         sa = -1.0;
         for i:0..5 {
             set(*mwpct, i, -get(cx,i));
             set(*mwpcs, i, -get(cx,i));
         }
-        csscal(5, sa, *cx, incx);
-        pass &= ctest(5, cx, mwpct, mwpcs, sfac);
+        csscal(5, c32(sa), *cx, incx);
+        pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
     }
 
     return pass;
@@ -381,7 +387,7 @@ check2 :: (sfac: float32) -> pass:bool {
     ca : C32 : C32.{0.4, -0.7};
     incxs : [4]int : int.[1,2,-2,-1];
     incys : [4]int : int.[1,-2,1,-2];
-    lens  : [2][4]int : #run data_array_2d(int, 2,4, 1,1,2,4,1,1,3,7, row_major = false);
+    lens  := data_array_2d(int, 2,4, 1,1,2,4,1,1,3,7, row_major=true);
     ns    : [4]int : int.[0,1,2,4];
 
     cx1 : [7]C32 : C32.[
@@ -404,7 +410,7 @@ check2 :: (sfac: float32) -> pass:bool {
         C32.{ 0.8, -0.7}
     ];
     
-    ct8 : [7][4][4]C32 : #run data_array_3d(C32, 7,4,4,
+    ct8 := data_array_3d(C32, 4,4,7,
         C32.{0.6e0,-0.6e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
@@ -453,28 +459,31 @@ check2 :: (sfac: float32) -> pass:bool {
         C32.{-0.9e0,0.5e0}, C32.{0.05e0,-0.6e0}, C32.{0.1e0,-0.5e0},
         C32.{-0.77e0,-0.49e0}, C32.{-0.5e0,-0.3e0},
         C32.{0.32e0,-1.16e0},
-    row_major = false);
+    row_major = true);
     
-    ct7 : C32[7] : C32.[
+    ct7 := data_array_2d(C32, 4,4,
         C32.{0.0e0,0.0e0}, 
         C32.{-0.06e0,-0.90e0}, 
         C32.{0.65e0,-0.47e0}, 
         C32.{-0.34e0,-1.22e0}, 
+
         C32.{0.0e0,0.0e0}, 
         C32.{-0.06e0,-0.90e0}, 
         C32.{-0.59e0,-1.46e0}, 
         C32.{-1.04e0,-0.04e0}, 
+
         C32.{0.0e0,0.0e0}, 
         C32.{-0.06e0,-0.90e0}, 
         C32.{-0.83e0,0.59e0}, 
         C32.{0.07e0,-0.37e0}, 
+
         C32.{0.0e0,0.0e0}, 
         C32.{-0.06e0,-0.90e0}, 
         C32.{-0.76e0,-1.15e0}, 
-        C32.{-1.33e0,-1.82e0}  
-    ];
+        C32.{-1.33e0,-1.82e0},
+    row_major=true);
     
-    ct6 : [4][4]C32 : #run data_array_2d(C32, 4, 4,
+    ct6 := data_array_2d(C32, 4, 4,
         C32.{0.0e0,0.0e0}, 
         C32.{0.90e0,0.06e0}, 
         C32.{0.91e0,-0.77e0}, 
@@ -494,9 +503,9 @@ check2 :: (sfac: float32) -> pass:bool {
         C32.{0.90e0,0.06e0}, 
         C32.{1.04e0,0.79e0}, 
         C32.{1.95e0,1.22e0},
-    row_major = false);
+    row_major = true);
 
-    ct10x : [7][4][4]C32 : #run data_array_3d(C32, 7, 4, 4, 
+    ct10x := data_array_3d(C32, 4,4,7,
         C32.{0.7e0,-0.8e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, 
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, 
         C32.{0.0e0,0.0e0}, C32.{0.6e0,-0.6e0}, C32.{0.0e0,0.0e0}, 
@@ -540,9 +549,9 @@ check2 :: (sfac: float32) -> pass:bool {
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.6e0,-0.6e0},
         C32.{0.7e0,-0.6e0}, C32.{-0.1e0,-0.2e0}, C32.{0.8e0,-0.7e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
-    row_major = false);
+    row_major = true);
 
-    ct10y : [7][4][4]C32 : #run data_array_3d(C32, 7,4,4,
+    ct10y := data_array_3d(C32, 4,4,7,
         C32.{0.6e0,-0.6e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
@@ -590,84 +599,84 @@ check2 :: (sfac: float32) -> pass:bool {
         C32.{-0.9e0,0.5e0}, C32.{-0.4e0,-0.7e0}, C32.{0.1e0,-0.5e0},
         C32.{-0.1e0,-0.9e0}, C32.{-0.5e0,-0.3e0},
         C32.{0.2e0,-0.8e0},
-    row_major = false);
+    row_major = true);
 
-    csize : [4]C32 : C32.[
+    csize1 : [4]C32 : C32.[
         C32.{0.0e0,0.0e0}, C32.{0.9e0,0.9e0},
         C32.{1.63e0,1.73e0}, C32.{2.90e0,2.78e0}
     ];
 
-    csize3 : [14]C32 : C32.[
+    csize3 := data_array_2d(C32, 2,7,
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{1.17e0,1.17e0},
         C32.{1.17e0,1.17e0}, C32.{1.17e0,1.17e0},
         C32.{1.17e0,1.17e0}, C32.{1.17e0,1.17e0},
-        C32.{1.17e0,1.17e0}, C32.{1.17e0,1.17e0}
-    ];
+        C32.{1.17e0,1.17e0}, C32.{1.17e0,1.17e0},
+    row_major=true);
 
-    csize2 : [7][2]C32 : #run data_array_2d(C32, 7,2, 
+    csize2 := data_array_2d(C32, 2,7,
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0},
         C32.{0.0e0,0.0e0}, C32.{0.0e0,0.0e0}, C32.{1.54e0,1.54e0},
         C32.{1.54e0,1.54e0}, C32.{1.54e0,1.54e0},
         C32.{1.54e0,1.54e0}, C32.{1.54e0,1.54e0},
         C32.{1.54e0,1.54e0}, C32.{1.54e0,1.54e0},
-    row_major = false);
+    row_major=true);
 
     cx : Array1D(7, C32) = ---;
-    cx : Array1D(7, C32) = ---;
+    cy : Array1D(7, C32) = ---;
     cdot : C32 = ---;
 
     for ki:0..4 {
-        incx = incxs(ki);
-        incy = incys(ki);
-        mx := abs(incx);
-        my := abs(incy);
+        incx = incxs[ki];
+        incy = incys[ki];
+        mx : int = abs(incx);
+        my : int = abs(incy);
 
         for kn:0..4 {
             n = ns[kn];
             ksize := min(1,kn);
-            lenx := lens[mx-1][kn];
-            leny := lens[my-1][kn];
+            lenx := lens[kn][mx-1];
+            leny := lens[kn][my-1];
 
             // initialize all argument arrays
             for i:0..7-1 {
-                set(cx, i, cx1[i]);
-                set(cy, i, cy1[i]);
+                set(*cx, i, cx1[i]);
+                set(*cy, i, cy1[i]);
             }
 
             if icase == {
             case 1;
                 cdot = cdotc(n,cx,incx,cy,incy);
-                pass &= ctest(1,cdot,ct6[ki][kn],csize1[kn],sfac);
+                pass &= ctest1(cdot,ct6[ki][kn],csize1[kn],sfac);
             case 2;
                 cdot = cdotu(n,cx,incx,cy,incy);
-                pass &= ctest(1,cdot,ct7[ki][kn],csize1[kn],sfac);
+                pass &= ctest1(cdot,ct7[ki][kn],csize1[kn],sfac);
             case 3;
                 caxpy(n,ca,cx,incx,*cy,incy);
-                pass &= ctest(leny, cy, ct8[ki][kn][0], csize2[ksize][0], sfac);
+                pass &= ctest(leny, cy.data, ct8[ki][kn], csize2[ksize], sfac);
             case 4;
-                ccopy(n,ca,cx,incx,*cy,incy);
-                pass &= ctest(leny,cy,ct10y[ki][kn][0],csize3,1.0);
+                ccopy(n,cx,incx,*cy,incy);
+                pass &= ctest(leny,cy.data,ct10y[ki][kn],csize3[0],1.0);
                 if ki == 0 {
-                    cx0[0] = C32.{42.0, 43.0};
-                    cy0[0] = C32.{44.0, 45.0};
-                    cty0[0] = ifx n == 0 then cy0[0] else cx0[0];
-                    lincx = incx;
+                    cx0 := array1d(1,C32.{42.0, 43.0});
+                    cy0 := array1d(1,C32.{44.0, 45.0});
+                    cty0 := ifx n == 0 then cy0 else cx0;
+                    lincx := incx;
                     incx = 0;
                     defer incx = lincx;
-                    lincy = incy;
+                    lincy := incy;
                     incy = 0;
                     defer incy = lincy;
 
-                    ccopy(n,cx0,incx, *cy0, incy);
-                    pass &= ctest(1,cy0,cty0,csize3,1.0);
+                    ccopy(n, cx0, incx, *cy0, incy);
+                    pass &= ctest(1, cy0.data, cty0.data, array1d(1,csize3[0][0]).data, 1.0);
                 }
             case 5;
                 cswap(n,*cx,incx,*cy,incy);
-                pass &= ctest(lenx,cx,ct10x[ki][kn][0],csize3,1.0);
-                pass &= ctest(leny, cy, ct10y[ki][kn][0], csize3, 1.0);
+                pass &= ctest(lenx, cx.data, ct10x[ki][kn], csize3[0], 1.0);
+                pass &= ctest(leny, cy.data, ct10y[ki][kn], csize3[0], 1.0);
             case;
                 assert(false, "WARNING: shouldn't be here in check2.");
             }

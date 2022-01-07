@@ -31,9 +31,9 @@ _tbmv :: (
     $$diag: u8,
     $$n: int,
     $$m: int,
-    $$a: $A/ArrayType2D,
+    a: $A/ArrayType2D,
     $$lda: int,
-    $$x: *$X/ArrayType1D,
+    x: *$X/ArrayType1D,
     $$incx: int
 ) {
     T :: A.data_type;

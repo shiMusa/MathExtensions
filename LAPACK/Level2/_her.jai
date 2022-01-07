@@ -25,10 +25,10 @@ zher :: _her;
 _her :: (
     $$uplo: u8,
     $$n: int,
-    $$alpha: $T,
-    $$x: $X/ArrayType1D,
+    alpha: $T,
+    x: $X/ArrayType1D,
     $$incx: int,
-    $$a: *$A/ArrayType2D,
+    a: *$A/ArrayType2D,
     $$lda: int
 ) {
     U :: X.data_type;

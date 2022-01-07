@@ -37,7 +37,7 @@ c64 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C64 #modify {
     return cpx(ncast(float64, re), ncast(float64, im));
 }
 
-c32 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C64 #modify {
+c32 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C32 #modify {
     if !is_intrinsic_number(T) || !is_intrinsic_number(U) {T = null; U = null; return;}    
 } {
     return cpx(ncast(float32, re), ncast(float32, im));

@@ -35,10 +35,10 @@ _trsm :: (
     $$diag: u8,
     $$m: int,
     $$n: int,
-    $$alpha: $T,
-    $$a: $A/ArrayType2D,
+    alpha: $T,
+    a: $A/ArrayType2D,
     $$lda: int,
-    $$b: $B/ArrayType2D,
+    b: $B/ArrayType2D,
     $$ldb: int
 ) {
     zero :: #run zero(T);

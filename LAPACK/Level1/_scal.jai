@@ -9,9 +9,7 @@ cscal  :: _scal;
 csscal :: _scal;
 zscal  :: _scal;
 zdscal :: _scal;
-_scal :: ($$n: int, ca: $U, cx: *$X/ArrayType1D, $$incx: int) #modify {
-    if !is_intrinsic_number(U) {U = null; return;}
-} {
+_scal :: ($$n: int, ca: X.data_type, cx: *$X/ArrayType1D, $$incx: int) {
     if n <= 0 then return;
     if incx == 1 {
         for i: 0..n-1 {

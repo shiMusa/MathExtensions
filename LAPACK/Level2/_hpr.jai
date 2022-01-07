@@ -28,10 +28,10 @@ zhpr :: _hpr;
 _hpr :: (
     $$uplo: u8,
     $$n: int,
-    $$alpha: $T,
-    $$x: $X/ArrayType1D,
+    alpha: $T,
+    x: $X/ArrayType1D,
     $$incx: int,
-    $$ap: $A/ArrayType1D
+    ap: $A/ArrayType1D
 ) {
     U :: X.data_type;
     zero :: #run zero(U);

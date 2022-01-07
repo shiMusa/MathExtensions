@@ -28,12 +28,12 @@ zhpmv :: _hpmv;
 _hpmv :: (
     $$uplo: u8,
     $$n: int,
-    $$alpha: $T,
-    $$ap: $A/ArrayType1D,
-    $$x: $X/ArrayType1D,
+    alpha: $T,
+    ap: $A/ArrayType1D,
+    x: $X/ArrayType1D,
     $$incx: int,
-    $$beta: T,
-    $$y: *$Y/ArrayType1D,
+    beta: T,
+    y: *$Y/ArrayType1D,
     $$incy: int
 ) {
     zero :: #run zero(T);

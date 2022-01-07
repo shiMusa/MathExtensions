@@ -36,13 +36,13 @@ _hemm :: (
     $$uplo: u8,
     $$m: int,
     $$n: int,
-    $$alpha: $T,
-    $$a: $A/ArrayType2D,
+    alpha: $T,
+    a: $A/ArrayType2D,
     $$lda: int,
-    $$b: *$B/ArrayType2D,
+    b: *$B/ArrayType2D,
     $$ldb: int,
-    $$beta: T,
-    $$c: *$C/ArrayType2D,
+    beta: T,
+    c: *$C/ArrayType2D,
     $$ldc: int,
     $hermitian: bool = true
 ) {

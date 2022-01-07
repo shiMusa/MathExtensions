@@ -97,9 +97,9 @@ _trsv :: (
     $$trans: u8, 
     $$diag: u8, 
     $$n: int, 
-    $$a: $A/ArrayType2D, 
+    a: $A/ArrayType2D, 
     $$lda: int, 
-    $$x: *$X/ArrayType1D, 
+    x: *$X/ArrayType1D, 
     $$incx: int
 ) {
     T :: A.data_type;

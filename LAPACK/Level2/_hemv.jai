@@ -30,13 +30,13 @@ zhemv :: _hemv;
 _hemv :: (
     $$uplo: u8,
     $$n: int,
-    $$alpha: $T,
-    $$a: $A/ArrayType2D,
+    alpha: $T,
+    a: $A/ArrayType2D,
     $$lda: int,
-    $$x: $X/ArrayType1D,
+    x: $X/ArrayType1D,
     $$incx: int,
-    $$beta: T,
-    $$y: *$Y/ArrayType1D,
+    beta: T,
+    y: *$Y/ArrayType1D,
     $$incy: int
 ) {
     zero :: #run zero(T);

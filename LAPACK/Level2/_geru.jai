@@ -27,12 +27,12 @@ dger  :: #bake_arguments _geru(conjugate=false);
 _geru :: (
     $$m: int,
     $$n: int,
-    $$alpha: $T,
-    $$x: $X/ArrayType1D,
+    alpha: $T,
+    x: $X/ArrayType1D,
     $$incx: int,
-    $$y: $Y/ArrayType1D,
+    y: $Y/ArrayType1D,
     $$incy: int,
-    $$a: *$A/ArrayType2D,
+    a: *$A/ArrayType2D,
     $$lda: int,
     $conjugate: bool
 ) {

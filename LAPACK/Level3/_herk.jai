@@ -39,11 +39,11 @@ _herk :: (
     $$trans: u8,
     $$n: int,
     $$k: int,
-    $$alpha: $U,
-    $$a: $A/ArrayType2D,
+    alpha: $U,
+    a: $A/ArrayType2D,
     $$lda: int,
-    $$beta: U,
-    $$c: *$C/ArrayType2D,
+    beta: U,
+    c: *$C/ArrayType2D,
     $$ldc: int,
     $hermitian: bool = true
 ) #modify {

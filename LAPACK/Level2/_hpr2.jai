@@ -29,12 +29,12 @@ zhpr2 :: _hpr2;
 _hpr2 :: (
     $$uplo: u8,
     $$n: int,
-    $$alpha: $T,
-    $$x: $X/ArrayType1D,
+    alpha: $T,
+    x: $X/ArrayType1D,
     $$incx: int,
-    $$y: $Y/ArrayType1D,
+    y: $Y/ArrayType1D,
     $$incy: int,
-    $$ap: *$A/ArrayType1D
+    ap: *$A/ArrayType1D
 ) {
     zero :: #run zero(T);
     one  :: #run one(T);

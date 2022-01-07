@@ -14,7 +14,7 @@ izamax :: i_amax;
 
 i_amax :: (
     $$n: int,
-    $$c: $C/ArrayType1D,
+    $$cx: $C/ArrayType1D,
     $$incx: int
 ) -> int {
     T :: #run get_number_inner_type(C.data_type);
@@ -35,7 +35,7 @@ i_amax :: (
         }
     } else {
         // code for increment no equal to 1
-        ix = 0;
+        ix := 0;
         smax = _abs1(get(cx,0));
         ix += incx;
         for i:1..n-1 {

@@ -342,7 +342,7 @@ abs :: inline ($U: Type, n: $T) -> U #modify {
 abs :: inline (a: $T) -> $U #modify {
     if !is_number(T) {U = null; return;}
     X := get_number_inner_type(T);
-    if is_intrinsic_float_number(X) { U = X; }
+    if is_intrinsic_number(X) { U = X; }
     else { U = type_info(float64); }
 } {
     return inline abs(U, a);

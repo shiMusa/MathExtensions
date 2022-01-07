@@ -34,13 +34,13 @@ _gbmv :: (
     $$n: int,             // cols of a
     $$kl: int,            // sub-diagonals of a, 0 <= kl
     $$ku: int,            // super-diagonals of a, 0 <= ku
-    $$alpha: $T,          // scalar
-    $$a: $A/ArrayType2D,  // band matrix of dimension lda x n
+    alpha: $T,          // scalar
+    a: $A/ArrayType2D,  // band matrix of dimension lda x n
     $$lda: int,           // first dimensions of a, kl+ku+1 <= lda
-    $$x: $X/ArrayType1D,  // vector
+    x: $X/ArrayType1D,  // vector
     $$incx: int,          // increment of x, incx != 0
-    $$beta: T,            // scalar
-    $$y: *$Y/ArrayType1D, // vector, will be overwritten 
+    beta: T,            // scalar
+    y: *$Y/ArrayType1D, // vector, will be overwritten 
     $$incy: int           // increment of y, incy != 0
 ) {
     #if CHECKS {

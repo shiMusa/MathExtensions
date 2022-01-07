@@ -1,4 +1,18 @@
 
+
+// Regex to replace Fortran comple syntax (a,b) with C32.{a,b}: 
+//                 \(([^\)]*)\)   ->   C32.{$1}
+
+
+
+// ? Fortran uses column-major storage while most modern programming languages
+// ? use row-major storage. This means, you have to be carefull about the order
+// ? of indices and assignment!
+// ? See also this Stackoverflow answer: 
+// ? https://stackoverflow.com/questions/2494818/fortran-arrays-and-subroutines-sub-arrays
+
+
+
 #load "xerbla.jai";
 #load "i_amax.jai";
 
@@ -42,10 +56,6 @@
 #load "Testing/cblat1.jai";
 
 
-// Regex to replace Fortran comple syntax (a,b) with C32.{a,b}: 
-//                 \(([^\)]*)\)   ->   C32.{$1}
-
-
 // ? tests if val equals any of lower_case_chars
 char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
     #if lower_case_chars.count == 1 {
@@ -64,7 +74,7 @@ err :: (msg: string, args: ..Any, $exit_program: bool=false) {
     }
     s := sprint("ERROR: %", msg);
     defer free(s);
-    println(s, ..args, colo=.FG_RED);
+    println(s, ..args, color=.FG_RED);
 }
 
 data_array_2d :: ($T: Type, $d1: int, $d2: int, vals: ..$U, $row_major: bool=true) -> [d1][d2]T {
@@ -167,6 +177,13 @@ test_lapack :: () {
         println("a = %", val);
         println("A = %", VAL);
         println("\"a\" == \"a\" == \"A\": %, %", char_eq(val, #char"a"), char_eq(VAL, #char"a"));
+    }
+
+    pass := true;
+    pass &= cblat1();
+
+    if !pass {
+        err("LAPACK tests did not pass.");
     }
 
     // test_lapack_axpy();

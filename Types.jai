@@ -33,6 +33,9 @@ is_float_number :: inline ($T: Type) -> bool {
 is_intrinsic_float_number :: inline (T: *Type_Info) -> bool {
     return T.type == .FLOAT;
 }
+is_intrinsic_float_number :: inline (T: Type) -> bool {
+    return T == float32 || T == float64;
+}
 
 
 

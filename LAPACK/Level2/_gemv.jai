@@ -30,13 +30,13 @@ _gemv :: (
     $$trans: u8,         // normal (N), transposed (T), or hermitian conjugated (H)
     $$m: int,            // rows of a
     $$n: int,            // columns of a
-    $$alpha: $T,         // scalar
-    $$a: $A/ArrayType2D, // matrix A
+    alpha: $T,         // scalar
+    a: $A/ArrayType2D, // matrix A
     $$lda: int,          // first dimension of A
-    $$x: $X/ArrayType1D, // vector
+    x: $X/ArrayType1D, // vector
     $$incx: int,         // increment of elements of x
-    $$beta: T,           // scalar
-    $y: *$Y/ArrayType1D, // vector
+    beta: T,           // scalar
+    y: *$Y/ArrayType1D, // vector
     $$incy: int          // increment of elements of y
 ) {
     one := one(T);

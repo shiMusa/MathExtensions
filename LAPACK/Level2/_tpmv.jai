@@ -30,8 +30,8 @@ _tpmv :: (
     $$trans: u8,
     $$diag: u8,
     $$n: int,
-    $$ap: $A/ArrayType1D,
-    $$x: *$X/ArrayType1D,
+    ap: $A/ArrayType1D,
+    x: *$X/ArrayType1D,
     $$incx: int
 ) {
     T :: A.data_type;

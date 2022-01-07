@@ -39,13 +39,13 @@ _her2k :: (
     $$trans: u8,
     $$n: int,
     $$k: int,
-    $$alpha: $T,
-    $$a: $A/ArrayType2D,
+    alpha: $T,
+    a: $A/ArrayType2D,
     $$lda: int,
-    $$b: $B/ArrayType2D,
+    b: $B/ArrayType2D,
     $$ldb: int,
-    $$beta: $U,
-    $$c: *$C/ArrayType2D,
+    beta: $U,
+    c: *$C/ArrayType2D,
     $$ldc: int,
     $hermitian: bool = true
 ) {

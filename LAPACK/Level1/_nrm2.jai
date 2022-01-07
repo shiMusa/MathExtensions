@@ -23,28 +23,37 @@ dznrm2 :: #bake_arguments _nrm2(R=float64);
 dnrm2  :: dznrm2;
 scnrm2 :: #bake_arguments _nrm2(R=float32);
 snrm   :: scnrm2;
-_nrm2 :: ($R: Type, n: int, x: $X/ArrayType1D, incx: int) -> R {
+_nrm2 :: ($R: Type, $$n: int, x: $X/ArrayType1D, $$incx: int) -> R {
+    #run assert(is_intrinsic_float_number(R));
 
     XT   :: #run get_number_inner_type(X.data_type);
-    T    :: UpCast(XT, float).T;
-    one  :: one(R);
-    zero :: zero(R);
-    #if R == float {
+    T    :: UpCast(XT, float64).T;
+    rone  :: #run one(R);
+    rzero :: #run zero(R);
+    #if R == float32 {
         maxn :: Math.FLOAT32_MAX;
+        tbig :: TBIG_32;
+        tsml :: TSML_32;
+        ssml :: SSML_32;
+        sbig :: SBIG_32;
     } else {
         maxn :: Math.FLOAT64_MAX;
+        tbig :: TBIG_64;
+        tsml :: TSML_64;
+        ssml :: SSML_64;
+        sbig :: SBIG_64;
     }
 
     // local scalars
     ix : int = ---;
     notbig : bool = ---;
-    abig, amed, asml, ax, scl, sumsq, ymax, ymin : float64 = ---;
+    abig, amed, asml, ax, scl, sumsq, ymax, ymin : R = ---;
 
     // quick return if possible
     if n <= 0 return 0.0;
 
-    scl = one;
-    sumsq = zero;
+    scl   = rone;
+    sumsq = rzero;
 
     //  Compute the sum of squares in 3 accumulators:
     //     abig -- sums of squares scaled down to avoid overflow
@@ -55,9 +64,9 @@ _nrm2 :: ($R: Type, n: int, x: $X/ArrayType1D, incx: int) -> R {
     //     tsml -- values smaller than this are scaled up by ssml
 
     notbig = true;
-    asml = zero;
-    amed = zero;
-    abig = zero;
+    asml = rzero;
+    amed = rzero;
+    abig = rzero;
     ix = 0;
 
     if incx < 0 then ix = (n-1)*(-incx);
@@ -66,7 +75,7 @@ _nrm2 :: ($R: Type, n: int, x: $X/ArrayType1D, incx: int) -> R {
         
         if ax > tbig {
             abig += (ax*sbig)*(ax*sbig);
-            nobig = false;
+            notbig = false;
         } else if ax < tsml {
             if notbig then asml += (ax*ssml)*(ax*ssml);
         } else {
@@ -87,19 +96,19 @@ _nrm2 :: ($R: Type, n: int, x: $X/ArrayType1D, incx: int) -> R {
         ix += incx;
     }
 
-    // Combine abig and amed or amed and asml if more than one
+    // Combine abig and amed or amed and asml if more than rone
     // accumulator was used.
 
-    if abig > zero {
+    if abig > rzero {
         // Combine abig and amed if abig > 0.
-        if amed > zero || amed > maxn /* || amed != amed WTF? */ {
+        if amed > rzero || amed > maxn /* || amed != amed WTF? */ {
             abig += (amed*sbig)*sbig;
         }
-        scl = one/sbig;
+        scl = rone/sbig;
         sumsq = abig;
-    } else if asml > zero {
+    } else if asml > rzero {
         // Combine amed and asml if asml > 0.
-        if amed > zero || amed > maxn /* || amed != amed WTF? */ {
+        if amed > rzero || amed > maxn /* || amed != amed WTF? */ {
             amed = sqrt(amed);
             asml = sqrt(asml)/ssml;
             if asml > amed {
@@ -109,15 +118,15 @@ _nrm2 :: ($R: Type, n: int, x: $X/ArrayType1D, incx: int) -> R {
                 ymin = asml;
                 ymax = amed;
             }
-            scl = one;
-            sumsq = ymax*ymax*(one + (ymin/ymax)*(ymin/ymax));
+            scl = rone;
+            sumsq = ymax*ymax*(rone + (ymin/ymax)*(ymin/ymax));
         } else {
-            scl = one / ssml;
+            scl = rone / ssml;
             sumsq = asml;
         }
     } else {
         // Otherwise all values are mid-range
-        scl = one;
+        scl = rone;
         sumsq = amed;
     }
 
