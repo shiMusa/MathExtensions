@@ -24,6 +24,7 @@ cblat1 :: () -> bool {
     pass : bool = ---;
     for ic:1..10 {
         icase = ic;
+        println("icase = %", icase);
 
         if icase <= 5 {
             pass &= check2(sfac);
@@ -158,6 +159,7 @@ itest :: (icomp: int, itrue: int, $push_msg: bool=true) -> bool {
 check1 :: (sfac: $T) -> pass:bool #modify {
     if !is_intrinsic_float_number(T) {T = null; return;}
 } {
+    println_push("check1");
     pass := true;
 
     sa : float32 = 0.3;
@@ -295,28 +297,36 @@ check1 :: (sfac: $T) -> pass:bool #modify {
 
     // Executable Statements
     for incx:1..2 {
+        println_push("incx = %", incx);
         for n:0..4 {
             len = 2*max(n,1);
+            println("n = %, len = %", n, len);
             // Set vector arguments
             for 0..len-1 {
-                set(*cx, it, cv[it][n][incx-1]);
+                set(*cx, it, cv[incx-1][n][it]);
             }
             if icase == {
             case 6;
+                println("scnrm2");
                 pass &= ctest1(scnrm2(n,cx,incx), strue2[n], strue2[n], sfac);
             case 7;
+                println("scasum");
                 pass &= ctest1(scasum(n,cx,incx), strue4[n], strue4[n], sfac);
             case 8;
+                println("cscal");
                 cscal(n,ca,*cx,incx);
-                pass &= ctest(len, cx.data, ctrue5[n][incx-1], ctrue5[n][incx-1], sfac);
+                pass &= ctest(len, cx.data, ctrue5[incx-1][n], ctrue5[incx-1][n], sfac);
             case 9;
+                println("cscal");
                 csscal(n,c32(sa),*cx,incx);
-                pass &= ctest(len,cx.data,ctrue6[n][incx-1], ctrue6[n][incx-1], sfac);
+                pass &= ctest(len,cx.data,ctrue6[incx-1][n], ctrue6[incx-1][n], sfac);
             case 10;
+                println("icamax");
                 itest(icamax(n,cx,incx),itrue3[n]);
                 for i:0..len-1 {
                     set(*cx,i, C32.{42.0, 43.0});
                 }
+                println("icamax");
                 pass &= itest(icamax(n,cx,incx), itruec[n]);
             case;
                 assert(false, "WARNING: Shouldn't be here in check1.");
@@ -329,6 +339,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
                 set(*cxr, ix, cvr[i]);
                 ix += incx;
             }
+            println("icamax");
             pass &= itest(icamax(n,cxr,incx), 3);
         }
     }
@@ -337,35 +348,39 @@ check1 :: (sfac: $T) -> pass:bool #modify {
     if icase == 8 {
         // Add a test for alpha equal to zero.
         ca = zero(C32);
-        for i:0..5 {
+        for i:0..5-1 {
             set(*mwpct, i, zero(C32));
             set(*mwpcs, i, C32.{1.0, 1.0});
         }
+        print("cscal");
         cscal(5, ca, *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
     } else if icase == 9 {
         // Add a test for alpha equal zero.
         sa = 0.0;
-        for i:0..5 {
+        for i:0..5-1 {
             set(*mwpct, i, zero(C32));
             set(*mwpcs, i, C32.{1.0, 1.0});
         }
+        print("csscal");
         csscal(5, c32(sa), *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
         // add a test for alpha equal to one.
         sa = 1.0;
-        for i:0..5 {
+        for i:0..5-1 {
             set(*mwpct, i, get(cx,i));
             set(*mwpcs, i, get(cx,i));
         }
+        print("csscal");
         csscal(5, c32(sa), *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
         // add a test for alpha equal to minus one.
         sa = -1.0;
-        for i:0..5 {
+        for i:0..5-1 {
             set(*mwpct, i, -get(cx,i));
             set(*mwpcs, i, -get(cx,i));
         }
+        print("csscal");
         csscal(5, c32(sa), *cx, incx);
         pass &= ctest(5, cx.data, mwpct.data, mwpcs.data, sfac);
     }
@@ -382,6 +397,7 @@ check1 :: (sfac: $T) -> pass:bool #modify {
 //  ######  ##     ## ########  ######  ##    ## #########
 
 check2 :: (sfac: float32) -> pass:bool {
+    println_push("check2");
     pass := true;
 
     ca : C32 : C32.{0.4, -0.7};
@@ -628,17 +644,19 @@ check2 :: (sfac: float32) -> pass:bool {
     cy : Array1D(7, C32) = ---;
     cdot : C32 = ---;
 
-    for ki:0..4 {
+    for ki:0..4-1 {
         incx = incxs[ki];
         incy = incys[ki];
         mx : int = abs(incx);
         my : int = abs(incy);
+        println_push("ki = %: incx = %, incy = %", ki, incx, incy);
 
-        for kn:0..4 {
+        for kn:0..4-1 {
             n = ns[kn];
             ksize := min(1,kn);
-            lenx := lens[kn][mx-1];
-            leny := lens[kn][my-1];
+            lenx := lens[mx-1][kn];
+            leny := lens[my-1][kn];
+            println("kn = %, n = %, lenx = %, leny = %", kn, n, lenx, leny);
 
             // initialize all argument arrays
             for i:0..7-1 {
@@ -646,22 +664,28 @@ check2 :: (sfac: float32) -> pass:bool {
                 set(*cy, i, cy1[i]);
             }
 
+            println("icase = %", icase);
+
             if icase == {
             case 1;
+                println("cdotc");
                 cdot = cdotc(n,cx,incx,cy,incy);
                 pass &= ctest1(cdot,ct6[ki][kn],csize1[kn],sfac);
             case 2;
+                println("cdotu");
                 cdot = cdotu(n,cx,incx,cy,incy);
                 pass &= ctest1(cdot,ct7[ki][kn],csize1[kn],sfac);
             case 3;
+                println("caxpy");
                 caxpy(n,ca,cx,incx,*cy,incy);
                 pass &= ctest(leny, cy.data, ct8[ki][kn], csize2[ksize], sfac);
             case 4;
+                println("ccopy");
                 ccopy(n,cx,incx,*cy,incy);
                 pass &= ctest(leny,cy.data,ct10y[ki][kn],csize3[0],1.0);
                 if ki == 0 {
-                    cx0 := array1d(1,C32.{42.0, 43.0});
-                    cy0 := array1d(1,C32.{44.0, 45.0});
+                    cx0 := array1d(1, C32.{42.0, 43.0});
+                    cy0 := array1d(1, C32.{44.0, 45.0});
                     cty0 := ifx n == 0 then cy0 else cx0;
                     lincx := incx;
                     incx = 0;
@@ -670,10 +694,12 @@ check2 :: (sfac: float32) -> pass:bool {
                     incy = 0;
                     defer incy = lincy;
 
+                    println("ccopy, ki = %", ki);
                     ccopy(n, cx0, incx, *cy0, incy);
                     pass &= ctest(1, cy0.data, cty0.data, array1d(1,csize3[0][0]).data, 1.0);
                 }
             case 5;
+                println("cswap");
                 cswap(n,*cx,incx,*cy,incy);
                 pass &= ctest(lenx, cx.data, ct10x[ki][kn], csize3[0], 1.0);
                 pass &= ctest(leny, cy.data, ct10y[ki][kn], csize3[0], 1.0);

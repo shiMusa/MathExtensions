@@ -7,6 +7,7 @@ dcopy :: _copy;
 scopy :: _copy;
 _copy :: ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: *$Y/ArrayType1D, $$incy: int) {
     #run assert(X.data_type == Y.data_type);
+
     if n <= 0 then return;
     if incx == 1 && incy == 1 {
         for i: 0..n-1 {
@@ -15,8 +16,8 @@ _copy :: ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: *$Y/ArrayType1D, $$incy
     } else {
         ix := 0;
         iy := 0;
-        if incx < 0 then ix = (-n+1)*incx + 1;
-        if incy < 0 then iy = (-n+1)*incy + 1;
+        if incx < 0 then ix = (n-1)*(-incx);
+        if incy < 0 then iy = (n-1)*(-incy);
         for i: 0..n-1 {
             set(cy, iy, get(cx, ix));
             ix += incx;
