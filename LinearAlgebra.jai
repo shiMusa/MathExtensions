@@ -26,8 +26,6 @@ solve_linear_2x2_default :: (x: *$C/VectorType, a: $A/MatrixType, b: $B/VectorTy
         assert(dim(x) == 2, "dimension mismatch: 2 != C.N = %\n", dim(x));
     }
 
-    // TODO remove unnecesary allocations!
-
     sigma := max(abs(get(a,0,0)), abs(get(a,0,1)), abs(get(a,1,0)), abs(get(a,1,1)));
     mu : DenseMatrix(A.data_type, 2, 2) = ---;
     copy(*mu, a);

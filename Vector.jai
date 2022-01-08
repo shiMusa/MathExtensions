@@ -92,7 +92,7 @@ str :: (
 // * Assuming `to` is initialized to zeroes.
 // * User has to know, what type the result has to be!
 cast_to :: (to: *$T/VectorType, from: $F/VectorType) {
-    for raw(from) {
+    for raw(*from) {
         set(to, it_index, ncast(T.data_type, it));
     }
 }
@@ -108,7 +108,7 @@ cast_to :: (to: *$T/VectorType, from: $F/VectorType) {
 // * Assuming `to` is initialized to zeroes.
 // * User has to know, what type the result has to be!
 copy :: (to: *$V/VectorType, from: V) {
-    for raw(from) {
+    for raw(*from) {
         set(to, it_index, it);
     }
 }

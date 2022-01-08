@@ -107,12 +107,12 @@ str :: (
 //  ######   #######  ##           ##
 
 copy :: inline (to: *$M/MatrixType, from: M) {
-    for raw(from) {
-        set_lin(to, it_index, it);
+    for raw(*from) {
+        set_raw(to, it_raw_index, it);
     }
 }
 
-copy :: (m: DenseMatrix($T, $N, $M)) -> type_of(m) {
+copy :: (m: DenseMatrix) -> type_of(m) {
     res : type_of(m) = ---;
     inline copy(*res, m);
     return res;
@@ -132,7 +132,7 @@ copy :: (m: DenseHeapMatrix) -> type_of(m) {
 //  ######  ##     ##  ######     ##    #######    ##     #######
 
 cast_to :: inline (to: *$M/MatrixType, from: $K/MatrixType) {
-    for raw(from) {
+    for raw(*from) {
         set_lin(to, it_index, ncast(M.data_type, it));
     }
 }
@@ -1023,7 +1023,7 @@ mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
         #assert(is_minor_number_type(C.data_type, B));
     }
 
-    for raw(a) {
+    for raw(*a) {
         set_raw(res, it_raw_index, it * b);
     }
 }
@@ -1097,8 +1097,8 @@ div :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
         #assert(is_minor_number_type(C.data_type, B));
     }
 
-    for raw(a) {
-        set_raw(res, it_raw_index, it / b);
+    for a {
+        set(res, it_row, it_column, it / b);
     }
 }
 
@@ -1750,10 +1750,12 @@ test_matrix :: () {
     {
         println_push("DenseMatrix", color = .FG_GREEN);
         {
+            println("test 0");
             m : DenseMatrix(float64, 3, 3);
             println("%", pstr(m));
         }
         {
+            println("test 1");
             a :: 3;
             m : DenseMatrix(float64, a, a);
             println("%", pstr(m));
@@ -1762,11 +1764,13 @@ test_matrix :: () {
 
 
         {
+            println("test 2");
             m : DenseMatrix(float64, 3, 3);
             mat_init_all(*m, 42.0);
             println("%", pstr(m));
         }
         {
+            println("test 3");
             a :: 3;
             m : DenseMatrix(float64, a, a);
             mat_init_all(*m, 42.0);
@@ -1775,6 +1779,7 @@ test_matrix :: () {
 
 
         {
+            println("test 4");
             m : DenseMatrix(C64, 3, 3);
             mat_init_all(*m, cpx(42.0));
             set(*m,1,2,R);
@@ -1783,6 +1788,7 @@ test_matrix :: () {
         }
 
         {
+            println("test 5");
             m : DenseMatrix(C64, 4, 4) = ---;
             mat_init_unit(*m);
             println("m = %", pstr(m));
@@ -1793,6 +1799,7 @@ test_matrix :: () {
         }
 
         {
+            println("test 6");
             m : DenseMatrix(C64, 3, 3);
             set(*m,0,2,R);
             transpose(*m);
@@ -1800,6 +1807,7 @@ test_matrix :: () {
         }
 
         {
+            println("test 7");
             a : DenseMatrix(float64, 2, 2);
             b : DenseMatrix(float64, 2, 2);
             mat_init_unit(*a);
@@ -1818,6 +1826,7 @@ test_matrix :: () {
         }
 
         {
+            println("test 8");
             m : DenseMatrix(C64, 2, 2);
             mat_init(*m, R, 2*R, 3*R, 4*R);
             println("m = %", pstr(m));
@@ -1826,6 +1835,7 @@ test_matrix :: () {
             println("res = %", pstr(res));
         }
         {
+            println("test 9");
             m : DenseMatrix(C64, 2, 2);
             mat_init(*m, R, 2.0*R, 3.0*R, 4.0*R);
             println("m = %", pstr(m));
@@ -1841,19 +1851,23 @@ test_matrix :: () {
         //     print("m = %\n", m);
         // }
         {
+            println("test 10");
             m : DenseMatrix(C64, 2, 2);
             mat_init(*m, 
                 C_ZERO, -I, 
                 I, C_ZERO
             );
-            k : DenseMatrix(C64, 2, 2);
+            k : DenseMatrix(C64, 2, 2) = ---;
+            println("k = %", pstr(k));
             copy(*k, m);
+            println("k = %", pstr(k));
             dagger(*k);
-            assert( k == m );
+            assert( k == m, "k = %\nm = %\n", pstr(k), pstr(m));
         }
 
 
         {
+            println("test 11");
             m : DenseMatrix(C64, 2, 2);
             mat_init(*m, R, I, 2*R-I, 2*R + 3*I);
             println("m = %", pstr(m));
@@ -1872,6 +1886,7 @@ test_matrix :: () {
         }
 
         {
+            println("test 12");
             M : DenseMatrix(C64, 3, 3);
             mat_init(*M,
                 C_ZERO, R, 2*R,

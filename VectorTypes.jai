@@ -193,14 +193,9 @@ for_expansion :: (v: *$V/VectorType, body: Code, flags: For_Flags) #expand {
 }
 
 
-raw :: inline (v: *$V/VectorType) -> VectorRawForExpansion(V) {
-    res : VectorRawForExpansion(V) = ---;
+raw :: inline (v: *$V/VectorType) -> *VectorRawForExpansion(V) {
+    res := New(VectorRawForExpansion(V), false);
     res.vector = v;
-    return res;
-}
-raw :: inline (v: $V/VectorType) -> VectorRawForExpansion(V) {
-    res : VectorRawForExpansion(V) = ---;
-    res.vector = *v;
     return res;
 }
 #scope_file
@@ -210,6 +205,7 @@ VectorRawForExpansion :: struct(T: Type) {
 #scope_export
 // * for expansion only over the really existing data
 for_expansion :: (ve: *VectorRawForExpansion, body: Code, flags: For_Flags) #expand {
+    defer free(ve);
     v := <<(ve.vector);
     i := 0;
     while i < n_raw(v) {

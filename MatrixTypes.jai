@@ -177,14 +177,9 @@ for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
 
 
 raw :: inline (m: *$M/MatrixType) -> *MatrixRawForExpansion(M) {
-    res : MatrixRawForExpansion(M) = ---;
+    res := New(MatrixRawForExpansion(M), false);
     res.matrix = m;
-    return *res;
-}
-raw :: inline (m: $M/MatrixType) -> *MatrixRawForExpansion(M) {
-    res : MatrixRawForExpansion(M) = ---;
-    res.matrix = *m;
-    return *res;
+    return res;
 }
 
 #scope_file
@@ -205,6 +200,7 @@ for_expansion :: (me: *MatrixRawForExpansion, body: Code, flags: For_Flags) #exp
         #insert (continue={i += 1; continue;}, break={break;}) body;
         i += 1;
     }
+    free(me);
 }
 
 
@@ -688,7 +684,7 @@ test_BandMatrix :: () {
     {
         println_push("test 1", color = .FG_YELLOW);
         bm : BandMatrix(int, 15, 17, 1, 2) = ---;
-        for raw(bm) {
+        for raw(*bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
         }
         println(bm);
@@ -698,7 +694,7 @@ test_BandMatrix :: () {
     {
         println_push("test 2", color = .FG_YELLOW);
         bm : BandMatrix(int, 8, 5, 2, 0);
-        for raw(bm) {
+        for raw(*bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
         }
         set(*bm, 3, 3, -42);
@@ -853,7 +849,7 @@ test_BandHeapMatrix :: () {
         println_push("test 1", color = .FG_YELLOW);
         bm := bhmat(int, 15, 17, 1, 2, false);
         defer free(bm);
-        for raw(bm) {
+        for raw(*bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
         }
         println(bm);
@@ -864,7 +860,7 @@ test_BandHeapMatrix :: () {
         println_push("test 2", color = .FG_YELLOW);
         bm := bhmat(int, 8, 5, 2, 0, false);
         defer free(bm);
-        for raw(bm) {
+        for raw(*bm) {
             set_raw(*bm, it_raw_index, it_raw_index);
         }
         set(*bm, 3, 3, -42);
@@ -1028,7 +1024,7 @@ test_TriangularMatrix :: () {
     {
         println_push("test 1", color = .FG_YELLOW);
         tm : TriangularMatrix(int, 8, 5) = ---;
-        for raw(tm) {
+        for raw(*tm) {
             set_raw(*tm, it_raw_index, it_raw_index);
         }
         tm.transposed = false;
@@ -1038,7 +1034,7 @@ test_TriangularMatrix :: () {
     {
         println_push("test 2", color = .FG_YELLOW);
         tm : TriangularMatrix(int, 8, 5) = ---;
-        for raw(tm) {
+        for raw(*tm) {
             set_raw(*tm, it_raw_index, it_raw_index);
         }
         tm.transposed = true;
@@ -1215,7 +1211,7 @@ test_TriangularHeapMatrix :: () {
         println_push("test 1", color = .FG_YELLOW);
         tm := thmat(int, 8, 5);
         defer free(tm);
-        for raw(tm) {
+        for raw(*tm) {
             set_raw(*tm, it_raw_index, it_raw_index);
         }
         tm.transposed = false;
@@ -1226,7 +1222,7 @@ test_TriangularHeapMatrix :: () {
         println_push("test 2", color = .FG_YELLOW);
         tm := thmat(int, 8, 5);
         defer free(tm);
-        for raw(tm) {
+        for raw(*tm) {
             set_raw(*tm, it_raw_index, it_raw_index);
         }
         tm.transposed = true;
