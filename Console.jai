@@ -14,6 +14,7 @@ PrintOptions :: struct {
     shift := 0;
     indent_charactoer_every := 4; // TODO not finished updating the Vector and Matrix pretty printing indentation. Try 3 to see what I mean.
     indent_character := "│";
+    stop_printing := false;
 };
 print_options : PrintOptions;
 
@@ -60,7 +61,16 @@ fg_color :: inline (txt: string, color: ConsoleColor = .FG_RESET) -> string {
 }
 
 
+println_pause :: () {
+    print_options.stop_printing = true;
+}
+println_unpause :: () {
+    print_options.stop_printing = false;
+}
+
 println_push :: (color: ConsoleColor = .FG_RESET) #expand {
+    if print_options.stop_printing then return;
+
     tip := cast(*Type_Info_Procedure)type_info(type_of(#this));
     text := sprint("% : % @ %", <<tip, type_of(#this), #location(#this));
     c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
@@ -71,6 +81,8 @@ println_push :: (color: ConsoleColor = .FG_RESET) #expand {
 }
 
 println_push :: (text: string = "", args: ..Any, color: ConsoleColor = .FG_RESET) #expand {
+    if print_options.stop_printing then return;
+
     c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
     println(c_text, ..args);
     print_indent(1);
@@ -79,6 +91,7 @@ println_push :: (text: string = "", args: ..Any, color: ConsoleColor = .FG_RESET
 }
 
 println :: (text: string = "", args: ..Any, color: ConsoleColor = .FG_RESET) {
+    if print_options.stop_printing then return;
 
     c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
 
@@ -98,6 +111,8 @@ println :: (text: string = "", args: ..Any, color: ConsoleColor = .FG_RESET) {
 }
 
 println :: (arg: Any, color: ConsoleColor = .FG_RESET) {
+    if print_options.stop_printing then return;
+
     text := sprint("%", arg);
     c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
     

@@ -4,3 +4,4 @@
 tests
 old
 zig-cache
+LAPACK-BLAS

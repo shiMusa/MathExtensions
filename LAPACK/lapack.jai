@@ -54,6 +54,7 @@
 #load "Level3/_trsm.jai";
 
 #load "Testing/cblat1.jai";
+#load "Testing/cblat2.jai";
 
 
 // ? tests if val equals any of lower_case_chars
@@ -181,6 +182,7 @@ test_lapack :: () {
 
     pass := true;
     pass &= cblat1();
+    pass &= cblat2();
 
     if !pass {
         err("LAPACK tests did not pass.");

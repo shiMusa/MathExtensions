@@ -55,3 +55,4 @@ run_all_tests :: () {
 Math   :: #import "Math";
 Pool   :: #import "Pool";
 String :: #import "String";
+File   :: #import "File";

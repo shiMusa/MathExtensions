@@ -141,6 +141,28 @@ for_unroll :: (from: int, to: int, body: Code, reverse: bool = false) #expand {
 }
 
 
+
+
+read_file_and_split :: (file_url: string) -> [][]string {
+    data, ok := File.read_entire_file(file_url);
+    if !ok {
+        assert(false, "Could not read entire file: %\n", file_url);
+    }
+
+    lines := String.split(data, "\n");
+
+    res := NewArray(lines.count, []string);
+
+    for lines {
+        res[it_index] = String.split(it, " ");
+    }
+
+    return res;
+}
+
+
+
+
 test_utils :: () {
     println_push("Utils", color = .FG_WHITE);
 
