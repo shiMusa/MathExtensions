@@ -40,6 +40,9 @@ cblat2 :: () -> bool {
     nalmax : int : 7;
     nbemax : int : 7;
 
+    zero :: #run zero(C32);
+    one  :: #run one(C32);
+
     sfac : float32 = ---;
     nidim, nkb, ninc, nalf, nbet : int = ---;
     idim, kb, inc : []int = ---;
@@ -138,6 +141,31 @@ cblat2 :: () -> bool {
         }
     }
     println("ltest = %", ltest);
+
+
+
+
+
+    eps := EPS_32; // Complex(float32)
+
+    // Check the riliability of CMVCH using exact data.
+    n = min(32, nmax);
+    for j:0..n-1 {
+        for i:0..n-1 {
+            set(*a, i,j, max(i-j+1, 0));
+        }
+        set(*x, j, j);
+        set(*y, j, zero);
+    }
+    for j:0..n-1 {
+        set(*yy, j, j*((j+1)*j)/2 - ((j+1)*j*(j-1))/3 );
+    }
+    // YY holds the exact result. On exit from CMVCH YT holds 
+    // the result computed by CMVCH.
+
+
+
+
 
     return false; // TODO
 }
