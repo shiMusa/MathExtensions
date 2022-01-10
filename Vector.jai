@@ -36,7 +36,7 @@
 
 
 pstr :: inline (v: $V/VectorType) -> string {
-    return str(v, print_options.offset, print_options.shift, "│", print_options.indent_charactoer_every);
+    return str(v, print_options.offset, print_options.shift, "│", print_options.indent_character_every);
 }
 
 str :: (

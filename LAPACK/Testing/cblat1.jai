@@ -18,7 +18,8 @@ icase, n, incx, incy : int = ---;
 
 
 cblat1 :: () -> bool {
-    println_push("cblat1");
+    println_push("cblat1", color=.FG_GREEN);
+    
     pass : bool = true;
     sfac: float32 : 9.765625e-4;
 

@@ -1,14 +1,24 @@
 // ? LAPACK cblat2
-// ? 
+// ? http://www.netlib.org/lapack/explore-html/d2/d54/cblat2_8f_source.html
+
+
+// ? Does is make sense to accurately copy the behavior of the test suite?
+// ? Meaning, generating output files etc.?
+
 
 file_url : string : "LAPACK/Testing/cblat2.in";
 
 cblat2 :: () -> bool {
+    println_push("cblat2", color=.FG_GREEN);
 
     data := read_file_and_split(file_url);
+    defer {
+        for data { array_free(it); }
+        array_free(data);
+    };
 
-    println_pause();
-
+    println("Input file:");
+    print(ansi_color(.FG_WHITE));
     for line, li: data {
         print("%: ", li);
         for line {
@@ -16,6 +26,7 @@ cblat2 :: () -> bool {
         }
         print("\n");
     }
+    print(ansi_color());
 
     nin    : int : 5;
     nsubs  : int : 17;
@@ -33,8 +44,16 @@ cblat2 :: () -> bool {
     nidim, nkb, ninc, nalf, nbet : int = ---;
     idim, kb, inc : []int = ---;
     alf, bet : []C32 = ---;
+    snames : [nsubs]string : string.[
+        "CGEMV", "CGBMV", "CHEMV", "CHBMV",
+        "CHPMB", "CTRMV", "CTBMV", "CTPMV",
+        "CTRSV", "CTBSV", "CTPSV", "CGERC",
+        "CGERU", "CHER" , "CHPR" , "CHER2",
+        "CHPR2"
+    ];
+    ltest : [nsubs]bool; // default to false
 
-    // read data
+    // parse data
     sfac = String.parse_float(*data[7][0]);
     println("sfac = %", sfac);
     
@@ -102,7 +121,23 @@ cblat2 :: () -> bool {
     }
     println("bet = %", bet);
 
-    println_unpause();
+    for i:0..nsubs-1 {
+        col := 1;
+        do_test := data[18+i][col];
+        while do_test == " " || do_test == "" {
+            col += 1;
+            do_test = data[18+i][col];
+        }
+
+        if do_test == "T" {
+            for *ltest {
+                if snames[it_index] == data[18+i][0] {
+                    <<it = true;
+                }
+            }
+        }
+    }
+    println("ltest = %", ltest);
 
     return false; // TODO
 }

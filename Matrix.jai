@@ -12,7 +12,7 @@
 */
 
 pstr :: inline (m: $V/MatrixType) -> string {
-    return str(m, print_options.offset, print_options.shift, "│", print_options.indent_charactoer_every);
+    return str(m, print_options.offset, print_options.shift, "│", print_options.indent_character_every);
 }
 
 str :: (
@@ -20,7 +20,7 @@ str :: (
     offset: int = 0, 
     indent: int = 4, 
     indent_character: string = " ", 
-    indent_charactoer_every: int = 4
+    indent_character_every: int = 4
 ) -> string {
     
     shift :: (ind: int = 0, additional_indent: int = 0) #expand {
@@ -28,7 +28,7 @@ str :: (
             append(*builder, " ");
         }
         for 0..ind-1+additional_indent {
-            if it % indent_charactoer_every == 0 {
+            if it % indent_character_every == 0 {
                 append(*builder, indent_character);
             } else {
                 append(*builder, " ");
