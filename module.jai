@@ -23,7 +23,7 @@
 #module_parameters(CHECKS := true);
 
 
-run_all_tests :: () {
+run_all_tests :: (verbose := false) {
     println("\nRunning tests ///////////////////////////////////////////////////\n", color = .FG_RED);
 
     test_console();
