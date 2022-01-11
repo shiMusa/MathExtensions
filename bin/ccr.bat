@@ -1,1 +1,1 @@
-cls && jai ../test.jai -x64 -import_dir "../" && "../test"
+cls && jai ../test.jai -import_dir "../" && "../test"

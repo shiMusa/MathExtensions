@@ -295,7 +295,7 @@ ncast :: inline ($T: Type, num: $N) -> T {
     } else #if #run is_complex_number(T) {
         
         #if #run is_quaternion_number(N) {
-            assert(false, "cannot ncast % -> %", N, T);
+            #run assert(false, "cannot ncast % -> %", N, T);
         } else {
 
             X :: #run get_number_inner_type(T);
@@ -309,7 +309,7 @@ ncast :: inline ($T: Type, num: $N) -> T {
     } else { // real numbers
 
         #if #run is_quaternion_number(N) || is_complex_number(N) {
-            assert(false, "cannot ncast % -> %", N, T);
+            #run assert(false, "cannot ncast % -> %", N, T);
         } else {
             
             return cast(T)num;
