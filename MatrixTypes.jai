@@ -73,19 +73,19 @@ get :: inline (a: *$A/ArrayType2D, i: int, j: int) -> A.data_type {
 }
 
 // * implementation for simple arrays
-Array2D :: struct(_data_type: Type) {
+Array2D :: struct(N: int, M: int, _data_type: Type) {
     using _a2d: ArrayType2D(_data_type);
-    data: [][]_T;
+    data: [N][M]_data_type;
 }
-array2d :: (values: [][]$T) -> Array2D(T) {
-    res : Array2D(T) = ---;
+array2d :: (values: [$N][$M]$T) -> Array2D(N,M,T) {
+    res : Array2D(N,M,T) = ---;
     res.data = values;
     return res;
 }
 get :: inline (a: Array2D, i: int, j: int) -> a.data_type {
     return a.data[i][j];
 }
-set :: inline (a: Array2D, i: int, j: int, val: a.data_type) {
+set :: inline (a: *Array2D, i: int, j: int, val: a.data_type) {
     a.data[i][j] = val;
 }
 

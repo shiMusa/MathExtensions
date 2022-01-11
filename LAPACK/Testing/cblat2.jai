@@ -6,7 +6,7 @@
 // ? Meaning, generating output files etc.?
 
 
-file_url : string : "LAPACK/Testing/cblat2.in";
+file_url : string : "../LAPACK/Testing/cblat2.in";
 
 cblat2 :: () -> bool {
     println_push("cblat2", color=.FG_GREEN);
@@ -40,13 +40,21 @@ cblat2 :: () -> bool {
     nalmax : int : 7;
     nbemax : int : 7;
 
-    zero :: #run zero(C32);
-    one  :: #run one(C32);
+    zero :: C32.{0.0, 0.0};
+    one  :: C32.{1.0, 0.0};
+
+    a : Array2D(nmax, nmax, C32) = ---;
+    aa, as : Array1D(nmax*nmax, C32) = ---;
+    x, y, yt : Array1D(nmax, C32) = ---;
+    z : Array1D(2*nmax, C32) = ---;
+    xs, _xx, yx, yy : Array1D(nmax*incmax, C32) = ---;
+    alf : Array1D(nalmax, C32) = ---;
+    bet : Array1D(nbemax, C32) = ---;
+    g : Array1D(nmax, float32) = ---;
 
     sfac : float32 = ---;
     nidim, nkb, ninc, nalf, nbet : int = ---;
     idim, kb, inc : []int = ---;
-    alf, bet : []C32 = ---;
     snames : [nsubs]string : string.[
         "CGEMV", "CGBMV", "CHEMV", "CHBMV",
         "CHPMB", "CTRMV", "CTBMV", "CTPMV",
@@ -100,13 +108,11 @@ cblat2 :: () -> bool {
     assert(nalf > 0 && nalf <= nalmax, "nalf out of range: 0 < % <= %\n", nalf, nalmax);
     println("nalf = %", nalf);
 
-    alf = NewArray(nalf, C32, false);
-    defer array_free(alf);
     for 0..nalf-1 {
         // complex number!
         c_num := String.slice(data[15][it], 1, data[15][it].count-2); // remove "(" and ")"
         f_vals := String.split(c_num, ",");
-        alf[it] = c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1]));
+        set(*alf, it, c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1])) );
     }
     println("alf = %", alf);
 
@@ -114,13 +120,11 @@ cblat2 :: () -> bool {
     assert(nbet > 0 && nbet <= nalmax, "nbet out of range: 0 < % <= %\n", nbet, nalmax);
     println("nbet = %", nbet);
 
-    bet = NewArray(nbet, C32, false);
-    defer array_free(bet);
     for 0..nbet-1 {
         // complex number!
         c_num := String.slice(data[17][it], 1, data[17][it].count-2); // remove "(" and ")"
         f_vals := String.split(c_num, ",");
-        bet[it] = c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1]));
+        set(*bet, it, c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1])) );
     }
     println("bet = %", bet);
 
@@ -149,16 +153,16 @@ cblat2 :: () -> bool {
     eps := EPS_32; // Complex(float32)
 
     // Check the riliability of CMVCH using exact data.
-    n = min(32, nmax);
+    n := min(32, nmax);
     for j:0..n-1 {
         for i:0..n-1 {
-            set(*a, i,j, max(i-j+1, 0));
+            set(*a, i,j, ncast(C32,max(i-j+1, 0)));
         }
-        set(*x, j, j);
+        set(*x, j, ncast(C32,j));
         set(*y, j, zero);
     }
     for j:0..n-1 {
-        set(*yy, j, j*((j+1)*j)/2 - ((j+1)*j*(j-1))/3 );
+        set(*yy, j, ncast(C32, j*((j+1)*j)/2 - ((j+1)*j*(j-1))/3) );
     }
     // YY holds the exact result. On exit from CMVCH YT holds 
     // the result computed by CMVCH.

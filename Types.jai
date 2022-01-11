@@ -318,13 +318,8 @@ ncast :: inline ($T: Type, num: $N) -> T {
     }
 }
 
-zero :: inline ($T: Type) -> T {
-    return ncast(T, 0);
-}
-
-one :: inline ($T: Type) -> T {
-    return ncast(T, 1);
-}
+zero :: #bake_arguments ncast(num=0);
+one  :: #bake_arguments ncast(num=1);
 
 nan :: inline ($T: Type) -> T {
     #if T == float64 {
