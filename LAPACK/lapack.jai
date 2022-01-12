@@ -78,7 +78,7 @@ err :: (msg: string, args: ..Any, $exit_program: bool=false) {
     println(s, ..args, color=.FG_RED);
 }
 
-lce :: (ri: $A/ArrayType1D, rj: $B/ArrayType1D, lr: int) -> bool {
+lce :: (ri: $A/ArrayType1D, rj: $B/ArrayType1D, $$lr: int) -> bool {
     for 0..lr {
         if get(ri,it) != get(rj,it) then return false;
     }
