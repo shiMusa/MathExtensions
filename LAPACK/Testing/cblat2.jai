@@ -20,10 +20,6 @@ cblat2 :: () -> bool {
     println_push("cblat2", color=.FG_GREEN);
 
     data := read_file_and_split(file_url);
-    defer {
-        for data { array_free(it); }
-        array_free(data);
-    };
 
     println("Input file:");
     print(ansi_color(.FG_WHITE));
@@ -59,10 +55,10 @@ cblat2 :: () -> bool {
     aa, as : Array1D(nmax*nmax, C32) = ---;
     x, y, yt : Array1D(nmax, C32) = ---;
     z : Array1D(2*nmax, C32) = ---;
-    xs, _xx, yx, yy : Array1D(nmax*incmax, C32) = ---;
+    xs, _xx, ys, yy : Array1D(nmax*incmax, C32) = ---;
     alf : Array1D(nalmax, C32) = ---;
     bet : Array1D(nbemax, C32) = ---;
-    g : Array1D(nmax, float32) = ---;
+    g   : Array1D(nmax, float32) = ---;
 
     thresh : float32 = ---;
     nidim, nkb, ninc, nalf, nbet : int = ---;
@@ -192,16 +188,23 @@ cblat2 :: () -> bool {
     if !pass then err("cmvch result not good: n = %\n%\n%", n, yy, yt, exit_program=true);
 
 
-    // Test each subroutine in turn
+    // Test each subroutine in turn.
+    // println("Test each subroutine in turn.");
     for isnum:0..nsubs-1 {
         if !ltest[isnum] then continue;
 
         srnamt := snames[isnum];
+        println("%: %", isnum, srnamt);
         // error exits need not be tested
 
         // Test computations
         if isnum <= 1 {
-            // cchk1(srnamt, eps, thresh, )
+            pass &= cchk1(
+                srnamt, eps, thresh,
+                nidim, idim, nkb, kb, nalf, alf.data,
+                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, as,
+                x, _xx, xs, y, yy, ys, yt, g
+            );
         } else if isnum <= 4 {
 
         } else if isnum <= 10 {
@@ -215,11 +218,9 @@ cblat2 :: () -> bool {
         }
     }
 
-    // Clean up
-    array_free(idim);
-    array_free(kb);
-    array_free(inc);
-    return false; // TODO finish
+    // Clean up.
+    if !pass then err("cblat2 did not pass.");
+    return pass;
 }
 
 
@@ -232,21 +233,21 @@ cblat2 :: () -> bool {
 //  ######  ##     ##    ###     ######  ##     ##
 
 cmvch :: (
-    $$trans: u8,
-    $$m: int,
-    $$n: int,
-    $$alpha: $T,
+    trans: u8,
+    m: int,
+    n: int,
+    alpha: $T,
     a: $A/ArrayType2D,
-    $$nmax: int,
+    nmax: int,
     x: $X/ArrayType1D,
-    $$incx: int,
-    $$beta: T,
+    incx: int,
+    beta: T,
     y: $Y/ArrayType1D,
     $$incy: int,
     yt: *$YT/ArrayType1D,
     g: *$G/ArrayType1D,
     yy: $YY/ArrayType1D,
-    $$eps: $U,
+    eps: $U,
     $fatal: bool
 ) -> bool {
     #if CHECKS {
@@ -352,37 +353,33 @@ lce :: (ri: $A/ArrayType1D, rj: $B/ArrayType1D, $$lr: int) -> bool {
 //  ######   ######  ##     ## ##    ##  ######
 
 cchk1 :: (
-    $$sname: string,
-    $$eps: $U,
-    $$thresh: U,
-    $$ntra: int,
-    $$trace: bool,
-    $$rewi: bool,
-    $$fatal: bool,
-    $$nidim: int,
-    $$idim: []int,
-    $$nkb: int,
-    $$kb: []int,
-    $$nalf: int,
-    $$alf: []$T,
-    $$nbet: int,
-    $$bet: []T,
-    $$ninc: int,
-    $$inc: []int,
-    $$nmax: int,
-    $$incmax: int,
-    a: $A/ArrayType2D,
-    aa: $AA/ArrayType2D,
-    as: $AS/ArrayType2D,
+    sname: string,
+    eps: $U,
+    thresh: U,
+    nidim: int,
+    idim: []int,
+    nkb: int,
+    kb: []int,
+    nalf: int,
+    alf: []$T,
+    nbet: int,
+    bet: []T,
+    ninc: int,
+    inc: []int,
+    nmax: int,
+    incmax: int,
+    a: *$A/ArrayType2D,
+    aa: *$AA/ArrayType1D,
+    as: $AS/ArrayType1D,
     x: $X/ArrayType1D,
-    xx: $XX/ArrayType1D,
+    _xx: $XX/ArrayType1D,
     xs: $XS/ArrayType1D,
     y: $Y/ArrayType1D,
     yy: $YY/ArrayType1D,
     ys: $YS/ArrayType1D,
     yt: $YT/ArrayType1D,
     g: $G/ArrayType1D
-) {
+) -> bool {
     #run {
         assert(U == get_number_inner_type(T));
         assert(T == A.data_type);
@@ -397,14 +394,15 @@ cchk1 :: (
         assert(T == YT.data_type);
         assert(U == G.data_type);
     }
+    println_push("cchk1");
 
     czero := zero(C32);
     cone  := one(C32);
     rzero := zero(U);
     rone  := one(U);
 
-    full   := sname[2] == "E";
-    banded := sname[2] == "B";
+    full   := char_eq(sname[2], #char "e");
+    banded := char_eq(sname[2], #char "b");
 
     // Define the number of arguments
     nargs := ifx full then 11 else 13;
@@ -413,15 +411,18 @@ cchk1 :: (
     reset := true;
     errmax := rzero;
 
-    for in:0..nidim {
+    for in:0..nidim-1 {
+        // println_push("in = %", in);
         n := idim[in];
         nd := n/2 + 1;
 
         for im:0..1 {
+            // println_push("im = %", im);
             m  := ifx im == 0 then max(n-nd,0) else min(n+nd, nmax);
             nk := ifx banded  then nkb         else 1;
 
             for iku:0..nk-1 {
+                // println_push("iku = %", iku);
                 ku := ifx banded then kb[iku]     else n-1;
                 kl := ifx banded then max(ku-1,0) else m-1;
 
@@ -437,12 +438,17 @@ cchk1 :: (
 
                 // Generate the matrix a.
                 transl := czero;
-                cmake(sname[1], "", "", m, n, *a, nmax, aa, lda, kl, ku, reset, transl);
+                _slice := String.slice(sname, 1, 2);
+                cmake(_slice, 0, 0, m, n, a, nmax, aa, lda, kl, ku, *reset, transl);
 
                 // TODO finish
             }
         }
     }
+
+    err("not yet fully implemented");
+
+    return false; // TODO
 }
 
 
@@ -467,14 +473,17 @@ cmake :: (
     lda: int,
     kl: int,
     ku: int,
-    reset: bool,
+    reset: *bool,
     transl: $T
 ) {
     #run {
         assert(T == A.data_type);
         assert(T == AA.data_type);
     }
-    U :: get_number_inner_type(T);
+    U :: #run get_number_inner_type(T);
+
+    // println_push("cmake: type = %, uplo = %, diag = %, m = %, n = %, kl = %, ku = %, nmax = %, lda = %", type, uplo, diag, m, n, kl, ku, nmax, lda);
+
     czero := zero(T);
     cone  := one(T);
     rzero := zero(U);
@@ -491,6 +500,7 @@ cmake :: (
     unit := tri && char_eq(diag, #char "u");
 
     // Generate data in array a.
+    // println("generate data in array a.");
     for j:0..n-1 {
         for i:0..m-1 {
             if !gen && !(upper && i <= j) && !(lower && i >= j) then continue;
@@ -509,35 +519,36 @@ cmake :: (
                 set(a,j,i, czero);
             }
         }
-        if sym  then set(a,j,j, real_nc(a,j,j));
+        if sym  then set(a,j,j, real_nc(get(a,j,j)));
         if tri  then set(a,j,j, get(a,j,j) + cone);
         if unit then set(a,j,j, cone);
     }
 
     // Store elements in array AS in data structure required by routine.
+    // println("store elements in array as in data structure required by routine.");
     if String.equal_nocase(type, "ge") {
         for j:0..n-1 {
             for i:0..m-1 {
-                set(aa, i+(j-1)*lda, get(a,i,j));
+                set(aa, i+j*lda, get(a,i,j));
             }
             for i:m..lda-1 {
-                set(aa, i+(j-1)*lda, rogue);
+                set(aa, i+j*lda, rogue);
             }
         }
     } else if String.equal_nocase(type, "gb") {
         for j:0..n-1 {
             i1, i2, i3 := 0;
             for 0..ku-j {
-                set(aa, i1+(j-1)*lda, rogue);
+                set(aa, i1+j*lda, rogue);
                 i1 += 1;
             }
             i2 = i1;
             for i1..min(kl+ku, ku+m-j) {
-                set(aa, i2+(j-1)*lda, get(a, i2+j-ku-1, j));
+                set(aa, i2+j*lda, get(a, i2+j-ku-1, j));
                 i2 += 1;
             }
             for i3:i2..lda-1 {
-                set(aa, i3+(j-1)*lda, rogue);
+                set(aa, i3+j*lda, rogue);
             }
         }
     } else if String.equal_nocase(type, "he") || String.equal_nocase(type, "tr") {
@@ -551,20 +562,20 @@ cmake :: (
                 iend = n;
             }
             for i:0..ibeg-1 {
-                set(aa, i+(j-1)*lda, rogue);
+                set(aa, i+j*lda, rogue);
             }
             for i:ibeg..iend {
-                set(aa, i+(j-1)*lda, get(a,i,j));
+                set(aa, i+j*lda, get(a,i,j));
             }
             for i:iend+1..lda-1 {
-                set(aa, i+(j-1)*lda, rogue);
+                set(aa, i+j*lda, rogue);
             }
             if sym {
-                jj := j + (j-1)*lda;
+                jj := j + j*lda;
                 set(aa,jj, cpx(real(get(aa,jj)), rrogue));
             }
         }
-    } else if String.equal_nocase(type, "hb") || String,equal_nocase(type, "tb") {
+    } else if String.equal_nocase(type, "hb") || String.equal_nocase(type, "tb") {
         for j:0..n-1 {
             kk, ibeg, iend : int = ---;
             if upper {
@@ -577,16 +588,16 @@ cmake :: (
                 iend = min(kl, m-j); // correct Fortran indexing
             }
             for i:0..ibeg-1 {
-                set(aa, i+(j-1)*lda, rogue);
+                set(aa, i+j*lda, rogue);
             }
             for i:ibeg..iend {
-                set(aa, i+(j-1)*lda, get(a,i+j-kk,j));
+                set(aa, i+j*lda, get(a,i+j-kk,j));
             }
             for i:iend+1..lda-1 {
-                set(aa, i+(j-1)*lda, rogue);
+                set(aa, i+j*lda, rogue);
             }
             if sym {
-                jj := kk + (j-1)*lda;
+                jj := kk + j*lda;
                 set(aa,jj, cpx(real(get(aa,jj)), rrogue));
             }
         }
@@ -606,9 +617,9 @@ cmake :: (
                 set(aa, ioff, get(a,i,j));
                 if i == j {
                     if unit then 
-                        set(aa,ioff, get(a,i,j)) 
+                        set(aa,ioff, get(a,i,j));
                     else
-                        set(aa,ioff, cpx(real(get(aa,ioff)), rrouge));
+                        set(aa,ioff, cpx(real(get(aa,ioff)), rrogue));
                 }
             }
         }
@@ -631,7 +642,6 @@ CBEG_Save :: struct {
     i  : int = 6;
     j  : int = 7;
     ic : int = 0;
-    reset : bool = false;
 }
 cbeg_save : CBEG_Save;
 
@@ -643,19 +653,19 @@ cbeg_save : CBEG_Save;
 // Richard Hanson, Sandia National Labs.
 // Jeremy Du Croz, NAG Central Office.
 cbeg :: (
-    $$reset: bool,
+    reset: *bool,
     $T: Type
-) ->  {
+) ->  T {
     using cbeg_save;
 
-    if reset {
+    if <<reset {
         // Initialize local variables
         mi = 891;
         mj = 457;
         i = 7;
         j = 7;
         ic = 0;
-        reset = false;
+        <<reset = false;
     }
 
     // The sequence of values of I or J is bounded between 1 and 999.

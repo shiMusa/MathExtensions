@@ -78,13 +78,6 @@ err :: (msg: string, args: ..Any, $exit_program: bool=false) {
     println(s, ..args, color=.FG_RED);
 }
 
-lce :: (ri: $A/ArrayType1D, rj: $B/ArrayType1D, $$lr: int) -> bool {
-    for 0..lr {
-        if get(ri,it) != get(rj,it) then return false;
-    }
-    return true;
-}
-
 data_array_2d :: ($T: Type, $d1: int, $d2: int, vals: ..$U, $row_major: bool=true) -> [d1][d2]T {
     res : [d1][d2]T;
     i1 := 0;
