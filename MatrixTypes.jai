@@ -72,23 +72,78 @@ get :: inline (a: *$A/ArrayType2D, i: int, j: int) -> A.data_type {
     return get(<<a, i, j);
 }
 
+
+
+//    ###    ########  ########     ###    ##    ##  #######  ########
+//   ## ##   ##     ## ##     ##   ## ##    ##  ##  ##     ## ##     ##
+//  ##   ##  ##     ## ##     ##  ##   ##    ####          ## ##     ##
+// ##     ## ########  ########  ##     ##    ##     #######  ##     ##
+// ######### ##   ##   ##   ##   #########    ##    ##        ##     ##
+// ##     ## ##    ##  ##    ##  ##     ##    ##    ##        ##     ##
+// ##     ## ##     ## ##     ## ##     ##    ##    ######### ########
+
 // * implementation for simple arrays
 Array2D :: struct(N: int, M: int, _data_type: Type) {
     using _a2d: ArrayType2D(_data_type);
-    data: [N][M]_data_type;
+    data: [N*M]_data_type;
 }
 array2d :: (values: [$N][$M]$T) -> Array2D(N,M,T) {
     res : Array2D(N,M,T) = ---;
-    res.data = values;
+    for i:0..N-1 {
+        for j:0..M-1 {
+            set(*res, i, j, values[i][j]);
+        }
+    }
     return res;
 }
 get :: inline (a: Array2D, i: int, j: int) -> a.data_type {
-    return a.data[i][j];
+    return a.data[i*a.M + j];
 }
 set :: inline (a: *Array2D, i: int, j: int, val: a.data_type) {
-    a.data[i][j] = val;
+    a.data[i*a.M + j] = val;
 }
 
+as_array1d :: (a: *Array2D) -> Array1D(a.N*a.M, a.data_type) {
+    res : Array1D(a.N*a.M, a.data_type) = ---;
+    res.data = a.data;
+    return res;
+}
+
+
+//    ###        #######  ########     ##     ## #### ######## ##      ##
+//   ## ##      ##     ## ##     ##    ##     ##  ##  ##       ##  ##  ##
+//  ##   ##            ## ##     ##    ##     ##  ##  ##       ##  ##  ##
+// ##     ##     #######  ##     ##    ##     ##  ##  ######   ##  ##  ##
+// #########    ##        ##     ##     ##   ##   ##  ##       ##  ##  ##
+// ##     ##    ##        ##     ##      ## ##    ##  ##       ##  ##  ##
+// ##     ##    ######### ########        ###    #### ########  ###  ###
+
+Array2DView :: struct(_A: Type) {
+    using _a2d: ArrayType2D(_A.data_type);
+    a1d : *_A;
+    cols: int;
+}
+array2d_view :: (a1d: *$A/ArrayType1D, cols: int) -> Array2DView(A) {
+    res : Array2DView(A) = ---;
+    res.a1d = a1d;
+    res.cols = cols;
+    return res;
+}
+get :: inline (a: Array2DView, i: int, j: int) -> a.data_type {
+    return get(a.a1d, i*a.cols + j);
+}
+set :: inline (a: *Array2DView, i: int, j: int, val: a.data_type) {
+    set(a.a1d, i*a.cols + j, val);
+}
+
+
+// ##     ##    ###    ########    ######## ##    ## ########  ########
+// ###   ###   ## ##      ##          ##     ##  ##  ##     ## ##
+// #### ####  ##   ##     ##          ##      ####   ##     ## ##
+// ## ### ## ##     ##    ##          ##       ##    ########  ######
+// ##     ## #########    ##          ##       ##    ##        ##
+// ##     ## ##     ##    ##          ##       ##    ##        ##
+// ##     ## ##     ##    ##          ##       ##    ##        ########
 
 /*
 * All concrete types M(T) of MatrixType(T, flags) must implement the following functions:

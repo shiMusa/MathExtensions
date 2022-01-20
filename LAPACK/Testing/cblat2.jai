@@ -200,10 +200,10 @@ cblat2 :: () -> bool {
         // Test computations
         if isnum <= 1 {
             pass &= cchk1(
-                srnamt, eps, thresh,
+                srnamt, eps, thresh, true,
                 nidim, idim, nkb, kb, nalf, alf.data,
-                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, as,
-                x, _xx, xs, y, yy, ys, yt, g
+                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
             );
         } else if isnum <= 4 {
 
@@ -343,6 +343,58 @@ lce :: (ri: $A/ArrayType1D, rj: $B/ArrayType1D, $$lr: int) -> bool {
     return true;
 }
 
+// ##        ######  ######## ########  ########  ######
+// ##       ##    ## ##       ##     ## ##       ##    ##
+// ##       ##       ##       ##     ## ##       ##
+// ##       ##       ######   ########  ######    ######
+// ##       ##       ##       ##   ##   ##             ##
+// ##       ##    ## ##       ##    ##  ##       ##    ##
+// ########  ######  ######## ##     ## ########  ######
+
+// Tests if selected elements in two arrays are equal.
+//
+// TYPE is 'GE', 'HE' or 'HP'.
+//
+// Auxiliary routine for test program for Level 2 Blas.
+//
+// -- Written on 10-August-1987.
+//    Richard Hanson, Sandia National Labs.
+//    Jeremy Du Croz, NAG Central Office.
+
+lceres :: (
+    type: string, 
+    uplo: u8, 
+    m: int, 
+    n: int, 
+    aa: $AA/ArrayType2D, 
+    as: $AS/ArrayType2D, 
+    lda: int
+) -> bool {
+    upper := char_eq(uplo, #char "u");
+    if String.equal_nocase(type, "ge") {
+        for j:0..n-1 {
+            for i:m+1..lda-1 {
+                if get(aa, i, j) != get(as, i, j) then return false;
+            }
+        }
+    } else if String.equal_nocase(type, "he") {
+        for j:0..n-1 {
+            ibeg := ifx upper then 0 else j;
+            iend := ifx upper then j else n-1;
+
+            for i:0..ibeg-1 {
+                if get(aa, i, j) != get(as, i, j) then return false;
+            }
+
+            for i:iend..lda-1 {
+                if get(aa, i, j) != get(as, i ,j) then return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 
 //  ######   ######  ##     ## ##    ##    ##
 // ##    ## ##    ## ##     ## ##   ##   ####
@@ -356,6 +408,7 @@ cchk1 :: (
     sname: string,
     eps: $U,
     thresh: U,
+    $fatal: bool,
     nidim: int,
     idim: []int,
     nkb: int,
@@ -370,15 +423,15 @@ cchk1 :: (
     incmax: int,
     a: *$A/ArrayType2D,
     aa: *$AA/ArrayType1D,
-    as: $AS/ArrayType1D,
-    x: $X/ArrayType1D,
-    _xx: $XX/ArrayType1D,
-    xs: $XS/ArrayType1D,
-    y: $Y/ArrayType1D,
-    yy: $YY/ArrayType1D,
-    ys: $YS/ArrayType1D,
-    yt: $YT/ArrayType1D,
-    g: $G/ArrayType1D
+    as: *$AS/ArrayType1D,
+    x: *$X/ArrayType1D,
+    _xx: *$XX/ArrayType1D,
+    xs: *$XS/ArrayType1D,
+    y: *$Y/ArrayType1D,
+    yy: *$YY/ArrayType1D,
+    ys: *$YS/ArrayType1D,
+    yt: *$YT/ArrayType1D,
+    g: *$G/ArrayType1D
 ) -> bool {
     #run {
         assert(U == get_number_inner_type(T));
@@ -396,8 +449,13 @@ cchk1 :: (
     }
     println_push("cchk1");
 
-    czero := zero(C32);
-    cone  := one(C32);
+    pass := true;
+
+    ich :: "NTC";
+
+    czero := zero(T);
+    cone  := one(T);
+    chalf := ncast(T, 0.5);
     rzero := zero(U);
     rone  := one(U);
 
@@ -412,17 +470,17 @@ cchk1 :: (
     errmax := rzero;
 
     for in:0..nidim-1 {
-        // println_push("in = %", in);
+        println_push("in = %", in);
         n := idim[in];
         nd := n/2 + 1;
 
         for im:0..1 {
-            // println_push("im = %", im);
+            println_push("im = %", im);
             m  := ifx im == 0 then max(n-nd,0) else min(n+nd, nmax);
             nk := ifx banded  then nkb         else 1;
 
             for iku:0..nk-1 {
-                // println_push("iku = %", iku);
+                println_push("iku = %", iku);
                 ku := ifx banded then kb[iku]     else n-1;
                 kl := ifx banded then max(ku-1,0) else m-1;
 
@@ -441,6 +499,107 @@ cchk1 :: (
                 _slice := String.slice(sname, 1, 2);
                 cmake(_slice, 0, 0, m, n, a, nmax, aa, lda, kl, ku, *reset, transl);
 
+                for ic:0..3-1 {
+                    trans := ich[ic];
+                    tran := char_eq(trans, #char "t", #char "c");
+
+                    ml := ifx tran then n else m;
+                    nl := ifx tran then m else n;
+
+                    for ix:0..ninc-1 {
+                        incx := inc[ix];
+                        lx := abs(incx)*nl;
+
+                        // Generate the vector X.
+                        transl = chalf;
+                        x_view := array2d_view(x, nl);
+                        cmake("GE", 0, 0, 1, nl, *x_view, 1, _xx, abs(incx), 0, nl-1, *reset, transl);
+
+                        if nl > 1 {
+                            set(x, nl/2 - 1, czero);
+                            set(_xx, abs(incx)*(nl/2-1), czero);
+                        }
+
+                        for iy:0..ninc-1 {
+                            incy := inc[iy];
+                            ly := abs(incy)*ml;
+
+                            for ia:0..nalf-1 {
+                                alpha := alf[ia];
+
+                                for ib:0..nbet-1 {
+                                    beta := bet[ib];
+
+                                    // Generate the vector Y.
+
+                                    transl := czero;
+                                    y_view := array2d_view(y, ml);
+                                    cmake("GE", 0, 0, 1, ml, *y_view, 1, yy, abs(incy), 0, ml-1, *reset, transl);
+
+                                    nc += 1;
+
+                                    // Save every datum before calling hte subroutine
+
+                                    transs := trans;
+                                    ms := m;
+                                    ns := n;
+                                    kls := kl;
+                                    kus := ku;
+                                    als := alpha;
+                                    for i:0..laa-1 {
+                                        set(as, i, get(aa,i));
+                                    }
+                                    ldas := lda;
+                                    for i:0..lx-1 {
+                                        set(xs, i, get(_xx,i));
+                                    }
+                                    incxs := incx;
+                                    bls := beta;
+                                    for i:0..ly-1 {
+                                        set(ys, i, get(yy,i));
+                                    }
+                                    incys := incy;
+
+                                    // Call the subroutine.
+                                    aa_view := array2d_view(aa, n);
+                                    if full {
+                                        cgemv(trans, m, n, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
+                                    } else if banded {
+                                        cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
+                                    }
+
+                                    // See what data changed inside subroutines.
+                                    // most of this is unnecessary since Jai has immutable variables in the first place. - Fehse, 2022-01-14
+                                    if _null {
+                                        ok := lce(<<ys, <<yy, ly);
+                                        pass &= ok;
+                                        if !ok then err("wrong results: ly = %\nys = %\nyy = %", ly, ys, yy);
+                                    } else {
+                                        ys_view := array2d_view(ys, ml);
+                                        yy_view := array2d_view(yy, ml);
+                                        ok := lceres("GE", 0, 1, ml, ys_view, yy_view, abs(incy));
+                                        pass &= ok;
+                                        if !ok then err("wrong results: \nys = %\nyy = %", ys, yy);
+                                    }
+
+                                    if !_null {
+                                        // Check result.
+                                        pass &= cmvch(
+                                            trans, m, n, alpha, <<a,
+                                            nmax, <<x, incx, beta, <<y,
+                                            incy, yt, g, <<yy, eps,
+                                            fatal
+                                        );
+                                    } else {
+                                        // Avoid repeating tests with m <= 0 or n <= 0
+                                        continue im;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // TODO finish
             }
         }
@@ -448,7 +607,7 @@ cchk1 :: (
 
     err("not yet fully implemented");
 
-    return false; // TODO
+    return pass;
 }
 
 

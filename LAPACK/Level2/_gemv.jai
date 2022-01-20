@@ -39,8 +39,8 @@ _gemv :: (
     y: *$Y/ArrayType1D, // vector
     $$incy: int          // increment of elements of y
 ) {
-    one := one(T);
-    zero := zero(T);
+    cone:= one(T);
+    czero := zero(T);
 
     temp : T = ---;
     ix, iy, jx, jy, lenx, leny: int = ---;
@@ -61,7 +61,7 @@ _gemv :: (
 
     // quick return if possible
 
-    if m == 0 || n == 0 || (alpha == zero && beta == one) then return;
+    if m == 0 || n == 0 || (alpha == czero && beta == cone) then return;
 
     noconj := char_eq(trans, #char "t");
 
@@ -79,15 +79,15 @@ _gemv :: (
     ky := ifx incy > 0 then 0 else (leny-1)*(-incy);
 
     // start the operations. In this version the elements of a are
-    // accessed sequantially with one pass through a.
+    // accessed sequantially with cone pass through a.
 
     // first form y := beta*y
 
-    if beta != one {
+    if beta != cone {
         if incy == 1 {
-            if beta == zero {
+            if beta == czero {
                 for i:0..leny-1 {
-                    set(y,i,zero);
+                    set(y,i,czero);
                 }
             } else {
                 for i:0..leny-1 {
@@ -96,9 +96,9 @@ _gemv :: (
             }
         } else {
             iy = ky;
-            if beta == zero {
+            if beta == czero {
                 for i:0..leny-1 {
-                    set(y,iy, zero);
+                    set(y,iy, czero);
                     iy += incy;
                 }
             } else {
@@ -110,7 +110,7 @@ _gemv :: (
         }
     }
     
-    if alpha == zero then return;
+    if alpha == czero then return;
 
     if char_eq(trans, #char "n") {
         // form y := alpha*A**x + y
@@ -141,7 +141,7 @@ _gemv :: (
         jy = ky;
         if incx == 1 {
             for j:0..n-1 {
-                temp = zero;
+                temp = czero;
                 if noconj {
                     for i:0..m-1 {
                         temp += get(a,i,j)*get(x,i);
@@ -156,7 +156,7 @@ _gemv :: (
             }
         } else {
             for j:0..n-1 {
-                temp = zero;
+                temp = czero;
                 ix = kx;
                 if noconj {
                     for i:0..m-1 {

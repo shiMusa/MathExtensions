@@ -92,6 +92,38 @@ operator == :: (a: Array1D, b: Array1D) -> bool {
     }
 }
 
+//    ###          ##   ########     ##     ## #### ######## ##      ##
+//   ## ##       ####   ##     ##    ##     ##  ##  ##       ##  ##  ##
+//  ##   ##        ##   ##     ##    ##     ##  ##  ##       ##  ##  ##
+// ##     ##       ##   ##     ##    ##     ##  ##  ######   ##  ##  ##
+// #########       ##   ##     ##     ##   ##   ##  ##       ##  ##  ##
+// ##     ##       ##   ##     ##      ## ##    ##  ##       ##  ##  ##
+// ##     ##     ###### ########        ###    #### ########  ###  ###
+
+Array1DView :: struct(_A: Type) {
+    using _a1d: ArrayType1D(_A.data_type);
+    a2d : *_A;
+    cols: int;
+}
+
+array1d_view :: (a2d: *$A/ArrayType2D, cols: int) -> Array1DView(A) {
+    res : Array1DView(A) = ---;
+    res.a2d = a2d;
+    res.cols = cols;
+    return res;
+}
+
+get :: inline (a: Array1DView, i: int) -> a.data_type {
+    col := i % a.cols;
+    row := i / a.cols;
+    return get(a.a2d, row, col);
+}
+set :: inline (a: *Array1DView, i: int, val: a.data_type) {
+    col := i % a.cols;
+    row := i / a.cols;
+    set(a.a2d, row, col, val);
+}
+
 
 // ##     ## ########    ###    ########     ###    ########  ########     ###    ##    ##    ##   ########
 // ##     ## ##         ## ##   ##     ##   ## ##   ##     ## ##     ##   ## ##    ##  ##   ####   ##     ##

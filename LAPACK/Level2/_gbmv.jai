@@ -4,7 +4,7 @@
 // "gbmv" = general band matrix * vector
 
 // ? original comment cgbmv()
-// CGBMV  performs one of the matrix-vector operations
+// CGBMV  performs cone of the matrix-vector operations
 // 
 // y := alpha*A*x + beta*y,   or   y := alpha*A**T*x + beta*y,   or
 // 
@@ -54,13 +54,13 @@ _gbmv :: (
         assert(kl >= 0);
         assert(ku >= 0);
         assert(lda >= kl+ku);
-        if char_eq(trans, #char "n") {
-            assert((n-1)*abs(incx) >= dim(x));
-            assert((m-1)*abs(incy) >= dim(y));
-        } else {
-            assert((m-1)*abs(incx) >= dim(x));
-            assert((n-1)*abs(incy) >= dim(y));
-        }
+        // if char_eq(trans, #char "n") {
+        //     assert((n-1)*abs(incx) >= dim(x));
+        //     assert((m-1)*abs(incy) >= dim(y));
+        // } else {
+        //     assert((m-1)*abs(incx) >= dim(x));
+        //     assert((n-1)*abs(incy) >= dim(y));
+        // }
         assert(incx != 0);
         assert(incy != 0);
     }
@@ -68,13 +68,13 @@ _gbmv :: (
     temp: T = ---;
     ix, iy, jx, jy, k, kup1, kx, ky, lenx, leny: int = ---;
     
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    czero := zero(T);
+    cone  := one(T);
 
     // quick return if possible
-    if m == 0 || n == 0 || (alpha == zero && beta == one) then return;
+    if m == 0 || n == 0 || (alpha == czero && beta == cone) then return;
 
-    #if is_consant(trans) {
+    #if is_constant(trans) {
         noconj :: #run char_eq(trans, #char "t");
     } else {
         noconj := char_eq(trans, #char "t");
@@ -92,15 +92,15 @@ _gbmv :: (
     ky = ifx incy > 0 then 0 else (leny-1)*(-incy);
 
     // start the operations. in this version the elements of a are 
-    // accessed sequentially with one pass through the band part of a.
+    // accessed sequentially with cone pass through the band part of a.
 
     // first form y := beta*y.
 
-    if beta != one {
+    if beta != cone {
         if incy == 1 {
-            if beta == zero {
+            if beta == czero {
                 for i:0..leny-1 {
-                    set(y, i, zero);
+                    set(y, i, czero);
                 }
             } else {
                 for i:0..leny-1 {
@@ -109,9 +109,9 @@ _gbmv :: (
             }
         } else {
             iy = ky;
-            if beta == zero {
+            if beta == czero {
                 for i:0..leny-1 {
-                    set(y,iy,zero);
+                    set(y,iy,czero);
                     iy += incy;
                 }
             } else {
@@ -123,15 +123,15 @@ _gbmv :: (
         }
     }
 
-    if alpha == zero then return;
-    kyp1 = ku + 1;
+    if alpha == czero then return;
+    kyp1 := ku + 1;
     if char_eq(trans, #char "n") {
         // form y := alpha*A*x + y
 
         jx = kx;
         if incy == 1 {
             for j:0..n-1 {
-                tmp = alpha*get(x,jx);
+                tmp := alpha*get(x,jx);
                 k = kup1 - j;
                 for i:max(0,j-ku)..min(m,j+kl)-1 {
                     set(y,i,get(y,i) + temp * get(a,k+i,j));
@@ -157,7 +157,7 @@ _gbmv :: (
         jy = ky;
         if incx == 1 {
             for j:0..n-1 {
-                temp = zero;
+                temp = czero;
                 k = kup1 - j;
                 if noconj {
                     for i:max(0,j-ku)..min(m,j+kl)-1 {
@@ -173,12 +173,12 @@ _gbmv :: (
             }
         } else {
             for j:0..n-1 {
-                temp = zero;
+                temp = czero;
                 ix = kx;
                 k = kup1 - j;
                 if noconj {
                     for i:max(0,j-ku)..min(m,j+kl)-1 {
-                        temp += get(a,k+i,j)*x(ix);
+                        temp += get(a,k+i,j)*get(x,ix);
                         ix += incx;
                     }
                 } else {
