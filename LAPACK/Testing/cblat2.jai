@@ -284,29 +284,29 @@ cmvch :: (
     iy = ky;
     for i:0..ml-1 {
         set(yt, iy, czero);
-        set(g,iy, rzero);
+        set(g , iy, rzero);
         jx = kx;
         if tran {
             for j:0..nl-1 {
                 set(yt, iy, get(yt,iy) + get(a,j,i)*get(x,jx));
-                set(g,iy, get(g,iy) + abs1(get(a,j,i))*abs1(get(x,jx)));
+                set(g , iy, get( g,iy) + abs1(get(a,j,i))*abs1(get(x,jx)));
                 jx += incxl;
             }
         } else if ctran {
             for j:0..nl-1 {
                 set(yt, iy, get(yt,iy) + conjugate(get(a,j,i))*get(x,jx));
-                set(g,iy, get(g,iy) + abs1(get(a,j,i))*abs1(get(x,jx)));
+                set( g, iy, get( g,iy) + abs1(get(a,j,i))*abs1(get(x,jx)));
                 jx += incxl;
             }
         } else {
             for j:0..nl-1 {
                 set(yt, iy, get(yt,iy) + get(a,i,j)*get(x,jx));
-                set(g,iy, get(g,iy) + abs1(get(a,i,j))*abs1(get(x,jx)));
+                set( g, iy, get( g,iy) + abs1(get(a,i,j))*abs1(get(x,jx)));
                 jx += incxl;
             }
         }
-        set(yt,iy, alpha*get(yt,iy) + beta*get(y,iy));
-        set(g,iy, abs1(alpha)*get(g,iy) + abs1(beta)*abs1(get(y,iy)));
+        set(yt, iy, alpha*get(yt,iy) + beta*get(y,iy));
+        set( g, iy, abs1(alpha)*get(g,iy) + abs1(beta)*abs1(get(y,iy)));
         iy += incyl;
     }
 
@@ -320,7 +320,27 @@ cmvch :: (
         }
         rerr = max(rerr,erri);
         if rerr*sqrt(eps) >= rone {
-            err("%*sqrt(%) = % >= 1.0", rerr, eps, rerr*sqrt(eps), exit_program=fatal);
+            err("cmvch | trans = %", trans);
+            err("cmvch | m     = %", m    );
+            err("cmvch | n     = %", n    );
+            err("cmvch | alpha = %", alpha);
+            err("cmvch | a     = %", a    );
+            err("cmvch | nmax  = %", nmax );
+            err("cmvch | x     = %", x    );
+            err("cmvch | incx  = %", incx );
+            err("cmvch | beta  = %", beta );
+            err("cmvch | y     = %", y    );
+            err("cmvch | incy  = %", incy );
+            err("cmvch | yt    = %", <<yt   );
+            err("cmvch | g     = %", <<g    );
+            err("cmvch | yy    = %", yy   );
+            err("cmvch | eps   = %", eps  );
+            err("cmvch | erri % : %", type_of(erri), erri);
+            err("cmvch | yt[%] = %, yy[%*abs(%)] = %", i, get(yt,i), i, incy, get(yy,i*abs(incy)));
+            err("cmvch | abs(get(yt,i) - get(yy,i*abs(incy))) = %", abs(get(yt,i) - get(yy,i*abs(incy))));
+            err("cmvch | g[i] = %", get(g,i));
+            err("cmvch | %*sqrt(%) = % >= 1.0", rerr, formatFloat(eps, mode=FormatFloat.Mode.SCIENTIFIC), rerr*sqrt(eps));
+            err("", exit_program=fatal);
             res = false;
         }
     }
@@ -337,7 +357,7 @@ cmvch :: (
 // ########  ######  ########
 
 lce :: (ri: $A/ArrayType1D, rj: $B/ArrayType1D, $$lr: int) -> bool {
-    for 0..lr {
+    for 0..lr-1 {
         if get(ri,it) != get(rj,it) then return false;
     }
     return true;
@@ -374,7 +394,10 @@ lceres :: (
     if String.equal_nocase(type, "ge") {
         for j:0..n-1 {
             for i:m+1..lda-1 {
-                if get(aa, i, j) != get(as, i, j) then return false;
+                if get(aa, i, j) != get(as, i, j) {
+                    err("aa[%, %] = % != as[%, %] = %", i, j, get(aa,i,j), i, j, get(as,i,j));
+                    return false;
+                }
             }
         }
     } else if String.equal_nocase(type, "he") {
@@ -383,11 +406,17 @@ lceres :: (
             iend := ifx upper then j else n-1;
 
             for i:0..ibeg-1 {
-                if get(aa, i, j) != get(as, i, j) then return false;
+                if get(aa, i, j) != get(as, i, j) {
+                    err("aa[%, %] = % != as[%, %] = %", i, j, get(aa,i,j), i, j, get(as,i,j));
+                    return false;
+                }
             }
 
             for i:iend..lda-1 {
-                if get(aa, i, j) != get(as, i ,j) then return false;
+                if get(aa, i, j) != get(as, i ,j) {
+                    err("aa[%, %] = % != as[%, %] = %", i, j, get(aa,i,j), i, j, get(as,i,j));
+                    return false;
+                }
             }
         }
     }
@@ -470,17 +499,17 @@ cchk1 :: (
     errmax := rzero;
 
     for in:0..nidim-1 {
-        println_push("in = %", in);
+        // println_push("in = %", in);
         n := idim[in];
         nd := n/2 + 1;
 
         for im:0..1 {
-            println_push("im = %", im);
+            // println_push("im = %", im);
             m  := ifx im == 0 then max(n-nd,0) else min(n+nd, nmax);
             nk := ifx banded  then nkb         else 1;
 
             for iku:0..nk-1 {
-                println_push("iku = %", iku);
+                // println_push("iku = %", iku);
                 ku := ifx banded then kb[iku]     else n-1;
                 kl := ifx banded then max(ku-1,0) else m-1;
 
@@ -492,7 +521,7 @@ cchk1 :: (
                 if lda > nmax then continue;
 
                 laa := lda*n;
-                _null := n < 0 || m < 0;
+                _null := n <= 0 || m <= 0;
 
                 // Generate the matrix a.
                 transl := czero;
@@ -528,6 +557,7 @@ cchk1 :: (
                                 alpha := alf[ia];
 
                                 for ib:0..nbet-1 {
+                                    println("in %, im %, iku %, ic %, ix %, iy %, ia %, ib %", in, im, iku, ic, ix, iy, ia, ib);
                                     beta := bet[ib];
 
                                     // Generate the vector Y.
@@ -563,9 +593,11 @@ cchk1 :: (
                                     // Call the subroutine.
                                     aa_view := array2d_view(aa, n);
                                     if full {
+                                        println("cgemv");
                                         cgemv(trans, m, n, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
                                     } else if banded {
                                         cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
+                                        println("cgbmv");
                                     }
 
                                     // See what data changed inside subroutines.
@@ -573,13 +605,21 @@ cchk1 :: (
                                     if _null {
                                         ok := lce(<<ys, <<yy, ly);
                                         pass &= ok;
-                                        if !ok then err("wrong results: ly = %\nys = %\nyy = %", ly, ys, yy);
+                                        if !ok {
+                                            err(" lce | ly = %",   ly);
+                                            err(" lce | ys = %", <<ys);
+                                            err(" lce | yy = %", <<yy, exit_program=fatal);
+                                        }
                                     } else {
                                         ys_view := array2d_view(ys, ml);
                                         yy_view := array2d_view(yy, ml);
                                         ok := lceres("GE", 0, 1, ml, ys_view, yy_view, abs(incy));
                                         pass &= ok;
-                                        if !ok then err("wrong results: \nys = %\nyy = %", ys, yy);
+                                        if !ok {
+                                            err(" lceres | ml = %, abs(incy) = %", ml, abs(incy));
+                                            err(" lceres | ys = %", ys_view);
+                                            err(" lceres | yy = %", yy_view, exit_program=fatal);
+                                        }
                                     }
 
                                     if !_null {

@@ -30,16 +30,16 @@ _gemv :: (
     $$trans: u8,         // normal (N), transposed (T), or hermitian conjugated (H)
     $$m: int,            // rows of a
     $$n: int,            // columns of a
-    alpha: $T,         // scalar
-    a: $A/ArrayType2D, // matrix A
-    $$lda: int,          // first dimension of A
-    x: $X/ArrayType1D, // vector
+    alpha: $T,           // scalar
+    a: $A/ArrayType2D,   // matrix A 
+    $$lda: int,          // first dimension of A  // unused
+    x: $X/ArrayType1D,   // vector
     $$incx: int,         // increment of elements of x
-    beta: T,           // scalar
-    y: *$Y/ArrayType1D, // vector
+    beta: T,             // scalar
+    y: *$Y/ArrayType1D,  // vector
     $$incy: int          // increment of elements of y
 ) {
-    cone:= one(T);
+    cone  := one(T);
     czero := zero(T);
 
     temp : T = ---;
