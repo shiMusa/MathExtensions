@@ -177,12 +177,12 @@ cblat2 :: () -> bool {
 
     pass := true;
 
-    trans : u8 = #char "N";
+    trans : u8 = #char "n";
     pass &= cmvch(trans, n, n, cone, a, nmax, x,  1, czero, y,  1, *yt, *g, yy, eps, true);
     pass &= lce(yy, yt, n);
     if !pass then err("cmvch result not good: n = %\n%\n%", n, yy, yt, exit_program=true);
 
-    trans = #char "T";
+    trans = #char "t";
     pass &= cmvch(trans, n, n, cone, a, nmax, x, -1, czero, y, -1, *yt, *g, yy, eps, true);
     pass &= lce(yy, yt, n);
     if !pass then err("cmvch result not good: n = %\n%\n%", n, yy, yt, exit_program=true);
@@ -320,7 +320,9 @@ cmvch :: (
         }
         rerr = max(rerr,erri);
         if rerr*sqrt(eps) >= rone {
-            err("cmvch | trans = %", trans);
+            _trans := char_to_string(trans);
+            defer free(_trans);
+            err("cmvch | trans = %", _trans);
             err("cmvch | m     = %", m    );
             err("cmvch | n     = %", n    );
             err("cmvch | alpha = %", alpha);
@@ -480,7 +482,7 @@ cchk1 :: (
 
     pass := true;
 
-    ich :: "NTC";
+    ich :: "ntc";
 
     czero := zero(T);
     cone  := one(T);
@@ -542,7 +544,7 @@ cchk1 :: (
                         // Generate the vector X.
                         transl = chalf;
                         x_view := array2d_view(x, nl);
-                        cmake("GE", 0, 0, 1, nl, *x_view, 1, _xx, abs(incx), 0, nl-1, *reset, transl);
+                        cmake("ge", 0, 0, 1, nl, *x_view, 1, _xx, abs(incx), 0, nl-1, *reset, transl);
 
                         if nl > 1 {
                             set(x, nl/2 - 1, czero);
@@ -564,7 +566,7 @@ cchk1 :: (
 
                                     transl := czero;
                                     y_view := array2d_view(y, ml);
-                                    cmake("GE", 0, 0, 1, ml, *y_view, 1, yy, abs(incy), 0, ml-1, *reset, transl);
+                                    cmake("ge", 0, 0, 1, ml, *y_view, 1, yy, abs(incy), 0, ml-1, *reset, transl);
 
                                     nc += 1;
 

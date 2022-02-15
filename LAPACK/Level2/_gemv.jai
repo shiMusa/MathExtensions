@@ -151,7 +151,7 @@ _gemv :: (
                         temp += conjugate(get(a,i,j))*get(x,i);
                     }
                 }
-                set(y,iy, get(y,iy) + alpha*temp);
+                set(y,jy, get(y,jy) + alpha*temp);
                 jy += incy;
             }
         } else {
@@ -169,7 +169,7 @@ _gemv :: (
                         ix += incx;
                     }
                 }
-                set(y,iy, get(y,iy) + alpha*temp);
+                set(y,jy, get(y,jy) + alpha*temp);
                 jy += incy;
             }
         }

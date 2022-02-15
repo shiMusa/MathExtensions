@@ -58,6 +58,7 @@
 
 
 // ? tests if val equals any of lower_case_chars
+// ? e.g. 'A' = 65, 'a' = 97, so 'a' - 32 = 'A'
 char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
     #if lower_case_chars.count == 1 {
         return val == lower_case_chars[0] || val == lower_case_chars[0]-32;
@@ -66,7 +67,7 @@ char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
         //     if lower_case_chars[it] == val || lower_case_chars[it] == val+32 then return true;
         // });
         for 0..lower_case_chars.count-1 {
-            if lower_case_chars[it] == val || lower_case_chars[it] == val+32 then return true;
+            if lower_case_chars[it] == val || lower_case_chars[it] == val-32 then return true;
         };
         return false;
     }

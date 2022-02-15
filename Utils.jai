@@ -77,6 +77,14 @@ str :: inline (val: $T) -> string #modify {
 }
 
 
+char_to_string :: (char: u8) -> string {
+    res: string;
+    _c := New(u8);
+    <<_c = char;
+    res.data = _c;
+    res.count = 1;
+    return res;
+}
 
 
 
