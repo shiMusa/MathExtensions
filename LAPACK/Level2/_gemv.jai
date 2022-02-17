@@ -39,6 +39,9 @@ _gemv :: (
     y: *$Y/ArrayType1D,  // vector
     $$incy: int          // increment of elements of y
 ) {
+    DEBUG :: false;
+    #if DEBUG println_push("_gemv");
+
     cone  := one(T);
     czero := zero(T);
 
@@ -83,6 +86,7 @@ _gemv :: (
 
     // first form y := beta*y
 
+    #if DEBUG println("beta == czero ? %", beta == czero, color=.FG_CYAN);
     if beta != cone {
         if incy == 1 {
             if beta == czero {
@@ -110,11 +114,12 @@ _gemv :: (
         }
     }
     
+    #if DEBUG println("alpha == czero ? %", alpha == czero, color=.FG_CYAN);
     if alpha == czero then return;
 
+    #if DEBUG println("trans == 'n' ? %", char_eq(trans, #char "n"), color=.FG_CYAN);
     if char_eq(trans, #char "n") {
         // form y := alpha*A**x + y
-
         jx = kx;
         if incy == 1 {
             for j:0..n-1 {
@@ -137,7 +142,6 @@ _gemv :: (
         }
     } else {
         // form y := alpha*A**T*x + y  or  y := alpha*A**H*x + y.
-
         jy = ky;
         if incx == 1 {
             for j:0..n-1 {

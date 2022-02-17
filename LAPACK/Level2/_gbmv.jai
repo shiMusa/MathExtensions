@@ -65,8 +65,11 @@ _gbmv :: (
         assert(incy != 0);
     }
 
+    DEBUG :: true;
+    #if DEBUG println_push("_gbmv", color=.FG_CYAN);
+
     temp: T = ---;
-    ix, iy, jx, jy, k, kup1, kx, ky, lenx, leny: int = ---;
+    ix, iy, jx, jy, k, kx, ky, lenx, leny: int = ---;
     
     czero := zero(T);
     cone  := one(T);
@@ -91,6 +94,11 @@ _gbmv :: (
     kx = ifx incx > 0 then 0 else (lenx-1)*(-incx);
     ky = ifx incy > 0 then 0 else (leny-1)*(-incy);
 
+    #if DEBUG println(
+        "noconj: %, trans: %, beta == cone: %, beta == czero: %, alpha == czero: %, kx: %, ky: %", 
+        noconj, char_to_string(trans), beta == cone, beta == czero, alpha == czero, kx, ky, 
+        color=.FG_CYAN);
+
     // start the operations. in this version the elements of a are 
     // accessed sequentially with cone pass through the band part of a.
 
@@ -104,19 +112,19 @@ _gbmv :: (
                 }
             } else {
                 for i:0..leny-1 {
-                    set(y,i,get(y,i)*beta);
+                    set(y, i, get(y,i)*beta);
                 }
             }
         } else {
             iy = ky;
             if beta == czero {
                 for i:0..leny-1 {
-                    set(y,iy,czero);
+                    set(y, iy, czero);
                     iy += incy;
                 }
             } else {
                 for i:0..leny-1 {
-                    set(y,iy,beta*get(y,iy));
+                    set(y, iy, beta*get(y,iy));
                     iy += incy;
                 }
             }
@@ -124,7 +132,6 @@ _gbmv :: (
     }
 
     if alpha == czero then return;
-    kyp1 := ku + 1;
     if char_eq(trans, #char "n") {
         // form y := alpha*A*x + y
 
@@ -132,9 +139,10 @@ _gbmv :: (
         if incy == 1 {
             for j:0..n-1 {
                 tmp := alpha*get(x,jx);
-                k = kup1 - j;
-                for i:max(0,j-ku)..min(m,j+kl)-1 {
-                    set(y,i,get(y,i) + temp * get(a,k+i,j));
+                k = ku - j;
+                // FORTRAN: i = max(1,j-ku),min(m,j+kl)
+                for i:max(0,j-ku)..min(m-1,j+kl) {
+                    set(y, i, get(y,i) + temp * get(a,k+i,j));
                 }
                 jx += incx;
             }
@@ -142,9 +150,10 @@ _gbmv :: (
             for j:0..n-1 {
                 temp = alpha*get(x,jx);
                 iy = ky;
-                k = kup1 - j;
-                for i:max(1,j-ku)..min(m,j+kl)-1 {
-                    set(y,iy, get(y,iy) + temp*get(a,k+i,j));
+                k = ku - j;
+                // FORTRAN: i = max(1,j-ku),min(m,j+kl)
+                for i:max(1,j-ku)..min(m-1,j+kl) {
+                    set(y, iy, get(y,iy) + temp*get(a,k+i,j));
                     iy += incy;
                 }
                 jx += incx;
@@ -158,13 +167,15 @@ _gbmv :: (
         if incx == 1 {
             for j:0..n-1 {
                 temp = czero;
-                k = kup1 - j;
+                k = ku - j;
                 if noconj {
-                    for i:max(0,j-ku)..min(m,j+kl)-1 {
+                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
+                    for i:max(0,j-ku)..min(m-1,j+kl) {
                         temp += get(a,k+i,j)*get(x,i);
                     }
                 } else {
-                    for i:max(0,j-ku)..min(m,j+kl)-1 {
+                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
+                    for i:max(0,j-ku)..min(m-1,j+kl) {
                         temp += conjugate(get(a,k+i,j))*get(x,i);
                     }
                 }
@@ -175,14 +186,16 @@ _gbmv :: (
             for j:0..n-1 {
                 temp = czero;
                 ix = kx;
-                k = kup1 - j;
+                k = ku - j;
                 if noconj {
-                    for i:max(0,j-ku)..min(m,j+kl)-1 {
+                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
+                    for i:max(0,j-ku)..min(m-1,j+kl) {
                         temp += get(a,k+i,j)*get(x,ix);
                         ix += incx;
                     }
                 } else {
-                    for i:max(0,j-ku)..min(m,j+kl)-1 {
+                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
+                    for i:max(0,j-ku)..min(m-1,j+kl) {
                         temp += conjugate(get(a,k+i,j))*get(x,ix);
                         ix += incx;
                     }

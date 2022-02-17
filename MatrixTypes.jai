@@ -118,22 +118,30 @@ as_array1d :: (a: *Array2D) -> Array1D(a.N*a.M, a.data_type) {
 // ##     ##    ##        ##     ##      ## ##    ##  ##       ##  ##  ##
 // ##     ##    ######### ########        ###    #### ########  ###  ###
 
-Array2DView :: struct(_A: Type) {
+Array2DView :: struct(_A: Type, row_major: bool) {
     using _a2d: ArrayType2D(_A.data_type);
     a1d : *_A;
-    cols: int;
+    lda: int;
 }
-array2d_view :: (a1d: *$A/ArrayType1D, cols: int) -> Array2DView(A) {
-    res : Array2DView(A) = ---;
+array2d_view :: (a1d: *$A/ArrayType1D, lda: int, $row_major: bool = true) -> Array2DView(A, row_major) {
+    res : Array2DView(A, row_major) = ---;
     res.a1d = a1d;
-    res.cols = cols;
+    res.lda = lda;
     return res;
 }
-get :: inline (a: Array2DView, i: int, j: int) -> a.data_type {
-    return get(a.a1d, i*a.cols + j);
+get :: inline (using a: Array2DView, i: int, j: int) -> a.data_type {
+    #if row_major {
+        return get(a1d, i*lda + j);
+    } else {
+        return get(a1d, i + j*lda);
+    }
 }
-set :: inline (a: *Array2DView, i: int, j: int, val: a.data_type) {
-    set(a.a1d, i*a.cols + j, val);
+set :: inline (using a: *Array2DView, i: int, j: int, val: a.data_type) {
+    #if row_major {
+        set(a1d, i*lda + j, val);
+    } else {
+        set(a1d, j + i*lda, val);
+    }
 }
 
 

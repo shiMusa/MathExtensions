@@ -261,6 +261,8 @@ cmvch :: (
             assert(U ==  G.data_type);
         }
     }
+    DEBUG :: false;
+    #if DEBUG println("trans = %", char_to_string(trans), color=.FG_CYAN);
 
     println_push("cmvch");
 
@@ -270,6 +272,7 @@ cmvch :: (
 
     tran  := char_eq(trans, #char "t");
     ctran := char_eq(trans, #char "c");
+    #if DEBUG println("tran = %, ctran = %", tran, ctran, color=.FG_CYAN);
     ml := ifx tran || ctran then n else m;
     nl := ifx tran || ctran then m else n;
     kx    := ifx incx < 0 then nl-1 else 0;
@@ -339,8 +342,8 @@ cmvch :: (
             err("cmvch | eps   = %", eps  );
             err("cmvch | erri % : %", type_of(erri), erri);
             err("cmvch | yt[%] = %, yy[%*abs(%)] = %", i, get(yt,i), i, incy, get(yy,i*abs(incy)));
-            err("cmvch | abs(get(yt,i) - get(yy,i*abs(incy))) = %", abs(get(yt,i) - get(yy,i*abs(incy))));
-            err("cmvch | g[i] = %", get(g,i));
+            err("cmvch | abs(get(yt,%) - get(yy,%*abs(%))) = %", i, i, incy, abs(get(yt,i) - get(yy,i*abs(incy))));
+            err("cmvch | g[%] = %", i, get(g,i));
             err("cmvch | %*sqrt(%) = % >= 1.0", rerr, formatFloat(eps, mode=FormatFloat.Mode.SCIENTIFIC), rerr*sqrt(eps));
             err("", exit_program=fatal);
             res = false;
@@ -543,7 +546,7 @@ cchk1 :: (
 
                         // Generate the vector X.
                         transl = chalf;
-                        x_view := array2d_view(x, nl);
+                        x_view := array2d_view(x, 1, row_major=false);
                         cmake("ge", 0, 0, 1, nl, *x_view, 1, _xx, abs(incx), 0, nl-1, *reset, transl);
 
                         if nl > 1 {
@@ -565,7 +568,7 @@ cchk1 :: (
                                     // Generate the vector Y.
 
                                     transl := czero;
-                                    y_view := array2d_view(y, ml);
+                                    y_view := array2d_view(y, 1, row_major=false);
                                     cmake("ge", 0, 0, 1, ml, *y_view, 1, yy, abs(incy), 0, ml-1, *reset, transl);
 
                                     nc += 1;
@@ -593,13 +596,13 @@ cchk1 :: (
                                     incys := incy;
 
                                     // Call the subroutine.
-                                    aa_view := array2d_view(aa, n);
+                                    aa_view := array2d_view(aa, lda, row_major=false);
                                     if full {
                                         println("cgemv");
                                         cgemv(trans, m, n, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
                                     } else if banded {
-                                        cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
                                         println("cgbmv");
+                                        cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
                                     }
 
                                     // See what data changed inside subroutines.
@@ -613,8 +616,8 @@ cchk1 :: (
                                             err(" lce | yy = %", <<yy, exit_program=fatal);
                                         }
                                     } else {
-                                        ys_view := array2d_view(ys, ml);
-                                        yy_view := array2d_view(yy, ml);
+                                        ys_view := array2d_view(ys, abs(incy), row_major=false);
+                                        yy_view := array2d_view(yy, abs(incy), row_major=false);
                                         ok := lceres("GE", 0, 1, ml, ys_view, yy_view, abs(incy));
                                         pass &= ok;
                                         if !ok {
@@ -647,7 +650,7 @@ cchk1 :: (
         }
     }
 
-    err("not yet fully implemented");
+    err("cchk1: not yet fully implemented");
 
     return pass;
 }
@@ -683,7 +686,8 @@ cmake :: (
     }
     U :: #run get_number_inner_type(T);
 
-    // println_push("cmake: type = %, uplo = %, diag = %, m = %, n = %, kl = %, ku = %, nmax = %, lda = %", type, uplo, diag, m, n, kl, ku, nmax, lda);
+    DEBUG :: false;
+    #if DEBUG println_push("cmake: type = %, uplo = %, diag = %, m = %, n = %, kl = %, ku = %, nmax = %, lda = %", type, uplo, diag, m, n, kl, ku, nmax, lda, color=.FG_CYAN);
 
     czero := zero(T);
     cone  := one(T);
@@ -700,12 +704,15 @@ cmake :: (
     lower := (sym || tri) && char_eq(uplo, #char "l");
     unit := tri && char_eq(diag, #char "u");
 
+    #if DEBUG println("gen: %, sym: %, tri: %, upper: %, lower: %, unit: %", gen, sym, tri, upper, lower, unit, color=.FG_CYAN);
+
     // Generate data in array a.
     // println("generate data in array a.");
     for j:0..n-1 {
         for i:0..m-1 {
             if !gen && !(upper && i <= j) && !(lower && i >= j) then continue;
 
+            // FORTRAN: j-i <= ku, i=j <= kl
             if (i <= j && j-i <= ku) || (i >= j && i-j <= kl) {
                 set(a,i,j, cbeg(reset, T)+transl);
             } else {
@@ -728,15 +735,19 @@ cmake :: (
     // Store elements in array AS in data structure required by routine.
     // println("store elements in array as in data structure required by routine.");
     if String.equal_nocase(type, "ge") {
+        #if DEBUG println("ge", color=.FG_CYAN);
         for j:0..n-1 {
             for i:0..m-1 {
-                set(aa, i+j*lda, get(a,i,j));
+                // FORTRAN: i + (j-1)*lda
+                set(aa, i + j*lda, get(a,i,j));
             }
             for i:m..lda-1 {
-                set(aa, i+j*lda, rogue);
+                // FORTRAN: i + (j-1)*lda
+                set(aa, i + j*lda, rogue);
             }
         }
     } else if String.equal_nocase(type, "gb") {
+        #if DEBUG println("gb", color=.FG_CYAN);
         for j:0..n-1 {
             i1, i2, i3 := 0;
             for 0..ku-j {
@@ -753,6 +764,7 @@ cmake :: (
             }
         }
     } else if String.equal_nocase(type, "he") || String.equal_nocase(type, "tr") {
+        #if DEBUG println("he || tr", color=.FG_CYAN);
         for j:0..n-1 {
             ibeg, iend : int = ---;
             if upper {
@@ -777,6 +789,7 @@ cmake :: (
             }
         }
     } else if String.equal_nocase(type, "hb") || String.equal_nocase(type, "tb") {
+        #if DEBUG println("hb || tb", color=.FG_CYAN);
         for j:0..n-1 {
             kk, ibeg, iend : int = ---;
             if upper {
@@ -803,6 +816,7 @@ cmake :: (
             }
         }
     } else if String.equal_nocase(type, "hp") || String.equal_nocase(type, "tp") {
+        #if DEBUG println("hp || tp", color=.FG_CYAN);
         ioff := 0;
         ibeg, iend : int = ---;
         for j:0..n-1 {
@@ -840,7 +854,7 @@ cmake :: (
 CBEG_Save :: struct {
     mi : int = 891;
     mj : int = 457;
-    i  : int = 6;
+    i  : int = 7;
     j  : int = 7;
     ic : int = 0;
 }
@@ -858,6 +872,9 @@ cbeg :: (
     $T: Type
 ) ->  T {
     using cbeg_save;
+
+    DEBUG :: false;
+    #if DEBUG println_push("cbeg(%,%)", <<reset, T, color=.FG_CYAN);
 
     if <<reset {
         // Initialize local variables
@@ -877,7 +894,6 @@ cbeg :: (
 
     ic += 1;
     while true {
-        using cbeg_save;
         i *= mi;
         j *= mj;
         i -= 1000*(i/1000);
@@ -888,5 +904,5 @@ cbeg :: (
         ic = 0;
     }
     X :: #run get_number_inner_type(T);
-    return cpx( ncast(X, (i-500)/1001.0), ncast(X, (j-500)/1001.0) );
+    return cpx( ncast(X, cast(float64)(i-500)/1001.0), ncast(X, cast(float64)(j-500)/1001.0) );
 }
