@@ -177,9 +177,9 @@ approx_inv_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = fals
 test_approximations :: () {
     println_push("Approximations", color = .FG_WHITE);
 
-    println("% = %", 1.0/42.0, approx_inverse(42.0, 0.01, 10));
-    println("% = %", 1.0/42.0, approx_inverse(42.0, 0.01, 1.0e-12, true));
-    println("err = %", Math.abs(approx_inverse(42.0, 0.01, 1.0e-12) - 1.0/42.0));
+    println("% = %", 1.0/42.0,  approx_inverse(42.0, 0.01, 10));
+    println("% = %", 1.0/42.0,  approx_inverse(42.0, 0.01, cast(float32) 1.0e-12, true));
+    println("err = %", Math.abs(approx_inverse(42.0, 0.01, cast(float32) 1.0e-12) - 1.0/42.0));
 
 
     println("% = %", Math.sqrt(42.0), approx_sqrt(42.0, 6.0, 3, true));

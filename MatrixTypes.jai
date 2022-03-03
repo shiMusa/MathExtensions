@@ -68,9 +68,9 @@ MATRIX_FLAGS :: enum_flags u32 {
 */
 ArrayType2D :: struct(data_type: Type){};
 
-get :: inline (a: *$A/ArrayType2D, i: int, j: int) -> A.data_type {
-    return get(<<a, i, j);
-}
+// get :: inline (a: *$A/ArrayType2D, i: int, j: int) -> A.data_type {
+//     return get(<<a, i, j);
+// }
 
 
 
@@ -175,29 +175,29 @@ MatrixType :: struct(
 }
 
 
-get_lin :: inline (m: *$M/MatrixType, i: int) -> m.data_type {
-    return get_lin(<<m, i);
-}
-get_raw :: inline (m: *$M/MatrixType, i: int) -> m.data_type {
-    return get_raw(<<m, i);
-}
-rows :: inline (m: *$M/MatrixType) -> int {
-    return rows(<<m);
-}
-cols :: inline (m: *$M/MatrixType) -> int {
-    return cols(<<m);
-}
+// get_lin :: inline (m: *$M/MatrixType, i: int) -> m.data_type {
+//     return get_lin(<<m, i);
+// }
+// get_raw :: inline (m: *$M/MatrixType, i: int) -> m.data_type {
+//     return get_raw(<<m, i);
+// }
+// rows :: inline (m: *$M/MatrixType) -> int {
+//     return rows(<<m);
+// }
+// cols :: inline (m: *$M/MatrixType) -> int {
+//     return cols(<<m);
+// }
 
 from_raw_index :: inline (m: *$M/MatrixType, i: int) -> int {
     return from_raw_index(<<m, i);
 }
 
 n :: inline (m: $M/MatrixType) -> int {
-    return rows(m) * M.cols(m);
+    return rows(m) * cols(m);
 }
-n :: inline (m: *$M/MatrixType) -> int {
-    return rows(<<m) * cols(<<m);
-}
+// n :: inline (m: *$M/MatrixType) -> int {
+//     return rows(<<m) * cols(<<m);
+// }
 
 from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
     c := cols(m);
@@ -206,13 +206,13 @@ from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
 to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
     return i * cols(m) + j;
 }
-from_lin_index :: inline (m: *$M/MatrixType, i: int) -> int, int {
-    r, c := inline from_lin_index(<<m, i);
-    return r, c;
-}
-to_lin_index :: inline (m: *$M/MatrixType, i: int, j: int) -> int {
-    return inline to_lin_index(<<m, i, j);
-}
+// from_lin_index :: inline (m: *$M/MatrixType, i: int) -> int, int {
+//     r, c := inline from_lin_index(<<m, i);
+//     return r, c;
+// }
+// to_lin_index :: inline (m: *$M/MatrixType, i: int, j: int) -> int {
+//     return inline to_lin_index(<<m, i, j);
+// }
 
 
 
@@ -1004,9 +1004,9 @@ cols :: inline (m: TriangularMatrix, $check_transposed: bool = true) -> int {
     }
 }
 
-get :: inline (m: *TriangularMatrix, i: int, j: int, $check_transposed: bool = true) -> m.data_type {
-    return inline get(<<m, i, j, check_transposed);
-}
+// get :: inline (m: *TriangularMatrix, i: int, j: int, $check_transposed: bool = true) -> m.data_type {
+//     return inline get(<<m, i, j, check_transposed);
+// }
 get :: inline (m: TriangularMatrix, i: int, j: int, $check_transposed: bool = true) -> m.data_type {
     #if check_transposed {
         if m.transposed {

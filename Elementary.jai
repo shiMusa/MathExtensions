@@ -1061,28 +1061,28 @@ test_elementary :: () {
         println_push("trigonometric functions real", color = .FG_GREEN);
 
         println("sin");
-        aa( sin(2.0), 0.9092974268 );
+        aa( sin(2.0), xx 0.9092974268 );
         println("cos");
-        aa( cos(2.0), -0.4161468365);
+        aa( cos(2.0), xx -0.4161468365);
         println("tan");
-        aa( tan(2.0), -2.185039863);
+        aa( tan(2.0), xx -2.185039863);
         println("cot");
-        aa( cot(2.0), -0.4576575544);
+        aa( cot(2.0), xx -0.4576575544);
         println("sec");
-        aa( sec(2.0), -2.402997962);
+        aa( sec(2.0), xx -2.402997962);
         println("csc");
-        aa( csc(2.0), 1.099750170);
+        aa( csc(2.0), xx 1.099750170);
 
         println("asin");
         println("acos");
         println("atan");
-        aa( atan(2.0), 1.107148718);
+        aa( atan(2.0), xx 1.107148718);
         println("acot");
-        aa( acot(2.0), 0.4636476090);
+        aa( acot(2.0), xx 0.4636476090);
         println("asec");
-        aa( asec(2.0), 1.047197551);
+        aa( asec(2.0), xx 1.047197551);
         println("acsc");
-        aa( acsc(2.0), 0.5235987758);
+        aa( acsc(2.0), xx 0.5235987758);
 
         // TODO test hyperbolic functions as well...
     }

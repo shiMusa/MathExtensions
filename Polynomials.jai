@@ -189,12 +189,12 @@ test_polynomials :: () {
 
     {
         println_push("Difficult quadratic problems (check manually)", color = .FG_GREEN);
-        r1, r2 = solve_quadratic_real(1.0e160, -2.0e160, 1.0e160);  println("%, %", r1, r2); // result: 1, 1
-        r1, r2 = solve_quadratic_real(1.0e-20, -1.0, 1.0);          println("%, %", r1, r2); // result: 10^20, 1
-        r1, r2 = solve_quadratic_real(1.0, -1.0, 1.0e-20);          println("%, %", r1, r2); // result: 1, 10^-20
-        r1, r2 = solve_quadratic_real(1.0e-10, -1.0, 1.0e-10);      println("%, %", r1, r2); // result: 10^10, 1
-        r1, r2 = solve_quadratic_real(1.0e-5, -1.0, 1.0e-5);        println("%, %", r1, r2); // result: 2e5 - 0.5e-5, 0.5e-5 + 0.125e-15
-        r1, r2 = solve_quadratic_real(1.0e-220, -1.0e100, 1.0e100); println("%, %", r1, r2); // result: 10e320, 1
+        r1, r2 = solve_quadratic_real(cast(float64)1.0e160, -2.0e160, 1.0e160);  println("%, %", r1, r2); // result: 1, 1
+        r1, r2 = solve_quadratic_real(cast(float64)1.0e-20, -1.0, 1.0);          println("%, %", r1, r2); // result: 10^20, 1
+        r1, r2 = solve_quadratic_real(cast(float64)1.0, -1.0, 1.0e-20);          println("%, %", r1, r2); // result: 1, 10^-20
+        r1, r2 = solve_quadratic_real(cast(float64)1.0e-10, -1.0, 1.0e-10);      println("%, %", r1, r2); // result: 10^10, 1
+        r1, r2 = solve_quadratic_real(cast(float64)1.0e-5, -1.0, 1.0e-5);        println("%, %", r1, r2); // result: 2e5 - 0.5e-5, 0.5e-5 + 0.125e-15
+        r1, r2 = solve_quadratic_real(cast(float64)1.0e-220, -1.0e100, 1.0e100); println("%, %", r1, r2); // result: 10e320, 1
     }
 
     {

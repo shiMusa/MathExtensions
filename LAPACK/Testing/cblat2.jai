@@ -496,6 +496,11 @@ cchk1 :: (
     full   := char_eq(sname[2], #char "e");
     banded := char_eq(sname[2], #char "b");
 
+    if full {
+        warn("skipping 'full' matrices for debugging");
+        return true; // just to jump right to cgbmv (bug) - Fehse 2022-03-02
+    }
+
     // Define the number of arguments
     nargs := ifx full then 11 else 13;
 
@@ -599,21 +604,21 @@ cchk1 :: (
                                     aa_view := array2d_view(aa, lda, row_major=false);
                                     if full {
                                         println("cgemv");
-                                        cgemv(trans, m, n, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
+                                        cgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                     } else if banded {
                                         println("cgbmv");
-                                        cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, <<_xx, incx, beta, yy, incy);
+                                        cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                     }
 
                                     // See what data changed inside subroutines.
                                     // most of this is unnecessary since Jai has immutable variables in the first place. - Fehse, 2022-01-14
                                     if _null {
-                                        ok := lce(<<ys, <<yy, ly);
+                                        ok := lce(ys, yy, ly);
                                         pass &= ok;
                                         if !ok {
-                                            err(" lce | ly = %",   ly);
-                                            err(" lce | ys = %", <<ys);
-                                            err(" lce | yy = %", <<yy, exit_program=fatal);
+                                            err(" lce | ly = %", ly);
+                                            err(" lce | ys = %", ys);
+                                            err(" lce | yy = %", yy, exit_program=fatal);
                                         }
                                     } else {
                                         ys_view := array2d_view(ys, abs(incy), row_major=false);
@@ -630,9 +635,9 @@ cchk1 :: (
                                     if !_null {
                                         // Check result.
                                         pass &= cmvch(
-                                            trans, m, n, alpha, <<a,
-                                            nmax, <<x, incx, beta, <<y,
-                                            incy, yt, g, <<yy, eps,
+                                            trans, m, n, alpha, a,
+                                            nmax, x, incx, beta, y,
+                                            incy, yt, g, yy, eps,
                                             fatal
                                         );
                                     } else {
@@ -739,10 +744,12 @@ cmake :: (
         for j:0..n-1 {
             for i:0..m-1 {
                 // FORTRAN: i + (j-1)*lda
+                // * This assumes a later interpretation of aa as a column-major matrix - Fehse 2022-03-03
                 set(aa, i + j*lda, get(a,i,j));
             }
             for i:m..lda-1 {
                 // FORTRAN: i + (j-1)*lda
+                // * This assumes a later interpretation of aa as a column-major matrix - Fehse 2022-03-03
                 set(aa, i + j*lda, rogue);
             }
         }

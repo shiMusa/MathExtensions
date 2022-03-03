@@ -81,6 +81,11 @@ err :: (msg: string, args: ..Any, $exit_program: bool=false) {
     defer free(s);
     println(s, ..args, color=.FG_RED);
 }
+warn :: (msg: string, args: ..Any) {
+    s := sprint("▷ %", msg);
+    defer free(s);
+    println(s, ..args, color=.FG_YELLOW);
+}
 
 data_array_2d :: ($T: Type, $d1: int, $d2: int, vals: ..$U, $row_major: bool=true) -> [d1][d2]T {
     res : [d1][d2]T;
@@ -142,19 +147,19 @@ data_array_3d :: ($T: Type, $d1: int, $d2: int, $d3: int, vals: ..$U, $row_major
 // Algorithm 978: Safe Scaling in the Level 1 BLAS
 // ACM Trans Math Softw 44:1--28
 // https://doi.org/10.1145/3061665
-EPS_32    : float32 : 0.5960464478E-07;
-ULP_32    : float32 : 0.1192092896E-06;
-SAFMIN_32 : float32 : 0.1175494351E-37;
-SAFMAX_32 : float32 : 0.8507059173E+38;
-SMLNUM_32 : float32 : 0.9860761315E-31;
-BIGNUM_32 : float32 : 0.1014120480E+32;
-RTMIN_32  : float32 : 0.3140184864E-15;
-RTMAX_32  : float32 : 0.3184525782E+16;
+EPS_32    : float32 : xx 0.5960464478E-07;
+ULP_32    : float32 : xx 0.1192092896E-06;
+SAFMIN_32 : float32 : xx 0.1175494351E-37;
+SAFMAX_32 : float32 : xx 0.8507059173E+38;
+SMLNUM_32 : float32 : xx 0.9860761315E-31;
+BIGNUM_32 : float32 : xx 0.1014120480E+32;
+RTMIN_32  : float32 : xx 0.3140184864E-15;
+RTMAX_32  : float32 : xx 0.3184525782E+16;
 // Blue's scaling constants
-TSML_32 : float32 : 0.1084202172E-18;
-TBIG_32 : float32 : 0.4503599627E+16;
-SSML_32 : float32 : 0.3777893186E+23;
-SBIG_32 : float32 : 0.1323488980E-22;
+TSML_32 : float32 : xx 0.1084202172E-18;
+TBIG_32 : float32 : xx 0.4503599627E+16;
+SSML_32 : float32 : xx 0.3777893186E+23;
+SBIG_32 : float32 : xx 0.1323488980E-22;
 // 64-bit
 EPS_64    : float64 : 0.11102230246251565404E-015;
 ULP_64    : float64 : 0.22204460492503130808E-015;

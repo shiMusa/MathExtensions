@@ -95,8 +95,8 @@ _gbmv :: (
     ky = ifx incy > 0 then 0 else (leny-1)*(-incy);
 
     #if DEBUG println(
-        "noconj: %, trans: %, beta == cone: %, beta == czero: %, alpha == czero: %, kx: %, ky: %", 
-        noconj, char_to_string(trans), beta == cone, beta == czero, alpha == czero, kx, ky, 
+        "noconj: %, trans: %, beta == cone: %, beta == czero: %, alpha == czero: %, kx: %, ky: %, incx = %, incy = %, kl = %, ku = %", 
+        noconj, char_to_string(trans), beta == cone, beta == czero, alpha == czero, kx, ky, incx, incy, kl, ku,
         color=.FG_CYAN);
 
     // start the operations. in this version the elements of a are 
@@ -107,6 +107,7 @@ _gbmv :: (
     if beta != cone {
         if incy == 1 {
             if beta == czero {
+                #if DEBUG println("case", color=.FG_CYAN);
                 for i:0..leny-1 {
                     set(y, i, czero);
                 }
@@ -137,6 +138,43 @@ _gbmv :: (
 
         jx = kx;
         if incy == 1 {
+
+            #if DEBUG println("case", color=.FG_CYAN);
+            /*
+            Comparing with LAPACK:
+            case: m = 2, n = 1, incx = 1, incy = 1, kl = 0, ku = 0
+
+            jx = kx = 1
+                 ky = 1
+            kup1 = 1
+
+            j = 1 (1..1)
+                jx = 1
+                k = 1-1 = 0
+                i = max(1,1-0)..min(2,1+0) = 1..1
+                    i = 1
+                    k+i = 0+1 = 1
+                    y(1) = ...
+                    a(1,1)
+                jx = 2
+
+            Jai:
+            jx = kx = 0
+
+            j:0..0
+                j = 0
+                    jx = 0
+                    k = 0-0 = 0
+                    i:max(0,0-0)..min(2-1,0+0) = 0..0
+                        i = 0
+                        k+i = 0+0 = 0
+                        set(y,0,...)
+                        get(a,0,0)
+                    jx = 1
+
+            */
+
+
             for j:0..n-1 {
                 tmp := alpha*get(x,jx);
                 k = ku - j;

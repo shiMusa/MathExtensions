@@ -31,14 +31,15 @@ VECTOR_FLAGS :: enum_flags u8 {
 * set: (*A(T), int, T)
 * dim: (A) -> int
 */
-ArrayType1D :: struct(data_type: Type){}
+ArrayType1D :: struct(data_type: Type) {}
 
-get :: inline (a: *$A/ArrayType1D, i: int) -> a.data_type {
-    return get(<<a, i);
-}
-dim :: inline (a: *$A/ArrayType1D) -> int {
-    return dim(<<a);
-}
+// get :: inline (a: *$A/ArrayType1D, i: int) -> a.data_type {
+//     return get(<<a, i);
+// }
+
+// dim :: inline (a: *$A/ArrayType1D) -> int {
+//     return dim(<<a);
+// }
 
 // operator [] :: inline (a: $A/ArrayType1D, i: int) -> A.data_type {
 //     return get(a, i);
