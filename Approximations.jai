@@ -34,7 +34,7 @@ Not sure how to do that atm in Jai...
 // ? Springer
 // ? Algorithm 2.3.1.4, page 50
 approx_inverse :: (val: $T, guess: T, rtol: T, $show_steps: bool = false) -> T #modify {
-    return is_number(cast(*Type_Info)T);
+    return is_number(T);
 } {
     #if CHECKS {
         #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);
@@ -65,7 +65,7 @@ approx_inverse :: (val: $T, guess: T, rtol: T, $show_steps: bool = false) -> T #
 // ? Springer
 // ? Algorithm 2.3.1.4, page 50
 approx_inverse :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
-    return is_number(cast(*Type_Info)T);
+    return is_number(T);
 } {
     #if CHECKS {
         #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);
@@ -96,7 +96,7 @@ approx_inverse :: (val: $T, guess: T, iterations: int, $show_steps: bool = false
 // ? Algorithm 2.3.1.5, page 51
 // TODO: bit shift exponent (divide by 2) for initial guess
 approx_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
-    return is_number(cast(*Type_Info)T); 
+    return is_number(T); 
 } {
     #if CHECKS {
         #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);
@@ -148,7 +148,7 @@ approx_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -
 // ? Springer
 // ? Algorithm 2.3.1.6, page 51
 approx_inv_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -> T #modify {
-    return is_number(cast(*Type_Info)T);   
+    return is_number(T);   
 } {
     #if CHECKS {
         #run assert(is_float_number(T), "can only calculate for floating point numbers, but given %\n", T);

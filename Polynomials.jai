@@ -6,8 +6,8 @@
 // Springer
 // Algorithm 2.3.1, page 49
 solve_quadratic :: (a: $T, b: T, c: T) -> ($U, U) #modify {
-    if !is_number(cast(*Type_Info)T) return false;
-    if !is_complex_number(cast(*Type_Info)T) {
+    if !is_number(T) return false;
+    if !is_complex_number(T) {
         U = get_complex_type_info_from_intrinsic_type_info(T);
     } else {
         U = T;
@@ -99,7 +99,7 @@ solve_quadratic_real :: (a: $T, b: T, c: T) -> T, T #modify {
 // a: list of prefactors from highest to lowest exponent, i.e.
 // a[0] x^2 + a[1] x + a[2] x^0
 polynom :: (x: $T, a: ..T) -> T #modify {
-    return is_number(cast(*Type_Info)T);
+    return is_number(T);
 } {
     p := a[0];
     for 1..a.count-1 {
@@ -118,7 +118,7 @@ polynom :: (x: $T, a: ..T) -> T #modify {
 // where q is a polynom of degree n-1.
 // returns (d, factors of q)
 synthetic_division :: (r: $T, a: ..T) -> T, []T #modify {
-    return is_number(cast(*Type_Info)T);
+    return is_number(T);
 } {
     b : [..]T;
     d : T;
@@ -145,7 +145,7 @@ synthetic_division :: (r: $T, a: ..T) -> T, []T #modify {
 // for q and ∂p/∂x
 // it is p(r) = b[n], ∂p(r)/∂x = c[n-1]
 repeated_synthetic_division :: (r: $T, a: ..T) -> []T, []T #modify {
-    return is_number(cast(*Type_Info)T);   
+    return is_number(T);   
 } {
     n := a.count-1;
 
