@@ -76,27 +76,36 @@ cpx_inv :: inline (z: Complex($T)) -> Complex(T) {
 
 
 
-operator + :: inline (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
+operator + :: inline (a: Complex($T), b: Complex($U)) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
+    return true;
+} {
     return cpx(a.real + b.real, a.imag + b.imag);
 }
 
-operator + :: inline (a: Complex($T), b: $U) -> Complex(UpCast(T,U).T) #modify {
+operator + :: inline (a: Complex($T), b: $U) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
     return is_intrinsic_number(U);
 } #symmetric {
     return cpx(a.real + b, a.imag);
 }
 
-operator - :: inline (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
+operator - :: inline (a: Complex($T), b: Complex($U)) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
+    return true;
+} {
     return cpx(a.real - b.real, a.imag - b.imag);
 }
 
-operator - :: inline (a: Complex($T), b: $U) -> Complex(UpCast(T,U).T) #modify {
+operator - :: inline (a: Complex($T), b: $U) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
     return is_intrinsic_number(U);
 } {
     return cpx(a.real - b, a.imag);
 }
 
-operator - :: inline (a: $U, b: Complex($T)) -> Complex(UpCast(T,U).T) #modify {
+operator - :: inline (a: $U, b: Complex($T)) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
     return is_intrinsic_number(U);
 } {
     return cpx(a - b.real, -b.imag);
@@ -109,14 +118,20 @@ operator - :: inline (a: Complex($T)) -> Complex(T) {
 
 
 
-operator * :: inline (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
+operator * :: inline (a: Complex($T), b: Complex($U)) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
+    return true;    
+} {
     return cpx(
         a.real * b.real - a.imag * b.imag,
         a.real * b.imag + a.imag * b.real
     );
 }
 
-operator / :: (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
+operator / :: (a: Complex($T), b: Complex($U)) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
+    return true;    
+} {
     abs := b.real * b.real + b.imag * b.imag;
     return cpx(
         ( a.real * b.real + a.imag * b.imag )/abs,
@@ -124,7 +139,8 @@ operator / :: (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
     );
 }
 
-operator * :: inline (a: Complex($T), v : $U) -> Complex(UpCast(T,U).T) #modify {
+operator * :: inline (a: Complex($T), v : $U) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
     return is_intrinsic_number(U);
 } #symmetric {
     return cpx(a.real * v, a.imag * v);
@@ -133,13 +149,15 @@ operator * :: inline (a: Complex($T), v : $U) -> Complex(UpCast(T,U).T) #modify 
 //     return cpx(a.real * v, a.imag * v);
 // }
 
-operator / :: inline (a: Complex($T), v : $U) -> Complex(UpCast(T,U).T) #modify {
+operator / :: inline (a: Complex($T), v : $U) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
     return is_intrinsic_number(U);
 } {
     return cpx(a.real / v, a.imag / v);
 }
 
-operator / :: inline (v : $U, a: Complex($T)) -> Complex(UpCast(T,U).T) #modify {
+operator / :: inline (v : $U, a: Complex($T)) -> $C #modify {
+    C = complex_with_inner_type(upcast(T, U));
     return is_intrinsic_number(U);
 } {
     return cpx(v, 0.0)/a;
