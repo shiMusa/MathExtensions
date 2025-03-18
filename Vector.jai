@@ -322,7 +322,7 @@ dot_dense_dense :: (a: DenseVector, b: DenseVector, $conjugate: bool = true) -> 
 
 
 operator * :: (a: DenseVector, b: $B) -> DenseVector(UpCast(a.data_type,B).T, a.N) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);
 } #symmetric {
     res : DenseVector(UpCast(a.data_type,B).T,a.N) = ---;
     inline copy(*res, a);
@@ -330,7 +330,7 @@ operator * :: (a: DenseVector, b: $B) -> DenseVector(UpCast(a.data_type,B).T, a.
     return res;
 }
 operator * :: (a: DenseHeapVector, b: $B) -> DenseHeapVector(UpCast(a.data_type,B).T) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);  
 } #symmetric {
     res := dhvec(UpCast(a.data_type,B).T, dim(a), false); // ! alloc
     inline copy(*res, a);
@@ -340,14 +340,14 @@ operator * :: (a: DenseHeapVector, b: $B) -> DenseHeapVector(UpCast(a.data_type,
 
 
 mul :: (a: *$A/VectorType, b: $B) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);  
 } {
     inline mul_default(a,b);
 }
 
 #scope_file
 mul_default :: (a: *$A/VectorType, b: $B) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);  
 } {
     #if CHECKS {
         #assert(is_minor_number_type(A.data_type,B));
@@ -364,7 +364,7 @@ mul_default :: (a: *$A/VectorType, b: $B) #modify {
 
 
 operator / :: inline (a: DenseVector, b: $B) -> DenseVector(UpCast(a.data_type,B).T, a.N) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);  
 } {
     res : DenseVector(UpCast(a.data_type,B).T,a.N) = ---;
     inline copy(*res, a);
@@ -372,7 +372,7 @@ operator / :: inline (a: DenseVector, b: $B) -> DenseVector(UpCast(a.data_type,B
     return res;
 }
 operator / :: inline (a: DenseHeapVector, b: $B) -> DenseHeapVector(UpCast(a.data_type,B).T) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);  
 } {
     res := dhvec(UpCast(a.data_type,B).T, dim(a), false); // ! alloc
     inline copy(*res, a);
@@ -382,14 +382,14 @@ operator / :: inline (a: DenseHeapVector, b: $B) -> DenseHeapVector(UpCast(a.dat
 
 
 div :: (a: *$A/VectorType, b: $B) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);  
 } {
     inline div_default(a,b);
 }
 
 #scope_file
 div_default :: (a: *$A/VectorType, b: $B) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);  
 } {
     ib := inv(b);
     inline mul(a, ib);
@@ -636,14 +636,14 @@ reflect_default :: (res: *$C/VectorType, vec: $A/VectorType, normal: $B/VectorTy
 // ? Algorithm 1.1.2 Saxpy, page 4
 // ? y = a * x + y
 saxpy :: (y: *$A/VectorType, x: $B/VectorType, a: $C) #modify {
-    if !is_number(C) {C = null; return;}    
+    return is_number(cast(*Type_Info)C);
 } {
     inline saxpy_default(y, x, a);
 }
 
 #scope_file
 saxpy_default :: (y: *$A/VectorType, x: $B/VectorType, a: $C) #modify {
-    if !is_number(C) {C = null; return;}    
+    return is_number(cast(*Type_Info)C);    
 } {
     #if CHECKS {
         assert(dim(y) == dim(x), "vectors not of same dimensions (%, %)\n", dim(y), dim(x));

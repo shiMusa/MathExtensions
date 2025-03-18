@@ -6,12 +6,13 @@
 // Springer
 // Algorithm 2.3.1, page 49
 solve_quadratic :: (a: $T, b: T, c: T) -> ($U, U) #modify {
-    if !is_number(T) {U = null; return;}
-    if !is_complex_number(T) {
+    if !is_number(cast(*Type_Info)T) return false;
+    if !is_complex_number(cast(*Type_Info)T) {
         U = get_complex_type_info_from_intrinsic_type_info(T);
     } else {
         U = T;
     }
+    return true;
 } {
     X :: #run get_number_inner_type(T);
 
@@ -52,13 +53,12 @@ solve_quadratic :: (a: $T, b: T, c: T) -> ($U, U) #modify {
 // Texts in computational science and engineering 18
 // Springer
 // Algorithm 2.3.1, page 49
-solve_quadratic_real :: (a: $T, b: T, c: T) -> (T, T) #modify {
-    if !is_number(T) {T = null; return;}
-    if is_complex_number(T) {T = null; return;}   
+solve_quadratic_real :: (a: $T, b: T, c: T) -> T, T #modify {
+    return is_intrinsic_number(T);
 } {
     sigma := max(Math.abs(a), Math.abs(b), Math.abs(c));
     if sigma == 0 {
-        return (nan(T), nan(T));
+        return nan(T), nan(T);
     }
 
     sigma2 := next_power_of_two(cast(int)Math.ceil(sigma));
@@ -68,8 +68,8 @@ solve_quadratic_real :: (a: $T, b: T, c: T) -> (T, T) #modify {
     c /= sigma;
 
     if Math.abs(a) == 0 {
-        if Math.abs(b) == 0 then return (nan(T), nan(T));
-        return (-c/b, nan(T));
+        if Math.abs(b) == 0 then return nan(T), nan(T);
+        return -c/b, nan(T);
     }
 
     b /= -2.0*a;
@@ -80,14 +80,14 @@ solve_quadratic_real :: (a: $T, b: T, c: T) -> (T, T) #modify {
     if d >= 0 {
         r1 := b + sign(b) * Math.sqrt(d);
 
-        if Math.abs(r1) > 0 then return (r1, c/r1);
-        return (r1, 0.0);
+        if Math.abs(r1) > 0 then return r1, c/r1;
+        return r1, 0.0;
     }
 
     // d = Math.sqrt(-d);
     
     // no real solutions
-    return (nan(T), nan(T));
+    return nan(T), nan(T);
 }
 
 
@@ -99,7 +99,7 @@ solve_quadratic_real :: (a: $T, b: T, c: T) -> (T, T) #modify {
 // a: list of prefactors from highest to lowest exponent, i.e.
 // a[0] x^2 + a[1] x + a[2] x^0
 polynom :: (x: $T, a: ..T) -> T #modify {
-    if !is_number(T) {T = null; return;}    
+    return is_number(cast(*Type_Info)T);
 } {
     p := a[0];
     for 1..a.count-1 {
@@ -117,8 +117,8 @@ polynom :: (x: $T, a: ..T) -> T #modify {
 // the division, such that p = (x-r) * q + d,
 // where q is a polynom of degree n-1.
 // returns (d, factors of q)
-synthetic_division :: (r: $T, a: ..T) -> (T, []T) #modify {
-    if !is_number(T) {T = null; return;}    
+synthetic_division :: (r: $T, a: ..T) -> T, []T #modify {
+    return is_number(cast(*Type_Info)T);
 } {
     b : [..]T;
     d : T;
@@ -130,7 +130,7 @@ synthetic_division :: (r: $T, a: ..T) -> (T, []T) #modify {
     }
     d = a[a.count-1] + r * b[a.count-2];
 
-    return (d, b);
+    return d, b;
 }
 
 
@@ -144,8 +144,8 @@ synthetic_division :: (r: $T, a: ..T) -> (T, []T) #modify {
 // calculates synthetic division as before, but returns prefactors 
 // for q and ∂p/∂x
 // it is p(r) = b[n], ∂p(r)/∂x = c[n-1]
-repeated_synthetic_division :: (r: $T, a: ..T) -> ([]T, []T) #modify {
-    if !is_number(T) {T = null; return;}    
+repeated_synthetic_division :: (r: $T, a: ..T) -> []T, []T #modify {
+    return is_number(cast(*Type_Info)T);   
 } {
     n := a.count-1;
 
@@ -162,7 +162,7 @@ repeated_synthetic_division :: (r: $T, a: ..T) -> ([]T, []T) #modify {
     }
     b[n] = a[n] + r * b[n-1];
 
-    return (b, c);
+    return b, c;
 }
 
 

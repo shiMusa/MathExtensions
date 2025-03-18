@@ -119,6 +119,7 @@ _gbmv :: (
         } else {
             iy = ky;
             if beta == czero {
+                // #if DEBUG println("case", color=.FG_CYAN);
                 for i:0..leny-1 {
                     set(y, iy, czero);
                     iy += incy;
@@ -185,6 +186,7 @@ _gbmv :: (
                 jx += incx;
             }
         } else {
+            // #if DEBUG println("case", color=.FG_CYAN);
             for j:0..n-1 {
                 temp = alpha*get(x,jx);
                 iy = ky;

@@ -58,16 +58,10 @@ Quaternion :: struct (T: Type) {
 
 
 q64 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q64 #modify {
-    if !is_intrinsic_number(T)
-    || !is_intrinsic_number(U)
-    || !is_intrinsic_number(V)
-    || !is_intrinsic_number(W) {
-        T = null;
-        U = null;
-        V = null;
-        W = null;
-        return;
-    }
+    return is_intrinsic_number(T)
+        && is_intrinsic_number(U)
+        && is_intrinsic_number(V)
+        && is_intrinsic_number(W);
 } {
     return qtn(
         ncast(float64, r),
@@ -79,16 +73,10 @@ q64 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q6
 
 
 q32 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q64 #modify {
-    if !is_intrinsic_number(T)
-    || !is_intrinsic_number(U)
-    || !is_intrinsic_number(V)
-    || !is_intrinsic_number(W) {
-        T = null;
-        U = null;
-        V = null;
-        W = null;
-        return;
-    }
+    return is_intrinsic_number(T)
+        && is_intrinsic_number(U)
+        && is_intrinsic_number(V)
+        && is_intrinsic_number(W);
 } {
     return qtn(
         ncast(float64, r),
@@ -101,7 +89,7 @@ q32 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q6
 
 
 qtn :: inline ($$r : $T = 0, $$v: $V/VectorType) -> UpCast(T, V.data_type).T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     #run assert(is_intrinsic_number(V.data_type), "cannot use non-real numbers for this method: V.data_type = %\n", V.data_type);
     
@@ -120,16 +108,10 @@ qtn :: inline ($$r : $T = 0, $$v: $V/VectorType) -> UpCast(T, V.data_type).T #mo
 
 
 qtn :: inline ($$r: $T = 0, $$i: $U = 0, $$j: $V = 0, $$k: $W = 0) -> Quaternion(T) #modify {
-    if !is_intrinsic_number(T)
-    || !is_intrinsic_number(U)
-    || !is_intrinsic_number(V)
-    || !is_intrinsic_number(W) {
-        T = null;
-        U = null;
-        V = null;
-        W = null;
-        return;
-    }
+    return is_intrinsic_number(T)
+        && is_intrinsic_number(U)
+        && is_intrinsic_number(V)
+        && is_intrinsic_number(W);
 } {
     #if is_constant(r) 
      && is_constant(i)
@@ -196,7 +178,7 @@ qtn_inv :: inline (q: Quaternion($T)) -> Quaternion(T) {
 
 
 qtn_rot :: inline (angle: $U, axis: $T/VectorType, $normalize: bool = false) -> UpCast(T.data_type, U).T #modify {
-    if !is_intrinsic_number(U) {U = null; return;}    
+    return is_intrinsic_number(U);
 } {
     #run assert(is_intrinsic_number(T.data_type), "this method only works for real numbers, but axis.data_type = %\n", T.data_type);
     #if normalize {
@@ -286,7 +268,7 @@ operator - :: inline (a: Complex($A), b: Quaternion($B)) -> Quaternion(UpCast(A,
 }
 
 operator + :: inline (a: Quaternion($A), b: $B) -> Quaternion(UpCast(A,B).T) #modify {
-    if !is_intrinsic_number(B) {B = null; return;}
+    return is_intrinsic_number(B);
 } #symmetric {
     return qtn(
         a.r + b,
@@ -296,7 +278,7 @@ operator + :: inline (a: Quaternion($A), b: $B) -> Quaternion(UpCast(A,B).T) #mo
     );
 }
 operator - :: inline (a: Quaternion($A), b: $B) -> Quaternion(UpCast(A,B).T) #modify {
-    if !is_intrinsic_number(B) {B = null; return;}
+    return is_intrinsic_number(B);
 } {
     return qtn(
         a.r - b,
@@ -306,7 +288,7 @@ operator - :: inline (a: Quaternion($A), b: $B) -> Quaternion(UpCast(A,B).T) #mo
     );
 }
 operator - :: inline (a: $A, b: Quaternion($B)) -> Quaternion(UpCast(A,B).T) #modify {
-    if !is_intrinsic_number(A) {A = null; return;}
+    return is_intrinsic_number(A);
 } {
     return qtn(
         a - b.r,
@@ -333,7 +315,7 @@ operator - :: inline (q: Quaternion($T)) -> Quaternion(T) {
 
 
 operator * :: inline (q: Quaternion($T), v: $V) -> Quaternion(UpCast(T,V).T) #modify {
-    if !is_intrinsic_number(V) {V = null; return;}    
+    return is_intrinsic_number(V);
 } #symmetric {
     return qtn(
         q.r * v,
@@ -343,7 +325,7 @@ operator * :: inline (q: Quaternion($T), v: $V) -> Quaternion(UpCast(T,V).T) #mo
     );
 }
 operator / :: inline (q: Quaternion($T), v: $V) -> Quaternion(UpCast(T,V).T) #modify {
-    if !is_intrinsic_number(V) {V = null; return;}    
+    return is_intrinsic_number(V);    
 } {
     return qtn(
         q.r / v,
@@ -354,7 +336,7 @@ operator / :: inline (q: Quaternion($T), v: $V) -> Quaternion(UpCast(T,V).T) #mo
 }
 // wikipedia, https://www.wikiwand.com/en/Quaternion
 operator / :: inline (v: $V, q: Quaternion($T)) -> Quaternion(UpCast(T,V).T) #modify {
-    if !is_intrinsic_number(V) {V = null; return;}    
+    return is_intrinsic_number(V);    
 } {
     abs := q.r*q.r + q.i*q.i + q.j*q.j + q.k*q.k;
     return qtn(
@@ -410,7 +392,7 @@ operator == :: inline (a: Quaternion($T), b: Complex($U)) -> bool #symmetric {
 }
 
 operator == :: inline (a: Quaternion($T), b: $U) -> bool #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } #symmetric {
     return a.r == b && a.i == 0 && a.j == 0 && a.k == 0;
 }

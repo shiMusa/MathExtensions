@@ -71,7 +71,7 @@ next_power_of_two :: inline (x : int) -> int {
 }
 
 str :: inline (val: $T) -> string #modify {
-    if !is_intrinsic_number(T) { T = null; return; }
+    return is_intrinsic_number(T);
 } {
     return sprint("%", val);
 }
@@ -89,12 +89,12 @@ char_to_string :: (char: u8) -> string {
 
 
 f64 :: inline (x: $T) -> float64 #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     return ncast(float64, x);
 }
 f32 :: inline (x: $T) -> float64 #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     return ncast(float32, x);
 }

@@ -36,13 +36,13 @@ Complex :: struct (T: Type) {
 
 
 c64 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C64 #modify {
-    if !is_intrinsic_number(T) || !is_intrinsic_number(U) {T = null; U = null; return;}    
+    return is_intrinsic_number(T) && is_intrinsic_number(U);
 } {
     return cpx(ncast(float64, re), ncast(float64, im));
 }
 
 c32 :: inline ($$re: $T = 0.0, $$im: $U = 0.0) -> C32 #modify {
-    if !is_intrinsic_number(T) || !is_intrinsic_number(U) {T = null; U = null; return;}    
+    return is_intrinsic_number(T) && is_intrinsic_number(U);    
 } {
     return cpx(ncast(float32, re), ncast(float32, im));
 }
@@ -81,7 +81,7 @@ operator + :: inline (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) 
 }
 
 operator + :: inline (a: Complex($T), b: $U) -> Complex(UpCast(T,U).T) #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } #symmetric {
     return cpx(a.real + b, a.imag);
 }
@@ -91,13 +91,13 @@ operator - :: inline (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) 
 }
 
 operator - :: inline (a: Complex($T), b: $U) -> Complex(UpCast(T,U).T) #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } {
     return cpx(a.real - b, a.imag);
 }
 
 operator - :: inline (a: $U, b: Complex($T)) -> Complex(UpCast(T,U).T) #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } {
     return cpx(a - b.real, -b.imag);
 }
@@ -125,7 +125,7 @@ operator / :: (a: Complex($T), b: Complex($U)) -> Complex(UpCast(T,U).T) {
 }
 
 operator * :: inline (a: Complex($T), v : $U) -> Complex(UpCast(T,U).T) #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } #symmetric {
     return cpx(a.real * v, a.imag * v);
 }
@@ -134,13 +134,13 @@ operator * :: inline (a: Complex($T), v : $U) -> Complex(UpCast(T,U).T) #modify 
 // }
 
 operator / :: inline (a: Complex($T), v : $U) -> Complex(UpCast(T,U).T) #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } {
     return cpx(a.real / v, a.imag / v);
 }
 
 operator / :: inline (v : $U, a: Complex($T)) -> Complex(UpCast(T,U).T) #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } {
     return cpx(v, 0.0)/a;
 }
@@ -150,7 +150,7 @@ operator == :: inline (a: Complex($T), b: Complex($U)) -> bool {
 }
 
 operator == :: inline (a: Complex($T), b: $U) -> bool #modify {
-    if !is_intrinsic_number(U) { U = null; return; }
+    return is_intrinsic_number(U);
 } #symmetric {
     return a.real == b && a.imag == 0.0;
 }

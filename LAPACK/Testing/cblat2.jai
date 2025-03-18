@@ -51,18 +51,18 @@ cblat2 :: () -> bool {
     rzero := zero(float32);
 
     // variables
-    a : Array2D(nmax, nmax, C32) = ---;
-    aa, as : Array1D(nmax*nmax, C32) = ---;
-    x, y, yt : Array1D(nmax, C32) = ---;
-    z : Array1D(2*nmax, C32) = ---;
-    xs, _xx, ys, yy : Array1D(nmax*incmax, C32) = ---;
-    alf : Array1D(nalmax, C32) = ---;
-    bet : Array1D(nbemax, C32) = ---;
-    g   : Array1D(nmax, float32) = ---;
+    a : Array2D(nmax, nmax, C32); // ! There might be an issue with row vs column major interpretation of `a`
+    aa, as : Array1D(nmax*nmax, C32);
+    x, y, yt : Array1D(nmax, C32);
+    z : Array1D(2*nmax, C32);
+    xs, _xx, ys, yy : Array1D(nmax*incmax, C32);
+    alf : Array1D(nalmax, C32);
+    bet : Array1D(nbemax, C32);
+    g   : Array1D(nmax, float32);
 
-    thresh : float32 = ---;
-    nidim, nkb, ninc, nalf, nbet : int = ---;
-    idim, kb, inc : []int = ---;
+    thresh : float32;
+    nidim, nkb, ninc, nalf, nbet : int;
+    idim, kb, inc : []int;
     snames : [nsubs]string : string.[
         "CGEMV", "CGBMV", "CHEMV", "CHBMV",
         "CHPMB", "CTRMV", "CTBMV", "CTPMV",
@@ -280,7 +280,6 @@ cmvch :: (
     ky    := ifx incy < 0 then ml-1 else 0;
     incyl := ifx incy < 0 then -1 else 1;
     iy, jx: int = ---;
-    erri: U = ---;
 
     // Compute expected result in YT using data in A, X and Y.
     // Compute gauges in G.
@@ -317,7 +316,7 @@ cmvch :: (
     rerr := rzero;
     res := true;
     for i:0..ml-1 {
-        erri = abs(get(yt,i) - get(yy,i*abs(incy)))/eps;
+        erri := abs(get(yt,i) - get(yy,i*abs(incy)))/eps;
         if get(g,i) != rzero {
             erri /= get(g,i);
         }
@@ -339,7 +338,7 @@ cmvch :: (
             err("cmvch | yt    = %", <<yt   );
             err("cmvch | g     = %", <<g    );
             err("cmvch | yy    = %", yy   );
-            err("cmvch | eps   = %", eps  );
+            err("cmvch | eps   = %", formatFloat(eps,mode=FormatFloat.Mode.SCIENTIFIC)  );
             err("cmvch | erri % : %", type_of(erri), erri);
             err("cmvch | yt[%] = %, yy[%*abs(%)] = %", i, get(yt,i), i, incy, get(yy,i*abs(incy)));
             err("cmvch | abs(get(yt,%) - get(yy,%*abs(%))) = %", i, i, incy, abs(get(yt,i) - get(yy,i*abs(incy))));
@@ -410,7 +409,7 @@ lceres :: (
             ibeg := ifx upper then 0 else j;
             iend := ifx upper then j else n-1;
 
-            for i:0..ibeg-1 {
+            for i:0..ibeg-1-1 {
                 if get(aa, i, j) != get(as, i, j) {
                     err("aa[%, %] = % != as[%, %] = %", i, j, get(aa,i,j), i, j, get(as,i,j));
                     return false;
@@ -481,6 +480,7 @@ cchk1 :: (
         assert(T == YT.data_type);
         assert(U == G.data_type);
     }
+    DEBUG :: true;
     println_push("cchk1");
 
     pass := true;
@@ -496,9 +496,11 @@ cchk1 :: (
     full   := char_eq(sname[2], #char "e");
     banded := char_eq(sname[2], #char "b");
 
-    if full {
-        warn("skipping 'full' matrices for debugging");
-        return true; // just to jump right to cgbmv (bug) - Fehse 2022-03-02
+    #if DEBUG {
+        if full {
+            warn("skipping 'full' matrices for debugging");
+            return true; // just to jump right to cgbmv (bug) - Fehse 2022-03-02
+        }
     }
 
     // Define the number of arguments
@@ -507,6 +509,10 @@ cchk1 :: (
     nc := 0;
     reset := true;
     errmax := rzero;
+
+    #if DEBUG {
+        COUNT := 0;
+    }
 
     for in:0..nidim-1 {
         // println_push("in = %", in);
@@ -567,6 +573,10 @@ cchk1 :: (
                                 alpha := alf[ia];
 
                                 for ib:0..nbet-1 {
+                                    #if DEBUG {
+                                        COUNT += 1;
+                                        println("COUNT %", COUNT);
+                                    }
                                     println("in %, im %, iku %, ic %, ix %, iy %, ia %, ib %", in, im, iku, ic, ix, iy, ia, ib);
                                     beta := bet[ib];
 

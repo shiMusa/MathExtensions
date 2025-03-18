@@ -28,10 +28,7 @@ approx :: inline (a: $A/MatrixType, b: $B/MatrixType) -> bool {
 }
 
 approx :: inline (a: $T, b: $U) -> bool #modify {
-    if !is_number(T) || !is_number(U) {
-        U = null; // reject non-scalars
-        return;
-    }
+    return is_number(cast(*Type_Info)T) && is_number(cast(*Type_Info)U);
 } {
     return abs(a - b) < DELTA;
 }

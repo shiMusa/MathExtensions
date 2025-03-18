@@ -998,14 +998,14 @@ vec_mul_mat_default :: (res: *$C/VectorType, a: $A/VectorType, b: $B/MatrixType)
 
 
 operator * :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, N, M) #modify {
-    if !is_number(B) {B = null; return;}
+    return is_number(cast(*Type_Info)B);
 } #symmetric {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
     inline mul(*res,a, b);
     return res;
 }
 operator * :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) #modify {
-    if !is_number(B) {B = null; return;}
+    return is_number(cast(*Type_Info)B);
 } #symmetric {
     res := dhmat(UpCast(T,B).T, rows(a), cols(a), false); // ! alloc
     inline mul(*res,a, b);
@@ -1014,7 +1014,7 @@ operator * :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) 
 
 
 mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
-    if !is_number(B) {B = null; return;}
+    return is_number(cast(*Type_Info)B);
 } {
     #if CHECKS {
         assert(rows(a) == rows(c), "Dimensions mismatch: a.rows  = %, res.rows  = %", rows(a), rows(c));
@@ -1030,7 +1030,7 @@ mul :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
 
 
 mul :: (a: *$A/MatrixType, b: $B) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);    
 } {
     #if CHECKS {
         #run assert(is_minor_number_type(A.data_type, B));
@@ -1071,14 +1071,14 @@ mul :: (a: *$A/MatrixType, b: $B) #modify {
 // ##     ## ##     ##    ##       ##           ######   ######  ##     ## ########
 
 operator / :: (a: DenseMatrix($T, $N, $M), b: $B) -> DenseMatrix(UpCast(T,B).T, N, M) #modify {
-    if !is_number(B) {B = null; return;}
+    return is_number(cast(*Type_Info)B);
 } {
     res : DenseMatrix(UpCast(T,B).T, N, M) = ---;
     inline div(*res,a, b);
     return res;
 }
 operator / :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) #modify {
-    if !is_number(B) {B = null; return;}
+    return is_number(cast(*Type_Info)B);
 } {
     res := dhmat(UpCast(T,B).T, rows(a), cols(a), false); // ! alloc
     inline div(*res,a, b);
@@ -1088,7 +1088,7 @@ operator / :: (a: DenseHeapMatrix($T), b: $B) -> DenseHeapMatrix(UpCast(T,B).T) 
 
 
 div :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
-    if !is_number(B) { B = null; return; }
+    return is_number(cast(*Type_Info)B);
 } {
     #if CHECKS {
         assert(rows(a) == rows(c), "Dimensions mismatch: a.rows  = %, res.rows  = %", rows(a), rows(c));
@@ -1103,7 +1103,7 @@ div :: (res: *$C/MatrixType, a: $A/MatrixType, b: $B) #modify {
 }
 
 div :: (a: *$A/MatrixType, b: $B) #modify {
-    if !is_number(B) {B = null; return;}    
+    return is_number(cast(*Type_Info)B);    
 } {
     #if CHECKS {
         #run assert(is_minor_number_type(A.data_type, B));

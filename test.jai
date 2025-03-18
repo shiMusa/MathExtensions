@@ -1,4 +1,4 @@
-#import "MathExtensions";
+#import,dir "../MathExtensions";
 #import "Basic";
 
 main :: () {

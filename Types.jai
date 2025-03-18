@@ -39,7 +39,7 @@ is_intrinsic_float_number :: inline (T: Type) -> bool {
 
 
 
-is_intrinsic_number :: ($T: Type) -> bool {
+is_intrinsic_number :: (T: Type) -> bool {
     for INTRINSIC_NUMBER_TYPES {
         if T == it then return true;
     }
@@ -53,7 +53,15 @@ is_intrinsic_number :: (T: *Type_Info) -> bool {
 
 
 
-is_non_real_number :: inline ($T: Type) -> bool {
+// is_real_number :: inline ($T: Type) -> bool {
+//     return is_number(T) && !is_complex_number(T) && !is_quaternion_number(T);
+// }
+// is_real_number :: inline (T: *Type_Info) -> bool {
+//     return is_number(T) && !is_complex_number(T) && !is_quaternion_number(T);
+// }
+
+
+is_non_real_number :: inline (T: Type) -> bool {
     return is_complex_number(T) || is_quaternion_number(T);
 }
 is_non_real_number :: inline (T: *Type_Info) -> bool {
@@ -61,14 +69,14 @@ is_non_real_number :: inline (T: *Type_Info) -> bool {
 }
 
 
-is_complex_number :: ($T: Type) -> bool {
+is_complex_number :: (T: Type) -> bool {
 
     #insert -> string {
         builder: String_Builder;
 
         for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
-                "#if T == Complex(%) then return true;\n",
+                "if T == Complex(%) then return true;\n",
                 it
             );
         }
@@ -88,14 +96,14 @@ is_complex_number :: (T: *Type_Info) -> bool {
 }
 
 
-is_quaternion_number :: ($T: Type) -> bool {
+is_quaternion_number :: (T: Type) -> bool {
 
     #insert -> string {
         builder: String_Builder;
 
         for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
-                "#if T == Quaternion(%) then return true;\n",
+                "if T == Quaternion(%) then return true;\n",
                 it
             );
         }
@@ -126,7 +134,7 @@ is_commuting :: (T: *Type_Info) -> bool {
 
 
 
-is_number :: inline ($T: Type) -> bool {
+is_number :: inline (T: Type) -> bool {
     return is_intrinsic_number(T) || is_complex_number(T) || is_quaternion_number(T);
 }
 is_number :: inline (T: *Type_Info) -> bool {
@@ -138,11 +146,11 @@ is_number :: inline (T: *Type_Info) -> bool {
 
 
 
-get_number_inner_type :: ($T: Type) -> Type {
-    #if #run is_complex_number(T) {
-        return #run get_complex_inner_type(T);
-    } else #if #run is_quaternion_number(T) {
-        return #run get_quaternion_inner_type(T);
+get_number_inner_type :: (T: Type) -> Type {
+    if is_complex_number(T) {
+        return get_complex_inner_type(T);
+    } else if is_quaternion_number(T) {
+        return get_quaternion_inner_type(T);
     } else {
         return T;
     }
@@ -157,20 +165,36 @@ get_number_inner_type :: (T: *Type_Info) -> *Type_Info {
 
 
 // ? assuming we already know it's a Complex(T) number
-get_complex_inner_type :: ($T: Type) -> Type {
+get_complex_inner_type :: (T: Type) -> Type, bool {
     #insert -> string {
         builder: String_Builder;
 
         for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
-                "#if T == Complex(%) then return %;\n",
+                "if T == Complex(%) then return %, true;\n",
                 it, it
             );
         }
 
         return builder_to_string(*builder);
     }
-    return Any;
+    return T, false;
+}
+
+get_complex_type_info_from_intrinsic_type_info :: (T: Type) -> Type, bool {
+    #insert -> string {
+        builder: String_Builder;
+
+        for INTRINSIC_NUMBER_TYPES {
+            print_to_builder(*builder,
+                "if % == T then return Complex(%), true;\n",
+                it, it
+            );
+        }
+
+        return builder_to_string(*builder);
+    }
+    return T, false;
 }
 
 get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info {
@@ -195,20 +219,20 @@ get_complex_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info 
 
 
 // ? assuming we already know it's a Complex(T) number
-get_quaternion_inner_type :: ($T: Type) -> Type {
+get_quaternion_inner_type :: (T: Type) -> Type, bool {
     #insert -> string {
         builder: String_Builder;
 
         for INTRINSIC_NUMBER_TYPES {
             print_to_builder(*builder,
-                "#if T == Quaternion(%) then return %;\n",
+                "if T == Quaternion(%) then return %, true;\n",
                 it, it
             );
         }
 
         return builder_to_string(*builder);
     }
-    return Any;
+    return T, false;
 }
 
 get_quaternion_type_info_from_intrinsic_type_info :: (T: *Type_Info) -> *Type_Info {
@@ -270,7 +294,7 @@ icast :: inline ($T: Type, num: Complex($N)) -> Complex(T) {
     return res;
 }
 icast :: inline ($T: Type, num: $N) -> T #modify {
-    if !is_intrinsic_number(N) {N = null; return;}
+    return is_intrinsic_number(N);
 } {
     return cast(T)num;
 }
@@ -464,6 +488,7 @@ upcast :: inline ($A: Type, $B: Type) -> Type {
                 }
             }
             assert(false, "cannot upcast % & %", A, B);
+            return int; // ? to get rid of warnings.
         }
     }
 }

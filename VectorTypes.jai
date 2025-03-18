@@ -58,7 +58,7 @@ ArrayType1D :: struct(data_type: Type) {}
 
 // * implementation for simple arrays
 Array1D :: struct(N: int, _T: Type) {
-    using _a1d: ArrayType1D(_T);
+    using #as _a1d: ArrayType1D(_T);
     data: [N]_T;
 }
 array1d :: (vals: [$N]$T) -> Array1D(N,T) {
@@ -102,7 +102,7 @@ operator == :: (a: Array1D, b: Array1D) -> bool {
 // ##     ##     ###### ########        ###    #### ########  ###  ###
 
 Array1DView :: struct(_A: Type) {
-    using _a1d: ArrayType1D(_A.data_type);
+    using #as _a1d: ArrayType1D(_A.data_type);
     a2d : *_A;
     cols: int;
 }
@@ -136,7 +136,7 @@ set :: inline (a: *Array1DView, i: int, val: a.data_type) {
 
 // * implementation for simple arrays
 HeapArray1D :: struct(_T: Type) {
-    using _a1d: ArrayType1D(_T);
+    using #as _a1d: ArrayType1D(_T);
     data: []_T;
 }
 harray1d :: (vals: []$T) -> HeapArray1D(T) {
@@ -197,7 +197,7 @@ VectorType :: struct(
     _data_type: Type,
     flags: VECTOR_FLAGS
 ){
-    using _a1d: ArrayType1D(_data_type);
+    using #as _a1d: ArrayType1D(_data_type);
 }
 
 from_raw_index :: inline (v: *$V/VectorType, i: int) -> int {
@@ -269,7 +269,7 @@ for_expansion :: (ve: *VectorRawForExpansion, body: Code, flags: For_Flags) #exp
 
 MatrixRowView :: struct(M: Type, N: int) {
     // using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW & M.flags); // TODO implement flags conversion
-    using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
+    using #as _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
     row: int;
     start_index: int = 0;
     stride: int = 1;
@@ -323,7 +323,7 @@ from_raw_index :: inline (v: MatrixRowView, i: int) -> int {
 
 MatrixColumnView :: struct(M: Type, N: int) {
     // using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW & M.flags); // TODO implement flags conversion
-    using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
+    using #as _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
     col: int;
     start_index: int = 0;
     stride: int = 1;
@@ -378,7 +378,7 @@ from_raw_index :: inline (v: MatrixColumnView, i: int) -> int {
 
 MatrixRowHeapView :: struct(M: Type) {
     // using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW & M.flags); // TODO implement flags conversion
-    using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
+    using #as _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
     row: int;
     cols: int;
     start_index: int = 0;
@@ -435,7 +435,7 @@ from_raw_index :: inline (v: MatrixRowHeapView, i: int) -> int {
 
 MatrixColumnHeapView :: struct(M: Type) {
     // using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW & M.flags); // TODO implement flags conversion
-    using _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
+    using #as _v: VectorType(M.data_type, VECTOR_FLAGS.VIEW);
     col: int;
     rows: int;
     start_index: int = 0;
@@ -491,7 +491,7 @@ from_raw_index :: inline (v: MatrixColumnHeapView, i: int) -> int {
 //    ###    #### ########  ###  ###
 
 VectorView :: struct(V: Type, N: int) {
-    using _v: VectorType(V.data_type, VECTOR_FLAGS.VIEW & V.flags);
+    using #as _v: VectorType(V.data_type, VECTOR_FLAGS.VIEW & V.flags);
     start_index: int = 0;
     stride: int = 1;
     vec: *V;
@@ -543,7 +543,7 @@ from_raw_index :: inline (v: VectorView, i: int) -> int {
 // ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
 
 VectorHeapView :: struct(V: Type) {
-    using _v: VectorType(V.data_type, VECTOR_FLAGS.VIEW & V.flags);
+    using #as _v: VectorType(V.data_type, VECTOR_FLAGS.VIEW & V.flags);
     dims: int;
     start_index: int = 0;
     stride: int = 1;
@@ -596,7 +596,7 @@ from_raw_index :: inline (v: VectorHeapView, i: int) -> int {
 // ########  ######## ##    ##  ######  ########
 
 DenseVector :: struct(_T: Type, N: int) {
-    using _v: VectorType(_T, VECTOR_FLAGS.DENSE);
+    using #as _v: VectorType(_T, VECTOR_FLAGS.DENSE);
     data: [N]_T;
 }
 
@@ -660,7 +660,7 @@ from_raw_index :: inline (v: DenseVector, i: int) -> int {
 
 
 DenseHeapVector :: struct(_T: Type) {
-    using _v: VectorType(_T, VECTOR_FLAGS.DENSE & VECTOR_FLAGS.HEAP);
+    using #as _v: VectorType(_T, VECTOR_FLAGS.DENSE & VECTOR_FLAGS.HEAP);
     dims : int;
     data: []_T;
 }

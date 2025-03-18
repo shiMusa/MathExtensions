@@ -26,16 +26,16 @@
 // ? Fortran transfer function
 // ? http://math.hawaii.edu/wordpress/fortran-4/#sign
 sign :: inline (x: $T, y: $U) -> $V #modify {
-    if !is_number(T) || is_non_real_number(U){V = null; return;}
+    if !is_number(T) || is_non_real_number(U) return false;
     X := get_number_inner_type(T);
-    if is_intrinsic_number(X) { V = X; }
-    else { V = type_info(float64); }
+    V = ifx is_intrinsic_number(X) then X else float64;
+    return true;
 } {
     return ifx y >= 0 then abs(x) else -abs(x);
 }
 
 sign :: inline (x: $T) -> T #modify {
-    if !is_number(T) {T = null; return;}    
+    return is_number(T);   
 } {
     #if #run is_quaternion_number(T) || is_complex_number(T) {
         // ? "New Aspects on Elementary Functions in the Context of Quaternionic Analysis"
@@ -71,7 +71,7 @@ factorial :: (n: int, $T: Type) -> T {
 
 inv :: inverse;
 inverse :: inline (n: $T) -> T #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #if #run is_quaternion_number(T) {
         return qtn_inv(n);
@@ -93,7 +93,7 @@ inverse :: inline (n: $T) -> T #modify {
 // ? Texts in computational science and engineering 18
 // ? Springer
 // ? 2.3.1.10 Binomial Coefficients, page 55
-binomial :: inline (from: $T, choose: T) -> T {
+binomial :: (from: $T, choose: T) -> T {
     #if CHECKS {
         assert(choose <= from, "Out of range: from = %, choose = %", from, choose);
     }
@@ -116,8 +116,9 @@ binomial :: inline (from: $T, choose: T) -> T {
 
 quat_r :: real;
 real :: inline (n: $T) -> $U #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) return false;
     U = get_number_inner_type(T);
+    return true;
 } {
     #if #run is_complex_number(T) {
         return n.real;
@@ -130,7 +131,7 @@ real :: inline (n: $T) -> $U #modify {
 
 quat_r_nc :: real_nc;
 real_nc :: inline (n: $T) -> T #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #if #run is_complex_number(T) {
         U :: #run get_number_inner_type(T);
@@ -153,8 +154,9 @@ real_nc :: inline (n: $T) -> T #modify {
 
 quat_i :: imag;
 imag :: inline (n: $T) -> $U #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) return false;
     U = get_number_inner_type(T);
+    return true;
 } {
     #if #run is_complex_number(T) {
         return n.imag;
@@ -167,7 +169,7 @@ imag :: inline (n: $T) -> $U #modify {
 
 quat_i_nc :: imag_nc;
 imag_nc :: inline (n: $T) -> T #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #if #run is_complex_number(T) {
         U :: #run get_number_inner_type(T);
@@ -189,8 +191,9 @@ imag_nc :: inline (n: $T) -> T #modify {
 }
 
 quat_j :: inline (n: $T) -> $U #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) return false;
     U = get_number_inner_type(T);
+    return true;
 } {
     #if #run is_quaternion_number(T) {
         return n.j;
@@ -200,7 +203,7 @@ quat_j :: inline (n: $T) -> $U #modify {
 }
 
 quat_j_nc :: inline (n: $T) -> T #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #if #run is_quaternion_number(T) {
         U :: #run get_number_inner_type(T);
@@ -216,8 +219,9 @@ quat_j_nc :: inline (n: $T) -> T #modify {
 }
 
 quat_k :: inline (n: $T) -> $U #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) return false;
     U = get_number_inner_type(T);
+    return true;
 } {
     #if #run is_quaternion_number(T) {
         return n.j;
@@ -227,7 +231,7 @@ quat_k :: inline (n: $T) -> $U #modify {
 }
 
 quat_k_nc :: inline (n: $T) -> T #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #if #run is_quaternion_number(T) {
         U :: #run get_number_inner_type(T);
@@ -251,7 +255,7 @@ quat_k_nc :: inline (n: $T) -> T #modify {
 //  ######   #######  ##    ##  ######
 
 conjugate :: inline (n: $T) -> T #modify {
-    if !is_number(T) { T = null; return; }    
+    return is_number(T);   
 } {
     #if #run is_quaternion_number(T) {
         return qtn(n.r, -n.i, -n.j, -n.k);
@@ -271,16 +275,16 @@ conjugate :: inline (n: $T) -> T #modify {
 // ##     ## ########   ######
 
 abs1 :: inline (n: $T) -> $U #modify {
-    if !is_number(T) {T = null; return;}
+    if !is_number(T) return false;
     X := get_number_inner_type(T);
-    if is_intrinsic_number(X) { U = X; }
-    else { U = type_info(float64); }
+    U = ifx is_intrinsic_number(X) then X else float64;
+    return true;
 } {
     return inline abs1(U, n); 
 }
 
 abs1 :: inline ($U: Type, n: $T) -> U #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #assert(is_intrinsic_number(U));
     #if #run is_quaternion_number(T) {
@@ -294,7 +298,7 @@ abs1 :: inline ($U: Type, n: $T) -> U #modify {
 
 // ? |z|²
 abs_sq :: inline ($U: Type, n: $T) -> U #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #assert(is_intrinsic_number(U));
     #if #run is_quaternion_number(T) {
@@ -322,14 +326,15 @@ abs_sq :: inline ($U: Type, n: $T) -> U #modify {
 }
 
 abs_sq :: inline (n: $T) -> $U #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) return false;
     U = get_number_inner_type(T);
+    return true;
 } {
     return inline abs_sq(U, n);
 }
 
 abs :: inline ($U: Type, n: $T) -> U #modify {
-    if !is_number(T) {T = null; return;}
+    return is_number(T);
 } {
     #assert(is_intrinsic_number(U));
     #if #run is_intrinsic_number(T) {
@@ -340,10 +345,10 @@ abs :: inline ($U: Type, n: $T) -> U #modify {
 }
 
 abs :: inline (a: $T) -> $U #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) return false;
     X := get_number_inner_type(T);
-    if is_intrinsic_number(X) { U = X; }
-    else { U = type_info(float64); }
+    U = ifx is_intrinsic_number(X) then X else float64;
+    return true;
 } {
     return inline abs(U, a);
 }
@@ -358,7 +363,7 @@ abs :: inline (a: $T) -> $U #modify {
 // ? given n = |n| exp(iθ), whis calculates θ.
 // ? for quaternions: n = |n| exp(iθ eᵥ), where eᵥ = v/|v| with n = n.r + v
 arg :: inline (a: $T) -> float64 #modify {
-    if !is_number(T) {T = null; return;}    
+    return is_number(T);  
 } {
     #if #run is_quaternion_number(T) {
         // ? https://www.wikiwand.com/en/Quaternion
@@ -502,12 +507,13 @@ sqrt :: inline(n: $T, $type: Type) -> type {
 // ? exp(iθ) where θ ∈ ℂ,ℝ
 // ? is also implemented for quaternions, where the real part of θ is the angle and the vector part is the direction
 phase :: inline (theta: $T) -> $U #modify {
-    if !is_number(T) {U = null; return;}
+    if !is_number(T) return false;
     if is_non_real_number(T) {
         U = T;
     } else { // return complex number by default
         U = get_complex_type_info_from_intrinsic_type_info(T);
     }
+    return true;
 } {
     #if #run is_quaternion_number(T) {
         return exp(theta.r * qtn_vec(theta));
@@ -927,39 +933,39 @@ acsch :: inline (n: $T) -> T {
 // ? https://www.wikiwand.com/en/Hyperbolic_functions
 // ? hyperbolic functions
 rsinh :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     return 0.5 * (Math.exp(x) - Math.exp(-x));
 }
 
 rcosh :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     return 0.5 * (Math.exp(x) + Math.exp(-x));
 }
 
 rtanh :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     tmp := Math.exp(2.0 * x);
     return (tmp - 1.0) / (tmp + 1.0);
 }
 
 rcoth :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     tmp := Math.exp(2.0 * x);
     return (tmp + 1.0) / (tmp - 1.0);
 }
 
 rsech :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     return 2.0 * Math.exp(x) / (Math.exp(2.0*x) + 1.0);
 }
 
 rcsch :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     return 2.0 * Math.exp(x) / (Math.exp(2.0*x) - 1.0);
 }
@@ -975,13 +981,13 @@ rcsch :: inline (x: $T) -> T #modify {
 // ? https://www.wikiwand.com/en/Hyperbolic_functions
 // ? inverse hyperbolic functions
 rasinh :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     return Math.log( x + Math.sqrt(x*x + 1.0) );
 }
 
 racosh :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     #if CHECKS {
         assert( x >= 1.0);
@@ -990,7 +996,7 @@ racosh :: inline (x: $T) -> T #modify {
 }
 
 ratanh :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     #if CHECKS {
         assert( Math.abs(x) < 1.0 );
@@ -999,7 +1005,7 @@ ratanh :: inline (x: $T) -> T #modify {
 }
 
 racoth :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     #if CHECKS {
         assert( Math.abs(x) > 1.0 );
@@ -1008,7 +1014,7 @@ racoth :: inline (x: $T) -> T #modify {
 }
 
 rasech :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     #if CHECKS {
         assert( x > 0.0 && x <= 1.0 );
@@ -1017,7 +1023,7 @@ rasech :: inline (x: $T) -> T #modify {
 }
 
 rasch :: inline (x: $T) -> T #modify {
-    if !is_intrinsic_number(T) {T = null; return;}
+    return is_intrinsic_number(T);
 } {
     #if CHECKS {
         assert( x != 0.0 );
