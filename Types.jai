@@ -16,26 +16,30 @@ INTRINSIC_NUMBER_TYPES :: Type.[
     float64, float32, s64, s32, s16, s8, u64, u32, u16, u8, bool, int, float
 ];
 
+INTRINSIC_FLOATING_NUMBER_TYPES :: Type.[
+    float64, float32, float
+];
+
 
 
 is_float_number :: (T: Type) -> bool {
-    if is_complex_number(T) {
+    if is_complex_number(T) || is_quaternion_number(T) {
         X := get_number_inner_type(T);
         return is_float_number(X);
-    } else if is_quaternion_number(T) {
-        X := get_number_inner_type(T);
-        return is_float_number(X);
-    } else if T == float64 || T == float32 || T == float {
-        return true;
-    } else return false;
+    } 
+
+    for INTRINSIC_FLOATING_NUMBER_TYPES
+        if T == it return true;
+
+    return false;
 }
 
 // is_intrinsic_float_number :: inline (T: *Type_Info) -> bool {
 //     return T.type == .FLOAT;
 // }
-is_intrinsic_float_number :: inline (T: Type) -> bool {
-    return T == float32 || T == float64 || T == float;
-}
+// is_intrinsic_float_number :: inline (T: Type) -> bool {
+//     return T == float32 || T == float64 || T == float;
+// }
 
 
 
