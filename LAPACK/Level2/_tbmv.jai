@@ -128,6 +128,7 @@ _tbmv :: (
                         if nounit then set(x,jx, get(x,jx)*get(a,0,j));
                     }
                     jx -= incx;
+                    if n-j > k then kx -= incx;
                 }
             }
         }

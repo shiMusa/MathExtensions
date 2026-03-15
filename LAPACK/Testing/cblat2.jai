@@ -1209,10 +1209,11 @@ cmake :: (
             for i:ibeg..iend {
                 set(aa, ioff, get(a,i,j));
                 if i == j {
-                    if unit then 
-                        set(aa,ioff, get(a,i,j));
-                    else
+                    if sym {
                         set(aa,ioff, cpx(real(get(aa,ioff)), rrogue));
+                    } else {
+                        set(aa,ioff, get(a,i,j));
+                    }
                 }
                 ioff += 1;
             }

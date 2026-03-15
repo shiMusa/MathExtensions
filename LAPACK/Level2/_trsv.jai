@@ -158,6 +158,7 @@ _trsv :: (
                             set(x,ix, get(x,ix) - tmp * get(a,i,j));
                         }
                     }
+                    jx -= incx;
                 }
             }
         } else {
