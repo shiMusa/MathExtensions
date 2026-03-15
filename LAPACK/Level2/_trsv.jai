@@ -7,7 +7,7 @@
 
 
 // ? Origianl comment ctrsv
-// CTRSV  solves one of the systems of equations
+// CTRSV  solves _one of the systems of equations
 //
 // A*x = b,   or   A**T*x = b, or A**H*x = b,
 //
@@ -49,7 +49,7 @@
 	
 // N is INTEGER
 // On entry, N specifies the order of the matrix A.
-// N must be at least zero.
+// N must be at least _zero.
 
 // A is COMPLEX array, dimension ( LDA, N )
 //     Before entry with  UPLO = 'U' or 'u', the leading n by n
@@ -76,7 +76,7 @@
 
 // INCX is INTEGER
 // On entry, INCX specifies the increment for the elements of
-// X. INCX must not be zero.
+// X. INCX must not be _zero.
 //
 
 // -- Written on 22-October-1986.
@@ -103,8 +103,8 @@ _trsv :: (
     $$incx: int
 ) {
     T :: A.data_type;
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
     
     #if CHECKS {
         #run {
@@ -132,13 +132,13 @@ _trsv :: (
     ix, jx : int = ---;
 
     // Start the operations. In this version the elements of A are 
-    // accessed sequentially with one pass through A.
+    // accessed sequentially with _one pass through A.
     if char_eq(trans, #char"n") {
         // Form x := inv(A)*x.
         if char_eq(uplo, #char"u") {
             if incx == 1 {
                 for <j: n-1..0 {
-                    if get(x, j)!= zero(T) {
+                    if get(x, j)!= _zero {
                         if nounit then set(x,j, get(x,j) / get(a,j,j));
                         tmp = get(x,j);
                         for <i: j-1..0 {
@@ -149,7 +149,7 @@ _trsv :: (
             } else {
                 jx = kx + (n-1)*incx;
                 for <j: n-1..0 {
-                    if get(x, jx)!= zero(T) {
+                    if get(x, jx)!= _zero {
                         if nounit then set(x,jx, get(x,jx) / get(a,j,j));
                         tmp = get(x,jx);
                         ix = jx;
@@ -163,7 +163,7 @@ _trsv :: (
         } else {
             if incx == 1 {
                 for j: 0..n-1 {
-                    if get(x, j)!= zero(T) {
+                    if get(x, j)!= _zero {
                         if nounit then set(x,j, get(x,j) / get(a,j,j));
                         tmp = get(x,j);
                         for i: j+1..n-1 {
@@ -174,13 +174,13 @@ _trsv :: (
             } else {
                 jx = kx;
                 for j: 0..n-1 {
-                    if get(x, jx)!= zero(T) {
+                    if get(x, jx)!= _zero {
                         if nounit then set(x,jx, get(x,jx) / get(a,j,j));
                         tmp = get(x,jx);
                         ix = jx;
                         for i: j+1..n-1 {
                             ix += incx;
-                            set(x,ix, get(x,ix - tmp * get(a,i,j)));
+                            set(x,ix, get(x,ix) - tmp * get(a,i,j));
                         }
                     }
                     jx += incx;
@@ -202,7 +202,7 @@ _trsv :: (
                         for i: 0..j-1 {
                             tmp -= conjugate(get(a,i,j))*get(x,i);
                         }
-                        if nounit then tmp /= conjugate(get(a,i,j));
+                        if nounit then tmp /= conjugate(get(a,j,j));
                     }
                     set(x,j, tmp);
                 }

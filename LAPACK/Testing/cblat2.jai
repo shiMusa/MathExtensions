@@ -213,7 +213,11 @@ cblat2 :: () -> bool {
                 *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
             );
         } else if isnum <= 10 {
-
+            pass &= cchk3(
+                srnamt, eps, thresh, true,
+                nidim, idim, nkb, kb, ninc, inc,
+                nmax, incmax, *a, *aa, *as, *y, *yy, *ys, *yt, *g, *z
+            );
         } else if isnum <= 12 {
 
         } else if isnum <= 14 {
@@ -838,6 +842,186 @@ cchk2 :: (
                                         incy, yt, g, yy, eps,
                                         fatal
                                     );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return pass;
+}
+
+
+//  ######   ######  ##     ## ##    ##  #######
+// ##    ## ##    ## ##     ## ##   ##  ##     ##
+// ##       ##       ##     ## ##  ##          ##
+// ##       ##       ######### #####     #######
+// ##       ##       ##     ## ##  ##          ##
+// ##    ## ##    ## ##     ## ##   ##  ##     ##
+//  ######   ######  ##     ## ##    ##  #######
+
+cchk3 :: (
+    sname: string,
+    eps: $U,
+    thresh: U,
+    $fatal: bool,
+    nidim: int,
+    idim: []int,
+    nkb: int,
+    kb: []int,
+    ninc: int,
+    inc: []int,
+    nmax: int,
+    incmax: int,
+    a: *$A/ArrayType2D,
+    aa: *$AA/ArrayType1D,
+    as: *$AS/ArrayType1D,
+    x: *$X/ArrayType1D,
+    _xx: *$XX/ArrayType1D,
+    xs: *$XS/ArrayType1D,
+    xt: *$XT/ArrayType1D,
+    g: *$G/ArrayType1D,
+    z: *$Z/ArrayType1D,
+) -> bool {
+    T :: A.data_type;
+    #run {
+        assert(U == get_number_inner_type(T));
+        // assert(T == A.data_type);
+        assert(T == AA.data_type);
+        assert(T == AS.data_type);
+        assert(T == X.data_type);
+        assert(T == XX.data_type);
+        assert(T == XS.data_type);
+        assert(U == G.data_type);
+        assert(T == Z.data_type);
+    }
+    DEBUG :: true;
+    println_push("cchk3");
+
+    pass := true;
+
+    ichu :: "ul";
+    icht :: "ntc";
+    ichd :: "un";
+
+    czero :: #run zero(T);
+    cone  :: #run one(T);
+    chalf :: #run ncast(T, 0.5);
+
+    full   := char_eq(sname[2], #char "r");
+    banded := char_eq(sname[2], #char "b");
+    packed := char_eq(sname[2], #char "p");
+
+    name_mv := char_eq(sname[3], #char "m") && char_eq(sname[4], #char "v");
+    name_sv := char_eq(sname[3], #char "s") && char_eq(sname[4], #char "v");
+
+    reset := true;
+    for 0..nmax-1 set(z, it, czero);
+
+    #if DEBUG {
+        COUNT := 0;
+    }
+
+    for in:0..nidim-1 {
+        n := idim[in];
+        nk := ifx banded then nkb else 1;
+
+        for iku:0..nk-1 {
+            k := ifx banded then kb[iku] else n-1;
+
+            lda := ifx banded then k+1 else n;
+            if !packed && lda < nmax then lda += 1;
+            if !packed && lda > nmax then continue;
+
+            laa := ifx packed then (n*(n+1))/2 else lda*n;
+            _null := n <= 0;
+
+            for icu:0..1 {
+                uplo := ichu[icu];
+
+                for ict:0..2 {
+                    trans := icht[ict];
+
+                    for icd:0..1 {
+                        diag := ichd[icd];
+
+                        // Generate the matrix A.
+
+                        transl := czero;
+                        _slice := String.slice(sname, 1, 2);
+                        cmake(_slice, uplo, diag, n, n, a, nmax, aa, lda, k, k, *reset, transl);
+
+                        for ix:0..ninc-1 {
+                            incx := inc[ix];
+                            lx := abs(incx)*n;
+
+                            transl = chalf;
+                            x_view := array2d_view(x, 1, row_major=false);
+                            cmake("ge", 0, 0, 1, n, *x_view, 1, _xx, abs(incx), 0, n-1, *reset, transl);
+
+                            if n > 1 {
+                                set(x, n/2 - 1, czero);
+                                set(_xx, abs(incx)*(n/2-1), czero);
+                            }
+
+                            // Save every datum  before calling the subroutine.
+                            for 0..laa-1 set(as, it, get(aa, it));
+                            for 0..lx-1 set(xs, it, get(_xx, it));
+
+                            aa_view := array2d_view(aa, lda, row_major=false);
+
+                            // Call the subroutine
+                            if name_mv {
+                                if full        _trmv(uplo, trans, diag, n, aa_view, lda, _xx, incx);
+                                else if banded _tbmv(uplo, trans, diag, n, k, aa_view, lda, _xx, incx);
+                                else if packed _tpmv(uplo, trans, diag, n, aa, _xx, incx);
+                            } else if name_sv {
+                                if full        _trsv(uplo, trans, diag, n, aa_view, lda, _xx, incx);
+                                else if banded _tbsv(uplo, trans, diag, n, k, aa_view, lda, _xx, incx);
+                                else if packed _tpsv(uplo, trans, diag, n, aa, _xx, incx);
+                            }
+
+                            // See what data chnaged inside subroutines
+                            ok := lce(as, aa, laa);
+                            pass &= ok;
+                            if !ok {
+                                err(" lcs | as  = %", as);
+                                err(" lcs | aa  = %", aa);
+                                err(" lcs | laa = %", laa, exit_program=fatal);
+                            }
+                            if _null {
+                                ok = lce(xs, _xx, lx);
+                                pass &= ok;
+                                if !ok {
+                                    err(" lce | xs = %", xs);
+                                    err(" lce | xx = %", _xx);
+                                    err(" lce | lx = %", lx, exit_program=fatal);
+                                }
+                            } else {
+                                xs_view := array2d_view(xs, abs(incx), row_major=false);
+                                xx_view := array2d_view(_xx, abs(incx), row_major=false);
+                                ok = lceres("ge", 0, 1, n, xs_view, xx_view, abs(incx));
+                                pass &= ok;
+                                if !ok {
+                                    err(" lceres | n    = %", n);
+                                    err(" lceres | xs   = %", xs);
+                                    err(" lceres | xx   = %", _xx);
+                                    err(" lceres | incx = %", incx, exit_program=fatal);
+                                }
+                            }
+
+                            if !_null {
+                                if name_mv {
+                                    pass &= cmvch(trans, n, n, cone, a, nmax, z, incx, czero, x, incx, xt, g, _xx, eps, fatal);
+                                } else if name_sv {
+                                    for i:0..n-1 {
+                                        set(z, i, get(_xx, i*abs(incx)));
+                                        set(_xx, i*abs(incx), get(x, i));
+                                    }
+                                    pass &= cmvch(trans, n, n, cone, a, nmax, z, incx, czero, x, incx, xt, g, _xx, eps, fatal);
                                 }
                             }
                         }

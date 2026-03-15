@@ -36,8 +36,8 @@ _hpmv :: (
     y: *$Y/ArrayType1D,
     $$incy: int
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
 
     #if CHECKS {
         #run {
@@ -52,7 +52,7 @@ _hpmv :: (
     }
 
     // quick return if possible
-    if n == 0 || (alpha == zero && beta == one) then return;
+    if n == 0 || (alpha == _zero && beta == _one) then return;
 
     // Set up the start points in x and y.
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
@@ -62,15 +62,15 @@ _hpmv :: (
     ix, iy, jx, jy, k, kk : int = ---;
 
     // Start the operations. In this version the elements of the array AP
-    // are accessed sequentially with one pass through AP.
+    // are accessed sequentially with _one pass through AP.
 
     // First form  y := beta*y
 
-    if beta != one {
+    if beta != _one {
         if incy == 1 {
-            if beta == zero {
+            if beta == _zero {
                 for i:0..n-1 {
-                    set(y,i, zero);
+                    set(y,i, _zero);
                 }
             } else {
                 for i:0..n-1 {
@@ -79,9 +79,9 @@ _hpmv :: (
             }
         } else {
             iy = ky;
-            if beta == zero {
+            if beta == _zero {
                 for i:0..n-1 {
-                    set(y,iy, zero);
+                    set(y,iy, _zero);
                     iy += incy;
                 }
             } else {
@@ -92,7 +92,7 @@ _hpmv :: (
             }
         }
     }
-    if alpha == zero then return;
+    if alpha == _zero then return;
     
     kk = 0;
     if char_eq(uplo, #char "u") {
@@ -100,7 +100,7 @@ _hpmv :: (
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
-                temp2 = zero;
+                temp2 = _zero;
                 k = kk;
                 for i:0..j-1 {
                     set(y,i, get(y,i) + temp1*get(ap,k));
@@ -115,7 +115,7 @@ _hpmv :: (
             jy = ky;
             for j:0..n-1 {
                 temp1 = alpha*get(x,jx);
-                temp2 = zero;
+                temp2 = _zero;
                 ix = kx;
                 iy = ky;
                 for k:kk..kk+j-1 {
@@ -135,7 +135,7 @@ _hpmv :: (
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
-                temp2 = zero;
+                temp2 = _zero;
                 set(y,j, get(y,j) + temp1*real_nc(get(ap,kk)));
                 k = kk + 1;
                 for i:j+1..n-1 {
@@ -151,7 +151,7 @@ _hpmv :: (
             jy = ky;
             for j:0..n-1 {
                 temp1 = alpha*get(x,jx);
-                temp2 = zero;
+                temp2 = _zero;
                 set(y,jy, get(y,jy) + temp1*real_nc(get(ap,kk)));
                 ix = jx;
                 iy = jy;

@@ -39,8 +39,8 @@ _hemv :: (
     y: *$Y/ArrayType1D,
     $$incy: int
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
 
     #if CHECKS {
         #run {
@@ -56,7 +56,7 @@ _hemv :: (
     }
 
     // quick return if possible
-    if n == 0 || (alpha == zero && beta == one) then return;
+    if n == 0 || (alpha == _zero && beta == _one) then return;
 
     // set up the start points in x and y.
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
@@ -66,14 +66,14 @@ _hemv :: (
     ix, iy, jx, jy : int = ---;
 
     // Start the operations. In this version the elements of A are
-    // accessed sequentially with one pass through the triangular part
+    // accessed sequentially with _one pass through the triangular part
 
     // first form  y := beta*y
-    if beta != one {
+    if beta != _one {
         if incy == 1 {
-            if beta == zero {
+            if beta == _zero {
                 for i:0..n-1 {
-                    set(y,i, zero);
+                    set(y,i, _zero);
                 }
             } else {
                 for i:0..n-1 {
@@ -82,9 +82,9 @@ _hemv :: (
             }
         } else {
             iy = ky;
-            if beta == zero {
+            if beta == _zero {
                 for i:0..n-1 {
-                    set(y,iy, zero);
+                    set(y,iy, _zero);
                     iy += incy;
                 }
             } else {
@@ -95,14 +95,14 @@ _hemv :: (
             }
         }
     }   
-    if alpha == zero then return;
+    if alpha == _zero then return;
 
     if char_eq(uplo, #char "u") {
         // Form y when A is stored in the upper triangle.
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
-                temp2 = zero;
+                temp2 = _zero;
                 for i:0..j-1 {
                     set(y,i, get(y,i) + temp1*get(a,i,j));
                     temp2 += conjugate(get(a,i,j))*get(x,i);
@@ -114,7 +114,7 @@ _hemv :: (
             jy = ky;
             for j:0..n-1 {
                 temp1 = alpha*get(x,jx);
-                temp2 = zero;
+                temp2 = _zero;
                 ix = kx;
                 iy = ky;
                 for i:0..j-1 {
@@ -133,7 +133,7 @@ _hemv :: (
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
-                temp2 = zero;
+                temp2 = _zero;
                 set(y,j, get(y,j) + temp1*real(get(a,j,j)));
                 for i:j+1..n-1 {
                     set(y,i, get(y,i) + temp1*get(a,i,j));
@@ -146,7 +146,7 @@ _hemv :: (
             jy = ky;
             for j:0..n-1 {
                 temp1 = alpha*get(x,jx);
-                temp2 = zero;
+                temp2 = _zero;
                 set(y,jy, get(y,jy) + temp1*real(get(a,j,j)));
                 ix = jx;
                 iy = jy;

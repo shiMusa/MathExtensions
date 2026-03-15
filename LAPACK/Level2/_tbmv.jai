@@ -4,7 +4,7 @@
 // ? tbmv = triangular band matrix * vector
 
 // ? original comment
-// CTBMV  performs one of the matrix-vector operations
+// CTBMV  performs _one of the matrix-vector operations
 //
 //    x := A*x,   or   x := A**T*x,   or   x := A**H*x,
 //
@@ -30,15 +30,15 @@ _tbmv :: (
     $$trans: u8,
     $$diag: u8,
     $$n: int,
-    $$m: int,
+    $$k: int,
     a: $A/ArrayType2D,
     $$lda: int,
     x: *$X/ArrayType1D,
     $$incx: int
 ) {
     T :: A.data_type;
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
     
     #if CHECKS {
         #run {
@@ -60,14 +60,14 @@ _tbmv :: (
     nounit := char_eq(diag, #char "n");
 
     temp : T = ---;
-    ix, jx, kplus1, kx, l : int = ---;
+    ix, jx, kplus1, l : int = ---;
 
     // Set up the start point in x if the increment is not unity. This
     // will be  (n-1)*incx  too small for descending loops.
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
 
     // Start the operations. In this version the elements of A are
-    // accessed sequentially with one pass through A.
+    // accessed sequentially with _one pass through A.
 
     if char_eq(trans, #char "n") {
         // Form  x := A*x
@@ -75,7 +75,7 @@ _tbmv :: (
             kplus1 = k + 1;
             if incx == 1 {
                 for j:0..n-1 {
-                    if get(x,j) != zero {
+                    if get(x,j) != _zero {
                         temp = get(x,j);
                         l = kplus1 - j;
                         for i:max(0,j-k)..j-1 {
@@ -87,7 +87,7 @@ _tbmv :: (
             } else {
                 jx = kx;
                 for j:0..n-1 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
                         l = kplus1 - j;
@@ -104,7 +104,7 @@ _tbmv :: (
         } else {
             if incx == 1 {
                 for <j:n-1..0 {
-                    if get(x,j) != zero {
+                    if get(x,j) != _zero {
                         temp = get(x,j);
                         l = 1 - j;
                         for <i:min(n-1,j+k)..j+1 {
@@ -117,7 +117,7 @@ _tbmv :: (
                 kx += (n-1)*incx;
                 jx = kx;
                 for <j:n-1..0 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
                         l = 1 - j;
@@ -144,7 +144,7 @@ _tbmv :: (
                             temp += get(a,l+i,j)*get(x,i);
                         }
                     } else {
-                        if nounit then tmp *= conjugate(get(a,kplus1,j));
+                        if nounit then temp *= conjugate(get(a,kplus1,j));
                         for <i:j-1..max(0,j-k) {
                             temp += conjugate(get(a,l+i,j))*get(x,i);
                         }

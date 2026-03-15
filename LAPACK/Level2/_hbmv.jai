@@ -36,8 +36,8 @@ _hbmv :: (
     y: *$Y/ArrayType1D,
     $$incy: int
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
     
     #if CHECKS {
         #run {
@@ -54,7 +54,7 @@ _hbmv :: (
     }
 
     // quick return if possible
-    if n == 0 || (alpha == zero && beta == one) then return;
+    if n == 0 || (alpha == _zero && beta == _one) then return;
 
     // set up the start points in x and y
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
@@ -64,14 +64,14 @@ _hbmv :: (
     ix, iy, jx, jy, kplus1, l : int = ---;
 
     // start the operations. in this version the elements of the array a
-    // are accessed sequentially with one pass through a.
+    // are accessed sequentially with _one pass through a.
 
     // first form  y := beta*y
-    if beta != one {
+    if beta != _one {
         if incy == 1 {
-            if beta == zero {
+            if beta == _zero {
                 for i:0..n-1 {
-                    set(y,i, zero);
+                    set(y,i, _zero);
                 }
             } else {
                 for i:0..n-1 {
@@ -80,9 +80,9 @@ _hbmv :: (
             }
         } else {
             iy = ky;
-            if beta == zero {
+            if beta == _zero {
                 for i:0..n-1 {
-                    set(y,iy, zero);
+                    set(y,iy, _zero);
                     iy += incy;
                 }
             } else {
@@ -94,7 +94,7 @@ _hbmv :: (
         }
     }
 
-    if alpha == zero then return;
+    if alpha == _zero then return;
 
     if char_eq(uplo, #char "u") {
         // Form  y  when upper triangle of A is stored.
@@ -102,7 +102,7 @@ _hbmv :: (
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
-                temp2 = zero;
+                temp2 = _zero;
                 l = kplus1 - j;
                 for i:max(0,j-k)..j-1 {
                     set(y,i, get(y,i) + temp1*get(a,l+i,j));
@@ -115,7 +115,7 @@ _hbmv :: (
             jy = ky;
             for j:0..n-1 {
                 temp1 = alpha * get(x,jx);
-                temp2 = zero;
+                temp2 = _zero;
                 ix = kx;
                 iy = ky;
                 l = kplus1 - j;
@@ -139,7 +139,7 @@ _hbmv :: (
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
-                temp2 = zero;
+                temp2 = _zero;
                 set(y,j, get(y,j) + temp1*real(get(a,0,j)));
                 l = -j;
                 for i:j+1..min(n-1,j+k) {
@@ -153,7 +153,7 @@ _hbmv :: (
             jy = ky;
             for j:0..n-1 {
                 temp1 = alpha*get(x,jx);
-                temp2 = zero;
+                temp2 = _zero;
                 set(y,jy, get(y,jy) + temp1*real(get(a,0,j)));
                 l = -j;
                 ix = jx;

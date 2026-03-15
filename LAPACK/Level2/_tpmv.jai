@@ -4,7 +4,7 @@
 // ? tpmv = triangular packed matrix * vector
 
 // ? original comment
-// CTPMV  performs one of the matrix-vector operations
+// CTPMV  performs _one of the matrix-vector operations
 //
 //    x := A*x,   or   x := A**T*x,   or   x := A**H*x,
 //
@@ -35,8 +35,8 @@ _tpmv :: (
     $$incx: int
 ) {
     T :: A.data_type;
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
     
     #if CHECKS {
         #run {
@@ -52,7 +52,7 @@ _tpmv :: (
     // Quick return if possible.
     if n == 0 then return;
 
-    #if !is_non_real_number(T) {
+    #if #run !is_non_real_number(T) {
         noconj :: true; // no complex or quaternion number, so no conjugation
     } else {
         #if is_constant(trans) { // this should bake the `if`s during compile time
@@ -75,7 +75,7 @@ _tpmv :: (
     ix, jx, k, kk : int = ---;
 
     // Start the operations. In this version the elements of AP are
-    // accessed sequentially with one pass through AP.
+    // accessed sequentially with _one pass through AP.
 
     if char_eq(trans, #char "n") {
         // Form  x := A*x.
@@ -83,7 +83,7 @@ _tpmv :: (
             kk = 1; // ! 1 offset?
             if incx == 1 {
                 for j:0..n-1 {
-                    if get(x,j) != zero {
+                    if get(x,j) != _zero {
                         temp = get(x,j);
                         k = kk;
                         for i:0..j-1 {
@@ -97,7 +97,7 @@ _tpmv :: (
             } else {
                 jx = kx;
                 for j:0..n-1 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
                         for k:kk..kk+j-2 {
@@ -114,7 +114,7 @@ _tpmv :: (
             kk = (n*(n+1))/2;
             if incx == 1 {
                 for <j:n-1..0 {
-                    if get(x,j) != zero {
+                    if get(x,j) != _zero {
                         temp = get(x,j);
                         k = kk;
                         for <i:n-1..j+1 {
@@ -129,7 +129,7 @@ _tpmv :: (
                 kx += (n-1)*incx;
                 jx = kx;
                 for <j:n-1..0 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
                         for k:kk..kk-(n-(j+1)) {

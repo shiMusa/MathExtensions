@@ -4,7 +4,7 @@
 // ? tpsv = triangular packed (matrix) solve vector
 
 // ? original comment
-// CTPSV  solves one of the systems of equations
+// CTPSV  solves _one of the systems of equations
 //
 //    A*x = b,   or   A**T*x = b,   or   A**H*x = b,
 //
@@ -37,8 +37,8 @@ _tpsv :: (
     $$incx: int
 ) {
     T :: A.data_type;
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
     
     #if CHECKS {
         #run {
@@ -54,7 +54,7 @@ _tpsv :: (
     // Quick return if possible.
     if n == 0 then return;
 
-    #if !is_non_real_number(T) {
+    #if #run !is_non_real_number(T) {
         noconj :: true; // no complex or quaternion number, so no conjugation
     } else {
         #if is_constant(trans) { // this should bake the `if`s during compile time
@@ -74,16 +74,16 @@ _tpsv :: (
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
 
     temp : T = ---;
-    ix, jx, k, kk, kx : int = ---;
+    ix, jx, k, kk : int = ---;
 
     // Start the operations. In this version the elements of AP are
-    // accessed sequentially with one pass through AP.
+    // accessed sequentially with _one pass through AP.
     if char_eq(trans, #char "n") {
         // Form  x := inv(A)*x.
         if char_eq(uplo, #char "u") {
             if incx == 1 {
                 for <j:n-1..0 {
-                    if get(x,i) != zero {
+                    if get(x,j) != _zero {
                         if nounit then set(x,j, get(x,j)/get(ap,kk));
                         temp = get(x,j);
                         k = kk - j;
@@ -97,7 +97,7 @@ _tpsv :: (
             } else {
                 jx = kx + (n-1)*incx;
                 for <j:n-1..0 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         if nounit then set(x,jx, get(x,jx)/get(ap,kk));
                         temp = get(x,jx);
                         ix = jx;
@@ -114,7 +114,7 @@ _tpsv :: (
             kk = 1;
             if incx == 1 {
                 for j:0..n-1 {
-                    if get(x,j) != zero {
+                    if get(x,j) != _zero {
                         if nounit then set(x,j, get(x,j)/get(ap,kk));
                         temp = get(x,j);
                         k = kk + 1;
@@ -128,7 +128,7 @@ _tpsv :: (
             } else {
                 jx = kx;
                 for j:0..n-1 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         if nounit then set(x,jx, get(x,jx)/get(ap,kk));
                         temp = get(x,jx);
                         ix = jx;
@@ -161,7 +161,7 @@ _tpsv :: (
                             temp -= conjugate(get(ap,k))*get(x,i);
                             k += 1;
                         }
-                        if nounit then tmep /= conjugate(get(ap,kk+j-1));
+                        if nounit then temp /= conjugate(get(ap,kk+j-1));
                     }
                     set(x,j, temp);
                     kk += j;

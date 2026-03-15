@@ -4,7 +4,7 @@
 // ? trmv = triangular matrix * vector
 
 // ? original comment
-// CTRMV  performs one of the matrix-vector operations
+// CTRMV  performs _one of the matrix-vector operations
 //
 //    x := A*x,   or   x := A**T*x,   or   x := A**H*x,
 //
@@ -36,8 +36,8 @@ _trmv :: (
     $$incx: int
 ) {
     T :: A.data_type;
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    _zero :: #run zero(T);
+    _one  :: #run one(T);
     
     #if CHECKS {
         #run {
@@ -54,7 +54,7 @@ _trmv :: (
     // Quick return if possible.
     if n == 0 then return;
 
-    #if !is_non_real_number(T) {
+    #if #run !is_non_real_number(T) {
         noconj :: true; // no complex or quaternion number, so no conjugation
     } else {
         #if is_constant(trans) {
@@ -74,17 +74,17 @@ _trmv :: (
     kx := ifx incx > 0 then 0 else (n-1)*incx;
 
     temp : T = ---;
-    ix, jx, kx : int = ---;
+    ix, jx : int = ---;
 
     // Start the operations. In this version the lements of A are
-    // accessed sequentially with one pass through A.
+    // accessed sequentially with _one pass through A.
 
     if char_eq(trans, #char "n") {
         // From  x := A*x.
         if char_eq(uplo, #char "u") {
             if incx == 1 {
                 for j:0..n-1 {
-                    if get(x,j) != zero {
+                    if get(x,j) != _zero {
                         temp = get(x,j);
                         for i:0..j-1 {
                             set(x,i, get(x,i) + temp*get(a,i,j));
@@ -95,7 +95,7 @@ _trmv :: (
             } else {
                 jx = kx;
                 for j:0..n-1 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
                         for i:0..j-1 {
@@ -110,7 +110,7 @@ _trmv :: (
         } else {
             if incx == 1 {
                 for <j:n-1..0 {
-                    if get(x,j) != zero {
+                    if get(x,j) != _zero {
                         temp = get(x,j);
                         for <i:n-1..j+1 {
                             set(x,i, get(x,i) + temp*get(a,i,j));
@@ -122,7 +122,7 @@ _trmv :: (
                 kx += (n-1)*incx;
                 jx = kx;
                 for <j:n-1..0 {
-                    if get(x,jx) != zero {
+                    if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
                         for <i:n-1..j+1 {
@@ -142,7 +142,7 @@ _trmv :: (
                 for <j:n-1..0 {
                     temp = get(x,j);
                     if noconj {
-                        if nounit then tmp *= get(a,j,j);
+                        if nounit then temp *= get(a,j,j);
                         for <i:j-1..0 {
                             temp += get(a,i,j)*get(x,i);
                         }
