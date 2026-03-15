@@ -90,12 +90,12 @@ _tbsv :: (
         // Form x := inv(A)*x.
         if char_eq(uplo, #char "u") {
             if incx == 1 {
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     if get(x,j) != _zero {
                         l = kplus1 - j;
                         if nounit then set(x,j, get(x,j)/get(a,kplus1,j));
                         temp = get(x,j);
-                        for <i:j-1..max(0,j-k) {
+                        for <i:max(0,j-k)..j-1 {
                             set(x,i, get(x,i) - temp*get(a,l+i,j));
                         }
                     }
@@ -103,14 +103,14 @@ _tbsv :: (
             } else {
                 kx += (n-1)*incx;
                 jx = kx;
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     kx -= incx;
                     if get(x,jx) != _zero {
                         ix = kx;
                         l = kplus1 - j;
                         if nounit then set(x,jx, get(x,jx)/get(a,kplus1,j));
                         temp = get(x,jx);
-                        for <i:j-1..max(0,j-k) {
+                        for <i:max(0,j-k)..j-1 {
                             set(x,ix, get(x,ix) - temp*get(a,l+i,j));
                             ix -= incx;
                         }
@@ -195,16 +195,16 @@ _tbsv :: (
             }
         } else {
             if incx == 1 {
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     temp = get(x,j);
                     l = 1 - j;
                     if noconj {
-                        for <i:min(n-1,j+k)..j+1 {
+                        for <i:j+1..min(n-1,j+k) {
                             temp -= get(a,l+i,j)*get(x,i);
                         }
                         if nounit then temp /= get(a,1,j);
                     } else {
-                        for <i:min(n-1,j+k)..j+1 {
+                        for <i:j+1..min(n-1,j+k) {
                             temp -= conjugate(get(a,l+i,j))*get(x,i);
                         }
                         if nounit then temp /= conjugate(get(a,1,j));
@@ -214,18 +214,18 @@ _tbsv :: (
             } else {
                 kx += (n-1)*incx;
                 jx = kx;
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     temp = get(x,jx);
                     ix = kx;
                     l = 1 - j;
                     if noconj {
-                        for <i:min(n-1,j+k)..j+1 {
+                        for <i:j+1..min(n-1,j+k) {
                             temp -= get(a,l+i,j)*get(x,ix);
                             ix -= incx;
                         }
                         if nounit then temp /= get(a,1,j);
                     } else {
-                        for <i:min(n-1,j+k)..j+1 {
+                        for <i:j+1..min(n-1,j+k) {
                             temp -= conjugate(get(a,l+i,j))*get(x,ix);
                             ix -= incx;
                         }

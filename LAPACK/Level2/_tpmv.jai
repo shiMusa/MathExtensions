@@ -113,11 +113,11 @@ _tpmv :: (
         } else {
             kk = (n*(n+1))/2;
             if incx == 1 {
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     if get(x,j) != _zero {
                         temp = get(x,j);
                         k = kk;
-                        for <i:n-1..j+1 {
+                        for <i:j+1..n-1 {
                             set(x,i, get(x,i) + temp*get(ap,k));
                             k -= 1;
                         }
@@ -128,7 +128,7 @@ _tpmv :: (
             } else {
                 kx += (n-1)*incx;
                 jx = kx;
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
@@ -148,18 +148,18 @@ _tpmv :: (
         if char_eq(uplo, #char "u") {
             kk = (n*(n+1))/2;
             if incx == 1 {
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     temp = get(x,j);
                     k = kk - 1;
                     if noconj {
                         if nounit then temp *= get(ap,kk);
-                        for <i:j-1..0 {
+                        for <i:0..j-1 {
                             temp += get(ap,k)*get(x,i);
                             k -= 1;
                         }
                     } else {
                         if nounit then temp *= conjugate(get(ap,kk));
-                        for <i:j-1..0 {
+                        for <i:0..j-1 {
                             temp += conjugate(get(ap,k))*get(x,i);
                             k -= 1;
                         }
@@ -169,18 +169,18 @@ _tpmv :: (
                 }
             } else {
                 jx = kx + (n-1)*incx;
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     temp = get(x,jx);
                     ix = jx;
                     if noconj {
                         if nounit then temp *= get(ap,kk);
-                        for <k:kk-1..kk-j+1 {
+                        for <k:kk-j+1..kk-1 {
                             ix -= incx;
                             temp += get(ap,k)*get(x,ix);
                         }
                     } else {
                         if nounit then temp *= conjugate(get(ap,kk));
-                        for <k:kk-1..kk-j+1 {
+                        for <k:kk-j+1..kk-1 {
                             ix -= incx;
                             temp += conjugate(get(ap,k))*get(x,ix);
                         }

@@ -71,7 +71,7 @@ _trmv :: (
 
     // Set up the start point in x if the increment is not unity. This
     // will be  (n-1)*incx  too small for descending loops.
-    kx := ifx incx > 0 then 0 else (n-1)*incx;
+    kx := ifx incx >= 0 then 0 else (n-1)*(-incx);
 
     temp : T = ---;
     ix, jx : int = ---;
@@ -109,10 +109,10 @@ _trmv :: (
             }
         } else {
             if incx == 1 {
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     if get(x,j) != _zero {
                         temp = get(x,j);
-                        for <i:n-1..j+1 {
+                        for <i:j+1..n-1 {
                             set(x,i, get(x,i) + temp*get(a,i,j));
                         }
                         if nounit then set(x,j, get(x,j)*get(a,j,j));
@@ -121,11 +121,11 @@ _trmv :: (
             } else {
                 kx += (n-1)*incx;
                 jx = kx;
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     if get(x,jx) != _zero {
                         temp = get(x,jx);
                         ix = kx;
-                        for <i:n-1..j+1 {
+                        for <i:j+1..n-1 {
                             set(x,ix, get(x,ix) + temp*get(a,i,j));
                             ix -= incx;
                         }
@@ -139,16 +139,16 @@ _trmv :: (
         // Form  x := A**T*x  or  x := A**H*x.
         if char_eq(uplo, #char "u") {
             if incx == 1 {
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     temp = get(x,j);
                     if noconj {
                         if nounit then temp *= get(a,j,j);
-                        for <i:j-1..0 {
+                        for <i:0..j-1 {
                             temp += get(a,i,j)*get(x,i);
                         }
                     } else {
                         if nounit then temp *= conjugate(get(a,j,j));
-                        for <i:j-1..0 {
+                        for <i:0..j-1 {
                             temp += conjugate(get(a,i,j))*get(x,i);
                         }
                     }
@@ -156,18 +156,18 @@ _trmv :: (
                 }
             } else {
                 jx = kx + (n-1)*incx;
-                for <j:n-1..0 {
+                for <j:0..n-1 {
                     temp = get(x,jx);
                     ix = jx;
                     if noconj {
                         if nounit then temp *= get(a,j,j);
-                        for <i:j-1..0 {
+                        for <i:0..j-1 {
                             ix -= incx;
                             temp += get(a,i,j)*get(x,ix);
                         }
                     } else {
                         if nounit then temp *= conjugate(get(a,j,j));
-                        for <i:j-1..0 {
+                        for <i:0..j-1 {
                             ix -= incx;
                             temp += conjugate(get(a,i,j))*get(x,ix);
                         }

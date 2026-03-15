@@ -137,23 +137,23 @@ _trsv :: (
         // Form x := inv(A)*x.
         if char_eq(uplo, #char"u") {
             if incx == 1 {
-                for <j: n-1..0 {
+                for <j: 0..n-1 {
                     if get(x, j)!= _zero {
                         if nounit then set(x,j, get(x,j) / get(a,j,j));
                         tmp = get(x,j);
-                        for <i: j-1..0 {
+                        for <i: 0..j-1 {
                             set(x,i, get(x,i) - tmp * get(a,i,j));
                         }
                     }
                 }
             } else {
                 jx = kx + (n-1)*incx;
-                for <j: n-1..0 {
+                for <j: 0..n-1 {
                     if get(x, jx)!= _zero {
                         if nounit then set(x,jx, get(x,jx) / get(a,j,j));
                         tmp = get(x,jx);
                         ix = jx;
-                        for <i: j-1..0 {
+                        for <i: 0..j-1 {
                             ix -= incx;
                             set(x,ix, get(x,ix) - tmp * get(a,i,j));
                         }
@@ -230,15 +230,15 @@ _trsv :: (
             }
         } else {
             if incx == 1 {
-                for <j: n-1..0 {
+                for <j: 0..n-1 {
                     tmp = get(x,j);
                     if noconj {
-                        for <i: n-1..j+1 {
+                        for <i: j+1..n-1 {
                             tmp -= get(a,i,j)*get(x,i);
                         }
                         if nounit then tmp /= get(a,j,j);
                     } else {
-                        for <i: n-1..j+1 {
+                        for <i: j+1..n-1 {
                             tmp -= conjugate(get(a,i,j))*get(x,i);
                         }
                         if nounit then tmp /= conjugate(get(a,j,j));
@@ -248,17 +248,17 @@ _trsv :: (
             } else {
                 kx += (n-1)*incx;
                 jx = kx;
-                for <j: n-1..0 {
+                for <j: 0..n-1 {
                     ix = kx;
                     tmp = get(x,jx);
                     if noconj {
-                        for <i: n-1..j+1 {
+                        for <i: j+1..n-1 {
                             tmp -= get(a,i,j)*get(x,ix);
                             ix -= incx;
                         }
                         if nounit then tmp /= get(a,j,j);
                     } else {
-                        for <i: n-1..j+1 {
+                        for <i: j+1..n-1 {
                             tmp -= conjugate(get(a,i,j))*get(x,ix);
                             ix -= incx;
                         }

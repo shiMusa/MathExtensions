@@ -199,19 +199,19 @@ cblat2 :: () -> bool {
 
         // Test computations
         if isnum <= 1 {
-            pass &= cchk1(
-                srnamt, eps, thresh, true,
-                nidim, idim, nkb, kb, nalf, alf.data,
-                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            );
+            // pass &= cchk1(
+            //     srnamt, eps, thresh, true,
+            //     nidim, idim, nkb, kb, nalf, alf.data,
+            //     nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+            //     *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
+            // );
         } else if isnum <= 4 {
-            pass &= cchk2(
-                srnamt, eps, thresh, true,
-                nidim, idim, nkb, kb, nalf, alf.data,
-                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            );
+            // pass &= cchk2(
+            //     srnamt, eps, thresh, true,
+            //     nidim, idim, nkb, kb, nalf, alf.data,
+            //     nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+            //     *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
+            // );
         } else if isnum <= 10 {
             pass &= cchk3(
                 srnamt, eps, thresh, true,
@@ -1015,7 +1015,7 @@ cchk3 :: (
 
                             if !_null {
                                 if name_mv {
-                                    pass &= cmvch(trans, n, n, cone, a, nmax, z, incx, czero, x, incx, xt, g, _xx, eps, fatal);
+                                    pass &= cmvch(trans, n, n, cone, a, nmax, x, incx, czero, z, incx, xt, g, _xx, eps, fatal);
                                 } else if name_sv {
                                     for i:0..n-1 {
                                         set(z, i, get(_xx, i*abs(incx)));

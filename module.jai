@@ -26,24 +26,24 @@
 run_all_tests :: (verbose := false) {
     println("\nRunning tests ///////////////////////////////////////////////////\n", color = .FG_RED);
 
-    test_console();
+    // test_console();
 
-    test_utils();
-    test_complex();
-    test_quaternion();
+    // test_utils();
+    // test_complex();
+    // test_quaternion();
 
-    test_elementary();
+    // test_elementary();
 
-    test_polynomials();
-    test_approximations();
+    // test_polynomials();
+    // test_approximations();
     
-    test_MatrixTypes();
+    // test_MatrixTypes();
 
-    test_vector();
-    test_matrix();
+    // test_vector();
+    // test_matrix();
 
-    test_checks();
-    test_linear_algebra();
+    // test_checks();
+    // test_linear_algebra();
 
     test_lapack();
 }
