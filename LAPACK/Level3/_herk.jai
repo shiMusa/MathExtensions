@@ -47,7 +47,7 @@ _herk :: (
     $$ldc: int,
     $hermitian: bool = true
 ) #modify {
-    if is_non_real_number(U) { U = null; return; }    
+    return !is_non_real_number(U);
 } {
     T :: A.data_type;
     zero :: #run zero(T);

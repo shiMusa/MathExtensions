@@ -177,7 +177,7 @@ _gbmv :: (
 
 
             for j:0..n-1 {
-                tmp := alpha*get(x,jx);
+                temp = alpha*get(x,jx);
                 k = ku - j;
                 // FORTRAN: i = max(1,j-ku),min(m,j+kl)
                 for i:max(0,j-ku)..min(m-1,j+kl) {
@@ -192,12 +192,12 @@ _gbmv :: (
                 iy = ky;
                 k = ku - j;
                 // FORTRAN: i = max(1,j-ku),min(m,j+kl)
-                for i:max(1,j-ku)..min(m-1,j+kl) {
+                for i:max(0,j-ku)..min(m-1,j+kl) {
                     set(y, iy, get(y,iy) + temp*get(a,k+i,j));
                     iy += incy;
                 }
                 jx += incx;
-                if j > ku then ky += incy;
+                if j >= ku then ky += incy;
             }
         }
     } else {
@@ -242,7 +242,7 @@ _gbmv :: (
                 }
                 set(y,jy, get(y,jy) + alpha*temp);
                 jy += incy;
-                if j > ku then kx += incx;
+                if j >= ku then kx += incx;
             }
         }
     }

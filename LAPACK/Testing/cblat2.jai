@@ -6,7 +6,7 @@
 // ? Meaning, generating output files etc.?
 
 
-file_url : string : "../LAPACK/Testing/cblat2.in";
+file_url : string : "LAPACK/Testing/cblat2.in";
 
 //  ######  ########  ##          ###    ########  #######
 // ##    ## ##     ## ##         ## ##      ##    ##     ##
@@ -766,18 +766,16 @@ cmake :: (
     } else if String.equal_nocase(type, "gb") {
         #if DEBUG println("gb", color=.FG_CYAN);
         for j:0..n-1 {
-            i1, i2, i3 := 0;
-            for 0..ku-j {
-                set(aa, i1+j*lda, rogue);
-                i1 += 1;
+            for band_row:0..lda-1 {
+                set(aa, band_row + j*lda, rogue);
             }
-            i2 = i1;
-            for i1..min(kl+ku, ku+m-j) {
-                set(aa, i2+j*lda, get(a, i2+j-ku-1, j));
-                i2 += 1;
-            }
-            for i3:i2..lda-1 {
-                set(aa, i3+j*lda, rogue);
+
+            // BLAS GB storage keeps A(i,j) at row ku + i - j for 0-based indices.
+            ibeg := max(0, j-ku);
+            iend := min(m-1, j+kl);
+            for i:ibeg..iend {
+                band_row := ku + i - j;
+                set(aa, band_row + j*lda, get(a, i, j));
             }
         }
     } else if String.equal_nocase(type, "he") || String.equal_nocase(type, "tr") {

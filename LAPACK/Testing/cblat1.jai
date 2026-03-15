@@ -46,7 +46,7 @@ cblat1 :: () -> bool {
 //  ######     ##    ########  ######     ##
 
 stest :: (len: int, scomp: []$T, strue: []T, ssize: []T, sfac: T) -> bool #modify {
-    if !is_intrinsic_float_number(T) {T = null; return;}    
+    return is_float_number(T);
 } {
     println_push("stest");
     check := true;
@@ -68,7 +68,7 @@ stest :: (len: int, scomp: []$T, strue: []T, ssize: []T, sfac: T) -> bool #modif
 //  ######     ##    ########  ######     ##     ######
 
 stest1 :: (scomp: $T, strue: T, ssize: T, sfac: T, $push_msg: bool=true) -> bool #modify {
-    if !is_intrinsic_float_number(T) {T = null; return;}    
+    return is_float_number(T);
 } {
     #if T == float32 {
         eps :: EPS_32;
@@ -158,7 +158,7 @@ itest :: (icomp: int, itrue: int, $push_msg: bool=true) -> bool {
 //  ######  ##     ## ########  ######  ##    ##  ######
 
 check1 :: (sfac: $T) -> pass:bool #modify {
-    if !is_intrinsic_float_number(T) {T = null; return;}
+    return is_float_number(T);
 } {
     println_push("check1");
     pass := true;

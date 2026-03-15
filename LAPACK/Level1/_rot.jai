@@ -7,7 +7,7 @@ drot :: _rot;
 csrot :: _rot;
 zdrot :: _rot;
 _rot :: ($$n: int, cx: *$X/ArrayType1D, $$incx: int, cy: *$Y/ArrayType1D, $$incy: int, c:$U, s: U) #modify {
-    if !is_intrinsic_float_number(U) {U = null; return;}
+    return is_float_number(U);
 } {
     if n <= 0 then return;
     if incx == 1 && incy == 1 {

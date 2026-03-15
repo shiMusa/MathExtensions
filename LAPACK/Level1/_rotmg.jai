@@ -23,10 +23,7 @@
 srotmg :: _rotmg;
 drotmg :: _rotmg;
 _rotmg :: (dd1: *$T, dd2: *T, dx1: *T, dy1: T, dparam: [5]T) #modify {
-    if T != type_info(float32) || T != type_info(float64) {
-        T = null;
-        return;
-    }    
+    return T == float32 || T == float64;
 } {
     gam    : T : 4096.0;
     gamsq  : T : gam*gam;

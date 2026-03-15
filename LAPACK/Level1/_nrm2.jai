@@ -24,7 +24,7 @@ dnrm2  :: dznrm2;
 scnrm2 :: #bake_arguments _nrm2(R=float32);
 snrm   :: scnrm2;
 _nrm2 :: ($R: Type, $$n: int, x: $X/ArrayType1D, $$incx: int) -> R {
-    #run assert(is_intrinsic_float_number(R));
+    #run assert(is_float_number(R));
 
     XT   :: #run get_number_inner_type(X.data_type);
     T    :: UpCast(XT, float64).T;
