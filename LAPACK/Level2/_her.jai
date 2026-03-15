@@ -55,7 +55,7 @@ _her :: (
     temp: U = ---;
 
     // set the start point in x if the increment is not unity.
-    kx := ifx incx > 0 then 0 else (n-1)*(-incx);
+    kx := ifx incx > 0 then 1 else 1 - (n-1)*incx;
 
     // start the operations. In this version the lements of A are
     // accessed sequentially with one pass through the triangular part
@@ -64,30 +64,30 @@ _her :: (
     if char_eq(uplo, #char "u") {
         // form  A  when A is stored in upper trianlge.
         if incx == 1 {
-            for j:0..n-1 {
-                if get(x,j) != zero {
-                    temp = alpha*conjugate(get(x,j));
-                    for i:0..j-1 {
-                        set(a,i,j, get(a,i,j) + get(x,i) * temp);
+            for j:1..n {
+                if fget(x, j) != zero {
+                    temp = alpha*conjugate(fget(x, j));
+                    for i:1..j-1 {
+                        fset(a, i, j, fget(a.*, i, j) + fget(x, i) * temp);
                     }
-                    set(a,j,j, real_nc(get(a,j,j)) + real_nc(get(x,j)*temp));
+                    fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(fget(x, j)*temp));
                 } else {
-                    set(a,j,j, real_nc(get(a,j,j)));
+                    fset(a, j, j, real_nc(fget(a.*, j, j)));
                 }
             }
         } else {
             jx = kx;
-            for j:0..n-1 {
-                if get(x,jx) != zero {
-                    temp = alpha*conjugate(get(x,jx));
+            for j:1..n {
+                if fget(x, jx) != zero {
+                    temp = alpha*conjugate(fget(x, jx));
                     ix = kx;
-                    for i:0..j-1 {
-                        set(a,i,j, get(a,i,j) + get(x,ix)*temp);
+                    for i:1..j-1 {
+                        fset(a, i, j, fget(a.*, i, j) + fget(x, ix)*temp);
                         ix += incx;
                     }
-                    set(a,j,j) = real_nc(get(a,j,j)) + real_nc(get(x,jx)*temp);
+                    fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(fget(x, jx)*temp));
                 } else {
-                    set(a,j,j, real_nc(get(a,j,j)));
+                    fset(a, j, j, real_nc(fget(a.*, j, j)));
                 }
                 jx += incx;
             }
@@ -95,31 +95,31 @@ _her :: (
     } else {
         // Form  A  where A is stored in lower triangle.
 
-        if icnx == 1 {
-            for j:0..n-1 {
-                if get(x,j) != zero {
-                    temp = alpha * conjugate(get(x,j));
-                    set(a,j,j, real_nc(get(a,j,j)) + real_nc(temp*get(x,j)));
-                    for i:j..n-1 {
-                        set(a,i,j, get(a,i,j) + get(x,i)*temp);
+        if incx == 1 {
+            for j:1..n {
+                if fget(x, j) != zero {
+                    temp = alpha * conjugate(fget(x, j));
+                    fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(temp*fget(x, j)));
+                    for i:j+1..n {
+                        fset(a, i, j, fget(a.*, i, j) + fget(x, i)*temp);
                     }
                 } else {
-                    set(a,j,j, real_nc(get(a,j,j)));
+                    fset(a, j, j, real_nc(fget(a.*, j, j)));
                 }
             }
         } else {
             jx = kx;
-            for j:0..n-1 {
-                if get(x,jx) != zero {
-                    temp = alpha * conjugate(get(x,j));
-                    set(a,j,j, real_nc(get(a,j,j)) + real_nc(temp*get(x,j)));
+            for j:1..n {
+                if fget(x, jx) != zero {
+                    temp = alpha * conjugate(fget(x, jx));
+                    fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(temp*fget(x, jx)));
                     ix = jx;
-                    for i:j..n-1 {
+                    for i:j+1..n {
                         ix += incx;
-                        set(a,i,j, get(a,i,j) + get(x,ix)*temp);
+                        fset(a, i, j, fget(a.*, i, j) + fget(x, ix)*temp);
                     }
                 } else {
-                    set(a,j,j, real_nc(get(a,j,j)));
+                    fset(a, j, j, real_nc(fget(a.*, j, j)));
                 }
                 jx += incx;
             }

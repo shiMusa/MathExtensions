@@ -126,7 +126,7 @@ _trsv :: (
 
     // Set up the start point in X if the increment is not unity. This 
     // will be (n-1)*incx too small for descending loops.
-    kx := ifx incx > 0 then 0 else (n-1)*(-incx);
+    kx := ifx incx > 0 then 1 else 1 - (n-1)*incx;
 
     tmp : T = ---;
     ix, jx : int = ---;
@@ -137,25 +137,25 @@ _trsv :: (
         // Form x := inv(A)*x.
         if char_eq(uplo, #char"u") {
             if incx == 1 {
-                for <j: 0..n-1 {
-                    if get(x, j)!= _zero {
-                        if nounit then set(x,j, get(x,j) / get(a,j,j));
-                        tmp = get(x,j);
-                        for <i: 0..j-1 {
-                            set(x,i, get(x,i) - tmp * get(a,i,j));
+                for <j: 1..n {
+                    if fget(x, j)!= _zero {
+                        if nounit then fset(x, j, fget(x.*, j) / fget(a, j, j));
+                        tmp = fget(x, j);
+                        if j > 1 for <i: 1..j-1 {
+                            fset(x, i, fget(x.*, i) - tmp * fget(a, i, j));
                         }
                     }
                 }
             } else {
                 jx = kx + (n-1)*incx;
-                for <j: 0..n-1 {
-                    if get(x, jx)!= _zero {
-                        if nounit then set(x,jx, get(x,jx) / get(a,j,j));
-                        tmp = get(x,jx);
+                for <j: 1..n {
+                    if fget(x, jx)!= _zero {
+                        if nounit then fset(x, jx, fget(x.*, jx) / fget(a, j, j));
+                        tmp = fget(x, jx);
                         ix = jx;
-                        for <i: 0..j-1 {
+                        if j > 1 for <i: 1..j-1 {
                             ix -= incx;
-                            set(x,ix, get(x,ix) - tmp * get(a,i,j));
+                            fset(x, ix, fget(x.*, ix) - tmp * fget(a, i, j));
                         }
                     }
                     jx -= incx;
@@ -163,25 +163,25 @@ _trsv :: (
             }
         } else {
             if incx == 1 {
-                for j: 0..n-1 {
-                    if get(x, j)!= _zero {
-                        if nounit then set(x,j, get(x,j) / get(a,j,j));
-                        tmp = get(x,j);
-                        for i: j+1..n-1 {
-                            set(x,i, get(x,i) - tmp * get(a,i,j));
+                for j: 1..n {
+                    if fget(x, j)!= _zero {
+                        if nounit then fset(x, j, fget(x.*, j) / fget(a, j, j));
+                        tmp = fget(x, j);
+                        for i: j+1..n {
+                            fset(x, i, fget(x.*, i) - tmp * fget(a, i, j));
                         }
                     }
                 }
             } else {
                 jx = kx;
-                for j: 0..n-1 {
-                    if get(x, jx)!= _zero {
-                        if nounit then set(x,jx, get(x,jx) / get(a,j,j));
-                        tmp = get(x,jx);
+                for j: 1..n {
+                    if fget(x, jx)!= _zero {
+                        if nounit then fset(x, jx, fget(x.*, jx) / fget(a, j, j));
+                        tmp = fget(x, jx);
                         ix = jx;
-                        for i: j+1..n-1 {
+                        for i: j+1..n {
                             ix += incx;
-                            set(x,ix, get(x,ix) - tmp * get(a,i,j));
+                            fset(x, ix, fget(x.*, ix) - tmp * fget(a, i, j));
                         }
                     }
                     jx += incx;
@@ -192,80 +192,80 @@ _trsv :: (
         // Form x := inv( A**T )*x  or  x := inv( A**H )*x.
         if char_eq(uplo, #char"u") {
             if incx == 1 {
-                for j: 0..n-1 {
-                    tmp = get(x,j);
+                for j: 1..n {
+                    tmp = fget(x, j);
                     if noconj {
-                        for i: 0..j-1 {
-                            tmp -= get(a,i,j)*get(x,i);
+                        for i: 1..j-1 {
+                            tmp -= fget(a, i, j)*fget(x, i);
                         }
-                        if nounit then tmp /= get(a,j,j);
+                        if nounit then tmp /= fget(a, j, j);
                     } else {
-                        for i: 0..j-1 {
-                            tmp -= conjugate(get(a,i,j))*get(x,i);
+                        for i: 1..j-1 {
+                            tmp -= conjugate(fget(a, i, j))*fget(x, i);
                         }
-                        if nounit then tmp /= conjugate(get(a,j,j));
+                        if nounit then tmp /= conjugate(fget(a, j, j));
                     }
-                    set(x,j, tmp);
+                    fset(x, j, tmp);
                 }
             } else {
                 jx = kx;
-                for j: 0..n-1 {
+                for j: 1..n {
                     ix = kx;
-                    tmp = get(x,jx);
+                    tmp = fget(x, jx);
                     if noconj {
-                        for i: 0..j-1 {
-                            tmp -= get(a,i,j)*get(x,ix);
+                        for i: 1..j-1 {
+                            tmp -= fget(a, i, j)*fget(x, ix);
                             ix += incx;
                         }
-                        if nounit then tmp /= get(a,j,j);
+                        if nounit then tmp /= fget(a, j, j);
                     } else {
-                        for i: 0..j-1 {
-                            tmp -= conjugate(get(a,i,j))*get(x,ix);
+                        for i: 1..j-1 {
+                            tmp -= conjugate(fget(a, i, j))*fget(x, ix);
                             ix += incx;
                         }
-                        if nounit then tmp /= conjugate(get(a,j,j));
+                        if nounit then tmp /= conjugate(fget(a, j, j));
                     }
-                    set(x,jx, tmp);
+                    fset(x, jx, tmp);
                     jx += incx;
                 }
             }
         } else {
             if incx == 1 {
-                for <j: 0..n-1 {
-                    tmp = get(x,j);
+                for <j: 1..n {
+                    tmp = fget(x, j);
                     if noconj {
-                        for <i: j+1..n-1 {
-                            tmp -= get(a,i,j)*get(x,i);
+                        for <i: j+1..n {
+                            tmp -= fget(a, i, j)*fget(x, i);
                         }
-                        if nounit then tmp /= get(a,j,j);
+                        if nounit then tmp /= fget(a, j, j);
                     } else {
-                        for <i: j+1..n-1 {
-                            tmp -= conjugate(get(a,i,j))*get(x,i);
+                        for <i: j+1..n {
+                            tmp -= conjugate(fget(a, i, j))*fget(x, i);
                         }
-                        if nounit then tmp /= conjugate(get(a,j,j));
+                        if nounit then tmp /= conjugate(fget(a, j, j));
                     }
-                    set(x,j, tmp);
+                    fset(x, j, tmp);
                 }
             } else {
                 kx += (n-1)*incx;
                 jx = kx;
-                for <j: 0..n-1 {
+                for <j: 1..n {
                     ix = kx;
-                    tmp = get(x,jx);
+                    tmp = fget(x, jx);
                     if noconj {
-                        for <i: j+1..n-1 {
-                            tmp -= get(a,i,j)*get(x,ix);
+                        for <i: j+1..n {
+                            tmp -= fget(a, i, j)*fget(x, ix);
                             ix -= incx;
                         }
-                        if nounit then tmp /= get(a,j,j);
+                        if nounit then tmp /= fget(a, j, j);
                     } else {
-                        for <i: j+1..n-1 {
-                            tmp -= conjugate(get(a,i,j))*get(x,ix);
+                        for <i: j+1..n {
+                            tmp -= conjugate(fget(a, i, j))*fget(x, ix);
                             ix -= incx;
                         }
-                        if nounit then tmp /= conjugate(get(a,j,j));
+                        if nounit then tmp /= conjugate(fget(a, j, j));
                     }
-                    set(x,jx, tmp);
+                    fset(x, jx, tmp);
                     jx -= incx;
                 }
             }

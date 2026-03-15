@@ -11,16 +11,16 @@ _dotc :: ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy:
     res := zero(T);
     if n < 0 then return res;
     if incx == 1 && incy == 1 {
-        for i: 0..n-1 {
-            res += conjugate(get(cx,i))*get(cy,i);
+        for i: 1..n {
+            res += conjugate(fget(cx, i))*fget(cy, i);
         }
     } else {
-        ix := 0;
-        iy := 0;
-        if incx < 0 then ix = (-n+1)*incx;
-        if incy < 0 then iy = (-n+1)*incy;
-        for i: 0..n-1 {
-            res += conjugate(get(cx,ix)) * get(cy,iy);
+        ix := 1;
+        iy := 1;
+        if incx < 0 then ix = (-n+1)*incx + 1;
+        if incy < 0 then iy = (-n+1)*incy + 1;
+        for i: 1..n {
+            res += conjugate(fget(cx, ix)) * fget(cy, iy);
             ix += incx;
             iy += incy;
         }

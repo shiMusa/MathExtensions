@@ -15,13 +15,13 @@ _asum :: ($U: Type, $$n: int, cx: $A/ArrayType1D, $$incx: int) -> U {
     if n <= 0 || incx < 0 then return res;
 
     if incx == 1 {
-        for i:0..n-1 {
-            res += abs1(get(cx,i));
+        for i:1..n {
+            res += abs1(fget(cx, i));
         }
     } else {
-        ix := 0;
-        for i:0..n-1 {
-            res += abs1(get(cx,ix));
+        ix := 1;
+        for i:1..n {
+            res += abs1(fget(cx, ix));
             ix += incx;
         }
     }

@@ -162,15 +162,15 @@ cblat2 :: () -> bool {
 
     // Check the riliability of CMVCH using exact data.
     n := min(32, nmax);
-    for j:0..n-1 {
-        for i:0..n-1 {
-            set(*a, i,j, ncast(C32,max(i-j+1, 0)));
+    for j:1..n {
+        for i:1..n {
+            fset(*a, i, j, ncast(C32,max(i-j+1, 0)));
         }
-        set(*x, j, ncast(C32,j));
-        set(*y, j, czero);
+        fset(*x, j, ncast(C32,j-1));
+        fset(*y, j, czero);
     }
-    for j:0..n-1 {
-        set(*yy, j, ncast(C32, j*((j+1)*j)/2 - ((j+1)*j*(j-1))/3) );
+    for j:1..n {
+        fset(*yy, j, ncast(C32, (j-1)*(j*(j-1))/2 - (j*(j-1)*(j-2))/3) );
     }
     // YY holds the exact result. On exit from CMVCH YT holds 
     // the result computed by CMVCH.
@@ -199,19 +199,19 @@ cblat2 :: () -> bool {
 
         // Test computations
         if isnum <= 1 {
-            // pass &= cchk1(
-            //     srnamt, eps, thresh, true,
-            //     nidim, idim, nkb, kb, nalf, alf.data,
-            //     nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-            //     *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            // );
+            pass &= cchk1(
+                srnamt, eps, thresh, true,
+                nidim, idim, nkb, kb, nalf, alf.data,
+                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
+            );
         } else if isnum <= 4 {
-            // pass &= cchk2(
-            //     srnamt, eps, thresh, true,
-            //     nidim, idim, nkb, kb, nalf, alf.data,
-            //     nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-            //     *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            // );
+            pass &= cchk2(
+                srnamt, eps, thresh, true,
+                nidim, idim, nkb, kb, nalf, alf.data,
+                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
+            );
         } else if isnum <= 10 {
             pass &= cchk3(
                 srnamt, eps, thresh, true,
@@ -284,50 +284,51 @@ cmvch :: (
     #if DEBUG println("tran = %, ctran = %", tran, ctran, color=.FG_CYAN);
     ml := ifx tran || ctran then n else m;
     nl := ifx tran || ctran then m else n;
-    kx    := ifx incx < 0 then nl-1 else 0;
+    kx    := ifx incx < 0 then nl else 1;
     incxl := ifx incx < 0 then -1 else 1;
-    ky    := ifx incy < 0 then ml-1 else 0;
+    ky    := ifx incy < 0 then ml else 1;
     incyl := ifx incy < 0 then -1 else 1;
     iy, jx: int = ---;
 
     // Compute expected result in YT using data in A, X and Y.
     // Compute gauges in G.
     iy = ky;
-    for i:0..ml-1 {
-        set(yt, iy, czero);
-        set(g , iy, rzero);
+    for i:1..ml {
+        fset(yt, iy, czero);
+        fset(g , iy, rzero);
         jx = kx;
         if tran {
-            for j:0..nl-1 {
-                set(yt, iy, get(yt,iy) + get(a,j,i)*get(x,jx));
-                set(g , iy, get( g,iy) + abs1(get(a,j,i))*abs1(get(x,jx)));
+            for j:1..nl {
+                fset(yt, iy, fget(yt.*,iy) + fget(a,j,i)*fget(x,jx));
+                fset(g , iy, fget(g.*,iy) + abs1(fget(a,j,i))*abs1(fget(x,jx)));
                 jx += incxl;
             }
         } else if ctran {
-            for j:0..nl-1 {
-                set(yt, iy, get(yt,iy) + conjugate(get(a,j,i))*get(x,jx));
-                set( g, iy, get( g,iy) + abs1(get(a,j,i))*abs1(get(x,jx)));
+            for j:1..nl {
+                fset(yt, iy, fget(yt.*,iy) + conjugate(fget(a,j,i))*fget(x,jx));
+                fset( g, iy, fget(g.*,iy) + abs1(fget(a,j,i))*abs1(fget(x,jx)));
                 jx += incxl;
             }
         } else {
-            for j:0..nl-1 {
-                set(yt, iy, get(yt,iy) + get(a,i,j)*get(x,jx));
-                set( g, iy, get( g,iy) + abs1(get(a,i,j))*abs1(get(x,jx)));
+            for j:1..nl {
+                fset(yt, iy, fget(yt.*,iy) + fget(a,i,j)*fget(x,jx));
+                fset( g, iy, fget(g.*,iy) + abs1(fget(a,i,j))*abs1(fget(x,jx)));
                 jx += incxl;
             }
         }
-        set(yt, iy, alpha*get(yt,iy) + beta*get(y,iy));
-        set( g, iy, abs1(alpha)*get(g,iy) + abs1(beta)*abs1(get(y,iy)));
+        fset(yt, iy, alpha*fget(yt.*,iy) + beta*fget(y,iy));
+        fset( g, iy, abs1(alpha)*fget(g.*,iy) + abs1(beta)*abs1(fget(y,iy)));
         iy += incyl;
     }
 
     // Compute the error ration for this result.
     rerr := rzero;
     res := true;
-    for i:0..ml-1 {
-        erri := abs(get(yt,i) - get(yy,i*abs(incy)))/eps;
-        if get(g,i) != rzero {
-            erri /= get(g,i);
+    for i:1..ml {
+        yii := 1 + (i-1)*abs(incy);
+        erri := abs(fget(yt.*,i) - fget(yy,yii))/eps;
+        if fget(g.*,i) != rzero {
+            erri /= fget(g.*,i);
         }
         rerr = max(rerr,erri);
         if rerr*sqrt(eps) >= rone {
@@ -349,9 +350,9 @@ cmvch :: (
             err("cmvch | yy    = %", yy   );
             err("cmvch | eps   = %", formatFloat(eps,mode=FormatFloat.Mode.SCIENTIFIC)  );
             err("cmvch | erri % : %", type_of(erri), erri);
-            err("cmvch | yt[%] = %, yy[%*abs(%)] = %", i, get(yt,i), i, incy, get(yy,i*abs(incy)));
-            err("cmvch | abs(get(yt,%) - get(yy,%*abs(%))) = %", i, i, incy, abs(get(yt,i) - get(yy,i*abs(incy))));
-            err("cmvch | g[%] = %", i, get(g,i));
+            err("cmvch | yt[%] = %, yy[1 + (%-1)*abs(%)] = %", i, fget(yt.*,i), i, incy, fget(yy,yii));
+            err("cmvch | abs(get(yt,%) - get(yy,1 + (%-1)*abs(%))) = %", i, i, incy, abs(fget(yt.*,i) - fget(yy,yii)));
+            err("cmvch | g[%] = %", i, fget(g.*,i));
             err("cmvch | %*sqrt(%) = % >= 1.0", rerr, formatFloat(eps, mode=FormatFloat.Mode.SCIENTIFIC), rerr*sqrt(eps));
             err("", exit_program=fatal);
             res = false;
@@ -1087,132 +1088,131 @@ cmake :: (
 
     // Generate data in array a.
     // println("generate data in array a.");
-    for j:0..n-1 {
-        for i:0..m-1 {
+    for j:1..n {
+        for i:1..m {
             if !gen && !(upper && i <= j) && !(lower && i >= j) then continue;
 
             // FORTRAN: j-i <= ku, i=j <= kl
             if (i <= j && j-i <= ku) || (i >= j && i-j <= kl) {
-                set(a,i,j, cbeg(reset, T)+transl);
+                fset(a, i, j, cbeg(reset, T)+transl);
             } else {
-                set(a,i,j, czero);
+                fset(a, i, j, czero);
             }
 
             if i == j then continue;
 
             if sym {
-                set(a,j,i, conjugate(get(a,i,j)));
+                fset(a, j, i, conjugate(fget(a.*,i,j)));
             } else {
-                set(a,j,i, czero);
+                fset(a, j, i, czero);
             }
         }
-        if sym  then set(a,j,j, real_nc(get(a,j,j)));
-        if tri  then set(a,j,j, get(a,j,j) + cone);
-        if unit then set(a,j,j, cone);
+        if sym  then fset(a, j, j, real_nc(fget(a.*,j,j)));
+        if tri  then fset(a, j, j, fget(a.*,j,j) + cone);
+        if unit then fset(a, j, j, cone);
     }
 
     // Store elements in array AS in data structure required by routine.
     // println("store elements in array as in data structure required by routine.");
     if String.equal_nocase(type, "ge") {
         #if DEBUG println("ge", color=.FG_CYAN);
-        for j:0..n-1 {
-            for i:0..m-1 {
+        for j:1..n {
+            for i:1..m {
                 // FORTRAN: i + (j-1)*lda
                 // * This assumes a later interpretation of aa as a column-major matrix - Fehse 2022-03-03
-                set(aa, i + j*lda, get(a,i,j));
+                fset(aa, i + (j-1)*lda, fget(a.*,i,j));
             }
-            for i:m..lda-1 {
+            for i:m+1..lda {
                 // FORTRAN: i + (j-1)*lda
                 // * This assumes a later interpretation of aa as a column-major matrix - Fehse 2022-03-03
-                set(aa, i + j*lda, rogue);
+                fset(aa, i + (j-1)*lda, rogue);
             }
         }
     } else if String.equal_nocase(type, "gb") {
         #if DEBUG println("gb", color=.FG_CYAN);
-        for j:0..n-1 {
-            for band_row:0..lda-1 {
-                set(aa, band_row + j*lda, rogue);
+        for j:1..n {
+            for band_row:1..lda {
+                fset(aa, band_row + (j-1)*lda, rogue);
             }
 
-            // BLAS GB storage keeps A(i,j) at row ku + i - j for 0-based indices.
-            ibeg := max(0, j-ku);
-            iend := min(m-1, j+kl);
+            ibeg := max(1, j-ku);
+            iend := min(m, j+kl);
             for i:ibeg..iend {
-                band_row := ku + i - j;
-                set(aa, band_row + j*lda, get(a, i, j));
+                band_row := ku + 1 + i - j;
+                fset(aa, band_row + (j-1)*lda, fget(a.*, i, j));
             }
         }
     } else if String.equal_nocase(type, "he") || String.equal_nocase(type, "tr") {
         #if DEBUG println("he || tr", color=.FG_CYAN);
-        for j:0..n-1 {
+        for j:1..n {
             ibeg, iend : int = ---;
             if upper {
-                ibeg = 0;
+                ibeg = 1;
                 iend = ifx unit then j-1 else j;
             } else {
                 ibeg = ifx unit then j+1 else j;
-                iend = n-1;
+                iend = n;
             }
-            for i:0..ibeg-1 {
-                set(aa, i+j*lda, rogue);
+            for i:1..ibeg-1 {
+                fset(aa, i+(j-1)*lda, rogue);
             }
             for i:ibeg..iend {
-                set(aa, i+j*lda, get(a,i,j));
+                fset(aa, i+(j-1)*lda, fget(a.*,i,j));
             }
-            for i:iend+1..lda-1 {
-                set(aa, i+j*lda, rogue);
+            for i:iend+1..lda {
+                fset(aa, i+(j-1)*lda, rogue);
             }
             if sym {
-                jj := j + j*lda;
-                set(aa,jj, cpx(real(get(aa,jj)), rrogue));
+                jj := j + (j-1)*lda;
+                fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
             }
         }
     } else if String.equal_nocase(type, "hb") || String.equal_nocase(type, "tb") {
         #if DEBUG println("hb || tb", color=.FG_CYAN);
-        for j:0..n-1 {
+        for j:1..n {
             kk, ibeg, iend : int = ---;
             if upper {
-                kk = kl; // correct Fortran indexing
-                ibeg = max(0, kl-j); // correct Fortran indexing
-                iend = ifx unit then kl-1 else kl; // correct Fortran indexing
+                kk = kl + 1;
+                ibeg = max(1, kk-j+1);
+                iend = ifx unit then kk-1 else kk;
             } else {
-                kk = 0; // correct Fortran indexing
-                ibeg = ifx unit then 1 else 0; // correct Fortran indexing
-                iend = min(kl, m-j-1); // correct Fortran indexing
+                kk = 1;
+                ibeg = ifx unit then 2 else 1;
+                iend = min(kl+1, m-j+1);
             }
-            for i:0..ibeg-1 {
-                set(aa, i+j*lda, rogue);
+            for i:1..ibeg-1 {
+                fset(aa, i+(j-1)*lda, rogue);
             }
             for i:ibeg..iend {
-                set(aa, i+j*lda, get(a,i+j-kk,j));
+                fset(aa, i+(j-1)*lda, fget(a.*,i+j-kk,j));
             }
-            for i:iend+1..lda-1 {
-                set(aa, i+j*lda, rogue);
+            for i:iend+1..lda {
+                fset(aa, i+(j-1)*lda, rogue);
             }
             if sym {
-                jj := kk + j*lda;
-                set(aa,jj, cpx(real(get(aa,jj)), rrogue));
+                jj := kk + (j-1)*lda;
+                fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
             }
         }
     } else if String.equal_nocase(type, "hp") || String.equal_nocase(type, "tp") {
         #if DEBUG println("hp || tp", color=.FG_CYAN);
-        ioff := 0;
-        for j:0..n-1 {
+        ioff := 1;
+        for j:1..n {
             ibeg, iend : int = ---;
             if upper {
-                ibeg = 0;
+                ibeg = 1;
                 iend = j;
             } else {
                 ibeg = j;
-                iend = n-1;
+                iend = n;
             }
             for i:ibeg..iend {
-                set(aa, ioff, get(a,i,j));
+                fset(aa, ioff, fget(a.*,i,j));
                 if i == j {
                     if sym {
-                        set(aa,ioff, cpx(real(get(aa,ioff)), rrogue));
+                        fset(aa,ioff, cpx(real(fget(aa.*,ioff)), rrogue));
                     } else {
-                        set(aa,ioff, get(a,i,j));
+                        fset(aa,ioff, fget(a.*,i,j));
                     }
                 }
                 ioff += 1;

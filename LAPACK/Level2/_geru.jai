@@ -59,36 +59,36 @@ _geru :: (
     // start the operations. In this version the elements of A are
     // accessed sequentially with one pass through A.
     temp : T = ---;
-    jy := ifx incy > 0 then 0 else (n-1)*(-incy);
+    jy := ifx incy > 0 then 1 else 1 - (n-1)*incy;
 
     if incx == 1 {
-        for j:0..n-1 {
-            if get(y,iy) != zero {
+        for j:1..n {
+            if fget(y, jy) != zero {
                 #if conjugate {
-                    temp = alpha * conjugate(get(y,iy));
+                    temp = alpha * conjugate(fget(y, jy));
                 } else {
-                    temp = alpha * get(y,iy);
+                    temp = alpha * fget(y, jy);
                 }
-                for i:0..m-1 {
-                    set(a,i,j, get(a,i,j) + get(x,i)*temp);
+                for i:1..m {
+                    fset(a, i, j, fget(a.*, i, j) + fget(x, i)*temp);
                 }
             }
             jy += incy;
         }
     } else {
         ix : int = ---;
-        kx := ifx incx > 0 then 0 else (m-1)*(-incx);
+        kx := ifx incx > 0 then 1 else 1 - (m-1)*incx;
 
-        for j:0..n-1 {
-            if get(y,iy) != zero {
+        for j:1..n {
+            if fget(y, jy) != zero {
                 #if conjugate {
-                    temp = alpha * conjugate(get(y,iy));
+                    temp = alpha * conjugate(fget(y, jy));
                 } else {
-                    temp = alpha * get(y,iy);
+                    temp = alpha * fget(y, jy);
                 }
                 ix = kx;
-                for i:0..m-1 {
-                    set(a,i,j, get(a,i,j) + get(x,ix)*temp);
+                for i:1..m {
+                    fset(a, i, j, fget(a.*, i, j) + fget(x, ix)*temp);
                     ix += incx;
                 }
             }

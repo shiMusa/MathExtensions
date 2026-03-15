@@ -31,74 +31,74 @@ _rotm :: ($$n: int, dx: *$X/ArrayType1D, $$incx: int, dy: *$Y/ArrayType1D, $$inc
             dh12 := dparam[3];
             dh21 := dparam[2];
             dh22 := dparam[4];
-            ix := 0;
-            for i:0..n-1 {
-                w := get(dx,ix);
-                z := get(dy,ix);
-                set(dx,ix, w*dh11 + z*dh12);
-                set(dy,ix, w*dh21 + z*dh22);
+            ix := 1;
+            for i:1..n {
+                w := fget(dx.*, ix);
+                z := fget(dy.*, ix);
+                fset(dx, ix, w*dh11 + z*dh12);
+                fset(dy, ix, w*dh21 + z*dh22);
                 ix += incx;
             }
         } else if dflag == 0.0 {
             dh12 := dparam[3];
             dh21 := dparam[2];
-            ix := 0;
-            for i: 0..n-1 {
-                w := get(dx,ix);
-                z := get(dy,ix);
-                set(dx,ix, w + z*dh12);
-                set(dy,ix, w*dh21 + z);
+            ix := 1;
+            for i: 1..n {
+                w := fget(dx.*, ix);
+                z := fget(dy.*, ix);
+                fset(dx, ix, w + z*dh12);
+                fset(dy, ix, w*dh21 + z);
                 ix += incx;
             }
         } else {
             dh11 := dparam[1];
             dh22 := dparam[4];
-            ix := 0;
-            for i: 0..n-1 {
-                w := get(dx,ix);
-                z := get(dy,ix);
-                set(dx,ix,  w*dh11 + z);
-                set(dy,ix, -w + dh22*z);
+            ix := 1;
+            for i: 1..n {
+                w := fget(dx.*, ix);
+                z := fget(dy.*, ix);
+                fset(dx, ix,  w*dh11 + z);
+                fset(dy, ix, -w + dh22*z);
             }
         }
     } else {
-        kx := 0;
-        ky := 0;
-        if incx < 0 then kx = (1-n)*incx;
-        if incy < 0 then ky = (1-n)*incy;
+        kx := 1;
+        ky := 1;
+        if incx < 0 then kx = (1-n)*incx + 1;
+        if incy < 0 then ky = (1-n)*incy + 1;
 
         if dflag < 0.0 {
             dh11 := dparam[1];
             dh12 := dparam[3];
             dh21 := dparam[2];
             dh22 := dparam[4];
-            for i: 0..n-1 {
-                w := get(dx,kx);
-                z := get(dy,ky);
-                set(dx,kx, w*dh11 + z*dh12);
-                set(dy,ky, w*dh21 + z*dh22);
+            for i: 1..n {
+                w := fget(dx.*, kx);
+                z := fget(dy.*, ky);
+                fset(dx, kx, w*dh11 + z*dh12);
+                fset(dy, ky, w*dh21 + z*dh22);
                 kx += incx;
                 ky += incy;
             }
         } else if dflag == 0.0 {
             dh12 := dparam[3];
             dh21 := dparam[2];
-            for i: 0..n-1 {
-                w := get(dx,kx);
-                z := get(dy,ky);
-                set(dx,kx, w + z*dh12);
-                set(dy,ky, w*dh21 + z);
+            for i: 1..n {
+                w := fget(dx.*, kx);
+                z := fget(dy.*, ky);
+                fset(dx, kx, w + z*dh12);
+                fset(dy, ky, w*dh21 + z);
                 kx += incx;
                 ky += incy;
             }
         } else {
             dh11 := dparam[1];
             dh22 := dparam[4];
-            for i: 0..n-1 {
-                w := get(dx,kx);
-                z := get(dy,ky);
-                set(dx,kx,  w*dh11 + z);
-                set(dy,ky, -w + dh22*z);
+            for i: 1..n {
+                w := fget(dx.*, kx);
+                z := fget(dy.*, ky);
+                fset(dx, kx,  w*dh11 + z);
+                fset(dy, ky, -w + dh22*z);
                 kx += incx;
                 ky += incy;
             }

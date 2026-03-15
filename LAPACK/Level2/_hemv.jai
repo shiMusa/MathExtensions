@@ -59,8 +59,8 @@ _hemv :: (
     if n == 0 || (alpha == _zero && beta == _one) then return;
 
     // set up the start points in x and y.
-    kx := ifx incx > 0 then 0 else (n-1)*(-incx);
-    ky := ifx incy > 0 then 0 else (n-1)*(-incy);
+    kx := ifx incx > 0 then 1 else 1 - (n-1)*incx;
+    ky := ifx incy > 0 then 1 else 1 - (n-1)*incy;
 
     temp1, temp2 : T = ---;
     ix, iy, jx, jy : int = ---;
@@ -72,24 +72,24 @@ _hemv :: (
     if beta != _one {
         if incy == 1 {
             if beta == _zero {
-                for i:0..n-1 {
-                    set(y,i, _zero);
+                for i:1..n {
+                    fset(y, i, _zero);
                 }
             } else {
-                for i:0..n-1 {
-                    set(y,i, beta*get(y,i));
+                for i:1..n {
+                    fset(y, i, beta*fget(y.*, i));
                 }
             }
         } else {
             iy = ky;
             if beta == _zero {
-                for i:0..n-1 {
-                    set(y,iy, _zero);
+                for i:1..n {
+                    fset(y, iy, _zero);
                     iy += incy;
                 }
             } else {
-                for i:0..n-1 {
-                    set(y,iy, beta*get(y,iy));
+                for i:1..n {
+                    fset(y, iy, beta*fget(y.*, iy));
                     iy += incy;
                 }
             }
@@ -100,30 +100,30 @@ _hemv :: (
     if char_eq(uplo, #char "u") {
         // Form y when A is stored in the upper triangle.
         if incx == 1 && incy == 1 {
-            for j:0..n-1 {
-                temp1 = alpha*get(x,j);
+            for j:1..n {
+                temp1 = alpha*fget(x, j);
                 temp2 = _zero;
-                for i:0..j-1 {
-                    set(y,i, get(y,i) + temp1*get(a,i,j));
-                    temp2 += conjugate(get(a,i,j))*get(x,i);
+                for i:1..j-1 {
+                    fset(y, i, fget(y.*, i) + temp1*fget(a, i, j));
+                    temp2 += conjugate(fget(a, i, j))*fget(x, i);
                 }
-                set(y,j, get(y,j) + temp1*real(get(a,j,j)) + alpha*temp2);
+                fset(y, j, fget(y.*, j) + temp1*real(fget(a, j, j)) + alpha*temp2);
             }
         } else {
             jx = kx;
             jy = ky;
-            for j:0..n-1 {
-                temp1 = alpha*get(x,jx);
+            for j:1..n {
+                temp1 = alpha*fget(x, jx);
                 temp2 = _zero;
                 ix = kx;
                 iy = ky;
-                for i:0..j-1 {
-                    set(y,iy, get(y,iy) + temp1*get(a,i,j));
-                    temp2 += conjugate(get(a,i,j))*get(x,ix);
+                for i:1..j-1 {
+                    fset(y, iy, fget(y.*, iy) + temp1*fget(a, i, j));
+                    temp2 += conjugate(fget(a, i, j))*fget(x, ix);
                     ix += incx;
                     iy += incy;
                 }
-                set(y,jy, get(y,jy) + temp1*real(get(a,j,j)) + alpha*temp2);
+                fset(y, jy, fget(y.*, jy) + temp1*real(fget(a, j, j)) + alpha*temp2);
                 jx += incx;
                 jy += incy;
             }
@@ -131,32 +131,32 @@ _hemv :: (
     } else {
         // Form y when A is stored in the lower triangle.
         if incx == 1 && incy == 1 {
-            for j:0..n-1 {
-                temp1 = alpha*get(x,j);
+            for j:1..n {
+                temp1 = alpha*fget(x, j);
                 temp2 = _zero;
-                set(y,j, get(y,j) + temp1*real(get(a,j,j)));
-                for i:j+1..n-1 {
-                    set(y,i, get(y,i) + temp1*get(a,i,j));
-                    temp2 += conjugate(get(a,i,j))*get(x,i);
+                fset(y, j, fget(y.*, j) + temp1*real(fget(a, j, j)));
+                for i:j+1..n {
+                    fset(y, i, fget(y.*, i) + temp1*fget(a, i, j));
+                    temp2 += conjugate(fget(a, i, j))*fget(x, i);
                 }
-                set(y,j, get(y,j) + alpha*temp2);
+                fset(y, j, fget(y.*, j) + alpha*temp2);
             }
         } else {
             jx = kx;
             jy = ky;
-            for j:0..n-1 {
-                temp1 = alpha*get(x,jx);
+            for j:1..n {
+                temp1 = alpha*fget(x, jx);
                 temp2 = _zero;
-                set(y,jy, get(y,jy) + temp1*real(get(a,j,j)));
+                fset(y, jy, fget(y.*, jy) + temp1*real(fget(a, j, j)));
                 ix = jx;
                 iy = jy;
-                for i:j+1..n-1 {
+                for i:j+1..n {
                     ix += incx;
                     iy += incy;
-                    set(y,iy, get(y,iy) + temp1*get(a,i,j));
-                    temp2 += conjugate(get(a,i,j))*get(x,ix);
+                    fset(y, iy, fget(y.*, iy) + temp1*fget(a, i, j));
+                    temp2 += conjugate(fget(a, i, j))*fget(x, ix);
                 }
-                set(y,jy, get(y,jy) + alpha*temp2);
+                fset(y, jy, fget(y.*, jy) + alpha*temp2);
                 jx += incx;
                 jy += incy;
             }

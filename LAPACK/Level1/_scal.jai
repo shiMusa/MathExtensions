@@ -12,14 +12,14 @@ zdscal :: _scal;
 _scal :: ($$n: int, ca: X.data_type, cx: *$X/ArrayType1D, $$incx: int) {
     if n <= 0 then return;
     if incx == 1 {
-        for i: 0..n-1 {
-            set(cx,i, get(cx,i) * ca);
+        for i: 1..n {
+            fset(cx, i, fget(cx, i) * ca);
         }
     } else {
-        ix := 0;
-        if incx < 0 then ix = (-n+1)*incx;
-        for i: 0..n-1 {
-            set(cx,ix, get(cx,ix) * ca);
+        ix := 1;
+        if incx < 0 then ix = (-n+1)*incx + 1;
+        for i: 1..n {
+            fset(cx, ix, fget(cx, ix) * ca);
             ix += incx;
         }
     }

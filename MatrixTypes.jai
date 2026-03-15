@@ -72,6 +72,14 @@ ArrayType2D :: struct(data_type: Type){};
 //     return get(a.*, i, j);
 // }
 
+fget :: inline (a: $A/ArrayType2D, i: int, j: int) -> A.data_type {
+    return get(a, i-1, j-1);
+}
+
+fset :: inline (a: *$A/ArrayType2D, i: int, j: int, val: A.data_type) {
+    set(a, i-1, j-1, val);
+}
+
 
 
 //    ###    ########  ########     ###    ##    ##  #######  ########

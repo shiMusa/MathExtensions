@@ -78,8 +78,8 @@ _gemv :: (
         lenx = m;
         leny = n;
     }
-    kx := ifx incx > 0 then 0 else (lenx-1)*(-incx);
-    ky := ifx incy > 0 then 0 else (leny-1)*(-incy);
+    kx := ifx incx > 0 then 1 else 1 - (lenx-1)*incx;
+    ky := ifx incy > 0 then 1 else 1 - (leny-1)*incy;
 
     // start the operations. In this version the elements of a are
     // accessed sequantially with cone pass through a.
@@ -90,24 +90,24 @@ _gemv :: (
     if beta != cone {
         if incy == 1 {
             if beta == czero {
-                for i:0..leny-1 {
-                    set(y,i,czero);
+                for i:1..leny {
+                    fset(y, i, czero);
                 }
             } else {
-                for i:0..leny-1 {
-                    set(y,i,beta*get(y,i));
+                for i:1..leny {
+                    fset(y, i, beta*fget(y.*, i));
                 }
             }
         } else {
             iy = ky;
             if beta == czero {
-                for i:0..leny-1 {
-                    set(y,iy, czero);
+                for i:1..leny {
+                    fset(y, iy, czero);
                     iy += incy;
                 }
             } else {
-                for i:0..leny-1 {
-                    set(y,iy, beta*get(y,iy));
+                for i:1..leny {
+                    fset(y, iy, beta*fget(y.*, iy));
                     iy += incy;
                 }
             }
@@ -122,19 +122,19 @@ _gemv :: (
         // form y := alpha*A**x + y
         jx = kx;
         if incy == 1 {
-            for j:0..n-1 {
-                temp = alpha * get(x,jx);
-                for i:0..m-1 {
-                    set(y,i, get(y,i) + temp * get(a,i,j));
+            for j:1..n {
+                temp = alpha * fget(x, jx);
+                for i:1..m {
+                    fset(y, i, fget(y.*, i) + temp * fget(a, i, j));
                 }
                 jx += incx;
             }
         } else {
-            for j:0..n-1 {
-                temp = alpha * get(x,jx);
+            for j:1..n {
+                temp = alpha * fget(x, jx);
                 iy = ky;
-                for i:0..m-1 {
-                    set(y,iy, get(y,iy) + temp * get(a,i,j));
+                for i:1..m {
+                    fset(y, iy, fget(y.*, iy) + temp * fget(a, i, j));
                     iy += incy;
                 }
                 jx += incx;
@@ -144,36 +144,36 @@ _gemv :: (
         // form y := alpha*A**T*x + y  or  y := alpha*A**H*x + y.
         jy = ky;
         if incx == 1 {
-            for j:0..n-1 {
+            for j:1..n {
                 temp = czero;
                 if noconj {
-                    for i:0..m-1 {
-                        temp += get(a,i,j)*get(x,i);
+                    for i:1..m {
+                        temp += fget(a, i, j)*fget(x, i);
                     }
                 } else {
-                    for i:0..m-1 {
-                        temp += conjugate(get(a,i,j))*get(x,i);
+                    for i:1..m {
+                        temp += conjugate(fget(a, i, j))*fget(x, i);
                     }
                 }
-                set(y,jy, get(y,jy) + alpha*temp);
+                fset(y, jy, fget(y.*, jy) + alpha*temp);
                 jy += incy;
             }
         } else {
-            for j:0..n-1 {
+            for j:1..n {
                 temp = czero;
                 ix = kx;
                 if noconj {
-                    for i:0..m-1 {
-                        temp += get(a,i,j)*get(x,ix);
+                    for i:1..m {
+                        temp += fget(a, i, j)*fget(x, ix);
                         ix += incx;
                     }
                 } else {
-                    for i:0..m-1 {
-                        temp += conjugate(get(a,i,j))*get(x,ix);
+                    for i:1..m {
+                        temp += conjugate(fget(a, i, j))*fget(x, ix);
                         ix += incx;
                     }
                 }
-                set(y,jy, get(y,jy) + alpha*temp);
+                fset(y, jy, fget(y.*, jy) + alpha*temp);
                 jy += incy;
             }
         }

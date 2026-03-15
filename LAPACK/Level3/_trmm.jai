@@ -70,11 +70,12 @@ _trmm :: (
 
     // And when alpha == zero
     if alpha == zero {
-        for j:0..n-1 {
-            for i:0..m-1 {
-                set(b,i,j, zero);
+        for j:1..n {
+            for i:1..m {
+                fset(b, i, j, zero);
             }
         }
+        return;
     }
 
     temp : T = ---;
@@ -84,27 +85,27 @@ _trmm :: (
         if char_eq(transa, #char "n") {
             // Form  B := alpha*A*B
             if upper {
-                for j:0..n-1 {
-                    for k:0..m-1 {
-                        if get(b,k,j) != zero {
-                            temp = alpha*get(b,k,j);
-                            for i:0..k-1 {
-                                set(b,i,j, get(b,i,j) + temp*get(a,i,k));
+                for j:1..n {
+                    for k:1..m {
+                        if fget(b.*, k, j) != zero {
+                            temp = alpha*fget(b.*, k, j);
+                            for i:1..k-1 {
+                                fset(b, i, j, fget(b.*, i, j) + temp*fget(a, i, k));
                             }
-                            if nounit then temp *= get(a,k,k);
-                            set(b,k,j, temp);
+                            if nounit then temp *= fget(a, k, k);
+                            fset(b, k, j, temp);
                         }
                     }
                 }
             } else {
-                for j:0..n-1 {
-                    for <k:m-1..0 {
-                        if get(b,k,j) != zero {
-                            temp = alpha*get(b,k,j);
-                            set(b,k,j, temp);
-                            if nounit then set(b,k,j, get(b,k,j)*get(a,k,k));
-                            for i:k+1..m-1 {
-                                set(b,i,j, get(b,i,j) + temp*get(a,i,k));
+                for j:1..n {
+                    for <k:1..m {
+                        if fget(b.*, k, j) != zero {
+                            temp = alpha*fget(b.*, k, j);
+                            fset(b, k, j, temp);
+                            if nounit then fset(b, k, j, fget(b.*, k, j)*fget(a, k, k));
+                            for i:k+1..m {
+                                fset(b, i, j, fget(b.*, i, j) + temp*fget(a, i, k));
                             }
                         }
                     }
@@ -113,39 +114,39 @@ _trmm :: (
         } else {
             // Form  B := alpha*A**T*B  or  B := alpha*A**H*B.
             if upper {
-                for j:0..n-1 {
-                    for <i:m-1..0 {
-                        temp = get(b,i,j);
+                for j:1..n {
+                    for <i:1..m {
+                        temp = fget(b.*, i, j);
                         if noconj {
-                            if nounit then temp *= get(a,i,i);
-                            for k:0..i-1 {
-                                temp += get(a,k,i)*get(b,k,j);
+                            if nounit then temp *= fget(a, i, i);
+                            for k:1..i-1 {
+                                temp += fget(a, k, i)*fget(b.*, k, j);
                             }
                         } else {
-                            if nounit then temp *= conjugate(get(a,i,i));
-                            for k:0..i-1 {
-                                temp += conjugate(get(a,k,i))*get(b,k,j);
+                            if nounit then temp *= conjugate(fget(a, i, i));
+                            for k:1..i-1 {
+                                temp += conjugate(fget(a, k, i))*fget(b.*, k, j);
                             }
                         }
-                        set(b,i,j, alpha*temp);
+                        fset(b, i, j, alpha*temp);
                     }
                 }
             } else {
-                for j:0..n-1 {
-                    for i:0..m-1 {
-                        temp = get(b,i,j);
+                for j:1..n {
+                    for i:1..m {
+                        temp = fget(b.*, i, j);
                         if noconj {
-                            if nounit then temp *= get(a,i,i);
-                            for k:i+1..m-1 {
-                                temp += get(a,k,i)*get(b,k,j);
+                            if nounit then temp *= fget(a, i, i);
+                            for k:i+1..m {
+                                temp += fget(a, k, i)*fget(b.*, k, j);
                             }
                         } else {
-                            if nounit then temp *= conjugate(get(a,i,i));
-                            for k:i+1..m-1 {
-                                temp += conjugate(get(a,k,i))*get(b,k,j);
+                            if nounit then temp *= conjugate(fget(a, i, i));
+                            for k:i+1..m {
+                                temp += conjugate(fget(a, k, i))*fget(b.*, k, j);
                             }
                         }
-                        set(b,i,j, alpha*temp);
+                        fset(b, i, j, alpha*temp);
                     }
                 }
             }
@@ -154,33 +155,33 @@ _trmm :: (
         if char_eq(transa, "n") {
             // Form  B := alpha*B*A.
             if upper {
-                for <j:n-1..0 {
+                for <j:1..n {
                     temp = alpha;
-                    if nounit then temp *= get(a,j,j);
-                    for i:0..m-1 {
-                        set(b,i,j, temp*get(b,i,j));
+                    if nounit then temp *= fget(a, j, j);
+                    for i:1..m {
+                        fset(b, i, j, temp*fget(b.*, i, j));
                     }
-                    for k:0..j-1 {
-                        if get(a,k,j) != zero {
-                            temp = alpha*get(a,k,j);
-                            for i:0..m-1 {
-                                set(b,i,j, get(b,i,j) + temp*get(b,i,k));
+                    for k:1..j-1 {
+                        if fget(a, k, j) != zero {
+                            temp = alpha*fget(a, k, j);
+                            for i:1..m {
+                                fset(b, i, j, fget(b.*, i, j) + temp*fget(b.*, i, k));
                             }
                         }
                     }
                 }
             } else {
-                for j:0..n-1 {
+                for j:1..n {
                     temp = alpha;
-                    if nounit then temp *= get(a,j,j);
-                    for i:0..m-1 {
-                        set(b,i,j, temp*get(b,i,j));
+                    if nounit then temp *= fget(a, j, j);
+                    for i:1..m {
+                        fset(b, i, j, temp*fget(b.*, i, j));
                     }
-                    for k:j+1..n-1 {
-                        if get(a,k,j) != zero {
-                            temp = alpha*get(a,k,j);
-                            for i:0..m-1 {
-                                set(b,i,j, get(b,i,j) + temp*get(b,i,k));
+                    for k:j+1..n {
+                        if fget(a, k, j) != zero {
+                            temp = alpha*fget(a, k, j);
+                            for i:1..m {
+                                fset(b, i, j, fget(b.*, i, j) + temp*fget(b.*, i, k));
                             }
                         }
                     }
@@ -189,50 +190,50 @@ _trmm :: (
         } else {
             // Form  B := alpha*B*A**T  or  B := alpha*B*A**H.
             if upper {
-                for k:0..n-1 {
-                    for j:0..k-1 {
-                        if get(a,j,k) != zero {
+                for k:1..n {
+                    for j:1..k-1 {
+                        if fget(a, j, k) != zero {
                             if noconj {
-                                temp = alpha*get(a,j,k);
+                                temp = alpha*fget(a, j, k);
                             } else {
-                                temp = alpha*conjugate(get(a,j,k));
+                                temp = alpha*conjugate(fget(a, j, k));
                             }
-                            for i:0..m-1 {
-                                set(b,i,j, get(b,i,j) + temp*get(b,i,k));
+                            for i:1..m {
+                                fset(b, i, j, fget(b.*, i, j) + temp*fget(b.*, i, k));
                             }
                         }
                     }
                     temp = alpha;
                     if nounit {
                         if noconj {
-                            temp *= get(a,k,k);
+                            temp *= fget(a, k, k);
                         } else {
-                            temp *= conjugate(get(a,k,k));
+                            temp *= conjugate(fget(a, k, k));
                         }
                     }
                     if temp != one {
-                        for i:0..m-1 {
-                            set(b,i,k, temp*get(b,i,k));
+                        for i:1..m {
+                            fset(b, i, k, temp*fget(b.*, i, k));
                         }
                     }
                 }
             } else {
-                for <k:n-1..0 {
-                    for j:k+1..n-1 {
-                        if get(a,j,k) != zero {
-                            temp = ifx noconj then alpha*get(a,j,k) else alpha*conjugate(get(a,j,k));
-                            for i:0..m-1 {
-                                set(b,i,j, get(b,i,j) + temp*get(b,i,k));
+                for <k:1..n {
+                    for j:k+1..n {
+                        if fget(a, j, k) != zero {
+                            temp = ifx noconj then alpha*fget(a, j, k) else alpha*conjugate(fget(a, j, k));
+                            for i:1..m {
+                                fset(b, i, j, fget(b.*, i, j) + temp*fget(b.*, i, k));
                             }
                         }
                     }
                     temp = alpha;
                     if nounit {
-                        temp = ifx noconj then temp*get(a,k,k) else temp*conjugate(get(a,k,k));
+                        temp = ifx noconj then temp*fget(a, k, k) else temp*conjugate(fget(a, k, k));
                     }
                     if temp != one {
-                        for i:0..m-1 {
-                            set(b,i,k, temp*get(b,i,k));
+                        for i:1..m {
+                            fset(b, i, k, temp*fget(b.*, i, k));
                         }
                     }
                 }

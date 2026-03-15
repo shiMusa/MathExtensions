@@ -80,52 +80,57 @@ _gemm :: (
     // And when alpha == zero
     if alpha == zero {
         if beta == zero {
-            for j:0..n-1 {
-                set(c,i,j, zero);
+            for j:1..n {
+                for i:1..m {
+                    fset(c, i, j, zero);
+                }
             }
         } else {
-            for j:0..n-1 {
-                for i:0..m-1 {
-                    set(c,i,j, beta*get(c,i,j));
+            for j:1..n {
+                for i:1..m {
+                    fset(c, i, j, beta*fget(c.*, i, j));
                 }
             }
         }
+        return;
     }
+
+    temp : T = ---;
 
     // Start the operations.
 
     if notb {
         if nota {
             // Form  C := alpha*A*B + beta*C.
-            for j:0..n-1 {
+            for j:1..n {
                 if beta == zero {
-                    for i:0..m-1 {
-                        set(c,i,j, zero);
+                    for i:1..m {
+                        fset(c, i, j, zero);
                     }
                 } else if beta != one {
-                    for i:0..m-1 {
-                        set(c,i,j, beta*get(c,i,j));
+                    for i:1..m {
+                        fset(c, i, j, beta*fget(c.*, i, j));
                     }
                 }
-                for l:0..k-1 {
-                    temp = alpha*get(b,l,j);
-                    for i:0..m-1 {
-                        set(c,i,j, get(c,i,j) + temp*get(a,i,l));
+                for l:1..k {
+                    temp = alpha*fget(b, l, j);
+                    for i:1..m {
+                        fset(c, i, j, fget(c.*, i, j) + temp*fget(a, i, l));
                     }
                 }
             }
         } else {
             // Form  C := alpha*A**T*B + beta*C
-            for j:0..n-1 {
-                for i:0..m-1 {
+            for j:1..n {
+                for i:1..m {
                     temp = zero;
-                    for l:0..k-1 {
-                        temp += get(a,l,i)*get(b,l,j);
+                    for l:1..k {
+                        temp += fget(a, l, i)*fget(b, l, j);
                     }
                     if beta == zero {
-                        set(c,i,j, alpha*temp);
+                        fset(c, i, j, alpha*temp);
                     } else {
-                        set(c,i,j, alpha*temp + beta*get(c,i,j));
+                        fset(c, i, j, alpha*temp + beta*fget(c.*, i, j));
                     }
                 }
             }
@@ -133,35 +138,35 @@ _gemm :: (
     } else {
         if nota {
             // Form  C := alpha*A*B**T + beta*C
-            for j:0..n-1 {
+            for j:1..n {
                 if beta == zero {
-                    for i:0..m-1 {
-                        set(c,i,j, zero);
+                    for i:1..m {
+                        fset(c, i, j, zero);
                     }
                 } else if beta != one {
-                    for i:0..m-1 {
-                        set(c,i,j, beta*get(c,i,j));
+                    for i:1..m {
+                        fset(c, i, j, beta*fget(c.*, i, j));
                     }
                 }
-                for l:0..k {
-                    temp = alpha*get(b,j,l);
-                    for i:0..m-1 {
-                        set(c,i,j, get(c,i,j) + temp*get(a,i,l));
+                for l:1..k {
+                    temp = alpha*fget(b, j, l);
+                    for i:1..m {
+                        fset(c, i, j, fget(c.*, i, j) + temp*fget(a, i, l));
                     }
                 }
             }
         } else {
             // Form  C := alpha*A**T*B**T + beta*C
-            for j:0..n-1 {
-                for i:0..m-1 {
+            for j:1..n {
+                for i:1..m {
                     temp = zero;
-                    for l:0..k-1 {
-                        tep += get(a,l,i)*get(b,j,l);
+                    for l:1..k {
+                        temp += fget(a, l, i)*fget(b, j, l);
                     }
                     if beta == zero {
-                        set(c,i,j, alpha*temp);
+                        fset(c, i, j, alpha*temp);
                     } else {
-                        set(c,i,j, alpha*temp + beta*get(c,i,j));
+                        fset(c, i, j, alpha*temp + beta*fget(c.*, i, j));
                     }
                 }
             }

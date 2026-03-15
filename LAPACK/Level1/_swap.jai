@@ -10,20 +10,20 @@ zswap :: _swap;
 _swap :: ($$n: int, cx: *$X/ArrayType1D, $$incx: int, cy: *$Y/ArrayType1D, $$incy: int) {
     if n <= 0 then return;
     if incx == 1 && incy == 1 {
-        for i: 0..n-1 {
-            tmp := get(cx,i);
-            set(cx,i, get(cy,i));
-            set(cy,i, tmp);
+        for i: 1..n {
+            tmp := fget(cx.*, i);
+            fset(cx, i, fget(cy.*, i));
+            fset(cy, i, tmp);
         }
     } else {
-        ix := 0;
-        iy := 0;
-        if incx < 0 then ix = (-n+1)*incx;
-        if incy < 0 then iy = (-n+1)*incy;
-        for i: 0..n-1 {
-            tmp := get(cx,ix);
-            set(cx,ix, get(cy,iy));
-            set(cy,iy, tmp);
+        ix := 1;
+        iy := 1;
+        if incx < 0 then ix = (-n+1)*incx + 1;
+        if incy < 0 then iy = (-n+1)*incy + 1;
+        for i: 1..n {
+            tmp := fget(cx.*, ix);
+            fset(cx, ix, fget(cy.*, iy));
+            fset(cy, iy, tmp);
             ix += incx;
             iy += incy;
         }

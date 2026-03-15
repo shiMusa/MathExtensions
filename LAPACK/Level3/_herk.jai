@@ -95,35 +95,36 @@ _herk :: (
     if alpha == zeroU {
         if upper {
             if beta == zeroU {
-                for j:0..n-1 {
-                    for i:0..j {
-                        set(c,i,j, zero);
+                for j:1..n {
+                    for i:1..j {
+                        fset(c, i, j, zero);
                     }
                 }
             } else {
-                for j:0..n-1 {
-                    for i:0..j-1 {
-                        set(c,i,j, beta*get(c,i,j));
+                for j:1..n {
+                    for i:1..j-1 {
+                        fset(c, i, j, beta*fget(c.*, i, j));
                     }
-                    set(c,j,j, beta*re(get(c,j,j)));
+                    fset(c, j, j, beta*re(fget(c.*, j, j)));
                 }
             }
         } else {
             if beta == zeroU {
-                for j:0..n-1 {
-                    for i:j..n-1 {
-                        set(c,i,j, zero);
+                for j:1..n {
+                    for i:j..n {
+                        fset(c, i, j, zero);
                     }
                 }
             } else {
-                for j:0..n-1 {
-                    set(c,j,j, beta*re(get(c,j,j)));
-                    for i:j+1..n-1 {
-                        set(c,i,j, beta*get(c,i,j));
+                for j:1..n {
+                    fset(c, j, j, beta*re(fget(c.*, j, j)));
+                    for i:j+1..n {
+                        fset(c, i, j, beta*fget(c.*, i, j));
                     }
                 }
             }
         }
+        return;
     }
 
     temp : T = ---;
@@ -133,49 +134,49 @@ _herk :: (
     if char_eq(trans, #char "n") {
         // Form  C := alpha*A*A**H + beta*C.
         if upper {
-            for j:0..n-1 {
+            for j:1..n {
                 if beta == zeroU {
-                    for i:0..j {
-                        set(c,i,j, zero);
+                    for i:1..j {
+                        fset(c, i, j, zero);
                     }
                 } else if beta != oneU {
-                    for i:0..j-1 {
-                        set(c,i,j, beta*get(c,i,j));
+                    for i:1..j-1 {
+                        fset(c, i, j, beta*fget(c.*, i, j));
                     }
-                    set(c,j,j, beta*re(get(c,j,j)));
+                    fset(c, j, j, beta*re(fget(c.*, j, j)));
                 } else {
-                    set(c,j,j, re(get(c,j,j)));
+                    fset(c, j, j, re(fget(c.*, j, j)));
                 }
-                for l:0..k {
-                    if get(a,j,l) != zero {
-                        temp = alpha*conj(get(a,j,l));
-                        for i:0..j-1 {
-                            set(c,i,j, get(c,i,j) + temp*get(a,i,l));
+                for l:1..k {
+                    if fget(a, j, l) != zero {
+                        temp = alpha*conj(fget(a, j, l));
+                        for i:1..j-1 {
+                            fset(c, i, j, fget(c.*, i, j) + temp*fget(a, i, l));
                         }
-                        set(c,j,j, re(get(c,j,j)) + re(temp*get(a,i,l)));
+                        fset(c, j, j, re(fget(c.*, j, j)) + re(temp*fget(a, j, l)));
                     }
                 }
             }
         } else {
-            for j:0..n-1 {
+            for j:1..n {
                 if beta == zeroU {
-                    for i:j..n-1 {
-                        set(c,i,j, zero);
+                    for i:j..n {
+                        fset(c, i, j, zero);
                     }
                 } else if beta != oneU {
-                    set(c,j,j, beta*re(get(c,j,j)));
-                    for i:j+1..n-1 {
-                        set(c,i,j, beta*get(c,i,j));
+                    fset(c, j, j, beta*re(fget(c.*, j, j)));
+                    for i:j+1..n {
+                        fset(c, i, j, beta*fget(c.*, i, j));
                     }
                 } else {
-                    set(c,j,j) = re(get(c,j,j));
+                    fset(c, j, j, re(fget(c.*, j, j)));
                 }
-                for l:0..k {
-                    if get(a,j,l) != zero {
-                        temp = alpha*conj(get(a,j,l));
-                        set(c,j,j, re(get(c,j,j)) + re(temp*get(a,j,l)));
-                        for i:j+1..n-1 {
-                            set(c,i,j, get(c,i,j) + temp*get(a,i,l));
+                for l:1..k {
+                    if fget(a, j, l) != zero {
+                        temp = alpha*conj(fget(a, j, l));
+                        fset(c, j, j, re(fget(c.*, j, j)) + re(temp*fget(a, j, l)));
+                        for i:j+1..n {
+                            fset(c, i, j, fget(c.*, i, j) + temp*fget(a, i, l));
                         }
                     }
                 }
@@ -184,48 +185,48 @@ _herk :: (
     } else {
         // Form  C := alpha*A**H*A + beta*C.
         if upper {
-            for j:0..n-1 {
-                for i:0..j-1 {
+            for j:1..n {
+                for i:1..j-1 {
                     temp = zero;
-                    for l:0..k {
-                        temp += conj(get(a,l,i))*get(a,l,j);
+                    for l:1..k {
+                        temp += conj(fget(a, l, i))*fget(a, l, j);
                     }
                     if beta == zeroU {
-                        set(c,i,j, alpha*temp);
+                        fset(c, i, j, alpha*temp);
                     } else {
-                        set(c,i,j, alpha*temp + beta*get(c,i,j));
+                        fset(c, i, j, alpha*temp + beta*fget(c.*, i, j));
                     }
                 }
                 rtemp = zeroU;
-                for l:0..k {
-                    rtemp += real(conj(get(a,l,j))*get(a,l,j));
+                for l:1..k {
+                    rtemp += real(conj(fget(a, l, j))*fget(a, l, j));
                 }
                 if beta == zeroU {
-                    set(c,j,j, alpha*rtemp);
+                    fset(c, j, j, alpha*rtemp);
                 } else {
-                    set(c,j,j, alpha*rtemp + beta*re(get(c,j,j)));
+                    fset(c, j, j, alpha*rtemp + beta*re(fget(c.*, j, j)));
                 }
             }
         } else {
-            for j:0..n-1 {
+            for j:1..n {
                 rtemp = zeroU;
-                for l:0..k {
-                    rtemp += real(conj(get(a,l,j))*get(a,l,j));
+                for l:1..k {
+                    rtemp += real(conj(fget(a, l, j))*fget(a, l, j));
                 }
                 if beta == zeroU {
-                    set(c,j,j, alpha*rtemp);
+                    fset(c, j, j, alpha*rtemp);
                 } else {
-                    set(c,j,j, alpha*rtemp + beta*re(get(c,j,j)));
+                    fset(c, j, j, alpha*rtemp + beta*re(fget(c.*, j, j)));
                 }
-                for i:j+1..n-1 {
+                for i:j+1..n {
                     temp = zero;
-                    for l:0..k {
-                        temp += conj(get(a,l,i))*get(a,l,j);
+                    for l:1..k {
+                        temp += conj(fget(a, l, i))*fget(a, l, j);
                     }
                     if beta == zeroU {
-                        set(c,i,j, alpha*temp);
+                        fset(c, i, j, alpha*temp);
                     } else {
-                        set(c,i,j, alpha*temp + beta*get(c,i,j));
+                        fset(c, i, j, alpha*temp + beta*fget(c.*, i, j));
                     }
                 }
             }

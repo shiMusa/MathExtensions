@@ -69,7 +69,7 @@ _gbmv :: (
     #if DEBUG println_push("_gbmv", color=.FG_CYAN);
 
     temp: T = ---;
-    ix, iy, jx, jy, k, kx, ky, lenx, leny: int = ---;
+    ix, iy, jx, jy, k, kx, ky, lenx, leny, kup1: int = ---;
     
     czero := zero(T);
     cone  := one(T);
@@ -91,8 +91,9 @@ _gbmv :: (
         lenx = m;
         leny = n;
     }
-    kx = ifx incx > 0 then 0 else (lenx-1)*(-incx);
-    ky = ifx incy > 0 then 0 else (leny-1)*(-incy);
+    kx = ifx incx > 0 then 1 else 1 - (lenx-1)*incx;
+    ky = ifx incy > 0 then 1 else 1 - (leny-1)*incy;
+    kup1 = ku + 1;
 
     #if DEBUG println(
         "noconj: %, trans: %, beta == cone: %, beta == czero: %, alpha == czero: %, kx: %, ky: %, incx = %, incy = %, kl = %, ku = %", 
@@ -108,25 +109,25 @@ _gbmv :: (
         if incy == 1 {
             if beta == czero {
                 #if DEBUG println("case", color=.FG_CYAN);
-                for i:0..leny-1 {
-                    set(y, i, czero);
+                for i:1..leny {
+                    fset(y, i, czero);
                 }
             } else {
-                for i:0..leny-1 {
-                    set(y, i, get(y,i)*beta);
+                for i:1..leny {
+                    fset(y, i, fget(y.*, i)*beta);
                 }
             }
         } else {
             iy = ky;
             if beta == czero {
                 // #if DEBUG println("case", color=.FG_CYAN);
-                for i:0..leny-1 {
-                    set(y, iy, czero);
+                for i:1..leny {
+                    fset(y, iy, czero);
                     iy += incy;
                 }
             } else {
-                for i:0..leny-1 {
-                    set(y, iy, beta*get(y,iy));
+                for i:1..leny {
+                    fset(y, iy, beta*fget(y.*, iy));
                     iy += incy;
                 }
             }
@@ -176,28 +177,26 @@ _gbmv :: (
             */
 
 
-            for j:0..n-1 {
-                temp = alpha*get(x,jx);
-                k = ku - j;
-                // FORTRAN: i = max(1,j-ku),min(m,j+kl)
-                for i:max(0,j-ku)..min(m-1,j+kl) {
-                    set(y, i, get(y,i) + temp * get(a,k+i,j));
+            for j:1..n {
+                temp = alpha*fget(x, jx);
+                k = kup1 - j;
+                for i:max(1,j-ku)..min(m,j+kl) {
+                    fset(y, i, fget(y.*, i) + temp * fget(a, k+i, j));
                 }
                 jx += incx;
             }
         } else {
             // #if DEBUG println("case", color=.FG_CYAN);
-            for j:0..n-1 {
-                temp = alpha*get(x,jx);
+            for j:1..n {
+                temp = alpha*fget(x, jx);
                 iy = ky;
-                k = ku - j;
-                // FORTRAN: i = max(1,j-ku),min(m,j+kl)
-                for i:max(0,j-ku)..min(m-1,j+kl) {
-                    set(y, iy, get(y,iy) + temp*get(a,k+i,j));
+                k = kup1 - j;
+                for i:max(1,j-ku)..min(m,j+kl) {
+                    fset(y, iy, fget(y.*, iy) + temp*fget(a, k+i, j));
                     iy += incy;
                 }
                 jx += incx;
-                if j >= ku then ky += incy;
+                if j > ku then ky += incy;
             }
         }
     } else {
@@ -205,44 +204,40 @@ _gbmv :: (
 
         jy = ky;
         if incx == 1 {
-            for j:0..n-1 {
+            for j:1..n {
                 temp = czero;
-                k = ku - j;
+                k = kup1 - j;
                 if noconj {
-                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
-                    for i:max(0,j-ku)..min(m-1,j+kl) {
-                        temp += get(a,k+i,j)*get(x,i);
+                    for i:max(1,j-ku)..min(m,j+kl) {
+                        temp += fget(a, k+i, j)*fget(x, i);
                     }
                 } else {
-                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
-                    for i:max(0,j-ku)..min(m-1,j+kl) {
-                        temp += conjugate(get(a,k+i,j))*get(x,i);
+                    for i:max(1,j-ku)..min(m,j+kl) {
+                        temp += conjugate(fget(a, k+i, j))*fget(x, i);
                     }
                 }
-                set(y,jy, get(y,jy) + alpha*temp);
+                fset(y, jy, fget(y.*, jy) + alpha*temp);
                 jy += incy;
             }
         } else {
-            for j:0..n-1 {
+            for j:1..n {
                 temp = czero;
                 ix = kx;
-                k = ku - j;
+                k = kup1 - j;
                 if noconj {
-                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
-                    for i:max(0,j-ku)..min(m-1,j+kl) {
-                        temp += get(a,k+i,j)*get(x,ix);
+                    for i:max(1,j-ku)..min(m,j+kl) {
+                        temp += fget(a, k+i, j)*fget(x, ix);
                         ix += incx;
                     }
                 } else {
-                    // FORTRAN: i = max(1,j-ku),min(m,j+kl)
-                    for i:max(0,j-ku)..min(m-1,j+kl) {
-                        temp += conjugate(get(a,k+i,j))*get(x,ix);
+                    for i:max(1,j-ku)..min(m,j+kl) {
+                        temp += conjugate(fget(a, k+i, j))*fget(x, ix);
                         ix += incx;
                     }
                 }
-                set(y,jy, get(y,jy) + alpha*temp);
+                fset(y, jy, fget(y.*, jy) + alpha*temp);
                 jy += incy;
-                if j >= ku then kx += incx;
+                if j > ku then kx += incx;
             }
         }
     }

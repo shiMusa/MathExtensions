@@ -67,11 +67,11 @@ _nrm2 :: ($R: Type, $$n: int, x: $X/ArrayType1D, $$incx: int) -> R {
     asml = rzero;
     amed = rzero;
     abig = rzero;
-    ix = 0;
+    ix = 1;
 
-    if incx < 0 then ix = (n-1)*(-incx);
-    for i: 0..n-1 {
-        ax = abs(real(get(x,ix)));
+    if incx < 0 then ix = (-n+1)*incx + 1;
+    for i: 1..n {
+        ax = abs(real(fget(x, ix)));
         
         if ax > tbig {
             abig += (ax*sbig)*(ax*sbig);
@@ -82,7 +82,7 @@ _nrm2 :: ($R: Type, $$n: int, x: $X/ArrayType1D, $$incx: int) -> R {
             amed += ax*ax;
         }
         
-        ax = abs(imag(get(x,ix)));
+        ax = abs(imag(fget(x, ix)));
 
         if ax > tbig {
             abig += (ax*sbig)*(ax*sbig);

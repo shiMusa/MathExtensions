@@ -54,15 +54,15 @@ _hpr2 :: (
     // quick return if possible
     if n == 0 || alpha == zero then return;
 
-    temp1, temp1 : T = ---;
+    temp1, temp2 : T = ---;
     ix, iy, jx, jy, k, kk, kx, ky : int = ---;
 
     // Set up the start points in x and y if the increments are not both
     // unity.
 
     if incx != 1 || incy != 1 {
-        kx = ifx incx > 0 then 0 else (n-1)*(-incx);
-        ky = ifx incy > 0 then 0 else (n-1)*(-incy);
+        kx = ifx incx > 0 then 1 else 1 - (n-1)*incx;
+        ky = ifx incy > 0 then 1 else 1 - (n-1)*incy;
         jx = kx;
         jy = ky;
     }
@@ -74,37 +74,36 @@ _hpr2 :: (
     if char_eq(uplo, #char "u") {
         // Form  A  when upper triangle is stored in AP.
         if incx == 1 && incy == 1 {
-            for j:0..n-1 {
-                if get(x,j) != zero || get(y,j) != zero {
-                    temp1 = alpha*conjugate(get(y,j));
-                    temp2 = conjugate(alpha*get(x,j));
+            for j:1..n {
+                if fget(x, j) != zero || fget(y, j) != zero {
+                    temp1 = alpha*conjugate(fget(y, j));
+                    temp2 = conjugate(alpha*fget(x, j));
                     k = kk;
-                    for i:0..j-1 {
-                        set(ap, k, get(ap,k) + get(x,i)*temp1 + get(y,i)*temp2);
+                    for i:1..j-1 {
+                        fset(ap, k, fget(ap.*, k) + fget(x, i)*temp1 + fget(y, i)*temp2);
                         k += 1;
                     }
+                    fset(ap, kk+j-1, real_nc(fget(ap.*, kk+j-1)) + real_nc(fget(x, j)*temp1 + fget(y, j)*temp2));
                 } else {
-                    #if nonreal set(ap, kk+j-1, real_nc(get(ap,kk+j-1)));
+                    #if nonreal fset(ap, kk+j-1, real_nc(fget(ap.*, kk+j-1)));
                 }
                 kk += j;
             }
         } else {
-            for j:0..n-1 {
-                if get(x,jx) != zero || get(y,jy) != zero {
-                    temp1 = alpha*conjugate(get(y,jy));
-                    temp2 = conjugate(alpha*get(x,jx));
+            for j:1..n {
+                if fget(x, jx) != zero || fget(y, jy) != zero {
+                    temp1 = alpha*conjugate(fget(y, jy));
+                    temp2 = conjugate(alpha*fget(x, jx));
                     ix = kx;
                     iy = ky;
                     for k:kk..kk+j-2 {
-                        set(ap,k, get(ap,k) + get(x,ix)*temp1 + get(y,iy)*temp2);
+                        fset(ap, k, fget(ap.*, k) + fget(x, ix)*temp1 + fget(y, iy)*temp2);
                         ix += incx;
                         iy += incy;
                     }
-                    set(ap,kk+j-1, real_nc(get(ap,kk+j-1)) + 
-                        real_nc(get(x,jx)*temp1 + get(y,jy)*temp2)
-                    );
+                    fset(ap, kk+j-1, real_nc(fget(ap.*, kk+j-1)) + real_nc(fget(x, jx)*temp1 + fget(y, jy)*temp2));
                 } else {
-                    #if nonreal set(ap,kk+j-1, real_nc(get(ap,kk+j-1)));
+                    #if nonreal fset(ap, kk+j-1, real_nc(fget(ap.*, kk+j-1)));
                 }
                 jx += incx;
                 jy += incy;
@@ -114,40 +113,36 @@ _hpr2 :: (
     } else {
         // Form  A  when lower triangle is stored in AP.
         if incx == 1 && incy == 1 {
-            for j:0..n-1 {
-                if get(x,j) != zero || get(y,j) != zero {
-                    temp1 = alpha*conjugate(get(y,j));
-                    temp2 = conjugate(alpha*get(x,j));
-                    set(ap,kk, real_nc(get(ap,kk)) +
-                        real_nc(get(x,j)*temp1 + get(y,j)*temp2)
-                    );
+            for j:1..n {
+                if fget(x, j) != zero || fget(y, j) != zero {
+                    temp1 = alpha*conjugate(fget(y, j));
+                    temp2 = conjugate(alpha*fget(x, j));
+                    fset(ap, kk, real_nc(fget(ap.*, kk)) + real_nc(fget(x, j)*temp1 + fget(y, j)*temp2));
                     k = kk + 1;
-                    for i:j+1..n-1 {
-                        set(ap,k, get(ap,k) + get(x,i)*temp1 + get(y,i)*temp2);
+                    for i:j+1..n {
+                        fset(ap, k, fget(ap.*, k) + fget(x, i)*temp1 + fget(y, i)*temp2);
                         k += 1;
                     }
                 } else {
-                    #if nonreal set(ap,kk, real_nc(get(ap,kk)));
+                    #if nonreal fset(ap, kk, real_nc(fget(ap.*, kk)));
                 }
                 kk += n-j+1;
             }
         } else {
-            for j:0..n-1 {
-                if get(x,jx) != zero || get(y,jy) != zero {
-                    temp1 = alpha*conjugate(get(y,jy));
-                    temp2 = conjugate(alpha*get(x,jx));
-                    set(ap,kk, real_nc(get(ap,kk)) + 
-                        real_nc(get(x,jx)*temp1 + get(y,jy)*temp2)
-                    );
+            for j:1..n {
+                if fget(x, jx) != zero || fget(y, jy) != zero {
+                    temp1 = alpha*conjugate(fget(y, jy));
+                    temp2 = conjugate(alpha*fget(x, jx));
+                    fset(ap, kk, real_nc(fget(ap.*, kk)) + real_nc(fget(x, jx)*temp1 + fget(y, jy)*temp2));
                     ix = jx;
                     iy = jy;
                     for k:kk+1..kk+n-j {
                         ix += incx;
                         iy += incy;
-                        set(ap,k, get(ap,k) + get(x,ix)*temp1 + get(y,iy)*temp2);
+                        fset(ap, k, fget(ap.*, k) + fget(x, ix)*temp1 + fget(y, iy)*temp2);
                     }
                 } else {
-                    #if nonreal set(ap,kk, real_nc(get(ap,kk)));
+                    #if nonreal fset(ap, kk, real_nc(fget(ap.*, kk)));
                 }
                 jx += incx;
                 jy += incy;

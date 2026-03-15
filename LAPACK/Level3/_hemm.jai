@@ -65,7 +65,7 @@ _hemm :: (
     }
 
     // Set nrowa as the number of rows of a.
-    nrowa := ifx char_eq(side, #char "l") then m else k;
+    nrowa := ifx char_eq(side, #char "l") then m else n;
     upper := char_eq(uplo, #char "u");
     
     // Test the input parameters.
@@ -90,18 +90,19 @@ _hemm :: (
     // And when  alpha == zero
     if alpha == zero {
         if beta == zero {
-            for j:0..n-1 {
-                for i:0..m-1 {
-                    set(c,i,j, zero);
+            for j:1..n {
+                for i:1..m {
+                    fset(c, i, j, zero);
                 }
             }
         } else {
-            for j:0..n-1 {
-                for i:0..m-1 {
-                    set(c,i,j, beta*get(c,i,j));
+            for j:1..n {
+                for i:1..m {
+                    fset(c, i, j, beta*fget(c.*, i, j));
                 }
             }
         }
+        return;
     }
 
     temp1, temp2 : T = ---;
@@ -110,61 +111,61 @@ _hemm :: (
     if char_eq(side, #char "l") {
         // Form  C := alpha*A*B + beta*C
         if upper {
-            for j:0..n-1 {
-                for i:0..m-1 {
-                    temp1 = alpha*get(b,i,j);
+            for j:1..n {
+                for i:1..m {
+                    temp1 = alpha*fget(b.*, i, j);
                     temp2 = zero;
-                    for k:0..i-1 {
-                        set(c,k,j, get(c,k,j) + temp1*get(a,k,i));
-                        temp2 += get(b,k,j)*conj(get(a,k,i));
+                    for k:1..i-1 {
+                        fset(c, k, j, fget(c.*, k, j) + temp1*fget(a, k, i));
+                        temp2 += fget(b.*, k, j)*conj(fget(a, k, i));
                     }
                     if beta == zero {
-                        set(c,i,j, temp1*re(get(a,i,i)) + alpha*temp2);
+                        fset(c, i, j, temp1*re(fget(a, i, i)) + alpha*temp2);
                     } else {
-                        set(c,i,j, beta*get(c,i,j) + temp1*re(get(a,i,j)) + alpha*temp2);
+                        fset(c, i, j, beta*fget(c.*, i, j) + temp1*re(fget(a, i, i)) + alpha*temp2);
                     }
                 }
             }
         } else {
-            for j:0..n-1 {
-                for <i:m-1..0{
-                    temp1 = alpha*get(b,i,j);
+            for j:1..n {
+                for <i:1..m {
+                    temp1 = alpha*fget(b.*, i, j);
                     temp2 = zero;
-                    for k:i+1..m-1 {
-                        set(c,k,j, get(c,k,j) + temp1*get(a,k,i));
-                        temp2 += get(b,k,j)*conj(get(a,k,i));
+                    for k:i+1..m {
+                        fset(c, k, j, fget(c.*, k, j) + temp1*fget(a, k, i));
+                        temp2 += fget(b.*, k, j)*conj(fget(a, k, i));
                     }
                     if beta == zero {
-                        set(c,i,j, temp1*re(get(a,i,i)) + alpha*temp2);
+                        fset(c, i, j, temp1*re(fget(a, i, i)) + alpha*temp2);
                     } else {
-                        set(c,i,j, beta*get(c,i,j) + temp1*re(get(a,i,i)) + alpha*temp2);
+                        fset(c, i, j, beta*fget(c.*, i, j) + temp1*re(fget(a, i, i)) + alpha*temp2);
                     }
                 }
             }
         }
     } else {
         // Form  C := alpha*B*A + beta*C
-        for j:0..n-1 {
-            temp1 = alpha*re(get(a,j,j));
+        for j:1..n {
+            temp1 = alpha*re(fget(a, j, j));
             if beta == zero {
-                for i:0..m-1 {
-                    set(c,i,j, temp1*get(b,i,j));
+                for i:1..m {
+                    fset(c, i, j, temp1*fget(b.*, i, j));
                 }
             } else {
-                for i:0..m-1 {
-                    set(c,i,j, beta*get(c,i,j) + temp1*get(b,i,j));
+                for i:1..m {
+                    fset(c, i, j, beta*fget(c.*, i, j) + temp1*fget(b.*, i, j));
                 }
             }
-            for k:0..j-1 {
-                temp1 = ifx upper then alpha*get(a,k,j) else alpha*conj(get(a,j,k));
-                for i:0..m-1 {
-                    set(c,i,j, get(c,i,j) + temp1*get(b,i,k));
+            for k:1..j-1 {
+                temp1 = ifx upper then alpha*fget(a, k, j) else alpha*conj(fget(a, j, k));
+                for i:1..m {
+                    fset(c, i, j, fget(c.*, i, j) + temp1*fget(b.*, i, k));
                 }
             }
-            for k:j+1..n-1 {
-                temp1 = ifx upper then alpha*conj(get(a,j,k)) else alpha*get(a,k,j);
-                for i:0..m-1 {
-                    set(c,i,j, get(c,i,j) + temp1*get(b,i,k));
+            for k:j+1..n {
+                temp1 = ifx upper then alpha*conj(fget(a, j, k)) else alpha*fget(a, k, j);
+                for i:1..m {
+                    fset(c, i, j, fget(c.*, i, j) + temp1*fget(b.*, i, k));
                 }
             }
         }

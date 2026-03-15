@@ -33,6 +33,14 @@ VECTOR_FLAGS :: enum_flags u8 {
 */
 ArrayType1D :: struct(data_type: Type) {}
 
+fget :: inline (a: $A/ArrayType1D, i: int) -> A.data_type {
+    return get(a, i-1);
+}
+
+fset :: inline (a: *$A/ArrayType1D, i: int, val: A.data_type) {
+    set(a, i-1, val);
+}
+
 // get :: inline (a: *$A/ArrayType1D, i: int) -> a.data_type {
 //     return get(a.*, i);
 // }
