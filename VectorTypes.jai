@@ -34,18 +34,18 @@ VECTOR_FLAGS :: enum_flags u8 {
 ArrayType1D :: struct(data_type: Type) {}
 
 // get :: inline (a: *$A/ArrayType1D, i: int) -> a.data_type {
-//     return get(<<a, i);
+//     return get(a.*, i);
 // }
 
 // dim :: inline (a: *$A/ArrayType1D) -> int {
-//     return dim(<<a);
+//     return dim(a.*);
 // }
 
 // operator [] :: inline (a: $A/ArrayType1D, i: int) -> A.data_type {
 //     return get(a, i);
 // }
 // operator [] :: inline (a: *$A/ArrayType1D, i: int) -> A.data_type {
-//     return get(<<a, i);
+//     return get(a.*, i);
 // }
 
 //    ###    ########  ########     ###    ##    ##    ##   ########
@@ -201,7 +201,7 @@ VectorType :: struct(
 }
 
 from_raw_index :: inline (v: *$V/VectorType, i: int) -> int {
-    return from_raw_index(<<v, i);
+    return from_raw_index(v.*, i);
 }
 
 // ########  #######  ########          ######## ##     ## ########  ##    ##
@@ -239,7 +239,7 @@ VectorRawForExpansion :: struct(T: Type) {
 // * for expansion only over the really existing data
 for_expansion :: (ve: *VectorRawForExpansion, body: Code, flags: For_Flags) #expand {
     defer free(ve);
-    v := <<(ve.vector);
+    v := (ve.*.vector);
     i := 0;
     while i < n_raw(v) {
         `it_index := from_raw_index(v, i);

@@ -495,7 +495,7 @@ mul_el :: (c: *$C/MatrixType, a: $A/MatrixType, b: $B/MatrixType) {
 }
 
 mul_el :: (a: *$A/MatrixType, b: $B/MatrixType) {
-    inline mul_el_default(a, <<a, b);
+    inline mul_el_default(a, a.*, b);
 }
 
 #scope_file
@@ -538,7 +538,7 @@ div_el :: (a: $A/MatrixType, b: $B/MatrixType, c: *$C/MatrixType) {
 }
 
 div_el :: (a: *$A/MatrixType, b: $B/MatrixType) {
-    inline div_el_default(a,<<a,b);
+    inline div_el_default(a,a.*,b);
 }
 
 

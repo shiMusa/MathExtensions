@@ -149,7 +149,7 @@ cblat2 :: () -> bool {
             if do_test == "T" {
                 for *ltest {
                     if snames[it_index] == data[18+i][0] {
-                        <<it = true;
+                        it.* = true;
                     }
                 }
             }
@@ -335,8 +335,8 @@ cmvch :: (
             err("cmvch | beta  = %", beta );
             err("cmvch | y     = %", y    );
             err("cmvch | incy  = %", incy );
-            err("cmvch | yt    = %", <<yt   );
-            err("cmvch | g     = %", <<g    );
+            err("cmvch | yt    = %", yt.*   );
+            err("cmvch | g     = %", g.*    );
             err("cmvch | yy    = %", yy   );
             err("cmvch | eps   = %", formatFloat(eps,mode=FormatFloat.Mode.SCIENTIFIC)  );
             err("cmvch | erri % : %", type_of(erri), erri);
@@ -891,16 +891,16 @@ cbeg :: (
     using cbeg_save;
 
     DEBUG :: false;
-    #if DEBUG println_push("cbeg(%,%)", <<reset, T, color=.FG_CYAN);
+    #if DEBUG println_push("cbeg(%,%)", reset.*, T, color=.FG_CYAN);
 
-    if <<reset {
+    if reset.* {
         // Initialize local variables
         mi = 891;
         mj = 457;
         i = 7;
         j = 7;
         ic = 0;
-        <<reset = false;
+        reset.* = false;
     }
 
     // The sequence of values of I or J is bounded between 1 and 999.

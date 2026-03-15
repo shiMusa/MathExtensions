@@ -72,7 +72,7 @@ println_push :: (color: ConsoleColor = .FG_RESET) #expand {
     if print_options.stop_printing then return;
 
     tip := cast(*Type_Info_Procedure)type_info(type_of(#this));
-    text := sprint("% : % @ %", <<tip, type_of(#this), #location(#this));
+    text := sprint("% : % @ %", tip.*, type_of(#this), #location(#this));
     c_text := ifx color != .FG_RESET then fg_color(text, color) else text;
     println(c_text);
     print_indent(1);

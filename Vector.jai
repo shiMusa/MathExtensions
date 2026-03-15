@@ -194,7 +194,7 @@ mul_el :: (c: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
 }
 
 mul_el :: (a: *$A/VectorType, b: $B/VectorType) {
-    inline mul_el_default(a,<<a, b);
+    inline mul_el_default(a,a.*, b);
 }
 
 #scope_file
@@ -241,7 +241,7 @@ div_el :: (c: *$C/VectorType, a: $A/VectorType, b: $B/VectorType) {
 }
 
 div_el :: (a: *$A/VectorType, b: $B/VectorType) {
-    inline div_el_default(a,<<a, b);
+    inline div_el_default(a,a.*, b);
 }
 
 #scope_file

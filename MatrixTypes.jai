@@ -69,7 +69,7 @@ MATRIX_FLAGS :: enum_flags u32 {
 ArrayType2D :: struct(data_type: Type){};
 
 // get :: inline (a: *$A/ArrayType2D, i: int, j: int) -> A.data_type {
-//     return get(<<a, i, j);
+//     return get(a.*, i, j);
 // }
 
 
@@ -176,27 +176,27 @@ MatrixType :: struct(
 
 
 // get_lin :: inline (m: *$M/MatrixType, i: int) -> m.data_type {
-//     return get_lin(<<m, i);
+//     return get_lin(m.*, i);
 // }
 // get_raw :: inline (m: *$M/MatrixType, i: int) -> m.data_type {
-//     return get_raw(<<m, i);
+//     return get_raw(m.*, i);
 // }
 // rows :: inline (m: *$M/MatrixType) -> int {
-//     return rows(<<m);
+//     return rows(m.*);
 // }
 // cols :: inline (m: *$M/MatrixType) -> int {
-//     return cols(<<m);
+//     return cols(m.*);
 // }
 
 from_raw_index :: inline (m: *$M/MatrixType, i: int) -> int {
-    return from_raw_index(<<m, i);
+    return from_raw_index(m.*, i);
 }
 
 n :: inline (m: $M/MatrixType) -> int {
     return rows(m) * cols(m);
 }
 // n :: inline (m: *$M/MatrixType) -> int {
-//     return rows(<<m) * cols(<<m);
+//     return rows(m.*) * cols(m.*);
 // }
 
 from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
@@ -208,11 +208,11 @@ to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
     return i * cols(m) + j;
 }
 // from_lin_index :: inline (m: *$M/MatrixType, i: int) -> int, int {
-//     r, c := inline from_lin_index(<<m, i);
+//     r, c := inline from_lin_index(m.*, i);
 //     return r, c;
 // }
 // to_lin_index :: inline (m: *$M/MatrixType, i: int, j: int) -> int {
-//     return inline to_lin_index(<<m, i, j);
+//     return inline to_lin_index(m.*, i, j);
 // }
 
 
@@ -231,8 +231,8 @@ for_expansion :: (m: *$M/MatrixType, body: Code, flags: For_Flags) #expand {
     i := 0;
     while i < n(m) {
         `it_index := i;
-        `it := get_lin(<<m, i);
-        `it_row, `it_column := from_lin_index(<<m, i);
+        `it := get_lin(m.*, i);
+        `it_row, `it_column := from_lin_index(m.*, i);
         #insert (continue={i += 1; continue;}, break={break;}) body;
         i += 1;
     }
@@ -254,7 +254,7 @@ MatrixRawForExpansion :: struct(T: Type) {
 
 // * for expansion for only the really existing data
 for_expansion :: (me: *MatrixRawForExpansion, body: Code, flags: For_Flags) #expand {
-    m := <<(me.matrix);
+    m := (me.*.matrix);
     i := 0;
     while i < n_raw(m) {
         `it_raw_index := i;
@@ -1006,7 +1006,7 @@ cols :: inline (m: TriangularMatrix, $check_transposed: bool = true) -> int {
 }
 
 // get :: inline (m: *TriangularMatrix, i: int, j: int, $check_transposed: bool = true) -> m.data_type {
-//     return inline get(<<m, i, j, check_transposed);
+//     return inline get(m.*, i, j, check_transposed);
 // }
 get :: inline (m: TriangularMatrix, i: int, j: int, $check_transposed: bool = true) -> m.data_type {
     #if check_transposed {
@@ -1200,7 +1200,7 @@ cols :: inline (m: TriangularHeapMatrix, $check_transposed: bool = true) -> int 
 }
 
 get :: inline (m: *TriangularHeapMatrix, i: int, j: int, $check_transposed: bool = true) -> m.data_type {
-    return inline get(<<m, i, j, check_transposed);
+    return inline get(m.*, i, j, check_transposed);
 }
 get :: inline (m: TriangularHeapMatrix, i: int, j: int, $check_transposed: bool = true) -> m.data_type {
     #if check_transposed {

@@ -237,7 +237,7 @@ solve_linear_orthogonal_projection_default :: (x: *$C/VectorType, Q: *$A/MatrixT
         assert(is_unitary(Q));
     }
     dagger(Q);
-    mul(x, <<Q, b);
+    mul(x, Q.*, b);
 }
 #scope_export
 
@@ -504,8 +504,8 @@ solve_linear_gaussian_factorization_no_pivot :: inline (x: *$C/VectorType, a: *$
 #scope_file
 solve_linear_gaussian_factorization_no_pivot_default :: (x: *$C/VectorType, a: *$A/MatrixType, b: $B/VectorType) {
     gaussian_factorization_no_pivot(a);
-    solve_linear_left_trapezoidal(x, <<a, b); // ? this should be possible, see function implementations!
-    solve_linear_right_trapezoidal(x, <<a, <<x); // ? this should be possible, see function implementations!
+    solve_linear_left_trapezoidal(x, a.*, b); // ? this should be possible, see function implementations!
+    solve_linear_right_trapezoidal(x, a.*, x.*); // ? this should be possible, see function implementations!
 }
 #scope_export
 
@@ -658,10 +658,10 @@ solve_linear_gaussian_factorization_full_pivot_default :: (
     }
 
     num_rows_perm, num_cols_perm := gaussian_factorization_full_pivot(a, rows_perm, cols_perm);
-    permute(b, <<rows_perm);
-    solve_linear_left_trapezoidal( x, <<a, <<b);
-    solve_linear_right_trapezoidal(x, <<a, <<x);
-    permute(x, <<cols_perm);
+    permute(b, rows_perm.*);
+    solve_linear_left_trapezoidal( x, a.*, b.*);
+    solve_linear_right_trapezoidal(x, a.*, x.*);
+    permute(x, cols_perm.*);
 
     return num_rows_perm, num_cols_perm;
 }
@@ -774,9 +774,9 @@ solve_linear_gaussian_factorization_row_pivot_default :: (
     }
 
     num_rows_perm := gaussian_factorization_row_pivot(a, rows_perm);
-    permute(b, <<rows_perm);
-    solve_linear_left_trapezoidal( x, <<a, <<b);
-    solve_linear_right_trapezoidal(x, <<a, <<x);
+    permute(b, rows_perm.*);
+    solve_linear_left_trapezoidal( x, a.*, b.*);
+    solve_linear_right_trapezoidal(x, a.*, x.*);
 
     return num_rows_perm;
 }
@@ -811,8 +811,8 @@ inverse_default :: (ainv: *A, a: $A/MatrixType) {
 
     mat_init_unit(ainv);
 
-    solve_linear_left_trapezoidal( ainv, a, <<ainv);
-    solve_linear_right_trapezoidal(ainv, a, <<ainv);
+    solve_linear_left_trapezoidal( ainv, a, ainv.*);
+    solve_linear_right_trapezoidal(ainv, a, ainv.*);
 
     permute_cols(ainv, row_perms);
 }

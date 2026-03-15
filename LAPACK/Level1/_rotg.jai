@@ -49,20 +49,20 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
     d, f1, f2, g1, g2, h2, p, u, uu, v, vv, w : R = ---;
     f, fs, g, gs, r, t : C = ---;
 
-    f = <<a;
+    f = a;.*
     g = b;
     if g == czero {
-        <<c = one;
-        <<s = czero;
+        c.* = one;
+        s.* = czero;
         r = f;
     } else if f == czero {
-        <<c = zero;
+        c.* = zero;
         g1 = max(abs(real(g), abs(imag(g))));
         if g1 > rtmin && g1 < rtmax {
             // use unscaled algorithm
             g2 = abs_sq(g);
             d = sqrt(g2);
-            <<s = conjugate(g)/d;
+            s.* = conjugate(g)/d;
             r = d;
         } else {
             // use scaled algorithms
@@ -71,7 +71,7 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
             gs = g*uu;
             g2 = abs_sq(gs);
             d = sqrt(g2);
-            <<s = conjugate(gs)/d;
+            s.* = conjugate(gs)/d;
             r = d*u;
         }
     } else {
@@ -88,8 +88,8 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
                 d = sqrt(f2)*sqrt(h2);
             }
             p = one/d;
-            <<c = f2*p;
-            <<s = conjugate(g)*(f*p);
+            c.* = f2*p;
+            s.* = conjugate(g)*(f*p);
             r = f*(h2*p);
         } else {
             // use scaled algorithm
@@ -99,7 +99,7 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
             g2 = abs_sq(gs);
             if f1*uu < rtmin {
                 // f is not well-scaled when scaled by g1
-                // use <<a different scaling for f.
+                // use a.* different scaling for f.
                 v = clamp(safmin, f1, safmax);
                 vv = one/v;
                 w = v*uu;
@@ -119,8 +119,8 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
                 d = sqrt(f2)*sqrt(h2);
             }
             p = one/d;
-            <<c = (f2*p)*w;
-            <<s = conjugate(gs)*(fs*p);
+            c.* = (f2*p)*w;
+            s.* = conjugate(gs)*(fs*p);
             r = (fs*(h2*p))*u;
         }
     }
@@ -165,28 +165,28 @@ drotg :: (a: *$R, b: *R, c: *R, s: *R) #modify {
     // local scalars
     anorm, bnorm, scl, sigma, r, z : R = ---;
 
-    anorm = abs(<<a);
-    bnorm = abs(<<b);
+    anorm = abs(a.*);
+    bnorm = abs(b.*);
     if bnorm == 0 {
-        <<c = 1;
-        <<s = 0;
-        <<b = 0;
+        c.* = 1;
+        s.* = 0;
+        b.* = 0;
     } else if anorm == 0 {
-        <<c = 0;
-        <<s = 1;
-        <<a = <<b;
-        <<b = 1;
+        c.* = 0;
+        s.* = 1;
+        a.* = b;.*
+        b.* = 1;
     } else {
         scl = min(safmax, max(safmin, anorm, bnorm));
-        // TODO simplify `sign(one(R),<<a)` to `sign(a)` ? (same for `b`)
-        sigma = ifx anorm > bnorm then sign(one(R),<<a) else sign(one(R),<<b);
-        r = sigma * (scl*sqrt((<<a/scl)*(<<a/scl) + (<<b/scl)*(<<b/scl)))
-        <<c = <<a/r;
-        <<s = <<b/r;
-        if anorm > bnorm {z = <<s;}
-        else if <<c /= 0 {z = 1/c;}
+        // TODO simplify `sign(one(R),a.*)` to `sign(a)` ? (same for `b`)
+        sigma = ifx anorm > bnorm then sign(one(R),a.*) else sign(one(R),b.*);
+        r = sigma * (scl*sqrt((a/scl.*)*(a/scl.*) + (b/scl.*)*(b/scl.*)))
+        c.* = a/r;.*
+        s.* = b/r;.*
+        if anorm > bnorm {z = s;.*}
+        else if c.* /= 0 {z = 1/c;}
         else z = 1;
-        <<a = r;
-        <<b = z;
+        a.* = r;
+        b.* = z;
     }
 }

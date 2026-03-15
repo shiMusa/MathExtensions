@@ -66,8 +66,8 @@ for_expansion :: (m: *$M/MatrixTrait, body: Code, flags: For_Flags) #expand {
     i := 0;
     while i < M.N*M.M {
         `it_index := i;
-        `it := get_lin(<<m, i);
-        `it_row, `it_column := from_lin_index(<<m, i);
+        `it := get_lin(m.*, i);
+        `it_row, `it_column := from_lin_index(m.*, i);
         #insert body;
         i += 1;
     }
@@ -93,7 +93,7 @@ MatrixRawForExpansion :: struct(T: Type) {
 }
 #scope_export
 for_expansion :: (me: *MatrixRawForExpansion($M), body: Code, flags: For_Flags) #expand {
-    m := <<me.matrix;
+    m := me.*.matrix;
     i := 0;
     while i < n_raw(m) {
         `it_index := i;

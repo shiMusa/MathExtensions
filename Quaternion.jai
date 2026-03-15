@@ -72,17 +72,17 @@ q64 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q6
 }
 
 
-q32 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q64 #modify {
+q32 :: inline ($$r: $T = 0.0, $$i: $U = 0.0, $$j: $V = 0.0, $$k: $W = 0.0) -> Q32 #modify {
     return is_intrinsic_number(T)
         && is_intrinsic_number(U)
         && is_intrinsic_number(V)
         && is_intrinsic_number(W);
 } {
     return qtn(
-        ncast(float64, r),
-        ncast(float64, i),
-        ncast(float64, j),
-        ncast(float64, k)
+        ncast(float32, r),
+        ncast(float32, i),
+        ncast(float32, j),
+        ncast(float32, k)
     );
 }
 

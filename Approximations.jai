@@ -124,18 +124,18 @@ approx_sqrt :: (val: $T, guess: T, iterations: int, $show_steps: bool = false) -
 
 //     // test : s64 = 0b0_11111111111_1000000000000000000000000000000000000000000000000000;
 //     test : s64 = 0b0_01111111111_0000000000000000000000000000000000000000000000000000;
-//     print("test %\n", <<cast(*float64)(*test));
+//     print("test %\n", cast(*float64.*)(*test));
 
-//     i : s64 = <<cast(*s64)(*val);
+//     i : s64 = cast(*s64.*)(*val);
 //     // mask out the exponent only
 //     mask : s64 = 0b0_11111111111_0000000000000000000000000000000000000000000000000000;
-//     print("%\n", <<cast(*float64)(*i));
+//     print("%\n", cast(*float64.*)(*i));
 //     i = mask & i;
-//     print("%\n", <<cast(*float64)(*i));
+//     print("%\n", cast(*float64.*)(*i));
 //     i = i >> 1;
-//     print("%\n", <<cast(*float64)(*i));
+//     print("%\n", cast(*float64.*)(*i));
 //     // i = mask & i;
-//     guess : float64 = <<cast(*float64)(*i);
+//     guess : float64 = cast(*float64.*)(*i);
 
 //     print("initial %, guess %\n", val, guess);
 
