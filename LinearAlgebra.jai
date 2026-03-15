@@ -896,18 +896,20 @@ cholesky_factorization_default :: (m: *$M/MatrixType) {
     }
     N := rows(a);
     M := cols(a);
+    ZERO :: #run zero(M.data_type);
+
     for k: 0..N-1 {
-        sum := zero(M.data_type);
+        sum := ZERO;
         for j: 0..k-1 {
             sum += abs_sq(get(m,k,j));
         }
         set(m,k,k, get(m,k,k) - sum);
-        if get(m,k,k) <= zero(M.data_type) then break;
+        if get(m,k,k) <= ZERO then break;
         
-        set(m, k, k, sqrt(get(m,k,k), M.data_type));
+        set(m, k, k, sqrt(get(m,k,k)));
 
         for i: k+1..N-1 {
-            sum2 := zero(M.data_type);
+            sum2 := ZERO;
             for j: 0..k-1 {
                 sum2 += get(m,i,j)*conjugate(get(m,k,j));
             }

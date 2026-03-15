@@ -84,7 +84,7 @@ ArrayType2D :: struct(data_type: Type){};
 
 // * implementation for simple arrays
 Array2D :: struct(N: int, M: int, _data_type: Type) {
-    using #as _a2d: ArrayType2D(_data_type);
+    using #as _a2d :: ArrayType2D(_data_type).{};
     data: [N*M]_data_type;
 }
 array2d :: (values: [$N][$M]$T) -> Array2D(N,M,T) {
@@ -119,7 +119,7 @@ as_array1d :: (a: *Array2D) -> Array1D(a.N*a.M, a.data_type) {
 // ##     ##    ######### ########        ###    #### ########  ###  ###
 
 Array2DView :: struct(_A: Type, row_major: bool) {
-    using #as _a2d: ArrayType2D(_A.data_type);
+    using #as _a2d :: ArrayType2D(_A.data_type).{};
     a1d : *_A;
     lda: int;
 }
@@ -171,7 +171,7 @@ MatrixType :: struct(
     __data_type: Type,
     flags: MATRIX_FLAGS
 ){
-    using #as _a2d: ArrayType2D(__data_type);
+    using #as _a2d :: ArrayType2D(__data_type).{};
 }
 
 
@@ -201,7 +201,8 @@ n :: inline (m: $M/MatrixType) -> int {
 
 from_lin_index :: inline (m: $M/MatrixType, i: int) -> int, int {
     c := cols(m);
-    return (i - i%c)/c, i%c;
+    col := i%c;
+    return (i - col)/c, col;
 }
 to_lin_index :: inline (m: $M/MatrixType, i: int, j: int) -> int {
     return i * cols(m) + j;
@@ -287,7 +288,7 @@ for_expansion :: (me: *MatrixRawForExpansion, body: Code, flags: For_Flags) #exp
 
 
 MatrixView :: struct(V: Type, N: int, M: int) {
-    using #as _m: MatrixType(V.data_type, MATRIX_FLAGS.VIEW & V.flags);
+    using #as _m :: MatrixType(V.data_type, MATRIX_FLAGS.VIEW & V.flags).{};
     start_row: int = 0;
     start_col: int = 0;
     stride_row: int = 1;
@@ -359,7 +360,7 @@ from_raw_index :: inline(m: MatrixView, i: int) -> int {
 // ##     ## ######## ##     ## ##              ###    #### ########  ###  ###
 
 MatrixHeapView :: struct(V: Type) {
-    using #as _m: MatrixType(V.data_type, MATRIX_FLAGS.VIEW & V.flags);
+    using #as _m :: MatrixType(V.data_type, MATRIX_FLAGS.VIEW & V.flags).{};
     rows: int;
     cols : int;
     start_row: int = 0;
@@ -440,7 +441,7 @@ from_raw_index :: inline(m: MatrixHeapView, i: int) -> int {
 
 // The only data that actually exists in memory during runtime is "data", the ONELY field of the struct.
 DenseMatrix :: struct(_T: Type, N: int, M: int) {
-    using #as _m: MatrixType(_T, MATRIX_FLAGS.DENSE); 
+    using #as _m :: MatrixType(_T, MATRIX_FLAGS.DENSE).{}; 
     data: [N*M]_T;
 }
 
@@ -520,7 +521,7 @@ from_raw_index :: inline (m: DenseMatrix, i: int) -> int {
 
 
 DenseHeapMatrix :: struct(_T: Type) {
-    using #as _m: MatrixType(_T, MATRIX_FLAGS.DENSE & .HEAP); 
+    using #as _m :: MatrixType(_T, MATRIX_FLAGS.DENSE & .HEAP).{}; 
     rows: int;
     cols: int;
     data : []_T; // * heap-allocated data!
@@ -636,7 +637,7 @@ from_raw_index :: inline (m: DenseHeapMatrix, i: int) -> int {
 // ? P is the lower bandwidth
 // ? Q is the upper bandwidth
 BandMatrix :: struct(_T: Type, N: int, M: int, P: int, Q: int) {
-    using #as _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND); 
+    using #as _m :: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND).{}; 
     ROWS : int : P+Q+1; // ? the BandMatrix is of size ROWS × M
     data: [ROWS*M]_T;
 }
@@ -784,7 +785,7 @@ test_BandMatrix :: () {
 // ? P is the lower bandwidth
 // ? Q is the upper bandwidth
 BandHeapMatrix :: struct(_T: Type) {
-    using #as _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND | MATRIX_FLAGS.HEAP); 
+    using #as _m :: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.BAND | MATRIX_FLAGS.HEAP).{}; 
     rows: int;
     cols: int;
     irows: int;
@@ -956,7 +957,7 @@ triangular_first_index_of_row :: inline (cols: int, i: int) -> int {
 #scope_export
 
 TriangularMatrix :: struct(_T: Type, N: int, M: int) {
-    using #as _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.TRIANGULAR);
+    using #as _m :: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.TRIANGULAR).{};
     transposed: bool = false;
     data: [#run triangluar_data_size(N,M)]_T;
 }
@@ -1138,7 +1139,7 @@ test_TriangularMatrix :: () {
 
 
 TriangularHeapMatrix :: struct(_T: Type) {
-    using #as _m: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.TRIANGULAR | MATRIX_FLAGS.HEAP);
+    using #as _m :: MatrixType(_T, MATRIX_FLAGS.DENSE | MATRIX_FLAGS.TRIANGULAR | MATRIX_FLAGS.HEAP).{};
     transposed: bool = false;
     rows: int;
     cols: int;
