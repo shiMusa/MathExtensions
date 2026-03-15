@@ -98,7 +98,7 @@ _hbmv :: (
 
     if char_eq(uplo, #char "u") {
         // Form  y  when upper triangle of A is stored.
-        kplus1 = k + 1;
+        kplus1 = k;
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
@@ -108,7 +108,7 @@ _hbmv :: (
                     set(y,i, get(y,i) + temp1*get(a,l+i,j));
                     temp2 += conjugate(get(a,l+i,j))*get(x,i);
                 }
-                set(y,i, get(y,i) + temp1*real(get(a,kplus1,j)) + alpha*temp2);
+                set(y,j, get(y,j) + temp1*real(get(a,kplus1,j)) + alpha*temp2);
             }
         } else {
             jx = kx;
@@ -125,10 +125,10 @@ _hbmv :: (
                     ix += incx;
                     iy += incy;
                 }
-                set(y,iy, get(y,iy) + temp1*real(get(a,kplus1,j)) + alpha*temp2);
+                set(y,jy, get(y,jy) + temp1*real(get(a,kplus1,j)) + alpha*temp2);
                 jx += incx;
                 jy += incy;
-                if j > k {
+                if j >= k {
                     kx += incx;
                     ky += incy;
                 }
@@ -140,9 +140,9 @@ _hbmv :: (
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
                 temp2 = zero;
-                set(y,j, get(y,j) + temp1*real(get(a,1,j)));
-                l = 1 - j;
-                for i:j..min(n,j+k)-1 {
+                set(y,j, get(y,j) + temp1*real(get(a,0,j)));
+                l = -j;
+                for i:j+1..min(n-1,j+k) {
                     set(y,i, get(y,i) + temp1*get(a,l+i,j));
                     temp2 += conjugate(get(a,l+i,j))*get(x,i);
                 }
@@ -154,17 +154,17 @@ _hbmv :: (
             for j:0..n-1 {
                 temp1 = alpha*get(x,jx);
                 temp2 = zero;
-                set(y,iy, get(y,iy) + temp1*real(get(a,1,j)));
-                l = 1 - j;
+                set(y,jy, get(y,jy) + temp1*real(get(a,0,j)));
+                l = -j;
                 ix = jx;
                 iy = jy;
-                for i:j..min(n,j+k)-1 {
+                for i:j+1..min(n-1,j+k) {
                     ix += incx;
                     iy += incy;
                     set(y,iy, get(y,iy) + temp1*get(a,l+i,j));
                     temp2 += conjugate(get(a,l+i,j))*get(x,ix);
                 }
-                set(y,iy, get(y,iy) + alpha*temp2);
+                set(y,jy, get(y,jy) + alpha*temp2);
                 jx += incx;
                 jy += incy;
             }

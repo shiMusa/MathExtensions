@@ -62,6 +62,9 @@ _hemv :: (
     kx := ifx incx > 0 then 0 else (n-1)*(-incx);
     ky := ifx incy > 0 then 0 else (n-1)*(-incy);
 
+    temp1, temp2 : T = ---;
+    ix, iy, jx, jy : int = ---;
+
     // Start the operations. In this version the elements of A are
     // accessed sequentially with one pass through the triangular part
 
@@ -95,10 +98,10 @@ _hemv :: (
     if alpha == zero then return;
 
     if char_eq(uplo, #char "u") {
-        // form  y  when A is stored in upper triangle.
+        // Form y when A is stored in the upper triangle.
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
-                temp1 = alpha*get(x,i);
+                temp1 = alpha*get(x,j);
                 temp2 = zero;
                 for i:0..j-1 {
                     set(y,i, get(y,i) + temp1*get(a,i,j));
@@ -126,13 +129,13 @@ _hemv :: (
             }
         }
     } else {
-        // form  y  when A is stored in lower triangle.
+        // Form y when A is stored in the lower triangle.
         if incx == 1 && incy == 1 {
             for j:0..n-1 {
                 temp1 = alpha*get(x,j);
                 temp2 = zero;
-                set(y,j, get(y,j) + temp1 * real(get(a,j,j)));
-                for i:j..n-1 {
+                set(y,j, get(y,j) + temp1*real(get(a,j,j)));
+                for i:j+1..n-1 {
                     set(y,i, get(y,i) + temp1*get(a,i,j));
                     temp2 += conjugate(get(a,i,j))*get(x,i);
                 }
@@ -147,13 +150,13 @@ _hemv :: (
                 set(y,jy, get(y,jy) + temp1*real(get(a,j,j)));
                 ix = jx;
                 iy = jy;
-                for j:0..n-1 {
+                for i:j+1..n-1 {
                     ix += incx;
                     iy += incy;
                     set(y,iy, get(y,iy) + temp1*get(a,i,j));
                     temp2 += conjugate(get(a,i,j))*get(x,ix);
                 }
-                set(y,iy, get(y,iy) + alpha*temp2);
+                set(y,jy, get(y,jy) + alpha*temp2);
                 jx += incx;
                 jy += incy;
             }

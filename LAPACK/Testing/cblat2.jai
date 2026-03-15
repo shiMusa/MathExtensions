@@ -206,7 +206,12 @@ cblat2 :: () -> bool {
                 *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
             );
         } else if isnum <= 4 {
-
+            pass &= cchk2(
+                srnamt, eps, thresh, true,
+                nidim, idim, nkb, kb, nalf, alf.data,
+                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
+            );
         } else if isnum <= 10 {
 
         } else if isnum <= 12 {
@@ -496,13 +501,6 @@ cchk1 :: (
     full   := char_eq(sname[2], #char "e");
     banded := char_eq(sname[2], #char "b");
 
-    #if DEBUG {
-        if full {
-            warn("skipping 'full' matrices for debugging");
-            return true; // just to jump right to cgbmv (bug) - Fehse 2022-03-02
-        }
-    }
-
     // Define the number of arguments
     nargs := ifx full then 11 else 13;
 
@@ -659,13 +657,195 @@ cchk1 :: (
                         }
                     }
                 }
-
-                // TODO finish
             }
         }
     }
 
-    err("cchk1: not yet fully implemented");
+    return pass;
+}
+
+
+//  ######   ######  ##     ## ##    ##  #######
+// ##    ## ##    ## ##     ## ##   ##  ##     ##
+// ##       ##       ##     ## ##  ##          ##
+// ##       ##       ######### #####     #######
+// ##       ##       ##     ## ##  ##   ##
+// ##    ## ##    ## ##     ## ##   ##  ##
+//  ######   ######  ##     ## ##    ## #########
+
+cchk2 :: (
+    sname: string,
+    eps: $U,
+    thresh: U,
+    $fatal: bool,
+    nidim: int,
+    idim: []int,
+    nkb: int,
+    kb: []int,
+    nalf: int,
+    alf: []$T,
+    nbet: int,
+    bet: []T,
+    ninc: int,
+    inc: []int,
+    nmax: int,
+    incmax: int,
+    a: *$A/ArrayType2D,
+    aa: *$AA/ArrayType1D,
+    as: *$AS/ArrayType1D,
+    x: *$X/ArrayType1D,
+    _xx: *$XX/ArrayType1D,
+    xs: *$XS/ArrayType1D,
+    y: *$Y/ArrayType1D,
+    yy: *$YY/ArrayType1D,
+    ys: *$YS/ArrayType1D,
+    yt: *$YT/ArrayType1D,
+    g: *$G/ArrayType1D
+) -> bool {
+    #run {
+        assert(U == get_number_inner_type(T));
+        assert(T == A.data_type);
+        assert(T == AA.data_type);
+        assert(T == AS.data_type);
+        assert(T == X.data_type);
+        assert(T == XX.data_type);
+        assert(T == XS.data_type);
+        assert(T == Y.data_type);
+        assert(T == YY.data_type);
+        assert(T == YS.data_type);
+        assert(T == YT.data_type);
+        assert(U == G.data_type);
+    }
+    DEBUG :: true;
+    println_push("cchk2");
+
+    pass := true;
+
+    ichu :: "ul";
+
+    czero := zero(T);
+    chalf := ncast(T, 0.5);
+
+    banded := char_eq(sname[2], #char "b");
+    packed := char_eq(sname[2], #char "p");
+    reset := true;
+
+    #if DEBUG {
+        COUNT := 0;
+    }
+
+    for in:0..nidim-1 {
+        n := idim[in];
+        nk := ifx banded then nkb else 1;
+
+        for iku:0..nk-1 {
+            k := ifx banded then kb[iku] else n-1;
+
+            lda := ifx banded then k+1 else n;
+            if !packed && lda < nmax then lda += 1;
+            if !packed && lda > nmax then continue;
+
+            laa := ifx packed then (n*(n+1))/2 else lda*n;
+            _null := n <= 0;
+
+            for iu:0..1 {
+                uplo := ichu[iu];
+
+                transl := czero;
+                _slice := String.slice(sname, 1, 2);
+                cmake(_slice, uplo, 0, n, n, a, nmax, aa, lda, k, k, *reset, transl);
+
+                for ix:0..ninc-1 {
+                    incx := inc[ix];
+                    lx := abs(incx)*n;
+
+                    transl = chalf;
+                    x_view := array2d_view(x, 1, row_major=false);
+                    cmake("ge", 0, 0, 1, n, *x_view, 1, _xx, abs(incx), 0, n-1, *reset, transl);
+
+                    if n > 1 {
+                        set(x, n/2 - 1, czero);
+                        set(_xx, abs(incx)*(n/2-1), czero);
+                    }
+
+                    for iy:0..ninc-1 {
+                        incy := inc[iy];
+                        ly := abs(incy)*n;
+
+                        for ia:0..nalf-1 {
+                            alpha := alf[ia];
+
+                            for ib:0..nbet-1 {
+                                #if DEBUG {
+                                    COUNT += 1;
+                                    println("COUNT %", COUNT);
+                                }
+                                println("in %, iku %, iu %, ix %, iy %, ia %, ib %", in, iku, iu, ix, iy, ia, ib);
+                                beta := bet[ib];
+
+                                transl := czero;
+                                y_view := array2d_view(y, 1, row_major=false);
+                                cmake("ge", 0, 0, 1, n, *y_view, 1, yy, abs(incy), 0, n-1, *reset, transl);
+
+                                for i:0..laa-1 {
+                                    set(as, i, get(aa,i));
+                                }
+                                for i:0..lx-1 {
+                                    set(xs, i, get(_xx,i));
+                                }
+                                for i:0..ly-1 {
+                                    set(ys, i, get(yy,i));
+                                }
+
+                                if packed {
+                                    println("chpmv");
+                                    chpmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
+                                } else {
+                                    aa_view := array2d_view(aa, lda, row_major=false);
+                                    if banded {
+                                        println("chbmv");
+                                        chbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                    } else {
+                                        println("chemv");
+                                        chemv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                    }
+                                }
+
+                                if _null {
+                                    ok := lce(ys, yy, ly);
+                                    pass &= ok;
+                                    if !ok {
+                                        err(" lce | ly = %", ly);
+                                        err(" lce | ys = %", ys);
+                                        err(" lce | yy = %", yy, exit_program=fatal);
+                                    }
+                                } else {
+                                    ys_view := array2d_view(ys, abs(incy), row_major=false);
+                                    yy_view := array2d_view(yy, abs(incy), row_major=false);
+                                    ok := lceres("GE", 0, 1, n, ys_view, yy_view, abs(incy));
+                                    pass &= ok;
+                                    if !ok {
+                                        err(" lceres | n = %, abs(incy) = %", n, abs(incy));
+                                        err(" lceres | ys = %", ys_view);
+                                        err(" lceres | yy = %", yy_view, exit_program=fatal);
+                                    }
+                                }
+
+                                if !_null {
+                                    pass &= cmvch(
+                                        #char "n", n, n, alpha, a,
+                                        nmax, x, incx, beta, y,
+                                        incy, yt, g, yy, eps,
+                                        fatal
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     return pass;
 }
@@ -787,7 +967,7 @@ cmake :: (
                 iend = ifx unit then j-1 else j;
             } else {
                 ibeg = ifx unit then j+1 else j;
-                iend = n;
+                iend = n-1;
             }
             for i:0..ibeg-1 {
                 set(aa, i+j*lda, rogue);
@@ -814,7 +994,7 @@ cmake :: (
             } else {
                 kk = 0; // correct Fortran indexing
                 ibeg = ifx unit then 1 else 0; // correct Fortran indexing
-                iend = min(kl, m-j); // correct Fortran indexing
+                iend = min(kl, m-j-1); // correct Fortran indexing
             }
             for i:0..ibeg-1 {
                 set(aa, i+j*lda, rogue);
@@ -833,17 +1013,16 @@ cmake :: (
     } else if String.equal_nocase(type, "hp") || String.equal_nocase(type, "tp") {
         #if DEBUG println("hp || tp", color=.FG_CYAN);
         ioff := 0;
-        ibeg, iend : int = ---;
         for j:0..n-1 {
+            ibeg, iend : int = ---;
             if upper {
                 ibeg = 0;
-                iend = j-1;
+                iend = j;
             } else {
-                ibeg = j-1;
+                ibeg = j;
                 iend = n-1;
             }
             for i:ibeg..iend {
-                ioff += 1;
                 set(aa, ioff, get(a,i,j));
                 if i == j {
                     if unit then 
@@ -851,6 +1030,7 @@ cmake :: (
                     else
                         set(aa,ioff, cpx(real(get(aa,ioff)), rrogue));
                 }
+                ioff += 1;
             }
         }
     }

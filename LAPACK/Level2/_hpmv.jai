@@ -59,7 +59,7 @@ _hpmv :: (
     ky := ifx incy > 0 then 0 else (n-1)*(-incy);
 
     temp1, temp2 : T = ---;
-    ix, iy, jx, jy, k, kk, kx, ky : int = ---;
+    ix, iy, jx, jy, k, kk : int = ---;
 
     // Start the operations. In this version the elements of the array AP
     // are accessed sequentially with one pass through AP.
@@ -107,8 +107,8 @@ _hpmv :: (
                     temp2 += conjugate(get(ap,k))*get(x,i);
                     k += 1;
                 }
-                set(y,j, get(y,j) + temp1*real_nc(get(ap,kk+j-1)) + alpha*temp2);
-                kk += j;
+                set(y,j, get(y,j) + temp1*real_nc(get(ap,kk+j)) + alpha*temp2);
+                kk += j+1;
             }
         } else {
             jx = kx;
@@ -118,16 +118,16 @@ _hpmv :: (
                 temp2 = zero;
                 ix = kx;
                 iy = ky;
-                for k:kk..kk+j-2 {
+                for k:kk..kk+j-1 {
                     set(y,iy, get(y,iy) + temp1*get(ap,k));
                     temp2 += conjugate(get(ap,k))*get(x,ix);
                     ix += incx;
                     iy += incy;
                 }
-                set(y,jy, get(y,jy) + temp1*real_nc(get(ap,kk+j-1)) + alpha*temp2);
+                set(y,jy, get(y,jy) + temp1*real_nc(get(ap,kk+j)) + alpha*temp2);
                 jx += incx;
                 jy += incy;
-                kk += j;
+                kk += j+1;
             }
         }
     } else {
@@ -144,7 +144,7 @@ _hpmv :: (
                     k += 1;
                 }
                 set(y,j, get(y,j) + alpha * temp2);
-                kk += (n-j+1); // ! +1 ?
+                kk += n-j;
             }
         } else {
             jx = kx;
@@ -155,7 +155,7 @@ _hpmv :: (
                 set(y,jy, get(y,jy) + temp1*real_nc(get(ap,kk)));
                 ix = jx;
                 iy = jy;
-                for k:kk+1..kk+n-j {
+                for k:kk+1..kk+n-j-1 {
                     ix += incx;
                     iy += incy;
                     set(y,iy, get(y,iy) + temp1*get(ap,k));
@@ -164,7 +164,7 @@ _hpmv :: (
                 set(y,jy, get(y,jy) + alpha*temp2);
                 jx += incx;
                 jy += incy;
-                kk += n-j+1;
+                kk += n-j;
             }
         }
     }
