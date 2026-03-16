@@ -22,6 +22,8 @@
 dznrm2 :: #bake_arguments _nrm2(R=float64);
 dnrm2  :: dznrm2;
 scnrm2 :: #bake_arguments _nrm2(R=float32);
+znrm2  :: dznrm2;
+snrm2  :: scnrm2;
 snrm   :: scnrm2;
 _nrm2 :: ($R: Type, $$n: int, x: $X/ArrayType1D, $$incx: int) -> R {
     #run assert(is_float_number(R));

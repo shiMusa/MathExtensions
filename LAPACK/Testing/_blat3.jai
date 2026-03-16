@@ -29,9 +29,9 @@ _blat3 :: ($T: Type, $U: Type, file_url: string, label: string) -> bool {
 
     complex_suite :: #run is_non_real_number(T);
     #if T == float32 || T == float64 {
-        nsubs :: 6;
+        nsubs :: 7;
     } else {
-        nsubs :: 9;
+        nsubs :: 10;
     }
 
     a  : Array2D(nmax, nmax, T);
@@ -57,20 +57,24 @@ _blat3 :: ($T: Type, $U: Type, file_url: string, label: string) -> bool {
     #if T == float32 {
         snames[0] = "SGEMM";  snames[1] = "SSYMM";  snames[2] = "STRMM";
         snames[3] = "STRSM";  snames[4] = "SSYRK";  snames[5] = "SSYR2K";
+        snames[6] = "SGEMMTR";
     }
     #if T == float64 {
         snames[0] = "DGEMM";  snames[1] = "DSYMM";  snames[2] = "DTRMM";
         snames[3] = "DTRSM";  snames[4] = "DSYRK";  snames[5] = "DSYR2K";
+        snames[6] = "DGEMMTR";
     }
     #if T == C32 {
         snames[0] = "CGEMM";  snames[1] = "CHEMM";  snames[2] = "CSYMM";
         snames[3] = "CTRMM";  snames[4] = "CTRSM";  snames[5] = "CHERK";
         snames[6] = "CSYRK";  snames[7] = "CHER2K"; snames[8] = "CSYR2K";
+        snames[9] = "CGEMMTR";
     }
     #if T == C64 {
         snames[0] = "ZGEMM";  snames[1] = "ZHEMM";  snames[2] = "ZSYMM";
         snames[3] = "ZTRMM";  snames[4] = "ZTRSM";  snames[5] = "ZHERK";
         snames[6] = "ZSYRK";  snames[7] = "ZHER2K"; snames[8] = "ZSYR2K";
+        snames[9] = "ZGEMMTR";
     }
 
     {
@@ -252,6 +256,12 @@ _blat3 :: ($T: Type, $U: Type, file_url: string, label: string) -> bool {
                 srnamt, eps, thresh, true,
                 nidim, idim, nalf, alf.data, nbet, bet.data, nmax,
                 *a, *aa, *as, *b, *bb, *bs, *c, *cc, *cs, *ct, *g, *w
+            );
+        } else if String.slice(srnamt, 1, 6) == "GEMMTR" {
+            pass &= cblat3_cchk6(
+                srnamt, eps, thresh, true,
+                nidim, idim, nalf, alf.data, nbet, bet.data, nmax,
+                *a, *aa, *as, *b, *bb, *bs, *c, *cc, *cs, *ct, *g
             );
         } else {
             err("_blat3 | unexpected routine name %", srnamt, exit_program=true);

@@ -5,4 +5,5 @@ tests
 old
 zig-cache
 LAPACK-BLAS
+lapack-3.12.1
 .vscode

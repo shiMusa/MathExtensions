@@ -9,17 +9,19 @@ cscal  :: _scal;
 csscal :: _scal;
 zscal  :: _scal;
 zdscal :: _scal;
-_scal :: ($$n: int, ca: X.data_type, cx: *$X/ArrayType1D, $$incx: int) {
-    if n <= 0 then return;
+_scal :: ($$n: int, ca: $T, cx: *$X/ArrayType1D, $$incx: int) {
+    #assert(is_minor_number_type(X.data_type, T));
+    if n <= 0 || incx <= 0 || ca == one(T) then return;
+    alpha := ncast(X.data_type, ca);
     if incx == 1 {
         for i: 1..n {
-            fset(cx, i, fget(cx, i) * ca);
+            fset(cx, i, fget(cx, i) * alpha);
         }
     } else {
         ix := 1;
         if incx < 0 then ix = (-n+1)*incx + 1;
         for i: 1..n {
-            fset(cx, ix, fget(cx, ix) * ca);
+            fset(cx, ix, fget(cx, ix) * alpha);
             ix += incx;
         }
     }

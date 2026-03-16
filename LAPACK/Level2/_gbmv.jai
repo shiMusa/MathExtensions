@@ -65,7 +65,7 @@ _gbmv :: (
         assert(incy != 0);
     }
 
-    DEBUG :: true;
+    DEBUG :: false;
     #if DEBUG println_push("_gbmv", color=.FG_CYAN);
 
     temp: T = ---;

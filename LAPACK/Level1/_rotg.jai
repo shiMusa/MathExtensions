@@ -38,15 +38,13 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
         safmin :: SAFMIN_64;
         safmax :: SAFMAX_64;
         rtmin  :: RTMIN_64;
-        rtmax  :: RTMAX_64;
     } else {
         safmin :: SAFMIN_32;
         safmax :: SAFMAX_32;
         rtmin  :: RTMIN_32;
-        rtmax  :: RTMAX_32;
     }
     // Local Scalars
-    d, f1, f2, g1, g2, h2, p, u, uu, v, vv, w : R = ---;
+    d, f1, f2, g1, g2, h2, rtmax, u, v, w : R = ---;
     f, fs, g, gs, r, t : C = ---;
 
     f = a;.*
@@ -57,74 +55,96 @@ zrotg :: (a: *$C, b: C, c: *$R, s: *C) #modify {
         r = f;
     } else if f == czero {
         c.* = zero;
-        g1 = max(abs(real(g), abs(imag(g))));
-        if g1 > rtmin && g1 < rtmax {
-            // use unscaled algorithm
-            g2 = abs_sq(g);
-            d = sqrt(g2);
-            s.* = conjugate(g)/d;
-            r = d;
+        if real(g) == zero {
+            r = abs(imag(g));
+            s.* = conjugate(g) / real(r);
+        } else if imag(g) == zero {
+            r = abs(real(g));
+            s.* = conjugate(g) / real(r);
         } else {
-            // use scaled algorithms
-            u = clamp(ncast(R,safmin), g1, ncast(R,safmax));
-            uu = one / u;
-            gs = g*uu;
-            g2 = abs_sq(gs);
-            d = sqrt(g2);
-            s.* = conjugate(gs)/d;
-            r = d*u;
+            g1 = max(abs(real(g)), abs(imag(g)));
+            rtmax = sqrt(safmax / 2);
+            if g1 > rtmin && g1 < rtmax {
+                g2 = abs_sq(g);
+                d = sqrt(g2);
+                s.* = conjugate(g) / d;
+                r = d;
+            } else {
+                u = min(safmax, max(safmin, g1));
+                gs = g / u;
+                g2 = abs_sq(gs);
+                d = sqrt(g2);
+                s.* = conjugate(gs) / d;
+                r = d * u;
+            }
         }
     } else {
         f1 = max( abs(real(f)), abs(imag(f)) );
         g1 = max( abs(real(g)), abs(imag(g)) );
-        if f1 > rtmin && f1 < rtmax && g1 > rtmin && g1 < rtmin {
-            // use unscaled algorithm
+        rtmax = sqrt(safmax / 4);
+        if f1 > rtmin && f1 < rtmax && g1 > rtmin && g1 < rtmax {
             f2 = abs_sq(f);
             g2 = abs_sq(g);
             h2 = f2 + g2;
-            if f2 > rtmin && h2 < rtmax {
-                d = sqrt(f2*h2);
+            if f2 >= h2 * safmin {
+                c.* = sqrt(f2 / h2);
+                r = f / c.*;
+                rtmax *= 2;
+                if f2 > rtmin && h2 < rtmax {
+                    s.* = conjugate(g) * (f / sqrt(f2 * h2));
+                } else {
+                    s.* = conjugate(g) * (r / h2);
+                }
             } else {
-                d = sqrt(f2)*sqrt(h2);
+                d = sqrt(f2 * h2);
+                c.* = f2 / d;
+                if c.* >= safmin {
+                    r = f / c.*;
+                } else {
+                    r = f * (h2 / d);
+                }
+                s.* = conjugate(g) * (f / d);
             }
-            p = one/d;
-            c.* = f2*p;
-            s.* = conjugate(g)*(f*p);
-            r = f*(h2*p);
         } else {
-            // use scaled algorithm
             u = min(safmax, max(safmin, f1, g1));
-            uu = one/u;
-            gs = g*uu;
+            gs = g / u;
             g2 = abs_sq(gs);
-            if f1*uu < rtmin {
-                // f is not well-scaled when scaled by g1
-                // use a.* different scaling for f.
-                v = clamp(safmin, f1, safmax);
-                vv = one/v;
-                w = v*uu;
-                fs = f*vv;
+            if f1 / u < rtmin {
+                v = min(safmax, max(safmin, f1));
+                w = v / u;
+                fs = f / v;
                 f2 = abs_sq(fs);
-                h2 = f2*w*w + g2;
+                h2 = f2*w**2 + g2;
             } else {
-                // otherwise use the same scaling for f and g.
                 w = one;
-                fs = f*uu;
+                fs = f / u;
                 f2 = abs_sq(fs);
                 h2 = f2 + g2;
             }
-            if f2 > rtmin && h2 < rtmax {
-                d = sqrt(f2*h2);
+            if f2 >= h2 * safmin {
+                c.* = sqrt(f2 / h2);
+                r = fs / c.*;
+                rtmax *= 2;
+                if f2 > rtmin && h2 < rtmax {
+                    s.* = conjugate(gs) * (fs / sqrt(f2 * h2));
+                } else {
+                    s.* = conjugate(gs) * (r / h2);
+                }
             } else {
-                d = sqrt(f2)*sqrt(h2);
+                d = sqrt(f2 * h2);
+                c.* = f2 / d;
+                if c.* >= safmin {
+                    r = fs / c.*;
+                } else {
+                    r = fs * (h2 / d);
+                }
+                s.* = conjugate(gs) * (fs / d);
             }
-            p = one/d;
-            c.* = (f2*p)*w;
-            s.* = conjugate(gs)*(fs*p);
-            r = (fs*(h2*p))*u;
+            c.* *= w;
+            r *= u;
         }
     }
-    a = r;
+    a.* = r;
 }
 
 

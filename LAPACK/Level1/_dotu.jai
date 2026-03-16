@@ -36,9 +36,9 @@ dsdot :: inline ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, 
     return _dotu_T(n,cx,incx,cy,incy,float64);
 }
 
-sdsdot :: inline ($$n: int, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int) -> float32 {
+sdsdot :: inline ($$n: int, sb: float32, cx: $X/ArrayType1D, $$incx: int, cy: $Y/ArrayType1D, $$incy: int) -> float32 {
     #assert(X.data_type == float32 && Y.data_type == float32);
-    return cast(float32)_dotu_T(n,cx,incx,cy,incy,float64);
+    return cast(float32)(cast(float64)sb + _dotu_T(n,cx,incx,cy,incy,float64));
 }
 
 

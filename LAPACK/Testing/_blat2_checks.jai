@@ -42,7 +42,7 @@ cmvch :: (
     DEBUG :: false;
     #if DEBUG println("trans = %", char_to_string(trans), color=.FG_CYAN);
 
-    println_push("cmvch");
+    #if DEBUG println_push("cmvch");
 
     czero := zero(T);
     rzero := zero(U);
@@ -263,8 +263,8 @@ cchk1 :: (
         assert(T == YT.data_type);
         assert(U == G.data_type);
     }
-    DEBUG :: true;
-    println_push("cchk1");
+    DEBUG :: false;
+    #if DEBUG println_push("cchk1");
 
     pass := true;
 
@@ -353,7 +353,7 @@ cchk1 :: (
                                         COUNT += 1;
                                         println("COUNT %", COUNT);
                                     }
-                                    println("in %, im %, iku %, ic %, ix %, iy %, ia %, ib %", in, im, iku, ic, ix, iy, ia, ib);
+                                    // println("in %, im %, iku %, ic %, ix %, iy %, ia %, ib %", in, im, iku, ic, ix, iy, ia, ib);
                                     beta := bet[ib];
 
                                     // Generate the vector Y.
@@ -390,36 +390,36 @@ cchk1 :: (
                                     aa_view := array2d_view(aa, lda, row_major=false);
                                     if full {
                                         #if T == float32 {
-                                            println("sgemv");
+                                            // println("sgemv");
                                             sgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == float64 {
-                                            println("dgemv");
+                                            // println("dgemv");
                                             dgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C32 {
-                                            println("cgemv");
+                                            // println("cgemv");
                                             cgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C64 {
-                                            println("zgemv");
+                                            // println("zgemv");
                                             zgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                     } else if banded {
                                         #if T == float32 {
-                                            println("sgbmv");
+                                            // println("sgbmv");
                                             sgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == float64 {
-                                            println("dgbmv");
+                                            // println("dgbmv");
                                             dgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C32 {
-                                            println("cgbmv");
+                                            // println("cgbmv");
                                             cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C64 {
-                                            println("zgbmv");
+                                            // println("zgbmv");
                                             zgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                     }
@@ -522,8 +522,8 @@ cchk2 :: (
         assert(T == YT.data_type);
         assert(U == G.data_type);
     }
-    DEBUG :: true;
-    println_push("cchk2");
+    DEBUG :: false;
+    #if DEBUG println_push("cchk2");
 
     pass := true;
 
@@ -586,7 +586,7 @@ cchk2 :: (
                                     COUNT += 1;
                                     println("COUNT %", COUNT);
                                 }
-                                println("in %, iku %, iu %, ix %, iy %, ia %, ib %", in, iku, iu, ix, iy, ia, ib);
+                                // println("in %, iku %, iu %, ix %, iy %, ia %, ib %", in, iku, iu, ix, iy, ia, ib);
                                 beta := bet[ib];
 
                                 transl := czero;
@@ -605,55 +605,55 @@ cchk2 :: (
 
                                 if packed {
                                     #if T == float32 {
-                                        println("sspmv");
+                                        // println("sspmv");
                                         sspmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
                                     }
                                     #if T == float64 {
-                                        println("dspmv");
+                                        // println("dspmv");
                                         dspmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
                                     }
                                     #if T == C32 {
-                                        println("chpmv");
+                                        // println("chpmv");
                                         chpmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
                                     }
                                     #if T == C64 {
-                                        println("zhpmv");
+                                        // println("zhpmv");
                                         zhpmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
                                     }
                                 } else {
                                     aa_view := array2d_view(aa, lda, row_major=false);
                                     if banded {
                                         #if T == float32 {
-                                            println("ssbmv");
+                                            // println("ssbmv");
                                             ssbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == float64 {
-                                            println("dsbmv");
+                                            // println("dsbmv");
                                             dsbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C32 {
-                                            println("chbmv");
+                                            // println("chbmv");
                                             chbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C64 {
-                                            println("zhbmv");
+                                            // println("zhbmv");
                                             zhbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                     } else {
                                         #if T == float32 {
-                                            println("ssymv");
+                                            // println("ssymv");
                                             ssymv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == float64 {
-                                            println("dsymv");
+                                            // println("dsymv");
                                             dsymv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C32 {
-                                            println("chemv");
+                                            // println("chemv");
                                             chemv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                         #if T == C64 {
-                                            println("zhemv");
+                                            // println("zhemv");
                                             zhemv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
                                         }
                                     }
@@ -742,8 +742,8 @@ cchk3 :: (
         assert(U == G.data_type);
         assert(T == Z.data_type);
     }
-    DEBUG :: true;
-    println_push("cchk3");
+    DEBUG :: false;
+    #if DEBUG println_push("cchk3");
 
     pass := true;
 
@@ -928,8 +928,8 @@ cchk4 :: (
         assert(U == G.data_type);
         assert(T == Z.data_type);
     }
-    DEBUG :: true;
-    println_push("cchk4");
+    DEBUG :: false;
+    #if DEBUG println_push("cchk4");
 
     pass := true;
 
@@ -1166,8 +1166,8 @@ cchk5 :: (
         assert(U == G.data_type);
         assert(T == Z.data_type);
     }
-    DEBUG :: true;
-    println_push("cchk5");
+    DEBUG :: false;
+    #if DEBUG println_push("cchk5");
 
     pass := true;
 
@@ -1425,7 +1425,8 @@ cchk6 :: (
         assert(U == G.data_type);
         assert(T == Z.data_type);
     }
-    println_push("cchk6");
+    DEBUG :: false;
+    #if DEBUG println_push("cchk6");
 
     pass := true;
 

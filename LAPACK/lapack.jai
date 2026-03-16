@@ -47,6 +47,7 @@
 #load "Level2/_trsv.jai";
 
 #load "Level3/_gemm.jai";
+#load "Level3/_gemmtr.jai";
 #load "Level3/_hemm.jai";
 #load "Level3/_her2k.jai";
 #load "Level3/_herk.jai";
