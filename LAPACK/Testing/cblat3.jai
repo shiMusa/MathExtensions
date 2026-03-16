@@ -1,215 +1,8 @@
 // ? LAPACK cblat3
 // ? http://www.netlib.org/lapack/explore-html/d9/ddb/cblat3_8f_source.html
 
-
-cblat3_file_url : string : "LAPACK/Testing/cblat3.in";
-
-
-cblat3 :: () -> bool {
-    println_push("cblat3", color=.FG_GREEN);
-
-    data := read_file_and_split(cblat3_file_url);
-
-    println("Input file:");
-    print(ansi_color(.FG_WHITE));
-    for line, li: data {
-        print("%: ", li);
-        for line {
-            print("% ", it);
-        }
-        print("\n");
-    }
-    print(ansi_color());
-
-    nin    : int : 5;
-    nsubs  : int : 9;
-
-    nmax   : int : 65;
-    nidmax : int : 9;
-    nalmax : int : 7;
-    nbemax : int : 7;
-
-    a  : Array2D(nmax, nmax, C32);
-    b  : Array2D(nmax, nmax, C32);
-    c  : Array2D(nmax, nmax, C32);
-    aa : Array1D(nmax*nmax, C32);
-    as : Array1D(nmax*nmax, C32);
-    bb : Array1D(nmax*nmax, C32);
-    bs : Array1D(nmax*nmax, C32);
-    cc : Array1D(nmax*nmax, C32);
-    cs : Array1D(nmax*nmax, C32);
-    ct : Array1D(nmax, C32);
-    g  : Array1D(nmax, float32);
-    w  : Array1D(2*nmax, C32);
-
-    thresh : float32;
-    nidim, nalf, nbet : int;
-    idim : []int;
-    alf  : Array1D(nalmax, C32);
-    bet  : Array1D(nbemax, C32);
-    ltest : [nsubs]bool;
-    snames : [nsubs]string : string.[
-        "CGEMM", "CHEMM", "CSYMM",
-        "CTRMM", "CTRSM", "CHERK",
-        "CSYRK", "CHER2K", "CSYR2K"
-    ];
-
-    {
-        thresh = String.parse_float(*data[7][0]);
-        println("thresh = %", thresh);
-
-        nidim = String.parse_int(*data[8][0]);
-        assert(nidim > 0 && nidim <= nidmax, "nidim out of range: 0 < % <= %\n", nidim, nidmax);
-        println("nidim = %", nidim);
-
-        idim = NewArray(nidim, int, false);
-        for 0..nidim-1 {
-            idim[it] = String.parse_int(*data[9][it]);
-            assert(idim[it] >= 0 && idim[it] <= nmax, "idim[%] out of range: % <= % <= %\n", it, 0, idim[it], nmax);
-        }
-        println("idim = %", idim);
-
-        nalf = String.parse_int(*data[10][0]);
-        assert(nalf > 0 && nalf <= nalmax, "nalf out of range: 0 < % <= %\n", nalf, nalmax);
-        println("nalf = %", nalf);
-
-        for 0..nalf-1 {
-            c_num := String.slice(data[11][it], 1, data[11][it].count-2);
-            f_vals := String.split(c_num, ",");
-            fset(*alf, it+1, c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1])));
-        }
-        println("alf = %", alf);
-
-        nbet = String.parse_int(*data[12][0]);
-        assert(nbet > 0 && nbet <= nbemax, "nbet out of range: 0 < % <= %\n", nbet, nbemax);
-        println("nbet = %", nbet);
-
-        for 0..nbet-1 {
-            c_num := String.slice(data[13][it], 1, data[13][it].count-2);
-            f_vals := String.split(c_num, ",");
-            fset(*bet, it+1, c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1])));
-        }
-        println("bet = %", bet);
-
-        for i:0..nsubs-1 {
-            col := 1;
-            do_test := data[14+i][col];
-            while do_test == " " || do_test == "" {
-                col += 1;
-                do_test = data[14+i][col];
-            }
-
-            if do_test == "T" {
-                for *ltest {
-                    if snames[it_index] == data[14+i][0] {
-                        it.* = true;
-                    }
-                }
-            }
-        }
-        println("ltest = %", ltest);
-    }
-
-    eps := EPS_32;
-    czero := zero(C32);
-    cone  := one(C32);
-    rzero := zero(float32);
-
-    {
-        ab_exact : Array2D(nmax, nmax, C32);
-        bb_exact : Array2D(nmax, nmax, C32);
-        c_exact  : Array2D(nmax, nmax, C32);
-        cc_exact : Array1D(nmax, C32);
-
-        n := min(32, nmax);
-        for j:1..n {
-            for i:1..n {
-                fset(*ab_exact, i, j, ncast(C32, max(i-j+1, 0)));
-            }
-            fset(*bb_exact, j, 1, ncast(C32, j));
-            fset(*bb_exact, 1, j, ncast(C32, j));
-            fset(*c_exact, j, 1, czero);
-        }
-        for j:1..n {
-            fset(*cc_exact, j, ncast(C32, j*((j+1)*j)/2 - ((j+1)*j*(j-1))/3));
-        }
-
-        cc_exact_view := array2d_view(*cc_exact, nmax, row_major=false);
-
-        errv : float32 = rzero;
-        pass := cblat3_cmmch(#char "n", #char "n", n, 1, n, cone, ab_exact, nmax, bb_exact, nmax, czero, c_exact, nmax, *ct, *g, cc_exact_view, nmax, eps, *errv, true, true);
-        pass &= lce(cc_exact, ct, n);
-        if !pass || errv != rzero then err("cmmch result not good: transa = n, transb = n", exit_program=true);
-
-        errv = rzero;
-        pass = cblat3_cmmch(#char "n", #char "c", n, 1, n, cone, ab_exact, nmax, bb_exact, nmax, czero, c_exact, nmax, *ct, *g, cc_exact_view, nmax, eps, *errv, true, true);
-        pass &= lce(cc_exact, ct, n);
-        if !pass || errv != rzero then err("cmmch result not good: transa = n, transb = c", exit_program=true);
-
-        for j:1..n {
-            fset(*bb_exact, j, 1, ncast(C32, n-j+1));
-            fset(*bb_exact, 1, j, ncast(C32, n-j+1));
-        }
-        for j:1..n {
-            fset(*cc_exact, n-j+1, ncast(C32, j*((j+1)*j)/2 - ((j+1)*j*(j-1))/3));
-        }
-
-        errv = rzero;
-        pass = cblat3_cmmch(#char "c", #char "n", n, 1, n, cone, ab_exact, nmax, bb_exact, nmax, czero, c_exact, nmax, *ct, *g, cc_exact_view, nmax, eps, *errv, true, true);
-        pass &= lce(cc_exact, ct, n);
-        if !pass || errv != rzero then err("cmmch result not good: transa = c, transb = n", exit_program=true);
-
-        errv = rzero;
-        pass = cblat3_cmmch(#char "c", #char "c", n, 1, n, cone, ab_exact, nmax, bb_exact, nmax, czero, c_exact, nmax, *ct, *g, cc_exact_view, nmax, eps, *errv, true, true);
-        pass &= lce(cc_exact, ct, n);
-        if !pass || errv != rzero then err("cmmch result not good: transa = c, transb = c", exit_program=true);
-    }
-
-    pass := true;
-    for isnum:0..nsubs-1 {
-        if !ltest[isnum] then continue;
-
-        srnamt := snames[isnum];
-        println("%: %", isnum, srnamt);
-
-        if isnum == 0 {
-            pass &= cblat3_cchk1(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, nbet, bet.data, nmax,
-                *a, *aa, *as, *b, *bb, *bs, *c, *cc, *cs, *ct, *g
-            );
-        } else if isnum == 1 || isnum == 2 {
-            pass &= cblat3_cchk2(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, nbet, bet.data, nmax,
-                *a, *aa, *as, *b, *bb, *bs, *c, *cc, *cs, *ct, *g
-            );
-        } else if isnum == 3 || isnum == 4 {
-            pass &= cblat3_cchk3(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, nmax,
-                *a, *aa, *as, *b, *bb, *bs, *ct, *g, *c
-            );
-        } else if isnum == 5 || isnum == 6 {
-            pass &= cblat3_cchk4(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, nbet, bet.data, nmax,
-                *a, *aa, *as, *b, *bb, *bs, *c, *cc, *cs, *ct, *g
-            );
-        } else if isnum == 7 || isnum == 8 {
-            pass &= cblat3_cchk5(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, nbet, bet.data, nmax,
-                *a, *aa, *as, *b, *bb, *bs, *c, *cc, *cs, *ct, *g, *w
-            );
-        } else {
-            warn("cblat3 | % not yet implemented, skipping for now", srnamt);
-        }
-    }
-
-    if !pass then err("cblat3 did not pass.");
-    return pass;
-}
+// ? LAPACK cblat3 helper routines
+// ? Loaded and driven by _blat3.jai
 
 
 //  ######  ##     ## ##     ##  ######  ##     ##
@@ -524,7 +317,18 @@ cblat3_cchk1 :: (
                                 cc_view := array2d_view(cc, ldc, row_major=false);
                                 cs_view := array2d_view(cs, ldc, row_major=false);
 
-                                cgemm(transa, transb, m, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                                #if T == float32 {
+                                    sgemm(transa, transb, m, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                                }
+                                #if T == float64 {
+                                    dgemm(transa, transb, m, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                                }
+                                #if T == C32 {
+                                    cgemm(transa, transb, m, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                                }
+                                #if T == C64 {
+                                    zgemm(transa, transb, m, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                                }
 
                                 isame1  := transa == transas;
                                 isame2  := transb == transbs;
@@ -719,10 +523,25 @@ cblat3_cchk2 :: (
                             cc_view := array2d_view(cc, ldc, row_major=false);
                             cs_view := array2d_view(cs, ldc, row_major=false);
 
-                            if conj {
-                                chemm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
-                            } else {
-                                csymm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
+                            #if T == float32 {
+                                ssymm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
+                            }
+                            #if T == float64 {
+                                dsymm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
+                            }
+                            #if T == C32 {
+                                if conj {
+                                    chemm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
+                                } else {
+                                    csymm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
+                                }
+                            }
+                            #if T == C64 {
+                                if conj {
+                                    zhemm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
+                                } else {
+                                    zsymm(side, uplo, m, n, alpha, aa_view, lda, *bb_view, ldb, beta, *cc_view, ldc);
+                                }
                             }
 
                             isame1  := side == sides;
@@ -914,9 +733,31 @@ cblat3_cchk3 :: (
                                 bs_view := array2d_view(bs, ldb, row_major=false);
 
                                 if is_mm {
-                                    ctrmm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    #if T == float32 {
+                                        strmm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
+                                    #if T == float64 {
+                                        dtrmm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
+                                    #if T == C32 {
+                                        ctrmm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
+                                    #if T == C64 {
+                                        ztrmm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
                                 } else if is_sm {
-                                    ctrsm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    #if T == float32 {
+                                        strsm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
+                                    #if T == float64 {
+                                        dtrsm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
+                                    #if T == C32 {
+                                        ctrsm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
+                                    #if T == C64 {
+                                        ztrsm(side, uplo, transa, diag, m, n, alpha, aa_view, lda, *bb_view, ldb);
+                                    }
                                 }
 
                                 isame1  := side == sides;
@@ -1100,17 +941,21 @@ cblat3_cchk4 :: (
                     for ia:1..nalf {
                         alpha := alf[ia-1];
                         ralpha : U = ---;
-                        if conj {
-                            ralpha = real(alpha);
-                            alpha = cpx(ralpha, rzero);
-                        }
+                            if conj {
+                                ralpha = real(alpha);
+                                #if T == C32 || T == C64 {
+                                    alpha = ncast(T, cpx(ralpha, rzero));
+                                }
+                            }
 
                         for ib:1..nbet {
                             beta := bet[ib-1];
                             rbeta : U = ---;
                             if conj {
                                 rbeta = real(beta);
-                                beta = cpx(rbeta, rzero);
+                                #if T == C32 || T == C64 {
+                                    beta = ncast(T, cpx(rbeta, rzero));
+                                }
                             }
 
                             is_null := n <= 0;
@@ -1153,10 +998,25 @@ cblat3_cchk4 :: (
                             cc_view := array2d_view(cc, ldc, row_major=false);
                             cs_view := array2d_view(cs, ldc, row_major=false);
 
-                            if conj {
-                                cherk(uplo, trans, n, k, ralpha, aa_view, lda, rbeta, *cc_view, ldc);
-                            } else {
-                                csyrk(uplo, trans, n, k, alpha, aa_view, lda, beta, *cc_view, ldc);
+                            #if T == float32 {
+                                ssyrk(uplo, trans, n, k, alpha, aa_view, lda, beta, *cc_view, ldc);
+                            }
+                            #if T == float64 {
+                                dsyrk(uplo, trans, n, k, alpha, aa_view, lda, beta, *cc_view, ldc);
+                            }
+                            #if T == C32 {
+                                if conj {
+                                    cherk(uplo, trans, n, k, ralpha, aa_view, lda, rbeta, *cc_view, ldc);
+                                } else {
+                                    csyrk(uplo, trans, n, k, alpha, aa_view, lda, beta, *cc_view, ldc);
+                                }
+                            }
+                            #if T == C64 {
+                                if conj {
+                                    zherk(uplo, trans, n, k, ralpha, aa_view, lda, rbeta, *cc_view, ldc);
+                                } else {
+                                    zsyrk(uplo, trans, n, k, alpha, aa_view, lda, beta, *cc_view, ldc);
+                                }
                             }
 
                             isame1  := uplo == uplos;
@@ -1398,7 +1258,9 @@ cblat3_cchk5 :: (
                             rbeta : U = ---;
                             if conj {
                                 rbeta = real(beta);
-                                beta = cpx(rbeta, rzero);
+                                #if T == C32 || T == C64 {
+                                    beta = ncast(T, cpx(rbeta, rzero));
+                                }
                             }
 
                             is_null := n <= 0;
@@ -1440,10 +1302,25 @@ cblat3_cchk5 :: (
                             cc_view := array2d_view(cc, ldc, row_major=false);
                             cs_view := array2d_view(cs, ldc, row_major=false);
 
-                            if conj {
-                                cher2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, rbeta, *cc_view, ldc);
-                            } else {
-                                csyr2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                            #if T == float32 {
+                                ssyr2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                            }
+                            #if T == float64 {
+                                dsyr2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                            }
+                            #if T == C32 {
+                                if conj {
+                                    cher2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, rbeta, *cc_view, ldc);
+                                } else {
+                                    csyr2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                                }
+                            }
+                            #if T == C64 {
+                                if conj {
+                                    zher2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, rbeta, *cc_view, ldc);
+                                } else {
+                                    zsyr2k(uplo, trans, n, k, alpha, aa_view, lda, bb_view, ldb, beta, *cc_view, ldc);
+                                }
                             }
 
                             isame1  := uplo == uplos;
@@ -1585,4 +1462,3 @@ cblat3_cchk5 :: (
 
     return pass;
 }
-

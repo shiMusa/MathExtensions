@@ -1,251 +1,5 @@
-// ? LAPACK cblat2
-// ? http://www.netlib.org/lapack/explore-html/d2/d54/cblat2_8f_source.html
-
-
-// ? Does is make sense to accurately copy the behavior of the test suite?
-// ? Meaning, generating output files etc.?
-
-
-file_url : string : "LAPACK/Testing/cblat2.in";
-
-//  ######  ########  ##          ###    ########  #######
-// ##    ## ##     ## ##         ## ##      ##    ##     ##
-// ##       ##     ## ##        ##   ##     ##           ##
-// ##       ########  ##       ##     ##    ##     #######
-// ##       ##     ## ##       #########    ##    ##
-// ##    ## ##     ## ##       ##     ##    ##    ##
-//  ######  ########  ######## ##     ##    ##    #########
-
-cblat2 :: () -> bool {
-    println_push("cblat2", color=.FG_GREEN);
-
-    data := read_file_and_split(file_url);
-
-    println("Input file:");
-    print(ansi_color(.FG_WHITE));
-    for line, li: data {
-        print("%: ", li);
-        for line {
-            print("% ", it);
-        }
-        print("\n");
-    }
-    print(ansi_color());
-
-
-    // constants
-    nin    : int : 5;
-    nsubs  : int : 17;
-
-    nmax   : int : 65;
-    incmax : int : 2;
-
-    ninmax : int : 7;
-    nidmax : int : 9;
-    nkbmax : int : 7;
-    nalmax : int : 7;
-    nbemax : int : 7;
-
-    czero := zero(C32);
-    cone  := one(C32);
-    rzero := zero(float32);
-
-    // variables
-    a : Array2D(nmax, nmax, C32); // ! There might be an issue with row vs column major interpretation of `a`
-    aa, as : Array1D(nmax*nmax, C32);
-    x, y, yt : Array1D(nmax, C32);
-    z : Array1D(2*nmax, C32);
-    xs, _xx, ys, yy : Array1D(nmax*incmax, C32);
-    alf : Array1D(nalmax, C32);
-    bet : Array1D(nbemax, C32);
-    g   : Array1D(nmax, float32);
-
-    thresh : float32;
-    nidim, nkb, ninc, nalf, nbet : int;
-    idim, kb, inc : []int;
-    snames : [nsubs]string : string.[
-        "CGEMV", "CGBMV", "CHEMV", "CHBMV",
-        "CHPMB", "CTRMV", "CTBMV", "CTPMV",
-        "CTRSV", "CTBSV", "CTPSV", "CGERC",
-        "CGERU", "CHER" , "CHPR" , "CHER2",
-        "CHPR2"
-    ];
-    ltest : [nsubs]bool; // default to false
-    // tsterr : bool = ---; // not used here
-
-
-    // parse data
-    {
-        // tsterr = ifx data[6][0] == "T" then true else false; // not used here
-
-        thresh = String.parse_float(*data[7][0]);
-        println("thresh = %", thresh);
-        
-        nidim = String.parse_int(*data[8][0]);
-        assert(nidim > 0 && nidim <= nidmax, "nidim out of range: 0 < % <= %\n", nidim, nidmax);
-        println("nidim = %", nidim);
-        
-        idim = NewArray(nidim, int, false);
-        for 0..nidim-1 {
-            idim[it] = String.parse_int(*data[9][it]);
-            assert(idim[it] >= 0 && idim[it] <= nmax, "idim[%] out of range: % <= % <= %\n", it, 0, idim[it], nmax);
-        }
-        println("idim = %", idim);
-
-        nkb = String.parse_int(*data[10][0]);
-        assert(nkb > 0 && nkb <= nkbmax, "nkb out of range: % < % <= %\n", 0, nkb, nkbmax);
-        println("nkb = %", nkb);
-
-        kb = NewArray(nkb, int, false);
-        for 0..nkb-1 {
-            kb[it] = String.parse_int(*data[11][it]);
-            assert(kb[it] >= 0, "kb[%] out of range: % < 0\n", it, kb[it]);
-        }
-        println("kb = %", kb);
-
-        ninc = String.parse_int(*data[12][0]);
-        assert(ninc >= 1 && ninc <= ninmax, "ninc out of range: 0 < % <= %\n", ninc, ninmax);
-        println("ninc = %", ninc);
-
-        inc = NewArray(ninc, int, false);
-        for 0..ninc-1 {
-            inc[it] = String.parse_int(*data[13][it]);
-            assert(inc[it] != 0 && abs(inc[it]) <= incmax, "inc[%] out of range: 0 != %, % <= %", it, inc[it], inc[it], incmax);
-        }
-        println("inc = %", inc);
-
-        nalf = String.parse_int(*data[14][0]);
-        assert(nalf > 0 && nalf <= nalmax, "nalf out of range: 0 < % <= %\n", nalf, nalmax);
-        println("nalf = %", nalf);
-
-        for 0..nalf-1 {
-            // complex number!
-            c_num := String.slice(data[15][it], 1, data[15][it].count-2); // remove "(" and ")"
-            f_vals := String.split(c_num, ",");
-            set(*alf, it, c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1])) );
-        }
-        println("alf = %", alf);
-
-        nbet = String.parse_int(*data[16][0]);
-        assert(nbet > 0 && nbet <= nalmax, "nbet out of range: 0 < % <= %\n", nbet, nalmax);
-        println("nbet = %", nbet);
-
-        for 0..nbet-1 {
-            // complex number!
-            c_num := String.slice(data[17][it], 1, data[17][it].count-2); // remove "(" and ")"
-            f_vals := String.split(c_num, ",");
-            set(*bet, it, c32(String.parse_float(*f_vals[0]), String.parse_float(*f_vals[1])) );
-        }
-        println("bet = %", bet);
-    
-        for i:0..nsubs-1 {
-            col := 1;
-            do_test := data[18+i][col];
-            while do_test == " " || do_test == "" {
-                col += 1;
-                do_test = data[18+i][col];
-            }
-
-            if do_test == "T" {
-                for *ltest {
-                    if snames[it_index] == data[18+i][0] {
-                        it.* = true;
-                    }
-                }
-            }
-        }
-        println("ltest = %", ltest);
-    }
-
-
-    eps := EPS_32; // Complex(float32)
-
-    // Check the riliability of CMVCH using exact data.
-    n := min(32, nmax);
-    for j:1..n {
-        for i:1..n {
-            fset(*a, i, j, ncast(C32,max(i-j+1, 0)));
-        }
-        fset(*x, j, ncast(C32,j-1));
-        fset(*y, j, czero);
-    }
-    for j:1..n {
-        fset(*yy, j, ncast(C32, (j-1)*(j*(j-1))/2 - (j*(j-1)*(j-2))/3) );
-    }
-    // YY holds the exact result. On exit from CMVCH YT holds 
-    // the result computed by CMVCH.
-
-    pass := true;
-
-    trans : u8 = #char "n";
-    pass &= cmvch(trans, n, n, cone, a, nmax, x,  1, czero, y,  1, *yt, *g, yy, eps, true);
-    pass &= lce(yy, yt, n);
-    if !pass then err("cmvch result not good: n = %\n%\n%", n, yy, yt, exit_program=true);
-
-    trans = #char "t";
-    pass &= cmvch(trans, n, n, cone, a, nmax, x, -1, czero, y, -1, *yt, *g, yy, eps, true);
-    pass &= lce(yy, yt, n);
-    if !pass then err("cmvch result not good: n = %\n%\n%", n, yy, yt, exit_program=true);
-
-
-    // Test each subroutine in turn.
-    // println("Test each subroutine in turn.");
-    for isnum:0..nsubs-1 {
-        if !ltest[isnum] then continue;
-
-        srnamt := snames[isnum];
-        println("%: %", isnum, srnamt);
-        // error exits need not be tested
-
-        // Test computations
-        if isnum <= 1 {
-            pass &= cchk1(
-                srnamt, eps, thresh, true,
-                nidim, idim, nkb, kb, nalf, alf.data,
-                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            );
-        } else if isnum <= 4 {
-            pass &= cchk2(
-                srnamt, eps, thresh, true,
-                nidim, idim, nkb, kb, nalf, alf.data,
-                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            );
-        } else if isnum <= 10 {
-            pass &= cchk3(
-                srnamt, eps, thresh, true,
-                nidim, idim, nkb, kb, ninc, inc,
-                nmax, incmax, *a, *aa, *as, *y, *yy, *ys, *yt, *g, *z
-            );
-        } else if isnum <= 12 {
-            pass &= cchk4(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, ninc, inc,
-                nmax, incmax, *a, *aa, *as, *x, *_xx, *xs, *y, *yy, *ys,
-                *yt, *g, *z
-            );
-        } else if isnum <= 14 {
-            pass &= cchk5(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, ninc, inc,
-                nmax, incmax, *a, *aa, *as, *x, *_xx, *xs, *y, *yy, *ys,
-                *yt, *g, *z
-            );
-        } else {
-            pass &= cchk6(
-                srnamt, eps, thresh, true,
-                nidim, idim, nalf, alf.data, ninc, inc,
-                nmax, incmax, *a, *aa, *as, *x, *_xx, *xs, *y, *yy, *ys,
-                *yt, *g, *z
-            );
-        }
-    }
-
-    // Clean up.
-    if !pass then err("cblat2 did not pass.");
-    return pass;
-}
+// ? LAPACK cblat2 helper routines
+// ? Loaded and driven by _blat2.jai
 
 
 //  ######  ##     ## ##     ##  ######  ##     ##
@@ -522,7 +276,7 @@ cchk1 :: (
     rzero := zero(U);
     rone  := one(U);
 
-    full   := char_eq(sname[2], #char "e");
+    full   := char_eq(sname[2], #char "e", #char "y");
     banded := char_eq(sname[2], #char "b");
 
     // Define the number of arguments
@@ -635,11 +389,39 @@ cchk1 :: (
                                     // Call the subroutine.
                                     aa_view := array2d_view(aa, lda, row_major=false);
                                     if full {
-                                        println("cgemv");
-                                        cgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        #if T == float32 {
+                                            println("sgemv");
+                                            sgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == float64 {
+                                            println("dgemv");
+                                            dgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C32 {
+                                            println("cgemv");
+                                            cgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C64 {
+                                            println("zgemv");
+                                            zgemv(trans, m, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
                                     } else if banded {
-                                        println("cgbmv");
-                                        cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        #if T == float32 {
+                                            println("sgbmv");
+                                            sgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == float64 {
+                                            println("dgbmv");
+                                            dgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C32 {
+                                            println("cgbmv");
+                                            cgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C64 {
+                                            println("zgbmv");
+                                            zgbmv(trans, m, n, kl, ku, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
                                     }
 
                                     // See what data changed inside subroutines.
@@ -822,16 +604,58 @@ cchk2 :: (
                                 }
 
                                 if packed {
-                                    println("chpmv");
-                                    chpmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
+                                    #if T == float32 {
+                                        println("sspmv");
+                                        sspmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
+                                    }
+                                    #if T == float64 {
+                                        println("dspmv");
+                                        dspmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
+                                    }
+                                    #if T == C32 {
+                                        println("chpmv");
+                                        chpmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
+                                    }
+                                    #if T == C64 {
+                                        println("zhpmv");
+                                        zhpmv(uplo, n, alpha, aa, _xx, incx, beta, yy, incy);
+                                    }
                                 } else {
                                     aa_view := array2d_view(aa, lda, row_major=false);
                                     if banded {
-                                        println("chbmv");
-                                        chbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        #if T == float32 {
+                                            println("ssbmv");
+                                            ssbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == float64 {
+                                            println("dsbmv");
+                                            dsbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C32 {
+                                            println("chbmv");
+                                            chbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C64 {
+                                            println("zhbmv");
+                                            zhbmv(uplo, n, k, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
                                     } else {
-                                        println("chemv");
-                                        chemv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        #if T == float32 {
+                                            println("ssymv");
+                                            ssymv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == float64 {
+                                            println("dsymv");
+                                            dsymv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C32 {
+                                            println("chemv");
+                                            chemv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
+                                        #if T == C64 {
+                                            println("zhemv");
+                                            zhemv(uplo, n, alpha, aa_view, lda, _xx, incx, beta, yy, incy);
+                                        }
                                     }
                                 }
 
@@ -1114,7 +938,7 @@ cchk4 :: (
     chalf := ncast(T, 0.5);
     rzero := zero(U);
 
-    conjug := char_eq(sname[4], #char "c");
+    conjug := sname.count > 4 && char_eq(sname[4], #char "c");
     nargs := 9;
 
     nc := 0;
@@ -1189,10 +1013,25 @@ cchk4 :: (
                         incys := incy;
 
                         aa_view := array2d_view(aa, lda, row_major=false);
-                        if conjug {
-                            cgerc(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
-                        } else {
-                            cgeru(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                        #if T == float32 {
+                            sger(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                        }
+                        #if T == float64 {
+                            dger(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                        }
+                        #if T == C32 {
+                            if conjug {
+                                cgerc(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            } else {
+                                cgeru(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            }
+                        }
+                        #if T == C64 {
+                            if conjug {
+                                zgerc(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            } else {
+                                zgeru(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            }
                         }
 
                         as_view := array2d_view(as, lda, row_major=false);
@@ -1340,7 +1179,7 @@ cchk5 :: (
     rzero := zero(U);
     rone  := one(U);
 
-    full   := char_eq(sname[2], #char "e");
+    full   := char_eq(sname[2], #char "e", #char "y");
     packed := char_eq(sname[2], #char "p");
 
     nargs := ifx full then 7 else 6;
@@ -1379,10 +1218,16 @@ cchk5 :: (
                 }
 
                 for ia:0..nalf-1 {
-                    ralpha := real(alf[ia]);
-                    if imag(alf[ia]) != rzero then continue;
-
-                    alpha := cpx(ralpha, rzero);
+                    ralpha : U = ---;
+                    alpha  : T = ---;
+                    #if T == C32 || T == C64 {
+                        ralpha = real(alf[ia]);
+                        if imag(alf[ia]) != rzero then continue;
+                        alpha = cpx(ralpha, rzero);
+                    } else {
+                        ralpha = alf[ia];
+                        alpha = alf[ia];
+                    }
                     _null := n <= 0 || ralpha == rzero;
 
                     transl = czero;
@@ -1400,9 +1245,31 @@ cchk5 :: (
 
                     if full {
                         aa_view := array2d_view(aa, lda, row_major=false);
-                        cher(uplo, n, ralpha, _xx, incx, *aa_view, lda);
+                        #if T == float32 {
+                            ssyr(uplo, n, ralpha, _xx, incx, *aa_view, lda);
+                        }
+                        #if T == float64 {
+                            dsyr(uplo, n, ralpha, _xx, incx, *aa_view, lda);
+                        }
+                        #if T == C32 {
+                            cher(uplo, n, ralpha, _xx, incx, *aa_view, lda);
+                        }
+                        #if T == C64 {
+                            zher(uplo, n, ralpha, _xx, incx, *aa_view, lda);
+                        }
                     } else if packed {
-                        chpr(uplo, n, ralpha, _xx, incx, aa);
+                        #if T == float32 {
+                            sspr(uplo, n, ralpha, _xx, incx, aa);
+                        }
+                        #if T == float64 {
+                            dspr(uplo, n, ralpha, _xx, incx, aa);
+                        }
+                        #if T == C32 {
+                            chpr(uplo, n, ralpha, _xx, incx, aa);
+                        }
+                        #if T == C64 {
+                            zhpr(uplo, n, ralpha, _xx, incx, aa);
+                        }
                     }
 
                     ok := lce(xs, _xx, lx);
@@ -1424,7 +1291,7 @@ cchk5 :: (
                     } else if full {
                         as_view := array2d_view(as, lda, row_major=false);
                         aa_view := array2d_view(aa, lda, row_major=false);
-                        ok = lceres("he", uplo, n, n, aa_view, as_view, lda);
+                        ok = lceres(String.slice(sname, 1, 2), uplo, n, n, aa_view, as_view, lda);
                         pass &= ok;
                         if !ok {
                             err(" lceres | uplo = %", uplo);
@@ -1569,7 +1436,7 @@ cchk6 :: (
     chalf := ncast(T, 0.5);
     rzero := zero(U);
 
-    full   := char_eq(sname[2], #char "e");
+    full   := char_eq(sname[2], #char "e", #char "y");
     packed := char_eq(sname[2], #char "p");
 
     nargs := ifx full then 9 else 8;
@@ -1642,9 +1509,31 @@ cchk6 :: (
 
                         if full {
                             aa_view := array2d_view(aa, lda, row_major=false);
-                            cher2(uplo, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            #if T == float32 {
+                                ssyr2(uplo, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            }
+                            #if T == float64 {
+                                dsyr2(uplo, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            }
+                            #if T == C32 {
+                                cher2(uplo, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            }
+                            #if T == C64 {
+                                zher2(uplo, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                            }
                         } else if packed {
-                            chpr2(uplo, n, alpha, _xx, incx, yy, incy, aa);
+                            #if T == float32 {
+                                sspr2(uplo, n, alpha, _xx, incx, yy, incy, aa);
+                            }
+                            #if T == float64 {
+                                dspr2(uplo, n, alpha, _xx, incx, yy, incy, aa);
+                            }
+                            #if T == C32 {
+                                chpr2(uplo, n, alpha, _xx, incx, yy, incy, aa);
+                            }
+                            #if T == C64 {
+                                zhpr2(uplo, n, alpha, _xx, incx, yy, incy, aa);
+                            }
                         }
 
                         ok := lce(xs, _xx, lx);
@@ -1674,7 +1563,7 @@ cchk6 :: (
                         } else if full {
                             as_view := array2d_view(as, lda, row_major=false);
                             aa_view := array2d_view(aa, lda, row_major=false);
-                            ok = lceres("he", uplo, n, n, aa_view, as_view, lda);
+                            ok = lceres(String.slice(sname, 1, 2), uplo, n, n, aa_view, as_view, lda);
                             pass &= ok;
                             if !ok {
                                 err(" lceres | uplo = %", uplo);
@@ -1806,7 +1695,12 @@ cmake :: (
     rzero := zero(U);
     rone  := one(U);
 
-    rogue  := cpx(ncast(U, -1.0e10), ncast(U, 1.0e10));
+    rogue  : T = ---;
+    #if T == C32 || T == C64 {
+        rogue = cpx(ncast(U, -1.0e10), ncast(U, 1.0e10));
+    } else {
+        rogue = ncast(T, ncast(U, -1.0e10));
+    }
     rrogue := ncast(U, -1.0e10);
 
     gen := char_eq(type[0], #char "g");
@@ -1898,8 +1792,10 @@ cmake :: (
                 fset(aa, i+(j-1)*lda, rogue);
             }
             if her {
-                jj := j + (j-1)*lda;
-                fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
+                #if T == C32 || T == C64 {
+                    jj := j + (j-1)*lda;
+                    fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
+                }
             }
         }
     } else if String.equal_nocase(type, "hb") || String.equal_nocase(type, "sb") || String.equal_nocase(type, "tb") {
@@ -1925,8 +1821,10 @@ cmake :: (
                 fset(aa, i+(j-1)*lda, rogue);
             }
             if her {
-                jj := kk + (j-1)*lda;
-                fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
+                #if T == C32 || T == C64 {
+                    jj := kk + (j-1)*lda;
+                    fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
+                }
             }
         }
     } else if String.equal_nocase(type, "hp") || String.equal_nocase(type, "sp") || String.equal_nocase(type, "tp") {
@@ -1945,7 +1843,11 @@ cmake :: (
                 fset(aa, ioff, fget(a.*,i,j));
                 if i == j {
                     if her {
-                        fset(aa,ioff, cpx(real(fget(aa.*,ioff)), rrogue));
+                        #if T == C32 || T == C64 {
+                            fset(aa,ioff, cpx(real(fget(aa.*,ioff)), rrogue));
+                        } else {
+                            fset(aa,ioff, fget(a.*,i,j));
+                        }
                     } else {
                         fset(aa,ioff, fget(a.*,i,j));
                     }
@@ -1976,8 +1878,8 @@ CBEG_Save :: struct {
 cbeg_save : CBEG_Save;
 
 
-// Generates complex number as pairs of random numbers uniformly
-// distributed between -0.5 and 0.5.
+// Generates test values uniformly distributed between -0.5 and 0.5.
+// Complex types use independent real and imaginary parts.
 
 // Written on 10-August-1987.
 // Richard Hanson, Sandia National Labs.
@@ -2019,5 +1921,9 @@ cbeg :: (
         ic = 0;
     }
     X :: #run get_number_inner_type(T);
-    return cpx( ncast(X, cast(float64)(i-500)/1001.0), ncast(X, cast(float64)(j-500)/1001.0) );
+    #if T == C32 || T == C64 {
+        return cpx(ncast(X, cast(float64)(i-500)/1001.0), ncast(X, cast(float64)(j-500)/1001.0));
+    } else {
+        return ncast(T, cast(float64)(i-500)/1001.0);
+    }
 }

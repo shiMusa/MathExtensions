@@ -17,7 +17,11 @@ icase, n, incx, incy : int = ---;
 #scope_export
 
 
-cblat1 :: () -> bool {
+// ? LAPACK cblat1 helper routines
+// ? Loaded and driven by _blat1.jai
+
+
+cblat1_impl :: () -> bool {
     println_push("cblat1", color=.FG_GREEN);
     
     pass : bool = true;
