@@ -16,47 +16,47 @@
 #load "xerbla.jai";
 #load "i_amax.jai";
 
-#load "Level1/_axpy.jai";
-#load "Level1/_copy.jai";
-#load "Level1/_dotc.jai";
-#load "Level1/_dotu.jai";
-#load "Level1/_scal.jai";
-#load "Level1/_rot.jai";
-#load "Level1/_swap.jai";
-#load "Level1/_asum.jai";
-#load "Level1/_abs.jai";
-#load "Level1/_rotm.jai";
-#load "Level1/_rotmg.jai";
-#load "Level1/_nrm2.jai";
+#load "BLAS_Level1/_axpy.jai";
+#load "BLAS_Level1/_copy.jai";
+#load "BLAS_Level1/_dotc.jai";
+#load "BLAS_Level1/_dotu.jai";
+#load "BLAS_Level1/_scal.jai";
+#load "BLAS_Level1/_rot.jai";
+#load "BLAS_Level1/_swap.jai";
+#load "BLAS_Level1/_asum.jai";
+#load "BLAS_Level1/_abs.jai";
+#load "BLAS_Level1/_rotm.jai";
+#load "BLAS_Level1/_rotmg.jai";
+#load "BLAS_Level1/_nrm2.jai";
 
-#load "Level2/_gbmv.jai";
-#load "Level2/_gemv.jai";
-#load "Level2/_geru.jai";
-#load "Level2/_hbmv.jai";
-#load "Level2/_hemv.jai";
-#load "Level2/_her.jai";
-#load "Level2/_her2.jai";
-#load "Level2/_hpmv.jai";
-#load "Level2/_hpr.jai";
-#load "Level2/_hpr2.jai";
-#load "Level2/_tbmv.jai";
-#load "Level2/_tbsv.jai";
-#load "Level2/_tpmv.jai";
-#load "Level2/_tpsv.jai";
-#load "Level2/_trmv.jai";
-#load "Level2/_trsv.jai";
+#load "BLAS_Level2/_gbmv.jai";
+#load "BLAS_Level2/_gemv.jai";
+#load "BLAS_Level2/_geru.jai";
+#load "BLAS_Level2/_hbmv.jai";
+#load "BLAS_Level2/_hemv.jai";
+#load "BLAS_Level2/_her.jai";
+#load "BLAS_Level2/_her2.jai";
+#load "BLAS_Level2/_hpmv.jai";
+#load "BLAS_Level2/_hpr.jai";
+#load "BLAS_Level2/_hpr2.jai";
+#load "BLAS_Level2/_tbmv.jai";
+#load "BLAS_Level2/_tbsv.jai";
+#load "BLAS_Level2/_tpmv.jai";
+#load "BLAS_Level2/_tpsv.jai";
+#load "BLAS_Level2/_trmv.jai";
+#load "BLAS_Level2/_trsv.jai";
 
-#load "Level3/_gemm.jai";
-#load "Level3/_gemmtr.jai";
-#load "Level3/_hemm.jai";
-#load "Level3/_her2k.jai";
-#load "Level3/_herk.jai";
-#load "Level3/_trmm.jai";
-#load "Level3/_trsm.jai";
+#load "BLAS_Level3/_gemm.jai";
+#load "BLAS_Level3/_gemmtr.jai";
+#load "BLAS_Level3/_hemm.jai";
+#load "BLAS_Level3/_her2k.jai";
+#load "BLAS_Level3/_herk.jai";
+#load "BLAS_Level3/_trmm.jai";
+#load "BLAS_Level3/_trsm.jai";
 
-#load "Testing/_blat1.jai";
-#load "Testing/_blat2.jai";
-#load "Testing/_blat3.jai";
+#load "BLAS_Testing/_blat1.jai";
+#load "BLAS_Testing/_blat2.jai";
+#load "BLAS_Testing/_blat3.jai";
 
 
 // ? tests if val equals any of lower_case_chars

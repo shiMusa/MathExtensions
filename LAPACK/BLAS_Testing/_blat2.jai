@@ -290,17 +290,17 @@ _blat2 :: ($T: Type, $U: Type, file_url: string, label: string) -> bool {
 }
 
 cblat2 :: () -> bool {
-    return _blat2(C32, float32, "LAPACK/Testing/cblat2.in", "cblat2");
+    return _blat2(C32, float32, "LAPACK/BLAS_Testing/cblat2.in", "cblat2");
 }
 
 sblat2 :: () -> bool {
-    return _blat2(float32, float32, "LAPACK/Testing/sblat2.in", "sblat2");
+    return _blat2(float32, float32, "LAPACK/BLAS_Testing/sblat2.in", "sblat2");
 }
 
 dblat2 :: () -> bool {
-    return _blat2(float64, float64, "LAPACK/Testing/dblat2.in", "dblat2");
+    return _blat2(float64, float64, "LAPACK/BLAS_Testing/dblat2.in", "dblat2");
 }
 
 zblat2 :: () -> bool {
-    return _blat2(C64, float64, "LAPACK/Testing/zblat2.in", "zblat2");
+    return _blat2(C64, float64, "LAPACK/BLAS_Testing/zblat2.in", "zblat2");
 }

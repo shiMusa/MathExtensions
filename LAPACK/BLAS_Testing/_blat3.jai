@@ -273,17 +273,17 @@ _blat3 :: ($T: Type, $U: Type, file_url: string, label: string) -> bool {
 }
 
 cblat3 :: () -> bool {
-    return _blat3(C32, float32, "LAPACK/Testing/cblat3.in", "cblat3");
+    return _blat3(C32, float32, "LAPACK/BLAS_Testing/cblat3.in", "cblat3");
 }
 
 sblat3 :: () -> bool {
-    return _blat3(float32, float32, "LAPACK/Testing/sblat3.in", "sblat3");
+    return _blat3(float32, float32, "LAPACK/BLAS_Testing/sblat3.in", "sblat3");
 }
 
 dblat3 :: () -> bool {
-    return _blat3(float64, float64, "LAPACK/Testing/dblat3.in", "dblat3");
+    return _blat3(float64, float64, "LAPACK/BLAS_Testing/dblat3.in", "dblat3");
 }
 
 zblat3 :: () -> bool {
-    return _blat3(C64, float64, "LAPACK/Testing/zblat3.in", "zblat3");
+    return _blat3(C64, float64, "LAPACK/BLAS_Testing/zblat3.in", "zblat3");
 }
