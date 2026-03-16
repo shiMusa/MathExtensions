@@ -191,7 +191,7 @@ test_lapack :: () {
     }
 
     pass := true;
-    pass &= cblat1();
+    pass &= _blat1();
     pass &= cblat2();
     pass &= sblat2();
     pass &= dblat2();
