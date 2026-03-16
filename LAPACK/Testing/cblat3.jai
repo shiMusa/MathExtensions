@@ -189,6 +189,12 @@ cblat3 :: () -> bool {
                 nidim, idim, nalf, alf.data, nmax,
                 *a, *aa, *as, *b, *bb, *bs, *ct, *g, *c
             );
+        } else if isnum == 5 || isnum == 6 {
+            pass &= cblat3_cchk4(
+                srnamt, eps, thresh, true,
+                nidim, idim, nalf, alf.data, nbet, bet.data, nmax,
+                *a, *aa, *as, *b, *bb, *bs, *c, *cc, *cs, *ct, *g
+            );
         } else {
             warn("cblat3 | % not yet implemented, skipping for now", srnamt);
         }
@@ -966,6 +972,291 @@ cblat3_cchk3 :: (
                                     pass &= ok;
                                     errmax = max(errmax, errv);
                                     if !ok then return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if errmax < thresh {
+        println("% passed the computational tests (% calls)", sname, nc, color=.FG_GREEN);
+    } else {
+        err("% completed the computational tests (% calls) but with maximum test ratio % - suspect", sname, nc, errmax);
+        pass = false;
+    }
+
+    return pass;
+}
+
+
+//  ######   ######  ##     ## ##    ##   ##  ##  
+// ##    ## ##    ## ##     ## ##   ##    ##  ##  
+// ##       ##       ##     ## ##  ##     ##  ##  
+// ##       ##       ######### #####      ##  ##  
+// ##       ##       ##     ## ##  ##     ##  ##  
+// ##    ## ##    ## ##     ## ##   ##    ##  ##  
+//  ######   ######  ##     ## ##    ##   ##  ##  
+
+cblat3_cchk4 :: (
+    sname: string,
+    eps: $U,
+    thresh: U,
+    $fatal: bool,
+    nidim: int,
+    idim: []int,
+    nalf: int,
+    alf: []$T,
+    nbet: int,
+    bet: []T,
+    nmax: int,
+    a: *$A/ArrayType2D,
+    aa: *$AA/ArrayType1D,
+    as: *$AS/ArrayType1D,
+    b: *$B/ArrayType2D,
+    bb: *$BB/ArrayType1D,
+    bs: *$BS/ArrayType1D,
+    c: *$C/ArrayType2D,
+    cc: *$CC/ArrayType1D,
+    cs: *$CS/ArrayType1D,
+    ct: *$CT/ArrayType1D,
+    g: *$G/ArrayType1D
+) -> bool {
+    #run {
+        assert(U == get_number_inner_type(T));
+        assert(T == A.data_type);
+        assert(T == AA.data_type);
+        assert(T == AS.data_type);
+        assert(T == B.data_type);
+        assert(T == BB.data_type);
+        assert(T == BS.data_type);
+        assert(T == C.data_type);
+        assert(T == CC.data_type);
+        assert(T == CS.data_type);
+        assert(T == CT.data_type);
+        assert(U == G.data_type);
+    }
+
+    println_push("cchk4");
+
+    icht :: "NC";
+    ichu :: "UL";
+
+    pass := true;
+    reset := true;
+    errmax := zero(U);
+    czero := zero(T);
+    rzero := zero(U);
+    rone  := one(U);
+    conj := String.slice(sname, 1, 2) == "HE";
+
+    nc : int = 0;
+
+    for in:1..nidim {
+        n := idim[in-1];
+
+        ldc := n;
+        if ldc < nmax then ldc += 1;
+        if ldc > nmax then continue;
+        lcc := ldc*n;
+
+        for ik:1..nidim {
+            k := idim[ik-1];
+
+            for ict:1..2 {
+                trans := icht[ict-1];
+                tran := char_eq(trans, #char "c");
+                if tran && !conj then trans = #char "t";
+
+                ma, na : int = ---;
+                if tran {
+                    ma = k;
+                    na = n;
+                } else {
+                    ma = n;
+                    na = k;
+                }
+
+                lda := ma;
+                if lda < nmax then lda += 1;
+                if lda > nmax then continue;
+                laa := lda*na;
+
+                cmake("ge", 0, 0, ma, na, a, nmax, aa, lda, ma-1, na-1, *reset, czero);
+
+                for icu:1..2 {
+                    uplo := ichu[icu-1];
+                    upper := char_eq(uplo, #char "u");
+
+                    for ia:1..nalf {
+                        alpha := alf[ia-1];
+                        ralpha : U = ---;
+                        if conj {
+                            ralpha = real(alpha);
+                            alpha = cpx(ralpha, rzero);
+                        }
+
+                        for ib:1..nbet {
+                            beta := bet[ib-1];
+                            rbeta : U = ---;
+                            if conj {
+                                rbeta = real(beta);
+                                beta = cpx(rbeta, rzero);
+                            }
+
+                            is_null := n <= 0;
+                            if conj {
+                                is_null = is_null || (((k <= 0 || ralpha == rzero) && rbeta == rone));
+                            }
+
+                            cmake(String.slice(sname, 1, 2), uplo, 0, n, n, c, nmax, cc, ldc, n-1, n-1, *reset, czero);
+
+                            nc += 1;
+
+                            uplos := uplo;
+                            transs := trans;
+                            ns := n;
+                            ks := k;
+                            rals : U = ---;
+                            als  : T = ---;
+                            if conj {
+                                rals = ralpha;
+                            } else {
+                                als = alpha;
+                            }
+                            for i:1..laa {
+                                fset(as, i, fget(aa.*, i));
+                            }
+                            ldas := lda;
+                            rbets : U = ---;
+                            bets  : T = ---;
+                            if conj {
+                                rbets = rbeta;
+                            } else {
+                                bets = beta;
+                            }
+                            for i:1..lcc {
+                                fset(cs, i, fget(cc.*, i));
+                            }
+                            ldcs := ldc;
+
+                            aa_view := array2d_view(aa, lda, row_major=false);
+                            cc_view := array2d_view(cc, ldc, row_major=false);
+                            cs_view := array2d_view(cs, ldc, row_major=false);
+
+                            if conj {
+                                cherk(uplo, trans, n, k, ralpha, aa_view, lda, rbeta, *cc_view, ldc);
+                            } else {
+                                csyrk(uplo, trans, n, k, alpha, aa_view, lda, beta, *cc_view, ldc);
+                            }
+
+                            isame1  := uplo == uplos;
+                            isame2  := trans == transs;
+                            isame3  := ns == n;
+                            isame4  := ks == k;
+                            isame5  := ifx conj then rals == ralpha else als == alpha;
+                            isame6  := lce(as.*, aa.*, laa);
+                            isame7  := ldas == lda;
+                            isame8  := ifx conj then rbets == rbeta else bets == beta;
+                            isame9  := ifx is_null then lce(cs.*, cc.*, lcc) else lceres(String.slice(sname, 1, 2), uplo, n, n, cs_view, cc_view, ldc);
+                            isame10 := ldcs == ldc;
+
+                            same := isame1 && isame2 && isame3 && isame4 && isame5 &&
+                                    isame6 && isame7 && isame8 && isame9 && isame10;
+                            if !same {
+                                if !isame1  then err("cblat3 cchk4 | parameter 1 changed incorrectly");
+                                if !isame2  then err("cblat3 cchk4 | parameter 2 changed incorrectly");
+                                if !isame3  then err("cblat3 cchk4 | parameter 3 changed incorrectly");
+                                if !isame4  then err("cblat3 cchk4 | parameter 4 changed incorrectly");
+                                if !isame5  then err("cblat3 cchk4 | parameter 5 changed incorrectly");
+                                if !isame6  then err("cblat3 cchk4 | parameter 6 changed incorrectly");
+                                if !isame7  then err("cblat3 cchk4 | parameter 7 changed incorrectly");
+                                if !isame8  then err("cblat3 cchk4 | parameter 8 changed incorrectly");
+                                if !isame9  then err("cblat3 cchk4 | parameter 9 changed incorrectly");
+                                if !isame10 then err("cblat3 cchk4 | parameter 10 changed incorrectly");
+                                err("cblat3 cchk4 | sname = %", sname);
+                                if conj {
+                                    err("cblat3 cchk4 | uplo = %, trans = %, n = %, k = %, alpha = %, lda = %, beta = %, ldc = %",
+                                        char_to_string(uplo), char_to_string(trans), n, k, ralpha, lda, rbeta, ldc,
+                                        exit_program=fatal);
+                                } else {
+                                    err("cblat3 cchk4 | uplo = %, trans = %, n = %, k = %, alpha = %, lda = %, beta = %, ldc = %",
+                                        char_to_string(uplo), char_to_string(trans), n, k, alpha, lda, beta, ldc,
+                                        exit_program=fatal);
+                                }
+                                return false;
+                            }
+
+                            if !is_null {
+                                transt : u8 = ---;
+                                if conj {
+                                    transt = #char "c";
+                                } else {
+                                    transt = #char "t";
+                                }
+                                jc := 1;
+                                for j:1..n {
+                                    jj, lj : int = ---;
+                                    if upper {
+                                        jj = 1;
+                                        lj = j;
+                                    } else {
+                                        jj = j;
+                                        lj = n - j + 1;
+                                    }
+
+                                    aw1 := array2d_view(as, nmax, row_major=false);
+                                    aw2 := array2d_view(bs, nmax, row_major=false);
+                                    cw1 := array2d_view(cs, nmax, row_major=false);
+                                    cw2 := array2d_view(bb, nmax, row_major=false);
+
+                                    if tran {
+                                        for cj:1..lj {
+                                            for ri:1..k {
+                                                fset(*aw1, ri, cj, fget(a.*, ri, jj + cj - 1));
+                                            }
+                                        }
+                                        for ri:1..k {
+                                            fset(*aw2, ri, 1, fget(a.*, ri, j));
+                                        }
+                                    } else {
+                                        for cj:1..k {
+                                            for ri:1..lj {
+                                                fset(*aw1, ri, cj, fget(a.*, jj + ri - 1, cj));
+                                            }
+                                        }
+                                        for cj:1..k {
+                                            fset(*aw2, 1, cj, fget(a.*, j, cj));
+                                        }
+                                    }
+
+                                    for ri:1..lj {
+                                        fset(*cw1, ri, 1, fget(c.*, jj + ri - 1, j));
+                                        fset(*cw2, ri, 1, fget(cc_view, jj + ri - 1, j));
+                                    }
+
+                                    errv := zero(U);
+                                    ok := false;
+                                    if tran {
+                                        ok = cblat3_cmmch(transt, #char "n", lj, 1, k, alpha, aw1, nmax, aw2, nmax, beta, cw1, nmax, ct, g, cw2, nmax, eps, *errv, fatal, true);
+                                    } else {
+                                        ok = cblat3_cmmch(#char "n", transt, lj, 1, k, alpha, aw1, nmax, aw2, nmax, beta, cw1, nmax, ct, g, cw2, nmax, eps, *errv, fatal, true);
+                                    }
+
+                                    pass &= ok;
+                                    errmax = max(errmax, errv);
+                                    if !ok {
+                                        if n > 1 then err("cblat3 cchk4 | these are the results for column %", j);
+                                        return false;
+                                    }
+
+                                    if upper {
+                                        jc += ldc;
+                                    } else {
+                                        jc += ldc + 1;
+                                    }
                                 }
                             }
                         }

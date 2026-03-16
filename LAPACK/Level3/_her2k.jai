@@ -49,8 +49,8 @@ _her2k :: (
     $$ldc: int,
     $hermitian: bool = true
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T); 
+    zero_t :: #run zero(T);
+    one_t  :: #run one(T); 
     zeroU :: #run zero(U); 
     oneU  :: #run one(U);  
 
@@ -91,15 +91,15 @@ _her2k :: (
     }
 
     // Quick return if possible.
-    if n == 0 || ((alpha == zero || k == 0) && beta == oneU) then return;
+    if n == 0 || ((alpha == zero_t || k == 0) && beta == oneU) then return;
 
     // And when  alpha == zero
-    if alpha == zero {
+    if alpha == zero_t {
         if upper {
             if beta == zeroU {
                 for j:1..n {
                     for i:1..j {
-                        fset(c, i, j, zero);
+                        fset(c, i, j, zero_t);
                     }
                 }
             } else {
@@ -114,7 +114,7 @@ _her2k :: (
             if beta == zeroU {
                 for j:1..n {
                     for i:j..n {
-                        fset(c, i, j, zero);
+                        fset(c, i, j, zero_t);
                     }
                 }
             } else {
@@ -136,7 +136,7 @@ _her2k :: (
             for j:1..n {
                 if beta == zeroU {
                     for i:1..j {
-                        fset(c, i, j, zero);
+                        fset(c, i, j, zero_t);
                     }
                 } else if beta != oneU {
                     for i:1..j-1 {
@@ -147,7 +147,7 @@ _her2k :: (
                     fset(c, j, j, re(fget(c.*, j, j)));
                 }
                 for l:1..k {
-                    if fget(a, j, l) != zero || fget(b, j, l) != zero {
+                    if fget(a, j, l) != zero_t || fget(b, j, l) != zero_t {
                         temp1 = alpha*conj(fget(b, j, l));
                         temp2 = conj(alpha*fget(a, j, l));
                         for i:1..j-1 {
@@ -161,7 +161,7 @@ _her2k :: (
             for j:1..n {
                 if beta == zeroU {
                     for i:j..n {
-                        fset(c, i, j, zero);
+                        fset(c, i, j, zero_t);
                     }
                 } else if beta != oneU {
                     for i:j+1..n {
@@ -171,7 +171,7 @@ _her2k :: (
                     fset(c, j, j, beta*re(fget(c.*, j, j)));
                 }
                 for l:1..k {
-                    if fget(a, j, l) != zero || fget(b, j, l) != zero {
+                    if fget(a, j, l) != zero_t || fget(b, j, l) != zero_t {
                         temp1 = alpha*conj(fget(b, j, l));
                         temp2 = conj(alpha*fget(a, j, l));
                         for i:j+1..n {
@@ -187,8 +187,8 @@ _her2k :: (
         if upper {
             for j:1..n {
                 for i:1..j {
-                    temp1 = zero;
-                    temp2 = zero;
+                    temp1 = zero_t;
+                    temp2 = zero_t;
                     for l:1..k {
                         temp1 += conj(fget(a, l, i))*fget(b, l, j);
                         temp2 += conj(fget(b, l, i))*fget(a, l, j);
@@ -211,8 +211,8 @@ _her2k :: (
         } else {
             for j:1..n {
                 for i:j..n {
-                    temp1 = zero;
-                    temp2 = zero;
+                    temp1 = zero_t;
+                    temp2 = zero_t;
                     for l:1..k {
                         temp1 += conj(fget(a, l, i))*fget(b, l, j);
                         temp2 += conj(fget(b, l, i))*fget(a, l, j);
