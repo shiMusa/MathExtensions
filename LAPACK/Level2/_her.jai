@@ -32,8 +32,8 @@ _her :: (
     $$lda: int
 ) {
     U :: X.data_type;
-    zero :: #run zero(U);
-    one  :: #run one(U);
+    zero_u :: #run zero(U);
+    one_u  :: #run one(U);
 
     #if CHECKS {
         #run {
@@ -65,7 +65,7 @@ _her :: (
         // form  A  when A is stored in upper trianlge.
         if incx == 1 {
             for j:1..n {
-                if fget(x, j) != zero {
+                if fget(x, j) != zero_u {
                     temp = alpha*conjugate(fget(x, j));
                     for i:1..j-1 {
                         fset(a, i, j, fget(a.*, i, j) + fget(x, i) * temp);
@@ -78,7 +78,7 @@ _her :: (
         } else {
             jx = kx;
             for j:1..n {
-                if fget(x, jx) != zero {
+                if fget(x, jx) != zero_u {
                     temp = alpha*conjugate(fget(x, jx));
                     ix = kx;
                     for i:1..j-1 {
@@ -97,7 +97,7 @@ _her :: (
 
         if incx == 1 {
             for j:1..n {
-                if fget(x, j) != zero {
+                if fget(x, j) != zero_u {
                     temp = alpha * conjugate(fget(x, j));
                     fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(temp*fget(x, j)));
                     for i:j+1..n {
@@ -110,7 +110,7 @@ _her :: (
         } else {
             jx = kx;
             for j:1..n {
-                if fget(x, jx) != zero {
+                if fget(x, jx) != zero_u {
                     temp = alpha * conjugate(fget(x, jx));
                     fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(temp*fget(x, jx)));
                     ix = jx;

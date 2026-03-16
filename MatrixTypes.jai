@@ -148,7 +148,7 @@ set :: inline (using a: *Array2DView, i: int, j: int, val: a.data_type) {
     #if row_major {
         set(a1d, i*lda + j, val);
     } else {
-        set(a1d, j + i*lda, val);
+        set(a1d, i + j*lda, val);
     }
 }
 
