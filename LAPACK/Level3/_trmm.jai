@@ -39,11 +39,11 @@ _trmm :: (
     b: *$B/ArrayType2D,
     $$ldb: int
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    zero_t :: #run zero(T);
+    one_t  :: #run one(T);
 
     // Set nrowa as the number of rows of a.
-    lside := char_eq(side, "l");
+    lside := char_eq(side, #char "l");
     nrowa := ifx lside then m else n;
     noconj := char_eq(transa, #char "t");
     nounit := char_eq(diag, #char "n");
@@ -69,10 +69,10 @@ _trmm :: (
     if m == 0 || n == 0 then return;
 
     // And when alpha == zero
-    if alpha == zero {
+    if alpha == zero_t {
         for j:1..n {
             for i:1..m {
-                fset(b, i, j, zero);
+                fset(b, i, j, zero_t);
             }
         }
         return;
@@ -87,7 +87,7 @@ _trmm :: (
             if upper {
                 for j:1..n {
                     for k:1..m {
-                        if fget(b.*, k, j) != zero {
+                        if fget(b.*, k, j) != zero_t {
                             temp = alpha*fget(b.*, k, j);
                             for i:1..k-1 {
                                 fset(b, i, j, fget(b.*, i, j) + temp*fget(a, i, k));
@@ -100,7 +100,7 @@ _trmm :: (
             } else {
                 for j:1..n {
                     for <k:1..m {
-                        if fget(b.*, k, j) != zero {
+                        if fget(b.*, k, j) != zero_t {
                             temp = alpha*fget(b.*, k, j);
                             fset(b, k, j, temp);
                             if nounit then fset(b, k, j, fget(b.*, k, j)*fget(a, k, k));
@@ -152,7 +152,7 @@ _trmm :: (
             }
         }
     } else {
-        if char_eq(transa, "n") {
+        if char_eq(transa, #char "n") {
             // Form  B := alpha*B*A.
             if upper {
                 for <j:1..n {
@@ -162,7 +162,7 @@ _trmm :: (
                         fset(b, i, j, temp*fget(b.*, i, j));
                     }
                     for k:1..j-1 {
-                        if fget(a, k, j) != zero {
+                        if fget(a, k, j) != zero_t {
                             temp = alpha*fget(a, k, j);
                             for i:1..m {
                                 fset(b, i, j, fget(b.*, i, j) + temp*fget(b.*, i, k));
@@ -178,7 +178,7 @@ _trmm :: (
                         fset(b, i, j, temp*fget(b.*, i, j));
                     }
                     for k:j+1..n {
-                        if fget(a, k, j) != zero {
+                        if fget(a, k, j) != zero_t {
                             temp = alpha*fget(a, k, j);
                             for i:1..m {
                                 fset(b, i, j, fget(b.*, i, j) + temp*fget(b.*, i, k));
@@ -192,7 +192,7 @@ _trmm :: (
             if upper {
                 for k:1..n {
                     for j:1..k-1 {
-                        if fget(a, j, k) != zero {
+                        if fget(a, j, k) != zero_t {
                             if noconj {
                                 temp = alpha*fget(a, j, k);
                             } else {
@@ -211,7 +211,7 @@ _trmm :: (
                             temp *= conjugate(fget(a, k, k));
                         }
                     }
-                    if temp != one {
+                    if temp != one_t {
                         for i:1..m {
                             fset(b, i, k, temp*fget(b.*, i, k));
                         }
@@ -220,7 +220,7 @@ _trmm :: (
             } else {
                 for <k:1..n {
                     for j:k+1..n {
-                        if fget(a, j, k) != zero {
+                        if fget(a, j, k) != zero_t {
                             temp = ifx noconj then alpha*fget(a, j, k) else alpha*conjugate(fget(a, j, k));
                             for i:1..m {
                                 fset(b, i, j, fget(b.*, i, j) + temp*fget(b.*, i, k));
@@ -231,7 +231,7 @@ _trmm :: (
                     if nounit {
                         temp = ifx noconj then temp*fget(a, k, k) else temp*conjugate(fget(a, k, k));
                     }
-                    if temp != one {
+                    if temp != one_t {
                         for i:1..m {
                             fset(b, i, k, temp*fget(b.*, i, k));
                         }
