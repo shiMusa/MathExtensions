@@ -1810,7 +1810,8 @@ cmake :: (
     rrogue := ncast(U, -1.0e10);
 
     gen := char_eq(type[0], #char "g");
-    sym := char_eq(type[0], #char "h");
+    her := char_eq(type[0], #char "h");
+    sym := her || char_eq(type[0], #char "s");
     tri := char_eq(type[0], #char "t");
     upper := (sym || tri) && char_eq(uplo, #char "u");
     lower := (sym || tri) && char_eq(uplo, #char "l");
@@ -1833,13 +1834,15 @@ cmake :: (
 
             if i == j then continue;
 
-            if sym {
+            if her {
                 fset(a, j, i, conjugate(fget(a.*,i,j)));
+            } else if sym {
+                fset(a, j, i, fget(a.*,i,j));
             } else {
                 fset(a, j, i, czero);
             }
         }
-        if sym  then fset(a, j, j, real_nc(fget(a.*,j,j)));
+        if her  then fset(a, j, j, real_nc(fget(a.*,j,j)));
         if tri  then fset(a, j, j, fget(a.*,j,j) + cone);
         if unit then fset(a, j, j, cone);
     }
@@ -1874,7 +1877,7 @@ cmake :: (
                 fset(aa, band_row + (j-1)*lda, fget(a.*, i, j));
             }
         }
-    } else if String.equal_nocase(type, "he") || String.equal_nocase(type, "tr") {
+    } else if String.equal_nocase(type, "he") || String.equal_nocase(type, "sy") || String.equal_nocase(type, "tr") {
         #if DEBUG println("he || tr", color=.FG_CYAN);
         for j:1..n {
             ibeg, iend : int = ---;
@@ -1894,12 +1897,12 @@ cmake :: (
             for i:iend+1..lda {
                 fset(aa, i+(j-1)*lda, rogue);
             }
-            if sym {
+            if her {
                 jj := j + (j-1)*lda;
                 fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
             }
         }
-    } else if String.equal_nocase(type, "hb") || String.equal_nocase(type, "tb") {
+    } else if String.equal_nocase(type, "hb") || String.equal_nocase(type, "sb") || String.equal_nocase(type, "tb") {
         #if DEBUG println("hb || tb", color=.FG_CYAN);
         for j:1..n {
             kk, ibeg, iend : int = ---;
@@ -1921,12 +1924,12 @@ cmake :: (
             for i:iend+1..lda {
                 fset(aa, i+(j-1)*lda, rogue);
             }
-            if sym {
+            if her {
                 jj := kk + (j-1)*lda;
                 fset(aa,jj, cpx(real(fget(aa.*,jj)), rrogue));
             }
         }
-    } else if String.equal_nocase(type, "hp") || String.equal_nocase(type, "tp") {
+    } else if String.equal_nocase(type, "hp") || String.equal_nocase(type, "sp") || String.equal_nocase(type, "tp") {
         #if DEBUG println("hp || tp", color=.FG_CYAN);
         ioff := 1;
         for j:1..n {
@@ -1941,7 +1944,7 @@ cmake :: (
             for i:ibeg..iend {
                 fset(aa, ioff, fget(a.*,i,j));
                 if i == j {
-                    if sym {
+                    if her {
                         fset(aa,ioff, cpx(real(fget(aa.*,ioff)), rrogue));
                     } else {
                         fset(aa,ioff, fget(a.*,i,j));
