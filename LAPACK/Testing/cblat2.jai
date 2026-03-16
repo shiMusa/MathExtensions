@@ -233,7 +233,7 @@ cblat2 :: () -> bool {
                 *yt, *g, *z
             );
         } else {
-
+            
         }
     }
 
@@ -1100,33 +1100,173 @@ cchk4 :: (
         assert(T == Z.data_type);
     }
     DEBUG :: true;
-    println_push("cchk1");
+    println_push("cchk4");
 
     pass := true;
-
-    ich :: "ntc";
 
     czero := zero(T);
     cone  := one(T);
     chalf := ncast(T, 0.5);
     rzero := zero(U);
-    rone  := one(U);
 
-    full   := char_eq(sname[2], #char "e");
-    banded := char_eq(sname[2], #char "b");
-
-    // Define the number of arguments
-    nargs := ifx full then 11 else 13;
+    conjug := char_eq(sname[4], #char "c");
+    nargs := 9;
 
     nc := 0;
     reset := true;
     errmax := rzero;
 
-    #if DEBUG {
-        COUNT := 0;
+    w : Array1D(1, T);
+
+    for in:0..nidim-1 {
+        n := idim[in];
+        nd := n/2 + 1;
+
+        for im:0..1 {
+            m := ifx im == 0 then max(n-nd, 0) else min(n+nd, nmax);
+
+            lda := m;
+            if lda < nmax then lda += 1;
+            if lda > nmax then continue;
+
+            laa := lda*n;
+            _null := n <= 0 || m <= 0;
+
+            for ix:0..ninc-1 {
+                incx := inc[ix];
+                lx := abs(incx)*m;
+
+                transl := chalf;
+                x_view := array2d_view(x, 1, row_major=false);
+                cmake("ge", 0, 0, 1, m, *x_view, 1, _xx, abs(incx), 0, m-1, *reset, transl);
+
+                if m > 1 {
+                    fset(x, m/2, czero);
+                    fset(_xx, 1 + abs(incx)*(m/2-1), czero);
+                }
+
+                for iy:0..ninc-1 {
+                    incy := inc[iy];
+                    ly := abs(incy)*n;
+
+                    transl = czero;
+                    y_view := array2d_view(y, 1, row_major=false);
+                    cmake("ge", 0, 0, 1, n, *y_view, 1, yy, abs(incy), 0, n-1, *reset, transl);
+
+                    if n > 1 {
+                        fset(y, n/2, czero);
+                        fset(yy, 1 + abs(incy)*(n/2-1), czero);
+                    }
+
+                    for ia:0..nalf-1 {
+                        alpha := alf[ia];
+
+                        transl = czero;
+                        _slice := String.slice(sname, 1, 2);
+                        cmake(_slice, 0, 0, m, n, a, nmax, aa, lda, m-1, n-1, *reset, transl);
+
+                        nc += 1;
+
+                        ms := m;
+                        ns := n;
+                        als := alpha;
+                        for i:0..laa-1 {
+                            set(as, i, get(aa, i));
+                        }
+                        ldas := lda;
+                        for i:0..lx-1 {
+                            set(xs, i, get(_xx, i));
+                        }
+                        incxs := incx;
+                        for i:0..ly-1 {
+                            set(ys, i, get(yy, i));
+                        }
+                        incys := incy;
+
+                        aa_view := array2d_view(aa, lda, row_major=false);
+                        if conjug {
+                            cgerc(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                        } else {
+                            cgeru(m, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                        }
+
+                        as_view := array2d_view(as, lda, row_major=false);
+                        isame1 := ms == m;
+                        isame2 := ns == n;
+                        isame3 := als == alpha;
+                        isame4 := lce(xs, _xx, lx);
+                        isame5 := incxs == incx;
+                        isame6 := lce(ys, yy, ly);
+                        isame7 := incys == incy;
+                        isame8 := ifx _null then lce(as, aa, laa) else lceres("ge", 0, m, n, aa_view, as_view, lda);
+                        isame9 := ldas == lda;
+
+                        same := isame1 && isame2 && isame3 && isame4 && isame5 && isame6 && isame7 && isame8 && isame9;
+                        pass &= same;
+                        if !same {
+                            if !isame1 err(" cchk4 | parameter 1 changed incorrectly");
+                            if !isame2 err(" cchk4 | parameter 2 changed incorrectly");
+                            if !isame3 err(" cchk4 | parameter 3 changed incorrectly");
+                            if !isame4 err(" cchk4 | parameter 4 changed incorrectly");
+                            if !isame5 err(" cchk4 | parameter 5 changed incorrectly");
+                            if !isame6 err(" cchk4 | parameter 6 changed incorrectly");
+                            if !isame7 err(" cchk4 | parameter 7 changed incorrectly");
+                            if !isame8 err(" cchk4 | parameter 8 changed incorrectly");
+                            if !isame9 err(" cchk4 | parameter 9 changed incorrectly");
+                            err(" cchk4 | sname = %", sname);
+                            err(" cchk4 | m = %, n = %, alpha = %, incx = %, incy = %, lda = %", m, n, alpha, incx, incy, lda, exit_program=fatal);
+                        }
+
+                        if !_null {
+                            if incx > 0 {
+                                for i:1..m {
+                                    fset(z, i, fget(x, i));
+                                }
+                            } else {
+                                for i:1..m {
+                                    fset(z, i, fget(x, m-i+1));
+                                }
+                            }
+
+                            z_view := array2d_view(z, nmax, row_major=false);
+                            for j:1..n {
+                                jy := ifx incy > 0 then 1 + (j-1)*abs(incy) else 1 + (n-j)*abs(incy);
+                                fset(*w, 1, fget(yy, jy));
+                                if conjug {
+                                    fset(*w, 1, conjugate(fget(w, 1)));
+                                }
+
+                                for i:1..m {
+                                    fset(y,  i, fget(a.*, i, j));
+                                    fset(ys, i, fget(aa, i + (j-1)*lda));
+                                }
+
+                                ok := cmvch(#char "n", m, 1, alpha, z_view, nmax, w, 1, cone, y, 1, yt, g, ys, eps, fatal);
+                                pass &= ok;
+
+                                erri := rzero;
+                                for i:1..m {
+                                    diff := abs(fget(yt.*, i) - fget(ys, i))/eps;
+                                    gi := fget(g.*, i);
+                                    if gi != rzero then diff /= gi;
+                                    erri = max(erri, diff);
+                                }
+                                errmax = max(errmax, erri);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
+    if errmax >= thresh {
+        pass = false;
+    }
 
+    _ = incmax;
+    _ = nargs;
+    _ = DEBUG;
 
     return pass;
 }

@@ -17,12 +17,12 @@
 //    Sven Hammarling, Nag Central Office.
 //    Richard Hanson, Sandia National Labs.
 
-cgerc :: #bake_arguments _geru(conjugate=true);
-zgerc :: #bake_arguments _geru(conjugate=true);
-cgeru :: #bake_arguments _geru(conjugate=false);
-zgeru :: #bake_arguments _geru(conjugate=false);
-sger  :: #bake_arguments _geru(conjugate=false);
-dger  :: #bake_arguments _geru(conjugate=false);
+cgerc :: #bake_arguments _geru(is_conjugate=true);
+zgerc :: #bake_arguments _geru(is_conjugate=true);
+cgeru :: #bake_arguments _geru(is_conjugate=false);
+zgeru :: #bake_arguments _geru(is_conjugate=false);
+sger  :: #bake_arguments _geru(is_conjugate=false);
+dger  :: #bake_arguments _geru(is_conjugate=false);
 
 _geru :: (
     $$m: int,
@@ -34,10 +34,10 @@ _geru :: (
     $$incy: int,
     a: *$A/ArrayType2D,
     $$lda: int,
-    $conjugate: bool
+    $is_conjugate: bool
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    zero_t :: #run zero(T);
+    one_t  :: #run one(T);
 
     #if CHECKS {
         #run {
@@ -54,7 +54,7 @@ _geru :: (
 
     // quick return if possible
 
-    if m == 0 || n == 0 || alpha == zero then return;
+    if m == 0 || n == 0 || alpha == zero_t then return;
 
     // start the operations. In this version the elements of A are
     // accessed sequentially with one pass through A.
@@ -63,8 +63,8 @@ _geru :: (
 
     if incx == 1 {
         for j:1..n {
-            if fget(y, jy) != zero {
-                #if conjugate {
+            if fget(y, jy) != zero_t {
+                #if is_conjugate {
                     temp = alpha * conjugate(fget(y, jy));
                 } else {
                     temp = alpha * fget(y, jy);
@@ -80,8 +80,8 @@ _geru :: (
         kx := ifx incx > 0 then 1 else 1 - (m-1)*incx;
 
         for j:1..n {
-            if fget(y, jy) != zero {
-                #if conjugate {
+            if fget(y, jy) != zero_t {
+                #if is_conjugate {
                     temp = alpha * conjugate(fget(y, jy));
                 } else {
                     temp = alpha * fget(y, jy);
