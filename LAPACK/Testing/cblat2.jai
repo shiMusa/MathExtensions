@@ -199,32 +199,32 @@ cblat2 :: () -> bool {
 
         // Test computations
         if isnum <= 1 {
-            // pass &= cchk1(
-            //     srnamt, eps, thresh, true,
-            //     nidim, idim, nkb, kb, nalf, alf.data,
-            //     nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-            //     *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            // );
+            pass &= cchk1(
+                srnamt, eps, thresh, true,
+                nidim, idim, nkb, kb, nalf, alf.data,
+                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
+            );
         } else if isnum <= 4 {
-            // pass &= cchk2(
-            //     srnamt, eps, thresh, true,
-            //     nidim, idim, nkb, kb, nalf, alf.data,
-            //     nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
-            //     *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
-            // );
+            pass &= cchk2(
+                srnamt, eps, thresh, true,
+                nidim, idim, nkb, kb, nalf, alf.data,
+                nbet, bet.data, ninc, inc, nmax, incmax, *a, *aa, *as,
+                *x, *_xx, *xs, *y, *yy, *ys, *yt, *g
+            );
         } else if isnum <= 10 {
-            // pass &= cchk3(
-            //     srnamt, eps, thresh, true,
-            //     nidim, idim, nkb, kb, ninc, inc,
-            //     nmax, incmax, *a, *aa, *as, *y, *yy, *ys, *yt, *g, *z
-            // );
+            pass &= cchk3(
+                srnamt, eps, thresh, true,
+                nidim, idim, nkb, kb, ninc, inc,
+                nmax, incmax, *a, *aa, *as, *y, *yy, *ys, *yt, *g, *z
+            );
         } else if isnum <= 12 {
-            // pass &= cchk4(
-            //     srnamt, eps, thresh, true,
-            //     nidim, idim, nalf, alf.data, ninc, inc,
-            //     nmax, incmax, *a, *aa, *as, *x, *_xx, *xs, *y, *yy, *ys,
-            //     *yt, *g, *z
-            // );
+            pass &= cchk4(
+                srnamt, eps, thresh, true,
+                nidim, idim, nalf, alf.data, ninc, inc,
+                nmax, incmax, *a, *aa, *as, *x, *_xx, *xs, *y, *yy, *ys,
+                *yt, *g, *z
+            );
         } else if isnum <= 14 {
             pass &= cchk5(
                 srnamt, eps, thresh, true,
@@ -233,7 +233,12 @@ cblat2 :: () -> bool {
                 *yt, *g, *z
             );
         } else {
-            
+            pass &= cchk6(
+                srnamt, eps, thresh, true,
+                nidim, idim, nalf, alf.data, ninc, inc,
+                nmax, incmax, *a, *aa, *as, *x, *_xx, *xs, *y, *yy, *ys,
+                *yt, *g, *z
+            );
         }
     }
 
@@ -1499,6 +1504,265 @@ cchk5 :: (
     _ = nargs;
     _ = incmax;
     _ = rone;
+
+    return pass;
+}
+
+
+//  ######   ######  ##     ## ##    ##  #######
+// ##    ## ##    ## ##     ## ##   ##  ##     ##
+// ##       ##       ##     ## ##  ##   ##
+// ##       ##       ######### #####    ########
+// ##       ##       ##     ## ##  ##   ##     ##
+// ##    ## ##    ## ##     ## ##   ##  ##     ##
+//  ######   ######  ##     ## ##    ##  #######
+
+cchk6 :: (
+    sname: string,
+    eps: $U,
+    thresh: U,
+    $fatal: bool,
+    nidim: int,
+    idim: []int,
+    nalf: int,
+    alf: []$T,
+    ninc: int,
+    inc: []int,
+    nmax: int,
+    incmax: int,
+    a: *$A/ArrayType2D,
+    aa: *$AA/ArrayType1D,
+    as: *$AS/ArrayType1D,
+    x: *$X/ArrayType1D,
+    _xx: *$XX/ArrayType1D,
+    xs: *$XS/ArrayType1D,
+    y: *$Y/ArrayType1D,
+    yy: *$YY/ArrayType1D,
+    ys: *$YS/ArrayType1D,
+    yt: *$YT/ArrayType1D,
+    g: *$G/ArrayType1D,
+    z: *$Z/ArrayType1D,
+) -> bool {
+    #run {
+        assert(U == get_number_inner_type(T));
+        assert(T == A.data_type);
+        assert(T == AA.data_type);
+        assert(T == AS.data_type);
+        assert(T == X.data_type);
+        assert(T == XX.data_type);
+        assert(T == XS.data_type);
+        assert(T == Y.data_type);
+        assert(T == YY.data_type);
+        assert(T == YS.data_type);
+        assert(T == YT.data_type);
+        assert(U == G.data_type);
+        assert(T == Z.data_type);
+    }
+    println_push("cchk6");
+
+    pass := true;
+
+    ichu :: "ul";
+
+    czero := zero(T);
+    cone  := one(T);
+    chalf := ncast(T, 0.5);
+    rzero := zero(U);
+
+    full   := char_eq(sname[2], #char "e");
+    packed := char_eq(sname[2], #char "p");
+
+    nargs := ifx full then 9 else 8;
+
+    nc := 0;
+    reset := true;
+    errmax := rzero;
+
+    w : Array1D(2, T);
+
+    for in:0..nidim-1 {
+        n := idim[in];
+        k := n - 1;
+
+        lda := ifx full then n else 1;
+        if full && lda < nmax then lda += 1;
+        if lda > nmax then continue;
+
+        laa := ifx full then lda*n else (n*(n+1))/2;
+
+        for iu:0..1 {
+            uplo := ichu[iu];
+            upper := char_eq(uplo, #char "u");
+
+            for ix:0..ninc-1 {
+                incx := inc[ix];
+                lx := abs(incx)*n;
+
+                transl := chalf;
+                x_view := array2d_view(x, 1, row_major=false);
+                cmake("ge", 0, 0, 1, n, *x_view, 1, _xx, abs(incx), 0, n-1, *reset, transl);
+
+                if n > 1 {
+                    fset(x, n/2, czero);
+                    fset(_xx, 1 + abs(incx)*(n/2-1), czero);
+                }
+
+                for iy:0..ninc-1 {
+                    incy := inc[iy];
+                    ly := abs(incy)*n;
+
+                    transl = czero;
+                    y_view := array2d_view(y, 1, row_major=false);
+                    cmake("ge", 0, 0, 1, n, *y_view, 1, yy, abs(incy), 0, n-1, *reset, transl);
+
+                    if n > 1 {
+                        fset(y, n/2, czero);
+                        fset(yy, 1 + abs(incy)*(n/2-1), czero);
+                    }
+
+                    for ia:0..nalf-1 {
+                        alpha := alf[ia];
+                        _null := n <= 0 || alpha == czero;
+
+                        transl = czero;
+                        _slice := String.slice(sname, 1, 2);
+                        cmake(_slice, uplo, 0, n, n, a, nmax, aa, lda, k, k, *reset, transl);
+
+                        nc += 1;
+
+                        for i:0..laa-1 {
+                            set(as, i, get(aa, i));
+                        }
+                        for i:0..lx-1 {
+                            set(xs, i, get(_xx, i));
+                        }
+                        for i:0..ly-1 {
+                            set(ys, i, get(yy, i));
+                        }
+
+                        if full {
+                            aa_view := array2d_view(aa, lda, row_major=false);
+                            cher2(uplo, n, alpha, _xx, incx, yy, incy, *aa_view, lda);
+                        } else if packed {
+                            chpr2(uplo, n, alpha, _xx, incx, yy, incy, aa);
+                        }
+
+                        ok := lce(xs, _xx, lx);
+                        pass &= ok;
+                        if !ok {
+                            err(" lce | xs = %", xs);
+                            err(" lce | xx = %", _xx);
+                            err(" lce | lx = %", lx, exit_program=fatal);
+                        }
+
+                        ok = lce(ys, yy, ly);
+                        pass &= ok;
+                        if !ok {
+                            err(" lce | ys = %", ys);
+                            err(" lce | yy = %", yy);
+                            err(" lce | ly = %", ly, exit_program=fatal);
+                        }
+
+                        if _null {
+                            ok = lce(as, aa, laa);
+                            pass &= ok;
+                            if !ok {
+                                err(" lce | as  = %", as);
+                                err(" lce | aa  = %", aa);
+                                err(" lce | laa = %", laa, exit_program=fatal);
+                            }
+                        } else if full {
+                            as_view := array2d_view(as, lda, row_major=false);
+                            aa_view := array2d_view(aa, lda, row_major=false);
+                            ok = lceres("he", uplo, n, n, aa_view, as_view, lda);
+                            pass &= ok;
+                            if !ok {
+                                err(" lceres | uplo = %", uplo);
+                                err(" lceres | n    = %", n);
+                                err(" lceres | lda  = %", lda);
+                                err(" lceres | as   = %", as_view);
+                                err(" lceres | aa   = %", aa_view, exit_program=fatal);
+                            }
+                        }
+
+                        if !_null {
+                            if incx > 0 {
+                                for i:1..n {
+                                    fset(x, i, fget(_xx, 1 + (i-1)*abs(incx)));
+                                }
+                            } else {
+                                for i:1..n {
+                                    fset(x, i, fget(_xx, 1 + (n-i)*abs(incx)));
+                                }
+                            }
+
+                            if incy > 0 {
+                                for i:1..n {
+                                    fset(y, i, fget(yy, 1 + (i-1)*abs(incy)));
+                                }
+                            } else {
+                                for i:1..n {
+                                    fset(y, i, fget(yy, 1 + (n-i)*abs(incy)));
+                                }
+                            }
+
+                            z_view := array2d_view(z, nmax, row_major=false);
+                            ja := 1;
+                            for j:1..n {
+                                fset(*w, 1, alpha*conjugate(fget(y, j)));
+                                fset(*w, 2, conjugate(alpha*fget(x, j)));
+
+                                jj, lj : int = ---;
+                                if upper {
+                                    jj = 1;
+                                    lj = j;
+                                } else {
+                                    jj = j;
+                                    lj = n-j+1;
+                                }
+
+                                for i:1..lj {
+                                    fset(z, i, fget(x, jj+i-1));
+                                    fset(z, i + nmax, fget(y, jj+i-1));
+                                    fset(_xx, i, fget(a.*, jj+i-1, j));
+                                    fset(ys, i, fget(aa, ja+i-1));
+                                }
+
+                                ok = cmvch(#char "n", lj, 2, cone, z_view, nmax, w, 1, cone, _xx, 1, yt, g, ys, eps, fatal);
+                                pass &= ok;
+
+                                erri := rzero;
+                                for i:1..lj {
+                                    gi := fget(g.*, i);
+                                    diff := abs(fget(yt.*, i) - fget(ys, i))/eps;
+                                    if gi != rzero then diff /= gi;
+                                    erri = max(erri, diff);
+                                }
+                                errmax = max(errmax, erri);
+
+                                if full {
+                                    if upper {
+                                        ja += lda;
+                                    } else {
+                                        ja += lda + 1;
+                                    }
+                                } else {
+                                    ja += lj;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if errmax >= thresh {
+        pass = false;
+    }
+
+    _ = incmax;
+    _ = nargs;
 
     return pass;
 }

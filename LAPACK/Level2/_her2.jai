@@ -33,8 +33,8 @@ _her2 :: (
     a: *$A/ArrayType2D,
     $$lda: int
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    zero_t :: #run zero(T);
+    one_t  :: #run one(T);
     nonreal :: #run is_non_real_number(T);
 
     #if CHECKS {
@@ -51,7 +51,7 @@ _her2 :: (
     }
 
     // quick return if possible
-    if n == 0 || alpha == zero then return;
+    if n == 0 || alpha == zero_t then return;
 
     temp1, temp2 : T = ---;
     ix, iy, jx, jy, kx, ky : int = ---;
@@ -72,7 +72,7 @@ _her2 :: (
         // Form  A  when A is stored in the upper triangle.
         if incx == 1 && incy == 1 {
             for j:1..n {
-                if fget(x, j) != zero || fget(y, j) != zero {
+                if fget(x, j) != zero_t || fget(y, j) != zero_t {
                     temp1 = alpha*conjugate(fget(y, j));
                     temp2 = conjugate(alpha*fget(x, j));
                     for i:1..j-1 {
@@ -85,7 +85,7 @@ _her2 :: (
             }
         } else {
             for j:1..n {
-                if fget(x, jx) != zero || fget(y, jy) != zero {
+                if fget(x, jx) != zero_t || fget(y, jy) != zero_t {
                     temp1 = alpha*conjugate(fget(y, jy));
                     temp2 = conjugate(alpha*fget(x, jx));
                     ix = kx;
@@ -107,7 +107,7 @@ _her2 :: (
         // Form  A  when A is stored in the lower triangle.
         if incx == 1 && incy == 1 {
             for j:1..n {
-                if fget(x, j) != zero || fget(y, j) != zero {
+                if fget(x, j) != zero_t || fget(y, j) != zero_t {
                     temp1 = alpha*conjugate(fget(y, j));
                     temp2 = conjugate(alpha*fget(x, j));
                     fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(fget(x, j)*temp1 + fget(y, j)*temp2));
@@ -120,7 +120,7 @@ _her2 :: (
             }
         } else {
             for j:1..n {
-                if fget(x, jx) != zero || fget(y, jy) != zero {
+                if fget(x, jx) != zero_t || fget(y, jy) != zero_t {
                     temp1 = alpha*conjugate(fget(y, jy));
                     temp2 = conjugate(alpha*fget(x, jx));
                     fset(a, j, j, real_nc(fget(a.*, j, j)) + real_nc(fget(x, jx)*temp1 + fget(y, jy)*temp2));
