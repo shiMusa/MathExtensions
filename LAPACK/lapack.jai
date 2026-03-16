@@ -55,6 +55,7 @@
 
 #load "Testing/cblat1.jai";
 #load "Testing/cblat2.jai";
+#load "Testing/cblat3.jai";
 
 
 // ? tests if val equals any of lower_case_chars
@@ -67,7 +68,7 @@ char_eq :: inline ($$val: s64, $lower_case_chars: ..s64) -> bool {
         //     if lower_case_chars[it] == val || lower_case_chars[it] == val+32 then return true;
         // });
         for 0..lower_case_chars.count-1 {
-            if lower_case_chars[it] == val || lower_case_chars[it] == val-32 then return true;
+            if val == lower_case_chars[it] || val == lower_case_chars[it]-32 then return true;
         };
         return false;
     }
@@ -191,7 +192,8 @@ test_lapack :: () {
 
     pass := true;
     // pass &= cblat1();
-    pass &= cblat2();
+    // pass &= cblat2();
+    pass &= cblat3();
 
     if !pass {
         err("LAPACK tests did not pass.");

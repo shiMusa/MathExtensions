@@ -43,15 +43,15 @@ _gemm :: (
     c: *$C/ArrayType2D,
     $$ldc: int
 ) {
-    zero :: #run zero(T);
-    one  :: #run one(T);
+    zero_t :: #run zero(T);
+    one_t  :: #run one(T);
 
     // Set nota and notb as true if a and b respectively are not
     // conjugated or transposed, set conja and conjb as true if a and
     // b respectively are to be transposed but not conjugated and set
     // nrowa and nrowb as the number of rows of a and b respectively.
-    nota := char_eq(transa, #char "n");
-    notb := char_eq(transb, #char "n");
+    nota  := char_eq(transa, #char "n");
+    notb  := char_eq(transb, #char "n");
     conja := char_eq(transa, #char "c");
     conjb := char_eq(transb, #char "c");
     nrowa := ifx nota then m else k;
@@ -75,14 +75,14 @@ _gemm :: (
     }
 
     // Quick return if possible.
-    if m == 0 || n == 0 || ((alpha == zero || k == 0) && beta == one) then return;
+    if m == 0 || n == 0 || ((alpha == zero_t || k == 0) && beta == one_t) then return;
 
     // And when alpha == zero
-    if alpha == zero {
-        if beta == zero {
+    if alpha == zero_t {
+        if beta == zero_t {
             for j:1..n {
                 for i:1..m {
-                    fset(c, i, j, zero);
+                    fset(c, i, j, zero_t);
                 }
             }
         } else {
@@ -103,11 +103,11 @@ _gemm :: (
         if nota {
             // Form  C := alpha*A*B + beta*C.
             for j:1..n {
-                if beta == zero {
+                if beta == zero_t {
                     for i:1..m {
-                        fset(c, i, j, zero);
+                        fset(c, i, j, zero_t);
                     }
-                } else if beta != one {
+                } else if beta != one_t {
                     for i:1..m {
                         fset(c, i, j, beta*fget(c.*, i, j));
                     }
@@ -123,11 +123,15 @@ _gemm :: (
             // Form  C := alpha*A**T*B + beta*C
             for j:1..n {
                 for i:1..m {
-                    temp = zero;
+                    temp = zero_t;
                     for l:1..k {
-                        temp += fget(a, l, i)*fget(b, l, j);
+                        if conja {
+                            temp += conjugate(fget(a, l, i))*fget(b, l, j);
+                        } else {
+                            temp += fget(a, l, i)*fget(b, l, j);
+                        }
                     }
-                    if beta == zero {
+                    if beta == zero_t {
                         fset(c, i, j, alpha*temp);
                     } else {
                         fset(c, i, j, alpha*temp + beta*fget(c.*, i, j));
@@ -139,17 +143,21 @@ _gemm :: (
         if nota {
             // Form  C := alpha*A*B**T + beta*C
             for j:1..n {
-                if beta == zero {
+                if beta == zero_t {
                     for i:1..m {
-                        fset(c, i, j, zero);
+                        fset(c, i, j, zero_t);
                     }
-                } else if beta != one {
+                } else if beta != one_t {
                     for i:1..m {
                         fset(c, i, j, beta*fget(c.*, i, j));
                     }
                 }
                 for l:1..k {
-                    temp = alpha*fget(b, j, l);
+                    if conjb {
+                        temp = alpha*conjugate(fget(b, j, l));
+                    } else {
+                        temp = alpha*fget(b, j, l);
+                    }
                     for i:1..m {
                         fset(c, i, j, fget(c.*, i, j) + temp*fget(a, i, l));
                     }
@@ -159,11 +167,23 @@ _gemm :: (
             // Form  C := alpha*A**T*B**T + beta*C
             for j:1..n {
                 for i:1..m {
-                    temp = zero;
+                    temp = zero_t;
                     for l:1..k {
-                        temp += fget(a, l, i)*fget(b, j, l);
+                        if conja {
+                            if conjb {
+                                temp += conjugate(fget(a, l, i))*conjugate(fget(b, j, l));
+                            } else {
+                                temp += conjugate(fget(a, l, i))*fget(b, j, l);
+                            }
+                        } else {
+                            if conjb {
+                                temp += fget(a, l, i)*conjugate(fget(b, j, l));
+                            } else {
+                                temp += fget(a, l, i)*fget(b, j, l);
+                            }
+                        }
                     }
-                    if beta == zero {
+                    if beta == zero_t {
                         fset(c, i, j, alpha*temp);
                     } else {
                         fset(c, i, j, alpha*temp + beta*fget(c.*, i, j));
