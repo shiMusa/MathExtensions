@@ -27,8 +27,8 @@
 // -- Modified 8-Nov-93 to set C(J,J) to REAL( C(J,J) ) when BETA = 1.
 //    Ed Anderson, Cray Research Inc.
 
-ssyr2k :: #bake_arguments _her2k(hermitian=true);
-dsyr2k :: #bake_arguments _her2k(hermitian=true);
+ssyr2k :: #bake_arguments _her2k(hermitian=false);
+dsyr2k :: #bake_arguments _her2k(hermitian=false);
 cher2k :: #bake_arguments _her2k(hermitian=true);
 zher2k :: #bake_arguments _her2k(hermitian=true);
 csyr2k :: #bake_arguments _her2k(hermitian=false);
@@ -82,7 +82,11 @@ _her2k :: (
             assert((U == get_number_inner_type(T) && hermitian) || (U == T && !hermitian));
         }
         assert(upper || char_eq(uplo, #char "l"));
-        assert(char_eq(trans, #char "n", #char "c"));
+        #if hermitian {
+            assert(char_eq(trans, #char "n", #char "c"));
+        } else {
+            assert(char_eq(trans, #char "n", #char "t"));
+        }
         assert(n >= 0);
         assert(k >= 0);
         assert(lda >= max(1,nrowa));
@@ -103,11 +107,19 @@ _her2k :: (
                     }
                 }
             } else {
-                for j:1..n {
-                    for i:1..j-1 {
-                        fset(c, i, j, beta*fget(c.*, i, j));
+                #if hermitian {
+                    for j:1..n {
+                        for i:1..j-1 {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
+                        fset(c, j, j, beta*re(fget(c.*, j, j)));
                     }
-                    fset(c, j, j, beta*re(fget(c.*, j, j)));
+                } else {
+                    for j:1..n {
+                        for i:1..j {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
+                    }
                 }
             }
         } else {
@@ -118,16 +130,26 @@ _her2k :: (
                     }
                 }
             } else {
-                for j:1..n {
-                    fset(c, j, j, beta*re(fget(c.*, j, j)));
-                    for i:j+1..n {
-                        fset(c, i, j, beta*fget(c.*, i, j));
+                #if hermitian {
+                    for j:1..n {
+                        fset(c, j, j, beta*re(fget(c.*, j, j)));
+                        for i:j+1..n {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
+                    }
+                } else {
+                    for j:1..n {
+                        for i:j..n {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
                     }
                 }
             }
         }
         return;
     }
+
+    temp1, temp2 : T = ---;
 
     // Start the operations.
     if char_eq(trans, #char "n") {
@@ -139,12 +161,20 @@ _her2k :: (
                         fset(c, i, j, zero_t);
                     }
                 } else if beta != oneU {
-                    for i:1..j-1 {
-                        fset(c, i, j, beta*fget(c.*, i, j));
+                    #if hermitian {
+                        for i:1..j-1 {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
+                        fset(c, j, j, beta*re(fget(c.*, j, j)));
+                    } else {
+                        for i:1..j {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
                     }
-                    fset(c, j, j, beta*re(fget(c.*, j, j)));
                 } else {
-                    fset(c, j, j, re(fget(c.*, j, j)));
+                    #if hermitian {
+                        fset(c, j, j, re(fget(c.*, j, j)));
+                    }
                 }
                 for l:1..k {
                     if fget(a, j, l) != zero_t || fget(b, j, l) != zero_t {
@@ -164,11 +194,20 @@ _her2k :: (
                         fset(c, i, j, zero_t);
                     }
                 } else if beta != oneU {
-                    for i:j+1..n {
-                        fset(c, i, j, beta*fget(c.*, i, j));
+                    #if hermitian {
+                        for i:j+1..n {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
+                        fset(c, j, j, beta*re(fget(c.*, j, j)));
+                    } else {
+                        for i:j..n {
+                            fset(c, i, j, beta*fget(c.*, i, j));
+                        }
                     }
                 } else {
-                    fset(c, j, j, beta*re(fget(c.*, j, j)));
+                    #if hermitian {
+                        fset(c, j, j, re(fget(c.*, j, j)));
+                    }
                 }
                 for l:1..k {
                     if fget(a, j, l) != zero_t || fget(b, j, l) != zero_t {
