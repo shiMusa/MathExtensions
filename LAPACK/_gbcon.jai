@@ -86,7 +86,7 @@ _gbcon_subvector :: inline (x: $X/ArrayType1D, $$offset: int, $$count: int) -> [
     return view;
 }
 
-_gbcon_lamch_safe_minimum :: () -> $RT #modify {
+_gbcon_lamch_safe_minimum :: ($RT: Type) -> RT #modify {
     return RT == float32 || RT == float64;
 } {
     #if RT == float32 {
