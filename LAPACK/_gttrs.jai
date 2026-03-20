@@ -106,101 +106,15 @@ _gttrs :: (
         }
     }
 
-    // Solve each RHS column independently (matches DGTTS2/CGTTS2 semantics).
-    if iTRANS == 0 {
-        // Solve A * X = B.
-        for j:1..nrhs {
-            // Solve L * x = b.
-            for i:1..n-1 {
-                if fget(ipiv, i) == i {
-                    fset(b, i + 1, j, fget(b.*, i + 1, j) - fget(dl, i)*fget(b.*, i, j));
-                } else {
-                    // Pivot implies IPIV(i) == i+1
-                    temp_i := fget(b.*, i, j);
-                    temp_ip := fget(b.*, i + 1, j);
-                    fset(b, i, j, temp_ip);
-                    fset(b, i + 1, j, temp_i - fget(dl, i)*temp_ip);
-                }
-            }
-
-            // Solve U * x = b.
-            fset(b, n, j, fget(b.*, n, j) / fget(d, n));
-            if n > 1 {
-                fset(b, n - 1, j,
-                    (fget(b.*, n - 1, j) - fget(du, n - 1)*fget(b.*, n, j)) / fget(d, n - 1));
-            }
-            if n > 2 {
-                for <i:n - 2..1 {
-                    fset(b, i, j,
-                        (fget(b.*, i, j)
-                         - fget(du, i)*fget(b.*, i + 1, j)
-                         - fget(du2, i)*fget(b.*, i + 2, j)) / fget(d, i));
-                }
-            }
-        }
-    } else if iTRANS == 1 {
-        // Solve A^T * X = B.
-        for j:1..nrhs {
-            // Solve U^T * x = b.
-            fset(b, 1, j, fget(b.*, 1, j) / fget(d, 1));
-            if n > 1 {
-                fset(b, 2, j,
-                    (fget(b.*, 2, j) - fget(du, 1)*fget(b.*, 1, j)) / fget(d, 2));
-            }
-            if n > 2 {
-                for i:3..n {
-                    fset(b, i, j,
-                        (fget(b.*, i, j)
-                         - fget(du, i - 1)*fget(b.*, i - 1, j)
-                         - fget(du2, i - 2)*fget(b.*, i - 2, j)) / fget(d, i));
-                }
-            }
-
-            // Solve L^T * x = b.
-            if n > 1 {
-                for <i:n - 1..1 {
-                    if fget(ipiv, i) == i {
-                        fset(b, i, j, fget(b.*, i, j) - fget(dl, i)*fget(b.*, i + 1, j));
-                    } else {
-                        // Pivot implies IPIV(i) == i+1
-                        temp_ip1 := fget(b.*, i + 1, j);
-                        fset(b, i + 1, j, fget(b.*, i, j) - fget(dl, i)*temp_ip1);
-                        fset(b, i, j, temp_ip1);
-                    }
-                }
-            }
-        }
+    // Solve using the LAPACK helper (*GTTS2).
+    #if MT == float32 {
+        sgtts2(iTRANS, n, nrhs, dl, d, du, du2, ipiv, b, ldb);
+    } else if MT == float64 {
+        dgtts2(iTRANS, n, nrhs, dl, d, du, du2, ipiv, b, ldb);
+    } else if MT == C32 {
+        cgtts2(iTRANS, n, nrhs, dl, d, du, du2, ipiv, b, ldb);
     } else {
-        // Solve A^H * X = B (complex only, ITRANS == 2).
-        for j:1..nrhs {
-            // Solve U^H * x = b.
-            fset(b, 1, j, fget(b.*, 1, j) / conjugate(fget(d, 1)));
-            if n > 1 {
-                fset(b, 2, j,
-                    (fget(b.*, 2, j) - conjugate(fget(du, 1))*fget(b.*, 1, j)) / conjugate(fget(d, 2)));
-            }
-            if n > 2 {
-                for i:3..n {
-                    fset(b, i, j,
-                        (fget(b.*, i, j)
-                         - conjugate(fget(du, i - 1))*fget(b.*, i - 1, j)
-                         - conjugate(fget(du2, i - 2))*fget(b.*, i - 2, j)) / conjugate(fget(d, i)));
-                }
-            }
-
-            // Solve L^H * x = b.
-            if n > 1 {
-                for <i:n - 1..1 {
-                    if fget(ipiv, i) == i {
-                        fset(b, i, j, fget(b.*, i, j) - conjugate(fget(dl, i))*fget(b.*, i + 1, j));
-                    } else {
-                        temp_ip1 := fget(b.*, i + 1, j);
-                        fset(b, i + 1, j, fget(b.*, i, j) - conjugate(fget(dl, i))*temp_ip1);
-                        fset(b, i, j, temp_ip1);
-                    }
-                }
-            }
-        }
+        zgtts2(iTRANS, n, nrhs, dl, d, du, du2, ipiv, b, ldb);
     }
 }
 
