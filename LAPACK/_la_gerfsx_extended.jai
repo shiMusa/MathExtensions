@@ -267,15 +267,20 @@ _la_gerfsx_extended_lin_berr :: (
            (MT == RT || MT == complex_with_inner_type(RT)) &&
            RES.data_type == MT && AYB.data_type == RT;
 } {
+    berr_buf: [1] RT;
+    berr_buf[0] = berr.*;
+
     #if MT == float32 {
-        sla_lin_berr(n, nz, nrhs, res, ayb, berr);
+        sla_lin_berr(n, nz, nrhs, res, ayb, berr_buf);
     } else if MT == float64 {
-        dla_lin_berr(n, nz, nrhs, res, ayb, berr);
+        dla_lin_berr(n, nz, nrhs, res, ayb, berr_buf);
     } else if MT == C32 {
-        cla_lin_berr(n, nz, nrhs, res, ayb, berr);
+        cla_lin_berr(n, nz, nrhs, res, ayb, berr_buf);
     } else {
-        zla_lin_berr(n, nz, nrhs, res, ayb, berr);
+        zla_lin_berr(n, nz, nrhs, res, ayb, berr_buf);
     }
+
+    berr.* = berr_buf[0];
 }
 
 _la_gerfsx_extended :: (

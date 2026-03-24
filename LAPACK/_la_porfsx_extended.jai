@@ -1,17 +1,17 @@
-// ? LAPACK *la_herfsx_extended()
+// ? LAPACK *la_porfsx_extended()
 // ? http://www.netlib.org/lapack/explore-html/
 
-// ? original comment cla_herfsx_extended/zla_herfsx_extended
-// *LA_HERFSX_EXTENDED improves the computed solution to a system of
-// linear equations for Hermitian indefinite matrices by performing
+// ? original comment cla_porfsx_extended/zla_porfsx_extended
+// *LA_PORFSX_EXTENDED improves the computed solution to a system of
+// linear equations for Hermitian positive-definite matrices by performing
 // extra-precise iterative refinement and provides error bounds and
 // backward error estimates for the solution.
 
-cla_herfsx_extended :: #bake_arguments _la_herfsx_extended(RT=float32, MT=C32);
-zla_herfsx_extended :: #bake_arguments _la_herfsx_extended(RT=float64, MT=C64);
+cla_porfsx_extended :: #bake_arguments _la_porfsx_extended(RT=float32, MT=C32);
+zla_porfsx_extended :: #bake_arguments _la_porfsx_extended(RT=float64, MT=C64);
 
 #scope_file
-_la_herfsx_extended_matrix_column :: inline (a: $A/ArrayType2D, $$ld: int, $$col: int, $$count: int) -> [] A.data_type {
+_la_porfsx_extended_matrix_column :: inline (a: $A/ArrayType2D, $$ld: int, $$col: int, $$count: int) -> [] A.data_type {
     #if CHECKS {
         assert(ld >= max(1, count));
         assert(col >= 1);
@@ -24,25 +24,25 @@ _la_herfsx_extended_matrix_column :: inline (a: $A/ArrayType2D, $$ld: int, $$col
     return view;
 }
 
-_la_herfsx_extended_lamch_epsilon :: ($RT: Type) -> RT #modify {
+_la_porfsx_extended_lamch_epsilon :: ($RT: Type) -> RT #modify {
     return RT == float32 || RT == float64;
 } {
     #if RT == float32 { return slamch(#char "e"); } else { return dlamch(#char "e"); }
 }
 
-_la_herfsx_extended_lamch_overflow :: ($RT: Type) -> RT #modify {
+_la_porfsx_extended_lamch_overflow :: ($RT: Type) -> RT #modify {
     return RT == float32 || RT == float64;
 } {
     #if RT == float32 { return slamch(#char "o"); } else { return dlamch(#char "o"); }
 }
 
-_la_herfsx_extended_abs1 :: inline (z: $MT, $RT: Type, $MT: Type) -> RT #modify {
+_la_porfsx_extended_abs1 :: inline (z: $MT, $RT: Type, $MT: Type) -> RT #modify {
     return (RT == float32 || RT == float64) && MT == complex_with_inner_type(RT);
 } {
     return _abs1(z);
 }
 
-_la_herfsx_extended_copy :: (
+_la_porfsx_extended_copy :: (
     $$n: int,
     x: $X/ArrayType1D,
     y: *$Y/ArrayType1D,
@@ -50,14 +50,10 @@ _la_herfsx_extended_copy :: (
 ) #modify {
     return (MT == C32 || MT == C64) && X.data_type == MT && Y.data_type == MT;
 } {
-    #if MT == C32 {
-        ccopy(n, x, 1, y, 1);
-    } else {
-        zcopy(n, x, 1, y, 1);
-    }
+    #if MT == C32 { ccopy(n, x, 1, y, 1); } else { zcopy(n, x, 1, y, 1); }
 }
 
-_la_herfsx_extended_axpy :: (
+_la_porfsx_extended_axpy :: (
     $$n: int,
     alpha: $MT,
     x: $X/ArrayType1D,
@@ -66,14 +62,10 @@ _la_herfsx_extended_axpy :: (
 ) #modify {
     return (MT == C32 || MT == C64) && X.data_type == MT && Y.data_type == MT;
 } {
-    #if MT == C32 {
-        caxpy(n, alpha, x, 1, y, 1);
-    } else {
-        zaxpy(n, alpha, x, 1, y, 1);
-    }
+    #if MT == C32 { caxpy(n, alpha, x, 1, y, 1); } else { zaxpy(n, alpha, x, 1, y, 1); }
 }
 
-_la_herfsx_extended_hemv :: (
+_la_porfsx_extended_hemv :: (
     $$uplo: u8,
     $$n: int,
     alpha: $MT,
@@ -87,14 +79,10 @@ _la_herfsx_extended_hemv :: (
     return (MT == C32 || MT == C64) &&
            A.data_type == MT && X.data_type == MT && Y.data_type == MT;
 } {
-    #if MT == C32 {
-        chemv(uplo, n, alpha, a, lda, x, 1, beta, y, 1);
-    } else {
-        zhemv(uplo, n, alpha, a, lda, x, 1, beta, y, 1);
-    }
+    #if MT == C32 { chemv(uplo, n, alpha, a, lda, x, 1, beta, y, 1); } else { zhemv(uplo, n, alpha, a, lda, x, 1, beta, y, 1); }
 }
 
-_la_herfsx_extended_blas_hemv_x :: (
+_la_porfsx_extended_blas_hemv_x :: (
     $$uplo2: int,
     $$n: int,
     alpha: $MT,
@@ -109,14 +97,10 @@ _la_herfsx_extended_blas_hemv_x :: (
     return (MT == C32 || MT == C64) &&
            A.data_type == MT && X.data_type == MT && Y.data_type == MT;
 } {
-    #if MT == C32 {
-        BLAS_CHEMV_X(uplo2, n, alpha, a, lda, x, 1, beta, y, 1, prec_type);
-    } else {
-        BLAS_ZHEMV_X(uplo2, n, alpha, a, lda, x, 1, beta, y, 1, prec_type);
-    }
+    #if MT == C32 { BLAS_CHEMV_X(uplo2, n, alpha, a, lda, x, 1, beta, y, 1, prec_type); } else { BLAS_ZHEMV_X(uplo2, n, alpha, a, lda, x, 1, beta, y, 1, prec_type); }
 }
 
-_la_herfsx_extended_blas_hemv2_x :: (
+_la_porfsx_extended_blas_hemv2_x :: (
     $$uplo2: int,
     $$n: int,
     alpha: $MT,
@@ -132,35 +116,25 @@ _la_herfsx_extended_blas_hemv2_x :: (
     return (MT == C32 || MT == C64) &&
            A.data_type == MT && XH.data_type == MT && XT.data_type == MT && Y.data_type == MT;
 } {
-    #if MT == C32 {
-        BLAS_CHEMV2_X(uplo2, n, alpha, a, lda, x_head, x_tail, 1, beta, y, 1, prec_type);
-    } else {
-        BLAS_ZHEMV2_X(uplo2, n, alpha, a, lda, x_head, x_tail, 1, beta, y, 1, prec_type);
-    }
+    #if MT == C32 { BLAS_CHEMV2_X(uplo2, n, alpha, a, lda, x_head, x_tail, 1, beta, y, 1, prec_type); } else { BLAS_ZHEMV2_X(uplo2, n, alpha, a, lda, x_head, x_tail, 1, beta, y, 1, prec_type); }
 }
 
-_la_herfsx_extended_hetrs :: (
+_la_porfsx_extended_potrs :: (
     $$uplo: u8,
     $$n: int,
     af: $AF/ArrayType2D,
     $$ldaf: int,
-    ipiv: $IPIV/ArrayType1D,
     b: *$B/ArrayType1D,
     $$ldb: int,
     info: *int,
     $MT: Type
 ) #modify {
-    return (MT == C32 || MT == C64) &&
-           AF.data_type == MT && IPIV.data_type == int && B.data_type == MT;
+    return (MT == C32 || MT == C64) && AF.data_type == MT && B.data_type == MT;
 } {
-    #if MT == C32 {
-        chetrs(uplo, n, 1, af, ldaf, ipiv, b, ldb, info);
-    } else {
-        zhetrs(uplo, n, 1, af, ldaf, ipiv, b, ldb, info);
-    }
+    #if MT == C32 { cpotrs(uplo, n, 1, af, ldaf, b, ldb, info); } else { zpotrs(uplo, n, 1, af, ldaf, b, ldb, info); }
 }
 
-_la_herfsx_extended_wwaddw :: (
+_la_porfsx_extended_wwaddw :: (
     $$n: int,
     x: *$X/ArrayType1D,
     y: *$Y/ArrayType1D,
@@ -170,14 +144,10 @@ _la_herfsx_extended_wwaddw :: (
     return (MT == C32 || MT == C64) &&
            X.data_type == MT && Y.data_type == MT && W.data_type == MT;
 } {
-    #if MT == C32 {
-        cla_wwaddw(n, x, y, w);
-    } else {
-        zla_wwaddw(n, x, y, w);
-    }
+    #if MT == C32 { cla_wwaddw(n, x, y, w); } else { zla_wwaddw(n, x, y, w); }
 }
 
-_la_herfsx_extended_heamv :: (
+_la_porfsx_extended_heamv :: (
     $$uplo2: int,
     $$n: int,
     alpha: $RT,
@@ -193,14 +163,10 @@ _la_herfsx_extended_heamv :: (
            MT == complex_with_inner_type(RT) &&
            A.data_type == MT && X.data_type == MT && Y.data_type == RT;
 } {
-    #if MT == C32 {
-        cla_heamv(uplo2, n, alpha, a, lda, x, 1, beta, y, 1);
-    } else {
-        zla_heamv(uplo2, n, alpha, a, lda, x, 1, beta, y, 1);
-    }
+    #if MT == C32 { cla_heamv(uplo2, n, alpha, a, lda, x, 1, beta, y, 1); } else { zla_heamv(uplo2, n, alpha, a, lda, x, 1, beta, y, 1); }
 }
 
-_la_herfsx_extended_lin_berr :: (
+_la_porfsx_extended_lin_berr :: (
     $$n: int,
     $$nz: int,
     $$nrhs: int,
@@ -226,7 +192,7 @@ _la_herfsx_extended_lin_berr :: (
     berr.* = berr_buf[0];
 }
 
-_la_herfsx_extended :: (
+_la_porfsx_extended :: (
     $$prec_type: int,
     $$uplo: u8,
     $$n: int,
@@ -235,7 +201,6 @@ _la_herfsx_extended :: (
     $$lda: int,
     af: $AF/ArrayType2D,
     $$ldaf: int,
-    ipiv: $IPIV/ArrayType1D,
     $$colequ: bool,
     c: $C/ArrayType1D,
     b: $B/ArrayType2D,
@@ -263,7 +228,6 @@ _la_herfsx_extended :: (
            MT == complex_with_inner_type(RT) &&
            A.data_type == MT &&
            AF.data_type == MT &&
-           IPIV.data_type == int &&
            C.data_type == RT &&
            B.data_type == MT &&
            Y.data_type == MT &&
@@ -292,32 +256,11 @@ _la_herfsx_extended :: (
     cnt, i, j, uplo2, x_state, y_prec_state, z_state : int = ---;
     dx_x, dxrat, dxratmax, dyk, dz_z, dzrat, dzratmax, eps, final_dx_x, final_dz_z,
     hugeval, incr_thresh, normdx, normx, normy, prev_dz_z, prevnormdx, yk, ymin, berr_j : RT = ---;
-    incr_prec, upper : bool = ---;
 
-    info.* = 0;
-    upper = lsame(uplo, #char "U");
-    if !upper && !lsame(uplo, #char "L") {
-        info.* = -2;
-    } else if n < 0 {
-        info.* = -3;
-    } else if nrhs < 0 {
-        info.* = -4;
-    } else if lda < max(1, n) {
-        info.* = -6;
-    } else if ldaf < max(1, n) {
-        info.* = -8;
-    } else if ldb < max(1, n) {
-        info.* = -13;
-    } else if ldy < max(1, n) {
-        info.* = -15;
-    }
-    if info.* != 0 {
-        xerbla(#run if MT == C32 { "CLA_HERFSX_EXTENDED" } else { "ZLA_HERFSX_EXTENDED" }, -info.*);
-        return;
-    }
+    if info.* != 0 then return;
 
-    eps = _la_herfsx_extended_lamch_epsilon(RT);
-    hugeval = _la_herfsx_extended_lamch_overflow(RT);
+    eps = _la_porfsx_extended_lamch_epsilon(RT);
+    hugeval = _la_porfsx_extended_lamch_overflow(RT);
     hugeval *= hugeval;
     incr_thresh = ncast(RT, n) * eps;
 
@@ -349,24 +292,24 @@ _la_herfsx_extended :: (
 
         x_state = working_state;
         z_state = unstable_state;
-        incr_prec = false;
+        incr_prec := false;
 
-        b_col := _la_herfsx_extended_matrix_column(b, ldb, j, n);
-        y_col := _la_herfsx_extended_matrix_column(y.*, ldy, j, n);
+        b_col := _la_porfsx_extended_matrix_column(b, ldb, j, n);
+        y_col := _la_porfsx_extended_matrix_column(y.*, ldy, j, n);
 
         for cnt:1..ithresh {
-            _la_herfsx_extended_copy(n, b_col, res, MT);
+            _la_porfsx_extended_copy(n, b_col, res, MT);
 
             if y_prec_state == base_residual {
-                _la_herfsx_extended_hemv(uplo, n, minus_one_t, a, lda, y_col, one_t, res, MT);
+                _la_porfsx_extended_hemv(uplo, n, minus_one_t, a, lda, y_col, one_t, res, MT);
             } else if y_prec_state == extra_residual {
-                _la_herfsx_extended_blas_hemv_x(uplo2, n, minus_one_t, a, lda, y_col, one_t, res, prec_type, MT);
+                _la_porfsx_extended_blas_hemv_x(uplo2, n, minus_one_t, a, lda, y_col, one_t, res, prec_type, MT);
             } else {
-                _la_herfsx_extended_blas_hemv2_x(uplo2, n, minus_one_t, a, lda, y_col, y_tail.*, one_t, res, prec_type, MT);
+                _la_porfsx_extended_blas_hemv2_x(uplo2, n, minus_one_t, a, lda, y_col, y_tail.*, one_t, res, prec_type, MT);
             }
 
-            _la_herfsx_extended_copy(n, res.*, dy, MT);
-            _la_herfsx_extended_hetrs(uplo, n, af, ldaf, ipiv, dy, n, info, MT);
+            _la_porfsx_extended_copy(n, res.*, dy, MT);
+            _la_porfsx_extended_potrs(uplo, n, af, ldaf, dy, n, info, MT);
 
             normx = zero_r;
             normy = zero_r;
@@ -375,8 +318,8 @@ _la_herfsx_extended :: (
             ymin = hugeval;
 
             for i:1..n {
-                yk = _la_herfsx_extended_abs1(fget(y_col, i), RT, MT);
-                dyk = _la_herfsx_extended_abs1(fget(dy.*, i), RT, MT);
+                yk = _la_porfsx_extended_abs1(fget(y_col, i), RT, MT);
+                dyk = _la_porfsx_extended_abs1(fget(dy.*, i), RT, MT);
 
                 if yk != zero_r {
                     dz_z = max(dz_z, dyk / yk);
@@ -468,9 +411,9 @@ _la_herfsx_extended :: (
             prev_dz_z = dz_z;
 
             if y_prec_state < extra_y {
-                _la_herfsx_extended_axpy(n, one_t, dy.*, *y_col, MT);
+                _la_porfsx_extended_axpy(n, one_t, dy.*, *y_col, MT);
             } else {
-                _la_herfsx_extended_wwaddw(n, *y_col, y_tail, dy.*, MT);
+                _la_porfsx_extended_wwaddw(n, *y_col, y_tail, dy.*, MT);
             }
         }
 
@@ -484,16 +427,16 @@ _la_herfsx_extended :: (
             fset(err_bnds_comp, j, la_linrx_err_i, final_dz_z / (one_r - dzratmax));
         }
 
-        _la_herfsx_extended_copy(n, b_col, res, MT);
-        _la_herfsx_extended_hemv(uplo, n, minus_one_t, a, lda, y_col, one_t, res, MT);
+        _la_porfsx_extended_copy(n, b_col, res, MT);
+        _la_porfsx_extended_hemv(uplo, n, minus_one_t, a, lda, y_col, one_t, res, MT);
 
         for i:1..n {
-            fset(ayb, i, _la_herfsx_extended_abs1(fget(b_col, i), RT, MT));
+            fset(ayb, i, _la_porfsx_extended_abs1(fget(b_col, i), RT, MT));
         }
 
-        _la_herfsx_extended_heamv(uplo2, n, one_r, a, lda, y_col, one_r, ayb, RT, MT);
+        _la_porfsx_extended_heamv(uplo2, n, one_r, a, lda, y_col, one_r, ayb, RT, MT);
         berr_j = ---;
-        _la_herfsx_extended_lin_berr(n, n, 1, res.*, ayb.*, *berr_j, RT, MT);
+        _la_porfsx_extended_lin_berr(n, n, 1, res.*, ayb.*, *berr_j, RT, MT);
         fset(berr_out, j, berr_j);
     }
 }
